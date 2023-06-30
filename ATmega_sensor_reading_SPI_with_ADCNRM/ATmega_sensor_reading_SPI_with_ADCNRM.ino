@@ -36,7 +36,7 @@ const volatile GPIO_pin_t pins[] = { DP7, DP13, DP5, DP11, DP0, DP1, DP23, DP21,
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                       //storage for tonehole sensor readings
 int tempToneholeReadA[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                  //temporary storage for ambient light tonehole sensor readings, written during the timer ISR
 volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //   we pack the 9 10-bit tonehole readings into 12 bytes to send via I2C to NRF52840
-bool dataReady = 1;
+//bool dataReady = 1;
 
 
 
@@ -169,7 +169,7 @@ void readSensors(void) {
     digitalWrite2f(pins[7], LOW);
     digitalWrite2f(pins[8], HIGH);
 
-    tempToneholeReadA[0] = ADC_read(holeTrans[0]);  //Here's where we get the ambient reading for hole 0, used in the caculation the next time around. For this hole (bell sensor, there is a delay of the polling interval (e.g. 3 mS) between the ambient and illuminated reading)
+    tempToneholeReadA[0] = ADC_read(holeTrans[0]);  //Here's where we get the ambient reading for hole 0, used in the caculation the next time around. For this hole (bell sensor), there is a delay of the polling interval (e.g. 3 mS) between the ambient and illuminated reading.
     toneholeRead[8] = ADC_read(holeTrans[8]) - tempToneholeReadA[8];
     digitalWrite2f(pins[8], LOW);
 
@@ -223,7 +223,7 @@ void ADC_init(void) {
     ADCSRA &= ~(bit(ADPS0) | bit(ADPS1) | bit(ADPS2));  // clear ADC prescaler bits
     ADCSRA = (1 << ADEN) | ((1 << ADPS2));              // enable ADC Division Factor 16 (36 uS)
     //ADCSRA = (1 << ADEN) | ((1 << ADPS2) | (1 << ADPS0));  // enable ADC Division Factor 32 (60 us)
-    ADMUX = (1 << REFS0);  //Voltage reference from Avcc (3.3v)
+    ADMUX = (1 << REFS0);  //Voltage reference from Avcc (3.0v)
 }
 
 
