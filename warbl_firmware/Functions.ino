@@ -110,7 +110,6 @@ void checkButtons() {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    toneholesReady = true;
     tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution for now to match the old WARBL code-- we can leave this at 12 bit if needed.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
@@ -275,7 +274,7 @@ bool debounceFingerHoles() {
 //Send the pattern of covered holes to the Configuration Tool
 void send_fingers() {
 
-    if (communicationMode) {  //send information about which holes are covered to the Configuration Tool if we're connected. Because it's MIDI we have to send it in two 7-byte chunks.
+    if (communicationMode) {  //send information about which holes are covered to the Configuration Tool if we're connected. Because it's MIDI we have to send it in two 7-bit chunks.
         sendMIDI(CC, 7, 114, holeCovered >> 7);
         sendMIDI(CC, 7, 115, lowByte(holeCovered));
     }
@@ -1356,7 +1355,7 @@ void handleControlChange(byte channel, byte number, byte value) {
     //Serial.println(value);
     //Serial.println("");
 
-    if (number < 119) {  //Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
+    if (number < 120) {  //Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
         if ((channel & 0x0f) == 7) {             //If we're on channel 7, we may be receiving messages from the configuration tool.
             powerDownTimer = millis();           //Reset the powerDown timer because we've heard from the Config Tool.
@@ -1392,15 +1391,6 @@ void handleControlChange(byte channel, byte number, byte value) {
                     communicationMode = 0;
                 }
 
-
-                /*
-                else if (value == 122) {  // Dump EEPROM
-                    for (int i = 0; i < EEPROM.length(); i++) {
-                        delay(3);
-                        blinkNumber = 3;
-                    }
-                }
-*/
 
                 for (byte i = 0; i < 3; i++) {  // Update the three selected fingering patterns if prompted by the tool.
                     if (value == 30 + i) {
@@ -1451,6 +1441,10 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (buttonReceiveMode == i) {
                         if (value == 119) {  //this is a special value for autocalibration because I ran out of values in the range 0-12 below.
                             buttonPrefs[mode][i][0] = 19;
+                            blinkNumber = 0;
+                        }
+                        if (value == 122) {  //this is a special value for powerdown because I ran out of values in the range 0-12 below.
+                            buttonPrefs[mode][i][0] = 22;
                             blinkNumber = 0;
                         }
                         for (byte j = 0; j < 12; j++) {  //update column 0 (action).
@@ -1900,6 +1894,11 @@ void performAction(byte action) {
 
         case 19:  //autocalibrate
             calibration = 1;
+            break;
+
+
+        case 22:
+            powerDown();
             break;
 
 

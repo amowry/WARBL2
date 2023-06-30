@@ -464,12 +464,10 @@ unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //covered hole 
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          //baseline (uncovered) hole tonehole sensor readings
 byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Used for receiving tone hole readings from the ATmega32U4
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              //tonehole sensor readings after being reassembled from above bytes
-bool toneholesReady = false;                                     // Indicates when a fresh reading of the tone holes is available
-bool toneholesReadyInterupt = false;
-unsigned int holeCovered = 0;      //whether each hole is covered-- each bit corresponds to a tonehole.
-uint8_t tempCovered = 0;           //used when masking holeCovered to ignore certain holes depending on the fingering pattern.
-bool fingersChanged = 1;           //keeps track of when the fingering pattern has changed.
-unsigned int prevHoleCovered = 1;  //so we can track changes.
+unsigned int holeCovered = 0;                                    //whether each hole is covered-- each bit corresponds to a tonehole.
+uint8_t tempCovered = 0;                                         //used when masking holeCovered to ignore certain holes depending on the fingering pattern.
+bool fingersChanged = 1;                                         //keeps track of when the fingering pattern has changed.
+unsigned int prevHoleCovered = 1;                                //so we can track changes.
 volatile int tempNewNote = 0;
 byte prevNote;
 byte newNote = -1;             //the next note to be played, based on the fingering chart (does not include transposition).
@@ -606,7 +604,7 @@ void setup() {
 
 
     //BLE MIDI stuff:
-    Bluefruit.configPrphBandwidth(BANDWIDTH_MAX); //Not sure if we need to request connection interval too? Connects to iOS @ 15mS
+    Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);  //Not sure if we need to request connection interval too? Connects to iOS @ 15mS
     Bluefruit.begin();
     //Bluefruit.Periph.setConnInterval(6, 12); // min = 6*1.25=7.5 ms, max = 12*1.25=15ms *doesn't seem to do anything...
     Bluefruit.setTxPower(8);                               // Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
@@ -833,9 +831,9 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 1 S
+    /////////// Things here happen ~ every 1.25 S
 
-    if ((nowtime - timerF) > 1000) {
+    if ((nowtime - timerF) > 1250) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
         manageBattery();  //Check the battery and manage charging if necessary.

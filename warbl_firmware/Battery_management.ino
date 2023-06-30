@@ -5,7 +5,7 @@ Charging:
 -indicate charging, fault (detect 1 Hz STAT pin for fault)
 -using running average for V?
 -don't terminate within the first several minutes?
--use 0 dV/dt for termination?
+-use 0 dV/dt for termination
 -after termination reset run time in EEPROM
 
 */
@@ -78,7 +78,7 @@ void powerDown() {
 
 
 void recordRuntime() {
-    runTimer = (millis() - runTimer) / 60000;  //Calculate how minutes we have been powered by the battery.
+    runTimer = (millis() - runTimer) / 60000;  //Calculate how many minutes we have been powered by the battery.
 
     byte high = EEPROM.read(1013);  //Read previous time.
     byte low = EEPROM.read(1014);
