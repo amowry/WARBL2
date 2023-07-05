@@ -38,7 +38,7 @@ void manageBattery() {
 
 
 
-    if (battVoltage < 1.1) {  //shut down when the battery is low
+    if (battVoltage < 1.0) {  //shut down when the battery is low
         powerDown();
     }
 
@@ -99,7 +99,7 @@ void recordRuntime() {
 float getBattVoltage() {
 
     //Read battery voltage
-    analogReference(AR_INTERNAL_1_8);    //Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.6 V.
+    analogReference(AR_INTERNAL_1_8);    //Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
     analogOversampling(256);             //Increase oversampling for precise 12-bit reading.
     digitalWrite(battReadEnable, HIGH);  //We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     float battReading = analogRead(battRead);

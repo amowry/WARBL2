@@ -984,7 +984,7 @@ void findStepsDown() {
 //Custom pitchbend algorithms, tin whistle and uilleann by Michael Eskin
 void handleCustomPitchBend() {
 
-    iPitchBend[2] = 0;  //reset pitchbend for the holes that are being used
+    iPitchBend[2] = 0;  //reset pitchbend for the holes that are being used ToDo: may need to do this for all holes because others might be being used for slide.
     iPitchBend[3] = 0;
 
     if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {  //calculate slide if necessary.
@@ -1281,7 +1281,7 @@ void sendNote() {
 
         pitchBendTimer = millis();  //for some reason it sounds best if we don't send pitchbend right away after starting a new note.
         noteOnTimestamp = pitchBendTimer;
-        powerDownTimer = millis();  //reset the powerDown timer
+        powerDownTimer = millis();  //reset the powerDown timer because we're actively sending notes
 
         prevNote = newNote;
 
@@ -1295,8 +1295,8 @@ void sendNote() {
         if (
           ((newState == 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && !play)) ||  //if the state drops to 1 (off) or we're in bagless mode and the sound has been turned off
           (modeSelector[mode] == kModeNorthumbrian && newNote == 60) ||                           //or closed Northumbrian pipe
-          (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            //or completely closed pipe
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 //turn the note off if the breath pressure drops or if we're in uilleann mode, the bell sensor is covered, and all the finger holes are covered.
+          (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            //or completely closed pipe with any fingering chart
+            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 //turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
             noteon = 0;                                                                           //keep track
 
             sendPressure(true);
@@ -2541,9 +2541,10 @@ void loadCalibration() {
 
 
 
-
+//ToDo: the calculations can be made more sophisticated now that we have a fast processor and FPU
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
+
 
     long scaledPressure = sensorValue - 100;  // input pressure range is 100-1000. Bring this down to 0-900
     scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0], inputPressureBounds[pressureOption][1]);
