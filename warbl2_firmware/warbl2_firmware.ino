@@ -16,6 +16,7 @@
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DS.h>  //IMU
 #include <Adafruit_LSM6DSL.h>
+#include <Adafruit_LSM6DSOX.h>
 #include <MadgwickAHRS.h>  //IMU sensor fusion
 
 
@@ -27,6 +28,7 @@ BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSL lsm6dsl;
+//Adafruit_LSM6DSOX lsm6d;
 
 ExternalEEPROM EEPROM;
 
@@ -125,7 +127,7 @@ ExternalEEPROM EEPROM;
 #define R4_FLATTEN 12
 #define kSWITCHESnVariables 13
 
-//Variables in the ED array (all the settings for the Expression and Drones panels)
+//Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
 #define EXPRESSION_DEPTH 1
 #define SEND_PRESSURE 2
@@ -177,6 +179,12 @@ ExternalEEPROM EEPROM;
 #define CUSTOM_FINGERING_11 48
 #define kEXPRESSIONnVariables 49
 
+//Variables in the WARBL2settings array (independent of mode)
+#define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
+#define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb"charging brick.
+#define VOLTAGE_FOR_SENDING 2
+#define kWARBL2SETTINGSnVariables 3
+
 /*
 struct MySettings : public midi::DefaultSettings {
     static const bool UseRunningStatus = false;
@@ -214,13 +222,14 @@ const uint8_t battRead = 16;        //Analog pin for reading battery voltage
 
 const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
 
+const uint8_t LSM_CS = 12;  //CS pin for IMU
 
 
 //Battery variables
 byte USBstatus = 0;  //stores power/USB connection status: battery power (0), dumb charger (1), or connected USB host (2)
 
 float battVoltage;
-float battTemp; //****no longer needed***
+float battTemp;  //****no longer needed***
 float CPUtemp;
 unsigned long runTimer;  //how long WARBL has been running on battery power
 bool battPower = false;  //keeps track of when we're on battery power, for above timer
@@ -236,7 +245,6 @@ unsigned long nowtime;
 unsigned long powerDownTimer;
 bool playing = 0;  //testing
 
-
 //IMU data
 double gyroX;
 double gyroY;
@@ -249,6 +257,9 @@ float IMUtemp;
 //instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
 byte defaultMode = 0;  // The default mode, from 0-2.
+
+//WARBL2 variables that are independent of instrument
+byte WARBL2settings[] = {2, 1, 0};  //see defines above
 
 //variables that can change according to instrument.
 int8_t octaveShift = 0;                       //octave transposition
@@ -278,7 +289,7 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  //whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
-byte switches[3][13] =  //the settings for the five switches in the vibrato/slide and register control panels
+byte switches[3][13] =  //the settings for the switches in various Config Tool panels
                         //instrument 0
   {
       {
@@ -530,6 +541,7 @@ bool communicationMode = 0;      //whether we are currently communicating with t
 byte buttonReceiveMode = 100;    //which row in the button configuration matrix for which we're currently receiving data.
 byte pressureReceiveMode = 100;  //which pressure variable we're currently receiving date for. From 1-12: Closed: offset, multiplier, jump, drop, jump time, drop time, Vented: offset, multiplier, jump, drop, jump time, drop time
 byte fingeringReceiveMode = 0;   // indicates the mode (instrument) for  which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;   // indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
 
 
@@ -606,7 +618,7 @@ void setup() {
     //BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);  //Not sure if we need to request connection interval too? Connects to iOS @ 15mS
     Bluefruit.begin();
-    //Bluefruit.Periph.setConnInterval(6, 12); // min = 6*1.25=7.5 ms, max = 12*1.25=15ms *doesn't seem to do anything...
+    Bluefruit.Periph.setConnInterval(6, 12);               // min = 6*1.25=7.5 ms, max = 12*1.25=15ms *doesn't seem to do anything...
     Bluefruit.setTxPower(8);                               // Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
     Bluefruit.autoConnLed(false);                          // Setup the on board LED to be enabled on CONNECT
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service
@@ -618,19 +630,19 @@ void setup() {
     startAdv();                                           // Set up and start advertising
 
 
-    Wire.begin();           // Join i2c bus for IMU and EEPROM.
-    Wire.setClock(400000);  //high speed
-
-
-    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000
+    Wire.begin();                          // Join i2c bus for EEPROM.
+    Wire.setClock(400000);                 //high speed
     EEPROM.setMemorySize(128 * 1024 / 8);  //In bytes. 128kbit = 16kbyte
     EEPROM.setPageSize(64);                //In bytes.
     EEPROM.enablePollForWriteComplete();   //Supports I2C polling of write completion. This shortens the amount of time waiting between writes but hammers the I2C bus by polling every 100 uS. disablePollForWriteComplete() will add 5 mS between each write.
     EEPROM.setPageWriteTime(5);            //5 ms max write time
-                                           //reading and writing bytes: EEPROM.write(location, data); (will only write if the data is new) EEPROM.read(location, data);
+    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings. Otherwise the library will overwrite the EEPROM in an attemp to detect the settings automatically.
 
+
+    //lsm6d.begin_SPI(LSM_CS); //begin IMU SPI
     lsm6dsl.begin_I2C();
     //filter.begin(sensorRate);
+
 
     //Set up SPI
     pinMode(2, OUTPUT);     //SS for Atmega

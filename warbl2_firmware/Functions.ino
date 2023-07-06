@@ -15,11 +15,11 @@ void printStuff(void) {
     //Serial.println(conn_param.max_conn_interval);
     //Bluefruit.Periph.printInfo();
 
-    //EEPROM.read(1014);
-    //Serial.println(tempSensorValue);
-    //Serial.println(transientFilter);
-    //Serial.println(pressed[1]);
+
+    //Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
     //Serial.println(battVoltage, 3);
+    //Serial.println(WARBL2settings[VOLTAGE_FOR_SENDING]);
+    //Serial.println(pressed[1]);
     //Serial.print(",");
     //Serial.println(battTemp, 2);
     //Serial.println(CPUtemp, 2);
@@ -165,6 +165,7 @@ void readIMU(void) {
     sensors_event_t gyro;
     sensors_event_t temp;
     lsm6dsl.getEvent(&accel, &gyro, &temp);
+    //lsm6d.getEvent(&accel, &gyro, &temp);
 
     gyroX = gyro.gyro.x;
     gyroY = gyro.gyro.y;
@@ -216,6 +217,18 @@ void readIMU(void) {
     pitchFilteredOld = pitchFiltered;
   */
 }
+
+
+
+
+
+
+
+//Calibate the IMU when the command is received from the Config Tool
+void calibrateIMU() {
+}
+
+
 
 
 
@@ -1441,11 +1454,11 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (buttonReceiveMode == i) {
                         if (value == 119) {  //this is a special value for autocalibration because I ran out of values in the range 0-12 below.
                             buttonPrefs[mode][i][0] = 19;
-                            blinkNumber = 0;
+                            //blinkNumber = 0;
                         }
                         if (value == 122) {  //this is a special value for powerdown because I ran out of values in the range 0-12 below.
                             buttonPrefs[mode][i][0] = 22;
-                            blinkNumber = 0;
+                            //blinkNumber = 0;
                         }
                         for (byte j = 0; j < 12; j++) {  //update column 0 (action).
                             if (value == 100 + j) {
@@ -1632,6 +1645,23 @@ void handleControlChange(byte channel, byte number, byte value) {
                     for (int i = 1; i < 10; i++) {  //save baseline calibration as factory baseline
                         EEPROM.write(i + 2000, EEPROM.read(i));
                     }
+                }
+
+                else if (value == 54) {  //save current sensor calibration as factory calibration
+                    calibrateIMU();
+                }
+
+                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) {  //save current sensor calibration as factory calibration
+                    WARBL2settingsReceiveMode = value - 55;
+                }
+            }
+
+
+
+            if (number == 119) {
+                WARBL2settings[WARBL2settingsReceiveMode] = value;
+                for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed bythe Config Tool because it is independent of mode.
+                    EEPROM.write(600 + r, WARBL2settings[r]);
                 }
             }
 
@@ -2084,9 +2114,13 @@ void saveFactorySettings() {
 
     EEPROM.write(48, defaultMode);  //save default mode
 
+    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
+        EEPROM.write(600 + r, WARBL2settings[r]);
+    }
+
     EEPROM.write(44, 3);  //indicates settings have been saved
 
-    for (int i = 1; i < 1501; i++) {             //then we read every byte in EEPROM from 1 to 150
+    for (int i = 1; i < 1501; i++) {             //then we read every byte in EEPROM from 1 to 1500
         EEPROM.write(2000 + i, EEPROM.read(i));  //and rewrite them from 2001 to 3500. Then they'll be available to restore later if necessary.
     }
 
@@ -2209,6 +2243,11 @@ void sendSettings() {
     }
 
     sendMIDI(CC, 7, 102, 121);  //Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
+
+    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  //send the WARBL2settings array
+        sendMIDI(CC, 7, 106, i);
+        sendMIDI(CC, 7, 119, WARBL2settings[i - 55]);
+    }
 }
 
 
@@ -2301,7 +2340,11 @@ void loadSettingsForAllModes() {
 
     defaultMode = EEPROM.read(48);  //load default mode
 
-    for (byte i = 0; i < 3; i++) {
+    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
+        WARBL2settings[r] = EEPROM.read(600 + r);
+    }
+
+    for (byte i = 0; i < 3; i++) {  //do this for each mode
 
         senseDistanceSelector[i] = EEPROM.read(50 + i);
 
@@ -2352,7 +2395,7 @@ void loadSettingsForAllModes() {
 
 
 
-//load the correct user settings for the current instrument. This is used at startup and any time settings are changed.
+//load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
 
     vibratoHoles = vibratoHolesSelector[mode];

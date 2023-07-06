@@ -4,7 +4,7 @@ Charging:
 
 -indicate charging, fault (detect 1 Hz STAT pin for fault)
 -using running average for V?
--don't terminate within the first several minutes?
+-don't terminate within the first several minutes or when voltage is below ~1.4-1.45 V?
 -use 0 dV/dt for termination
 -after termination reset run time in EEPROM
 
@@ -14,6 +14,17 @@ void manageBattery() {
 
 
     battVoltage = getBattVoltage();
+
+    WARBL2settings[VOLTAGE_FOR_SENDING] = (((battVoltage + 0.005) * 100) - 50);  //convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format)
+
+    static byte cycles = 24;
+    if (cycles == 24) {
+        cycles = 0;
+        if (communicationMode) {
+            sendVoltage();  //send voltage to ConFig Tool every 30 seconds
+        }
+    }
+    cycles++;
 
     //battTemp = getBattTemp();
 
@@ -134,4 +145,19 @@ float getBattTemp() {
     float battTempC = (1.00 / ((1.00 / 298.15) + (1.00 / 3380.00) * (log(4096 / (float)thermReading - 1.00)))) - 273.15;
 
     return battTempC;
+}
+
+
+
+
+
+
+
+
+
+//send voltage to ConFig Tool
+void sendVoltage() {
+
+    sendMIDI(CC, 7, 106, 57);
+    sendMIDI(CC, 7, 119, WARBL2settings[VOLTAGE_FOR_SENDING]);
 }
