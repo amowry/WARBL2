@@ -6,21 +6,16 @@ void printStuff(void) {
     //Serial.println(gyroY);
 
     for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeBaseline[i]);
+        //Serial.println(toneholeRead[i]);
     }
 
 
 
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
-    //Serial.println(conn_param.max_conn_interval);
-    //Bluefruit.Periph.printInfo();
-
-
+    //Serial.println(connIntvl);
     //Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
     //Serial.println(battVoltage, 3);
-    //Serial.println(WARBL2settings[VOLTAGE_FOR_SENDING]);
     //Serial.println(pressed[1]);
-    //Serial.print(",");
     //Serial.println(battTemp, 2);
     //Serial.println(CPUtemp, 2);
     //Serial.println(IMUtemp);
@@ -175,14 +170,14 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
-    //calibrate  -- ToDo: add routine for this and accel
-    gyroX -= 0.0010F;
-    gyroY -= -0.0513F;
-    gyroZ -= .0110F;
+    //calibrate  -- ToDo: add routine for this (and accel?)
+    gyroX -= 0.0122F;
+    gyroY -= -0.0476F;
+    gyroZ -= 0.0012F;
 
     //static float accelFilteredOld;
 
-    //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // testing low pass filter -- this works for extremely basic tilt.
+    //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // low pass filter -- this works for extremely basic tilt.
     //accelFilteredOld = accelFiltered;
     //Serial.println(accelFiltered);
 
@@ -190,21 +185,19 @@ void readIMU(void) {
     Serial.println(gyroX, 4);
     Serial.println(gyroY, 4);
     Serial.println(gyroZ, 4);
-    Serial.println(accelX);
-    Serial.println(accelY);
-    Serial.println(accelZ);
-    Serial.println(gyroX);
-    Serial.println(gyroY);
+    Serial.println(accelX, 4);
+    Serial.println(accelY, 4);
+    Serial.println(accelZ, 4);
     Serial.println("");
-*/
-    /*  
+
+   
     gyroX *= 57.29577793F;  //convert to degrees/s 
     gyroY *= 57.29577793F;  //convert to degrees/s
     gyroZ *= 57.29577793F;  //convert to degrees/s
 
-    accelX /= 9.80665f;  //convert to g
-    accelY /= 9.80665f;  //convert to g
-    accelZ /= 9.80665f;  //convert to g
+    //accelX /= 9.80665f;  //convert to g
+    //accelY /= 9.80665f;  //convert to g
+    //accelZ /= 9.80665f;  //convert to g
 
     
     //Madgwick-- doesn't seem to be working correctly.
@@ -214,8 +207,8 @@ void readIMU(void) {
     roll = filter.getRoll();
     yaw = filter.getYaw();
     Serial.println(roll);
-    pitchFilteredOld = pitchFiltered;
-  */
+
+    */
 }
 
 
@@ -2248,6 +2241,16 @@ void sendSettings() {
         sendMIDI(CC, 7, 106, i);
         sendMIDI(CC, 7, 119, WARBL2settings[i - 55]);
     }
+
+    manageBattery(true);  //do this to send voltage and charging status to Config Tool
+
+    //sendMIDI(CC, 7, 106, 72);
+    //sendMIDI(CC, 7, 119, connIntvl);  //send the connection interval to the Config Tool
+
+    sendMIDI(CC, 7, 106, 72);
+    sendMIDI(CC, 7, 119, connIntvl & 0x7F);  //Send low byte of the connection interval.
+    sendMIDI(CC, 7, 106, 73);
+    sendMIDI(CC, 7, 119, connIntvl >> 7);  //Send high byte of the connection interval.
 }
 
 
@@ -2713,7 +2716,7 @@ void startAdv(void) {
 
 
 
-//These just convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library
+//These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MIDI event over USB
 {
 
@@ -2727,26 +2730,42 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
 
         case 0x80:  //Note Off
             {
-                MIDI.sendNoteOff(d1, d2, c);
-                BLEMIDI.sendNoteOff(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendNoteOff(d1, d2, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendNoteOff(d1, d2, c);
+                }
                 break;
             }
         case 0x90:  //Note On
             {
-                MIDI.sendNoteOn(d1, d2, c);
-                BLEMIDI.sendNoteOn(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendNoteOn(d1, d2, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendNoteOn(d1, d2, c);
+                }
                 break;
             }
         case 0xA0:  //Key Pressure
             {
-                MIDI.sendPolyPressure(d1, d2, c);
-                BLEMIDI.sendPolyPressure(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendAfterTouch(d1, d2, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendAfterTouch(d1, d2, c);
+                }
                 break;
             }
         case 0xB0:  //CC
             {
-                MIDI.sendControlChange(d1, d2, c);
-                BLEMIDI.sendControlChange(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendControlChange(d1, d2, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendControlChange(d1, d2, c);
+                }
                 break;
             }
         case 0xC0:  //Program Change
@@ -2760,8 +2779,12 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
         case 0xE0:  //Pitchbend
             {
                 int16_t pitch = ((d2 << 7) + d1) - 8192;
-                MIDI.sendPitchBend(pitch, c);
-                BLEMIDI.sendPitchBend(pitch, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendPitchBend(pitch, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendPitchBend(pitch, c);
+                }
                 break;
             }
         default:
@@ -2791,17 +2814,87 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over
 
         case 0xD0:  //Channel pressure
             {
-                MIDI.sendAfterTouch(d, c);
-                BLEMIDI.sendAfterTouch(d, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendAfterTouch(d, c);  //deprecated
+                    //MIDI.sendPolyPressure(d, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendAfterTouch(d, c);
+                    //BLEMIDI.sendPolyPressure(d, c);
+                }
                 break;
             }
 
 
         case 0xC0:  //Program Change
             {
-                MIDI.sendProgramChange(d, c);
-                BLEMIDI.sendProgramChange(d, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                    MIDI.sendProgramChange(d, c);
+                }
+                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                    BLEMIDI.sendProgramChange(d, c);
+                }
                 break;
             }
+    }
+}
+
+
+
+
+
+
+
+
+
+//retrieve BLE connection information
+void connect_callback(uint16_t conn_handle) {
+
+    // Get the reference to current connection
+    BLEConnection* connection = Bluefruit.Connection(conn_handle);
+
+    char central_name[32] = { 0 };
+
+    connection->getPeerName(central_name, sizeof(central_name));
+
+    // Get the current connection agreed upon connection interval in units of 0.625 mS
+    connIntvl = connection->getConnectionInterval();
+    connIntvl = connIntvl * 0.625;  //convert to mS
+    //Serial.print("Connected to ");
+    //Serial.println(central_name);
+
+    //Serial.print("At connection interval ");
+    //Serial.println(connIntvl);
+
+    if (communicationMode) {
+        sendMIDI(CC, 7, 106, 72);
+        sendMIDI(CC, 7, 119, (connIntvl * 100) & 0x7F);  //Send LSB of the connection interval to Config Tool.
+        sendMIDI(CC, 7, 106, 73);
+        sendMIDI(CC, 7, 119, (connIntvl * 100) >> 7);  //Send MSB of the connection interval to Conf Tool.
+    }
+}
+
+
+
+
+
+
+
+
+//Detect BLE disconnect
+void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
+    (void)conn_handle;
+    (void)reason;
+
+    //Serial.println();
+    //Serial.print("Disconnected, reason = 0x"); Serial.println(reason, HEX);
+
+    connIntvl = 0;
+
+    if (communicationMode) {
+        sendMIDI(CC, 7, 106, 72);
+        sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
+        sendMIDI(CC, 7, 106, 73);
+        sendMIDI(CC, 7, 119, 0);  //Send 0 to Conf Tool.
     }
 }

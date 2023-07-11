@@ -3,25 +3,33 @@
 Charging:
 
 -indicate charging, fault (detect 1 Hz STAT pin for fault)
--using running average for V?
 -don't terminate within the first several minutes or when voltage is below ~1.4-1.45 V?
 -use 0 dV/dt for termination
 -after termination reset run time in EEPROM
 
 */
 
-void manageBattery() {
+void manageBattery(bool send) {
 
+    static byte chargingStatus = 0;  //0 is not charging, 1 is charging, 2 is fault
+    //digitalWrite(chargeEnable, HIGH); //enable charging (the charger IC determines if charging will actually start)
 
     battVoltage = getBattVoltage();
 
-    WARBL2settings[VOLTAGE_FOR_SENDING] = (((battVoltage + 0.005) * 100) - 50);  //convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format)
+    const float alpha = 0.2;
+    static float smoothed_voltage = battVoltage;
+    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //exponential moving average -- takes several seconds to level out after powerup
 
-    static byte cycles = 24;
-    if (cycles == 24) {
+
+    static byte cycles = 24;  //send voltage and charging status to Config Tool every 30 seconds
+    if (cycles == 24 || send) {
         cycles = 0;
         if (communicationMode) {
-            sendVoltage();  //send voltage to ConFig Tool every 30 seconds
+            sendMIDI(CC, 7, 106, 70);
+            sendMIDI(CC, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  //convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format)
+
+            sendMIDI(CC, 7, 106, 71);
+            sendMIDI(CC, 7, 119, chargingStatus);  //send charging status
         }
     }
     cycles++;
@@ -33,33 +41,22 @@ void manageBattery() {
     USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
 
 
-    if (USBstatus != BATTERY_POWER) {    //Check if we've been plugged in to power.
-        digitalWrite(powerEnable, LOW);  //Disable the boost converter if there is USB power. The device will then power down if USB is unplugged again.
-        if (battPower) {                 //if previously running on battery power
-            battPower = false;
-            recordRuntime();  //Record how long we were under battery power.
-        }
+    if (battPower && USBstatus != BATTERY_POWER) {  //Check if we've been plugged in to power.
+        digitalWrite(powerEnable, LOW);             //Disable the boost converter if there is USB power. The device will then power down if USB is unplugged again.
+        battPower = false;
+        recordRuntime();  //Record how long we were under battery power.
     }
 
 
-
-    if (nowtime - powerDownTimer > POWER_DOWN_TIME * 60000) {  //Check to see if we've been idle long enough to power down.
+    if (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000) {  //Check to see if we've been idle long enough to power down.
         powerDown();
     }
-
 
 
     if (battVoltage < 1.0) {  //shut down when the battery is low
         powerDown();
     }
 
-
-    /*
-    Serial.println(battVoltage, 3);
-    //Serial.println(",");
-    Serial.println(battTemp, 2);
-    Serial.println("");
-    */
 
     //Serial.print(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
 }
@@ -73,7 +70,7 @@ void manageBattery() {
 
 void powerDown() {
 
-    if (USBstatus == BATTERY_POWER) {
+    if (battPower) {
         recordRuntime();
         digitalWrite(redLED, HIGH);  //Indicate power down.
         delay(500);
@@ -145,19 +142,4 @@ float getBattTemp() {
     float battTempC = (1.00 / ((1.00 / 298.15) + (1.00 / 3380.00) * (log(4096 / (float)thermReading - 1.00)))) - 273.15;
 
     return battTempC;
-}
-
-
-
-
-
-
-
-
-
-//send voltage to ConFig Tool
-void sendVoltage() {
-
-    sendMIDI(CC, 7, 106, 57);
-    sendMIDI(CC, 7, 119, WARBL2settings[VOLTAGE_FOR_SENDING]);
 }

@@ -8,7 +8,6 @@
 #include "nrfx_power.h"  //for detecting VBUS
 #include <nrf_nvic.h>
 #include <Arduino.h>
-#include <Adafruit_TinyUSB.h>
 #include <MIDI.h>
 #include <bluefruit.h>
 #include <Wire.h>  //I2C communication with peripherals
@@ -36,7 +35,6 @@ ExternalEEPROM EEPROM;
 //#define RELEASE //Uncomment for release version (turns off CDC)
 #define VERSION 40            //software version number (without decimal point)
 #define HARDWARE_REVISION 41  //hardware
-#define POWER_DOWN_TIME 5     //the number of minutes of inactivity until we power down
 
 #define DEBOUNCE_TIME 0.02                          //button debounce time, in seconds---Integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
 #define SAMPLE_FREQUENCY 200                        //button sample frequency, in Hz
@@ -182,24 +180,19 @@ ExternalEEPROM EEPROM;
 //Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
 #define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb"charging brick.
-#define VOLTAGE_FOR_SENDING 2
+#define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
 
-/*
-struct MySettings : public midi::DefaultSettings {
-    static const bool UseRunningStatus = false;
+
+struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
-    static const bool HandleNullVelocityNoteOnAsNoteOff = true;
-    static const unsigned SysExMaxSize = 128;
-    static const bool UseSenderActiveSensing = false;
-    static const bool UseReceiverActiveSensing = false;
-    static const uint16_t SenderActiveSensingPeriodicity = 0;
 };
 
+
 // Create instances of the Arduino MIDI Library.
-MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
-MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
-*/
+//MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
+//MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
+
 
 // Create instances of the Arduino MIDI Library.
 MIDI_CREATE_INSTANCE(BLEMidi, blemidi, BLEMIDI);
@@ -227,12 +220,14 @@ const uint8_t LSM_CS = 12;  //CS pin for IMU
 
 //Battery variables
 byte USBstatus = 0;  //stores power/USB connection status: battery power (0), dumb charger (1), or connected USB host (2)
-
 float battVoltage;
 float battTemp;  //****no longer needed***
 float CPUtemp;
 unsigned long runTimer;  //how long WARBL has been running on battery power
 bool battPower = false;  //keeps track of when we're on battery power, for above timer
+
+//BLE
+uint16_t connIntvl = 0;  // The negotiated connection interval
 
 //Misc.
 unsigned long timerA = 0;  //for timing various intervals
@@ -259,7 +254,7 @@ byte mode = 0;         // The current mode (instrument), from 0-2.
 byte defaultMode = 0;  // The default mode, from 0-2.
 
 //WARBL2 variables that are independent of instrument
-byte WARBL2settings[] = {2, 1, 0};  //see defines above
+byte WARBL2settings[] = { 2, 1, 5 };  //see defines above
 
 //variables that can change according to instrument.
 int8_t octaveShift = 0;                       //octave transposition
@@ -537,11 +532,11 @@ bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;  //used to monitor drones on/off.
 
 //variables for communication with the WARBL Configuration Tool
-bool communicationMode = 0;      //whether we are currently communicating with the tool.
-byte buttonReceiveMode = 100;    //which row in the button configuration matrix for which we're currently receiving data.
-byte pressureReceiveMode = 100;  //which pressure variable we're currently receiving date for. From 1-12: Closed: offset, multiplier, jump, drop, jump time, drop time, Vented: offset, multiplier, jump, drop, jump time, drop time
-byte fingeringReceiveMode = 0;   // indicates the mode (instrument) for  which a fingering pattern is going to be sent
-byte WARBL2settingsReceiveMode = 0;   // indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
+bool communicationMode = 0;          //whether we are currently communicating with the tool.
+byte buttonReceiveMode = 100;        //which row in the button configuration matrix for which we're currently receiving data.
+byte pressureReceiveMode = 100;      //which pressure variable we're currently receiving date for. From 1-12: Closed: offset, multiplier, jump, drop, jump time, drop time, Vented: offset, multiplier, jump, drop, jump time, drop time
+byte fingeringReceiveMode = 0;       // indicates the mode (instrument) for  which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;  // indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
 
 
@@ -602,7 +597,7 @@ void setup() {
     MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
 
 
-    manageBattery();  //Check the battery right away
+    manageBattery(false);  //Check the battery right away
     if (USBstatus == BATTERY_POWER) {
         digitalWrite(powerEnable, HIGH);  //enable the boost converter if there's no USB power
         runTimer = millis();
@@ -626,8 +621,10 @@ void setup() {
     bledis.begin();
     BLEMIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
     BLEMIDI.turnThruOff();
-    BLEMIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
-    startAdv();                                           // Set up and start advertising
+    BLEMIDI.setHandleControlChange(handleControlChange);          // Handle received MIDI CC messages.
+    Bluefruit.Periph.setConnectCallback(connect_callback);        //Allows us to get connection information
+    Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  //Detect disconnect
+    startAdv();                                                   // Set up and start advertising
 
 
     Wire.begin();                          // Join i2c bus for EEPROM.
@@ -680,19 +677,11 @@ void setup() {
 
     //EEPROM.write(1013, 0);  //TESTING--do this after each full charge
     //EEPROM.write(1014, 0);  //TESTING--do this after each full charge
-
-    //Scheduler.startLoop(readMIDITask);
 }
 
 
 
 
-//testing to read MIDI as fast as possible -- doesn't seem to fix occasional lost received messages.
-/*
-void readMIDITask(){
-MIDI.read();
-}
-*/
 
 
 
@@ -775,9 +764,8 @@ void loop() {
 
 
 
-
     if (switches[mode][SEND_VELOCITY]) {  //if we're sending NoteOn velocity based on pressure
-        if (prevState == 1 && newState != 1) {
+        if (prevState == SILENCE && newState != SILENCE) {
             velocityDelayTimer = nowtime;  //reset the delay timer used for calculating velocity when a note is turned on after silence.
         }
         prevState = newState;
@@ -817,9 +805,12 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 20 mS. This interval was chosen to be slightly longer than the typical connection interval ToDO: optimize this if we're not using BLE or for different connection intervals
+    /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
-    if (nowtime - timerC > 20) {
+    if ((nowtime - timerC) >= (connIntvl > 0 ? (connIntvl + 2) : 9)) {
+      Serial.println(connIntvl);
+      Serial.println(nowtime - timerC);
+       Serial.println("");
         timerC = nowtime;
 
         calculateAndSendPitchbend();
@@ -850,12 +841,12 @@ void loop() {
     if ((nowtime - timerF) > 1250) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
-        manageBattery();  //Check the battery and manage charging if necessary.
+        manageBattery(false);  //Check the battery and manage charging.
     }
 
 
 
 
-
+    /////////////
     sendNote();  //Send the MIDI note (every 3 mS)
 }
