@@ -1,6 +1,6 @@
 
 /*
-    The ATmega32U4 is dedicated to reading the WARBL tone hole sensors. It reads the sensors
+    The ATmega32U4 is dedicated to  reading the WARBL tone hole sensors. It reads the sensors
      then goes to sleep. When wakened by a pin interrupt it
     sends all tone hole data by SPI and then repeats.
 

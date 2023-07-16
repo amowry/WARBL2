@@ -2,23 +2,53 @@
 
 Charging:
 
--indicate charging, fault (detect 1 Hz STAT pin for fault)
--don't terminate within the first several minutes or when voltage is below ~1.4-1.45 V?
--use 0 dV/dt for termination
--after termination reset run time in EEPROM
+-monitor STAT pin from BQ25172 (detect 1 Hz blink on STAT pin for fault)
+-when it goes high (and not fault), mark charging as on and set charging start time
+-possibly subtract charging time from coulometry calculation in case WARBL is unplugged before termination (will have to frequently update charging time in EEPROM if we do this, but be careful of EEPROM wear (maybe ~ 15 minutes)-- an EEPROM write alo takes ~5 mS)
+-terminate if smoothed voltage is ~flat (will need to tune this value)
+-don't terminate for first ~5-10 minutes, or if voltage is below ~1.4-1.45 V?
+-after we terminate charge or STAT pin goes low, mark charging as off and reset run time in EEPROM
+-use coulometry to calculate remaining battery percentage, assuming constant current consumption
+-if battery drops to 1.0 V recalculate run time on total charge for coulometry calculation.
+-indicate charging by pulsing or slowly flashing red or purple LED that times out if WARBL is playing notes (so as not to be annoying). LED should turn green when fully charged
 
 */
 
 void manageBattery(bool send) {
 
-    static byte chargingStatus = 0;  //0 is not charging, 1 is charging, 2 is fault
-    //digitalWrite(chargeEnable, HIGH); //enable charging (the charger IC determines if charging will actually start)
+    USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
+
+
+    static byte chargingStatus = 0;       //0 is not charging, 1 is charging, 2 is fault
+    static byte prevChargingStatus1 = 1;  //keep track in case it has changed
+    static byte prevChargingStatus2 = 2;  //FIFO with length of 3 for detecting a fault (blinking STAT pin)
+
+    if (digitalRead(STAT) == 0) {
+        digitalWrite(redLED, HIGH);  //charging
+        chargingStatus = 1;
+    } else {
+        digitalWrite(redLED, LOW);
+        chargingStatus = 0;
+    }
+
+    //Serial.println(chargingStatus);
+    //Serial.println(prevChargingStatus);
+    //Serial.println("");
+
+
+    if (prevChargingStatus1 != chargingStatus) {  //send the status to the Config Tool if it has changed
+        if (communicationMode) {
+            sendMIDI(CC, 7, 106, 71);
+            sendMIDI(CC, 7, 119, chargingStatus);
+        }
+        prevChargingStatus1 = chargingStatus;
+    }
 
     battVoltage = getBattVoltage();
 
     const float alpha = 0.2;
     static float smoothed_voltage = battVoltage;
-    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //exponential moving average -- takes several seconds to level out after powerup
+    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //exponential moving average -- takes several seconds to level out after powerup (smoothing might not even be necessary)
 
 
     static byte cycles = 24;  //send voltage and charging status to Config Tool every 30 seconds
@@ -34,11 +64,16 @@ void manageBattery(bool send) {
     }
     cycles++;
 
-    //battTemp = getBattTemp();
-
     //CPUtemp = readCPUTemperature();
 
-    USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
+
+    if (millis() > 2000 && (chargingStatus == 0 && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
+        digitalWrite(chargeEnable, HIGH);  //enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
+        //chargingStatus = 1;
+    } else if (chargingStatus == 1 && (WARBL2settings[CHARGE_FROM_HOST] == 0 || battPower)) {
+        digitalWrite(chargeEnable, LOW);  //disable charging
+        //chargingStatus = 0;
+    }
 
 
     if (battPower && USBstatus != BATTERY_POWER) {  //Check if we've been plugged in to power.
@@ -53,7 +88,9 @@ void manageBattery(bool send) {
     }
 
 
-    if (battVoltage < 1.0) {  //shut down when the battery is low
+    if (battPower && battVoltage <= 1.0) {  //shut down when the battery is low
+        //digitalWrite(redLED, HIGH);         //Indicate power down.
+        delay(5000);  //long red LED to indicate shutdown because of low battery
         powerDown();
     }
 
@@ -112,34 +149,11 @@ float getBattVoltage() {
     digitalWrite(battReadEnable, HIGH);  //We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     float battReading = analogRead(battRead);
     digitalWrite(battReadEnable, LOW);
-    analogReference(AR_VDD4);  //Switch back to VDD reference.
+    analogReference(AR_VDD4);  //Switch back to VDD reference for reading pressure sensor.
     analogOversampling(8);     //Change back to 8X oversampling for reading pressure sensor.
 
     //Calculate voltage. Assumes 12-bit ADC and 1.8V ref
     battReading = (battReading * 0.439453125f) / 1000;  //mV
 
     return battReading;
-}
-
-
-
-
-
-
-
-
-
-float getBattTemp() {
-
-    //Read battery temp
-    analogOversampling(256);             //Increase oversampling for precise 12-bit reading.
-    digitalWrite(battTempEnable, HIGH);  //We only direct current through the thermistor while reading to prevent self heating.
-    float thermReading = analogRead(battTempRead);
-    digitalWrite(battTempEnable, LOW);
-    analogOversampling(8);  //Change back to 8X oversampling for reading pressure sensor
-
-    //Use thermistor B parameter (3380) to calculate temp in degrees C. Assumes 12-bit ADC and VDD ref.
-    float battTempC = (1.00 / ((1.00 / 298.15) + (1.00 / 3380.00) * (log(4096 / (float)thermReading - 1.00)))) - 273.15;
-
-    return battTempC;
 }

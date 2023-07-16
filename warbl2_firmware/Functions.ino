@@ -3,22 +3,26 @@
 //debug
 void printStuff(void) {
 
-    //Serial.println(gyroY);
+    //Serial.println(accelY);
 
     for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeRead[i]);
+       // Serial.println(toneholeRead[i]);
     }
 
+    Serial.println(toneholeRead[0]);
+    //Serial.println("");
 
-
+    //Serial.println(digitalRead(STAT));
+    //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(connIntvl);
     //Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
     //Serial.println(battVoltage, 3);
     //Serial.println(pressed[1]);
-    //Serial.println(battTemp, 2);
     //Serial.println(CPUtemp, 2);
     //Serial.println(IMUtemp);
+    // Serial.println(USBstatus);
+    //Serial.println(battPower);
     //Serial.println("");
     //Serial.println("");
 
@@ -108,6 +112,7 @@ void getSensors(void) {
     tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution for now to match the old WARBL code-- we can leave this at 12 bit if needed.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
+    SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);   //SS -- wake up ATmega
     delayMicroseconds(10);  //give it time to wake up
     SPI.transfer(0);
@@ -115,6 +120,7 @@ void getSensors(void) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
     digitalWrite(2, HIGH);  //SS
+    SPI.endTransaction();
 
 
     //unpack the readings from bytes to ints
@@ -155,12 +161,12 @@ void getSensors(void) {
 
 void readIMU(void) {
 
+    //default rate for IMU is 104 Hz (this can be changed)
 
     sensors_event_t accel;
     sensors_event_t gyro;
     sensors_event_t temp;
-    lsm6dsl.getEvent(&accel, &gyro, &temp);
-    //lsm6d.getEvent(&accel, &gyro, &temp);
+    sox.getEvent(&accel, &gyro, &temp);
 
     gyroX = gyro.gyro.x;
     gyroY = gyro.gyro.y;
@@ -2244,13 +2250,10 @@ void sendSettings() {
 
     manageBattery(true);  //do this to send voltage and charging status to Config Tool
 
-    //sendMIDI(CC, 7, 106, 72);
-    //sendMIDI(CC, 7, 119, connIntvl);  //send the connection interval to the Config Tool
-
     sendMIDI(CC, 7, 106, 72);
-    sendMIDI(CC, 7, 119, connIntvl & 0x7F);  //Send low byte of the connection interval.
+    sendMIDI(CC, 7, 119, (connIntvl * 100) & 0x7F);  //Send low byte of the connection interval.
     sendMIDI(CC, 7, 106, 73);
-    sendMIDI(CC, 7, 119, connIntvl >> 7);  //Send high byte of the connection interval.
+    sendMIDI(CC, 7, 119, (connIntvl * 100) >> 7);  //Send high byte of the connection interval.
 }
 
 
@@ -2895,6 +2898,6 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
         sendMIDI(CC, 7, 106, 72);
         sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
         sendMIDI(CC, 7, 106, 73);
-        sendMIDI(CC, 7, 119, 0);  //Send 0 to Conf Tool.
+        sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
     }
 }

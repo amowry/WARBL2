@@ -1,6 +1,5 @@
 
 
-
 //Power budget goal: 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 4 mA for tone hole sensors, 2 mA for other peripherals. 10 mA total, for at least 10 hour battery life
 
 
@@ -13,11 +12,8 @@
 #include <Wire.h>  //I2C communication with peripherals
 #include <SPI.h>   //communication with ATmega32U4
 #include <SparkFun_External_EEPROM.h>
-#include <Adafruit_LSM6DS.h>  //IMU
-#include <Adafruit_LSM6DSL.h>
-#include <Adafruit_LSM6DSOX.h>
-#include <MadgwickAHRS.h>  //IMU sensor fusion
-
+#include <Adafruit_LSM6DSOX.h>  //IMU
+#include <MadgwickAHRS.h>       //IMU sensor fusion
 
 Madgwick filter;
 const float sensorRate = 104.00;
@@ -26,11 +22,13 @@ BLEDis bledis;
 BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 
-Adafruit_LSM6DSL lsm6dsl;
-//Adafruit_LSM6DSOX lsm6d;
+Adafruit_LSM6DSOX sox;  //IMU instance
 
 ExternalEEPROM EEPROM;
 
+#define SPI_MOSI MOSI
+#define SPI_MISO MISO
+#define SPI_SCK SCK
 
 //#define RELEASE //Uncomment for release version (turns off CDC)
 #define VERSION 40            //software version number (without decimal point)
@@ -200,18 +198,18 @@ MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
 
 //GPIO constants
 const uint8_t redLED = 8;
-const uint8_t greenLED = 3;  //also LED_BUILTIN
-const uint8_t blueLED = 10;
+const uint8_t greenLED = 10;  //also LED_BUILTIN
+const uint8_t blueLED = 3;
 
 const uint8_t powerEnable = 19;  //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
 
 const uint8_t chargeEnable = 7;  //Enables charging @ 120 mA current  (0.3 C, should take around 3.5 hours to charge)
 
-const uint8_t battTempEnable = 6;  //****This variable will no longer be used****
-const uint8_t battTempRead = 15;   //Thermistor ********This will become STAT pin  -- input with pullup  ***********************************
+//const uint8_t battTempEnable = 6;  //****This variable will no longer be used****
+const uint8_t STAT = 15;  //********This will become STAT pin  -- input with pullup  ***********************************
 
-const uint8_t battReadEnable = 11;  //Driving this high connects the battery to NRF for reading voltage ***this will become pin D6****
-const uint8_t battRead = 16;        //Analog pin for reading battery voltage
+const uint8_t battReadEnable = 6;  //Driving this high connects the battery to NRF for reading voltage ***this will become pin D6****
+const uint8_t battRead = 16;       //Analog pin for reading battery voltage
 
 const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
 
@@ -560,7 +558,6 @@ void setup() {
     NRF_UART0->ENABLE = 0;
 
     digitalWrite(battReadEnable, LOW);  //the default with this board is for output pins to be high, so drive them all low before setting them as outputs
-    digitalWrite(battTempEnable, LOW);
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
     digitalWrite(redLED, LOW);
@@ -568,7 +565,6 @@ void setup() {
     digitalWrite(greenLED, LOW);
 
     pinMode(battReadEnable, OUTPUT);  //set various pins as outputs
-    pinMode(battTempEnable, OUTPUT);
     pinMode(chargeEnable, OUTPUT);
     pinMode(powerEnable, OUTPUT);
     pinMode(redLED, OUTPUT);
@@ -579,9 +575,7 @@ void setup() {
     pinMode(buttons[1], INPUT_PULLUP);
     pinMode(buttons[2], INPUT_PULLUP);
 
-
-    //digitalWrite(chargeEnable, HIGH); //charge
-
+    pinMode(STAT, INPUT_PULLUP);  //STAT from charger
 
     //set up ADC
     analogOversampling(8);  //Takes 55 uS regardless of resolution.
@@ -597,25 +591,22 @@ void setup() {
     MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
 
 
-    manageBattery(false);  //Check the battery right away
-    if (USBstatus == BATTERY_POWER) {
-        digitalWrite(powerEnable, HIGH);  //enable the boost converter if there's no USB power
-        runTimer = millis();
-        battPower = true;
-    }
+    digitalWrite(powerEnable, HIGH);  //enable the boost converter at startup at least until we have time to check for USB power.
+    runTimer = millis();
+    battPower = true;
 
 
-    digitalWrite(blueLED, HIGH);  //indicate powerup
+    digitalWrite(greenLED, HIGH);  //indicate powerup
     delay(500);
-    digitalWrite(blueLED, LOW);
+    digitalWrite(greenLED, LOW);
 
 
     //BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);  //Not sure if we need to request connection interval too? Connects to iOS @ 15mS
     Bluefruit.begin();
-    Bluefruit.Periph.setConnInterval(6, 12);               // min = 6*1.25=7.5 ms, max = 12*1.25=15ms *doesn't seem to do anything...
+    Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Rewuest the lowest possible connection interval
     Bluefruit.setTxPower(8);                               // Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
-    Bluefruit.autoConnLed(false);                          // Setup the on board LED to be enabled on CONNECT
+    Bluefruit.autoConnLed(false);                          // Don't indicate connection
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service
     bledis.setModel("WARBL BLE MIDI");
     bledis.begin();
@@ -633,22 +624,17 @@ void setup() {
     EEPROM.setPageSize(64);                //In bytes.
     EEPROM.enablePollForWriteComplete();   //Supports I2C polling of write completion. This shortens the amount of time waiting between writes but hammers the I2C bus by polling every 100 uS. disablePollForWriteComplete() will add 5 mS between each write.
     EEPROM.setPageWriteTime(5);            //5 ms max write time
-    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings. Otherwise the library will overwrite the EEPROM in an attemp to detect the settings automatically.
+    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings.
 
-
-    //lsm6d.begin_SPI(LSM_CS); //begin IMU SPI
-    lsm6dsl.begin_I2C();
-    //filter.begin(sensorRate);
 
 
     //Set up SPI
     pinMode(2, OUTPUT);     //SS for Atmega
-    pinMode(12, OUTPUT);    //SS for IMU
     digitalWrite(2, HIGH);  // ensure SS stays high for now
-    digitalWrite(12, HIGH);
     SPI.begin();
-    SPI.setClockDivider(SPI_CLOCK_DIV32);  //2 MHz for NRF52840
 
+    sox.begin_SPI(LSM_CS);  //start IMU
+    //filter.begin(sensorRate);
 
     //EEPROM.write(44, 255);  //this line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -688,7 +674,6 @@ void setup() {
 
 void loop() {
 
-
     /////////// Things here happen ~ every 3 mS
 
 
@@ -696,17 +681,20 @@ void loop() {
 
     byte delayTime = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
 
+
     if (delayTime < 3) {  //If it hasn't already been more than 3 mS since the last time through the loop, we can sleep for a bit.
         delayTime = 3 - delayTime;
         delay(delayTime);
     }
+    
 
+//delay(3);
 
     getSensors();
 
     nowtime = millis();  //get the current time for the timers used below
 
-    get_state();  //get the breath state from the pressure sensor if there's been a reading.
+    get_state();  //get the breath state.
 
     MIDI.read();  // read any new USBMIDI messages
 
@@ -808,9 +796,6 @@ void loop() {
     /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
     if ((nowtime - timerC) >= (connIntvl > 0 ? (connIntvl + 2) : 9)) {
-      Serial.println(connIntvl);
-      Serial.println(nowtime - timerC);
-       Serial.println("");
         timerC = nowtime;
 
         calculateAndSendPitchbend();
