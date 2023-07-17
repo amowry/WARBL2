@@ -549,7 +549,7 @@ void setup() {
 #endif
     //dwt_enable();  //enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
-    sd_clock_hfclk_request(); //enable the high=frequency clock.
+    sd_clock_hfclk_request();  //Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
 
     NRF_POWER->DCDCEN = 1;  //ENABLE DC/DC CONVERTER, cuts power consumption.
 

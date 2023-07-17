@@ -20,11 +20,12 @@ void manageBattery(bool send) {
 
 
     static byte chargingStatus = 0;       //0 is not charging, 1 is charging, 2 is fault
-    static byte prevChargingStatus1 = 1;  //keep track in case it has changed
+    static byte prevChargingStatus1 = 1;  //Keep track in case it has changed.
     static byte prevChargingStatus2 = 2;  //FIFO with length of 3 for detecting a fault (blinking STAT pin)
+    static bool chargeEnabled = 0;        //Whether the carger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
 
-    if (digitalRead(STAT) == 0) {
-        digitalWrite(redLED, HIGH);  //charging
+    if (digitalRead(STAT) == 0) {  //charging
+        digitalWrite(redLED, HIGH);
         chargingStatus = 1;
     } else {
         digitalWrite(redLED, LOW);
@@ -36,7 +37,7 @@ void manageBattery(bool send) {
     //Serial.println("");
 
 
-    if (prevChargingStatus1 != chargingStatus) {  //send the status to the Config Tool if it has changed
+    if (prevChargingStatus1 != chargingStatus) {  //Send the status to the Config Tool if it has changed
         if (communicationMode) {
             sendMIDI(CC, 7, 106, 71);
             sendMIDI(CC, 7, 119, chargingStatus);
@@ -48,18 +49,18 @@ void manageBattery(bool send) {
 
     const float alpha = 0.2;
     static float smoothed_voltage = battVoltage;
-    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //exponential moving average -- takes several seconds to level out after powerup (smoothing might not even be necessary)
+    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average -- takes several seconds to level out after powerup (smoothing might not even be necessary)
 
 
-    static byte cycles = 24;  //send voltage and charging status to Config Tool every 30 seconds
+    static byte cycles = 24;  //Send voltage and charging status to Config Tool every 30 seconds.
     if (cycles == 24 || send) {
         cycles = 0;
         if (communicationMode) {
             sendMIDI(CC, 7, 106, 70);
-            sendMIDI(CC, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  //convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format)
+            sendMIDI(CC, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  //Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format)
 
             sendMIDI(CC, 7, 106, 71);
-            sendMIDI(CC, 7, 119, chargingStatus);  //send charging status
+            sendMIDI(CC, 7, 119, chargingStatus);  //Send charging status
         }
     }
     cycles++;
@@ -67,10 +68,12 @@ void manageBattery(bool send) {
     //CPUtemp = readCPUTemperature();
 
 
-    if (millis() > 2000 && (chargingStatus == 0 && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
-        //digitalWrite(chargeEnable, HIGH);  //enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
-    } else if (chargingStatus == 1 && (WARBL2settings[CHARGE_FROM_HOST] == 0 || battPower)) {
-        digitalWrite(chargeEnable, LOW);  //disable charging
+    if (millis() > 2000 && (chargeEnabled == 0 && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
+        digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
+        chargeEnabled = 1;
+    } else if (chargeEnabled == 1 && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
+        digitalWrite(chargeEnable, LOW);                                                                                     //Disable charging.
+        chargeEnabled = 0;
     }
 
 
@@ -85,13 +88,13 @@ void manageBattery(bool send) {
         powerDown();
     }
 
-/*
-    if (battPower && battVoltage <= 1.0) {  //shut down when the battery is low
-        //digitalWrite(redLED, HIGH);         //Indicate power down.
-        delay(5000);  //long red LED to indicate shutdown because of low battery
+
+    if (battPower && battVoltage <= 1.0) {  //Shut down when the battery is low.
+        digitalWrite(redLED, HIGH);         //Indicate power down.
+        delay(5000);                        //Long red LED to indicate shutdown because of low battery
         powerDown();
     }
-*/
+
 
     //Serial.print(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
 }
