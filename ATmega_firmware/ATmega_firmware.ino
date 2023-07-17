@@ -100,7 +100,6 @@ void loop() {
     while (digitalRead(SS) == LOW) {}  //make sure the transfer is done before proceeding
 
     readSensors();
-
 }
 
 
@@ -119,7 +118,7 @@ EMPTY_INTERRUPT(ADC_vect);  //we're not using the ADC complete interrupt
 
 
 
-//830 uS to read all sensors and prepare the data. The total time that IR LEDs are on is 800 uS, so power consumed by sensors is: 16 mA * (800 uS/3000 uS * 16mA/LED) == 4.25 mA when polled every 3 mS.
+//830 uS to read all sensors and prepare the data. The total time that IR LEDs are on is 800 uS, so power consumed by sensors is: 800 uS/3000 uS * 13mA/LED == 3.5 mA when polled every 3 mS.
 void readSensors(void) {
 
 
@@ -206,7 +205,6 @@ void readSensors(void) {
 
 
     interrupts();
-
 }
 
 
@@ -217,7 +215,7 @@ void ADC_init(void) {
 
     ADCSRA &= ~(bit(ADPS0) | bit(ADPS1) | bit(ADPS2));  // clear ADC prescaler bits
     ADCSRA = (1 << ADEN) | ((1 << ADPS2));              // enable ADC Division Factor 16 (36 uS)
-    ADMUX = (1 << REFS0);  //Voltage reference from Avcc (3.0v)
+    ADMUX = (1 << REFS0);                               //Voltage reference from Avcc (3.0v)
 }
 
 
