@@ -187,14 +187,14 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
 };
 
 
-// Create instances of the Arduino MIDI Library.
-//MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
-//MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
+// Create instances of the Arduino MIDI Library. ***AS OF 7/17/23, this requires the latest version of the MIDI library from GitHub, rather than the release version. Otherwise just use the instances below.
+MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
+MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 
 // Create instances of the Arduino MIDI Library.
-MIDI_CREATE_INSTANCE(BLEMidi, blemidi, BLEMIDI);
-MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
+//MIDI_CREATE_INSTANCE(BLEMidi, blemidi, BLEMIDI);
+//MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
 
 //GPIO constants
 const uint8_t redLED = 8;
@@ -205,10 +205,9 @@ const uint8_t powerEnable = 19;  //Driving this high enables the boost converter
 
 const uint8_t chargeEnable = 7;  //Enables charging @ 120 mA current  (0.3 C, should take around 3.5 hours to charge)
 
-//const uint8_t battTempEnable = 6;  //****This variable will no longer be used****
-const uint8_t STAT = 15;  //********This will become STAT pin  -- input with pullup  ***********************************
+const uint8_t STAT = 15;  //STAT pin  -- input with pullup
 
-const uint8_t battReadEnable = 6;  //Driving this high connects the battery to NRF for reading voltage ***this will become pin D6****
+const uint8_t battReadEnable = 6;  //Driving this high connects the battery to NRF for reading voltage
 const uint8_t battRead = 16;       //Analog pin for reading battery voltage
 
 const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
@@ -550,6 +549,8 @@ void setup() {
 #endif
     //dwt_enable();  //enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
+    sd_clock_hfclk_request(); //enable the high=frequency clock.
+
     NRF_POWER->DCDCEN = 1;  //ENABLE DC/DC CONVERTER, cuts power consumption.
 
     //disable UART-- saves ~0.1 mA average
@@ -663,6 +664,8 @@ void setup() {
 
     //EEPROM.write(1013, 0);  //TESTING--do this after each full charge
     //EEPROM.write(1014, 0);  //TESTING--do this after each full charge
+
+    //digitalWrite(chargeEnable, HIGH);
 }
 
 
@@ -686,9 +689,7 @@ void loop() {
         delayTime = 3 - delayTime;
         delay(delayTime);
     }
-    
 
-//delay(3);
 
     getSensors();
 

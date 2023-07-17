@@ -4,9 +4,9 @@
      then goes to sleep. When wakened by a pin interrupt it
     sends all tone hole data by SPI and then repeats.
 
-    Copyright (C) 2018-2023 Andrew Mowry warbl.xyz
+    Copyright (C) 2023 Andrew Mowry warbl.xyz
 
-    This program is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modif
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -36,7 +36,6 @@ const volatile GPIO_pin_t pins[] = { DP7, DP13, DP5, DP11, DP0, DP1, DP23, DP21,
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                       //storage for tonehole sensor readings
 int tempToneholeReadA[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                  //temporary storage for ambient light tonehole sensor readings, written during the timer ISR
 volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //   we pack the 9 10-bit tonehole readings into 12 bytes to send via I2C to NRF52840
-//bool dataReady = 1;
 
 
 
@@ -85,26 +84,23 @@ void loop() {
 
     //sleep after getting and preparing the readings.
 
-    //if (dataReady) {
 
-        set_sleep_mode(SLEEP_MODE_STANDBY);
-        cli();                //turn off interrupts
-        power_adc_disable();  //turn off the ADC to save a little more power
-        sleep_enable();
-        sei();  //turn on interrupts immediately before sleeping
-        sleep_cpu();
+    set_sleep_mode(SLEEP_MODE_STANDBY);
+    cli();                //turn off interrupts
+    power_adc_disable();  //turn off the ADC to save a little more power
+    sleep_enable();
+    sei();  //turn on interrupts immediately before sleeping
+    sleep_cpu();
 
-        //sleeping__________________________________
+    //sleeping__________________________________
 
-        sleep_disable();  //disable sleep after waking
-        power_adc_enable();
+    sleep_disable();  //disable sleep after waking
+    power_adc_enable();
 
-        while (digitalRead(SS) == LOW) {}  //make sure the transfer is done before proceeding
+    while (digitalRead(SS) == LOW) {}  //make sure the transfer is done before proceeding
 
-        //dataReady = false;
+    readSensors();
 
-        readSensors();
-   // }
 }
 
 
@@ -211,7 +207,6 @@ void readSensors(void) {
 
     interrupts();
 
-    //dataReady = true;
 }
 
 
@@ -222,7 +217,6 @@ void ADC_init(void) {
 
     ADCSRA &= ~(bit(ADPS0) | bit(ADPS1) | bit(ADPS2));  // clear ADC prescaler bits
     ADCSRA = (1 << ADEN) | ((1 << ADPS2));              // enable ADC Division Factor 16 (36 uS)
-    //ADCSRA = (1 << ADEN) | ((1 << ADPS2) | (1 << ADPS0));  // enable ADC Division Factor 32 (60 us)
     ADMUX = (1 << REFS0);  //Voltage reference from Avcc (3.0v)
 }
 

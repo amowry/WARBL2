@@ -3,14 +3,14 @@
 //debug
 void printStuff(void) {
 
-    //Serial.println(accelY);
+    Serial.println(accelY);
 
     for (byte i = 0; i < 9; i++) {
-       // Serial.println(toneholeRead[i]);
+        // Serial.println(toneholeRead[i]);
     }
 
     Serial.println(toneholeRead[0]);
-    //Serial.println("");
+    Serial.println("");
 
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
@@ -109,13 +109,13 @@ void checkButtons() {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution for now to match the old WARBL code-- we can leave this at 12 bit if needed.
+    tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution to 10 bit for now to match the old WARBL code-- we can also use 12 bit if needed.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);   //SS -- wake up ATmega
     delayMicroseconds(10);  //give it time to wake up
-    SPI.transfer(0);
+    SPI.transfer(0);        //we don't receive anything useful back from the first transfer
     for (byte i = 0; i < 12; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
@@ -161,7 +161,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //default rate for IMU is 104 Hz (this can be changed)
+    //default rate for IMU is 104 Hz (this can be changed -- see library)
 
     sensors_event_t accel;
     sensors_event_t gyro;

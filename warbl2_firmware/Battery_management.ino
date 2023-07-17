@@ -68,11 +68,9 @@ void manageBattery(bool send) {
 
 
     if (millis() > 2000 && (chargingStatus == 0 && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
-        digitalWrite(chargeEnable, HIGH);  //enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
-        //chargingStatus = 1;
+        //digitalWrite(chargeEnable, HIGH);  //enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
     } else if (chargingStatus == 1 && (WARBL2settings[CHARGE_FROM_HOST] == 0 || battPower)) {
         digitalWrite(chargeEnable, LOW);  //disable charging
-        //chargingStatus = 0;
     }
 
 
@@ -87,13 +85,13 @@ void manageBattery(bool send) {
         powerDown();
     }
 
-
+/*
     if (battPower && battVoltage <= 1.0) {  //shut down when the battery is low
         //digitalWrite(redLED, HIGH);         //Indicate power down.
         delay(5000);  //long red LED to indicate shutdown because of low battery
         powerDown();
     }
-
+*/
 
     //Serial.print(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
 }
