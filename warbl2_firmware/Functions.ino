@@ -3,21 +3,20 @@
 //debug
 void printStuff(void) {
 
-    Serial.println(accelY);
+    //Serial.println(accelY);
 
     for (byte i = 0; i < 9; i++) {
         // Serial.println(toneholeRead[i]);
     }
 
-    Serial.println(toneholeRead[0]);
-    Serial.println("");
+    //Serial.println(toneholeRead[0]);
+    //Serial.println("");
 
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(connIntvl);
     //Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
-    //Serial.println(battVoltage, 3);
     //Serial.println(pressed[1]);
     //Serial.println(CPUtemp, 2);
     //Serial.println(IMUtemp);

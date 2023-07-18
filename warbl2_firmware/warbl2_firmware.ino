@@ -216,10 +216,6 @@ const uint8_t LSM_CS = 12;  //CS pin for IMU
 
 
 //Battery variables
-byte USBstatus = 0;  //stores power/USB connection status: battery power (0), dumb charger (1), or connected USB host (2)
-float battVoltage;
-float battTemp;  //****no longer needed***
-float CPUtemp;
 unsigned long runTimer;  //how long WARBL has been running on battery power
 bool battPower = false;  //keeps track of when we're on battery power, for above timer
 
@@ -475,8 +471,6 @@ volatile int tempNewNote = 0;
 byte prevNote;
 byte newNote = -1;             //the next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;              //the actual MIDI note being played, which we remember so we can turn it off again.
-volatile bool firstTime = 1;   // we have the LEDs off ~50% of the time. This bool keeps track of whether each LED is off or on at the end of each timer cycle
-volatile byte timerCycle = 0;  //the number of times we've entered the timer ISR with the new sensors.
 byte transientFilter = 0;      // small delay for filtering out transient notes
 
 
