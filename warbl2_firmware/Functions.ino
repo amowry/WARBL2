@@ -4,12 +4,20 @@
 void printStuff(void) {
 
     //Serial.println(accelY);
+    //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
         // Serial.println(toneholeRead[i]);
     }
 
     //Serial.println(toneholeRead[0]);
+    //Serial.println("");
+
+    //EEPROM.get(1015, testRead);
+
+    //Serial.println(gyroX, 3);
+    //Serial.println(gyroY, 3);
+    //Serial.println(gyroZ, 3);
     //Serial.println("");
 
     //Serial.println(digitalRead(STAT));
@@ -32,73 +40,6 @@ void printStuff(void) {
 }
 
 
-
-
-
-//Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
-void checkButtons() {
-
-
-    for (byte j = 0; j < 3; j++) {
-
-
-        if (digitalRead(buttons[j]) == 0) {  //if the button reads low, reduce the integrator by 1
-            if (integrator[j] > 0) {
-                integrator[j]--;
-            }
-        } else if (integrator[j] < MAXIMUM) {  //if the button reads high, increase the integrator by 1
-            integrator[j]++;
-        }
-
-
-        if (integrator[j] == 0) {  //the button is pressed.
-            pressed[j] = 1;        //we make the output the inverse of the input so that a pressed button reads as a "1".
-            buttonUsed = 1;        //flag that there's been button activity, so we know to handle it.
-
-            if (prevOutput[j] == 0 && !longPressUsed[j]) {
-                justPressed[j] = 1;  //the button has just been pressed
-            }
-
-            else {
-                justPressed[j] = 0;
-            }
-
-            if (prevOutput[j] == 1) {  //increase a counter so we know when a button has been held for a long press
-                longPressCounter[j]++;
-            }
-        }
-
-
-
-        else if (integrator[j] >= MAXIMUM) {  //the button is not pressed
-            pressed[j] = 0;
-            integrator[j] = MAXIMUM;  // defensive code if integrator got corrupted
-
-            if (prevOutput[j] == 1 && !longPressUsed[j]) {
-                released[j] = 1;  //the button has just been released
-                buttonUsed = 1;
-            }
-
-            longPress[j] = 0;
-            longPressUsed[j] = 0;  //if a button is not pressed, reset the flag that tells us it's been used for a long press.
-            longPressCounter[j] = 0;
-        }
-
-
-
-        if (longPressCounter[j] > 300 && !longPressUsed[j]) {  //if the counter gets to a certain level, it's a long press
-            longPress[j] = 1;
-        }
-
-
-        prevOutput[j] = pressed[j];  //keep track of state for next time around.
-    }
-
-    if (nowtime < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
-        pressed[2] = 0;
-        released[2] = 0;
-    }
-}
 
 
 
@@ -175,10 +116,10 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
-    //calibrate  -- ToDo: add routine for this (and accel?)
-    gyroX -= 0.0122F;
-    gyroY -= -0.0476F;
-    gyroZ -= 0.0012F;
+    //calibrate
+    gyroX -= gyroXCalibration;
+    gyroY -= gyroYCalibration;
+    gyroZ -= gyroZCalibration;
 
     //static float accelFilteredOld;
 
@@ -222,8 +163,87 @@ void readIMU(void) {
 
 
 
-//Calibate the IMU when the command is received from the Config Tool
+//Calibrate the IMU when the command is received from the Config Tool. ToDo: Add accel if necessary??
 void calibrateIMU() {
+
+    gyroXCalibration = gyroX;  //Take reading and cast double to float (should be plenty of significant figures??).
+    gyroYCalibration = gyroY;
+    gyroZCalibration = gyroZ;
+
+    EEPROM.put(1015, gyroXCalibration);  //Put the current readings into EEPROM.
+    EEPROM.put(1019, gyroYCalibration);
+    EEPROM.put(1023, gyroZCalibration);
+}
+
+
+
+
+
+
+
+//Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
+void checkButtons() {
+
+
+    for (byte j = 0; j < 3; j++) {
+
+
+        if (digitalRead(buttons[j]) == 0) {  //if the button reads low, reduce the integrator by 1
+            if (integrator[j] > 0) {
+                integrator[j]--;
+            }
+        } else if (integrator[j] < MAXIMUM) {  //if the button reads high, increase the integrator by 1
+            integrator[j]++;
+        }
+
+
+        if (integrator[j] == 0) {  //the button is pressed.
+            pressed[j] = 1;        //we make the output the inverse of the input so that a pressed button reads as a "1".
+            buttonUsed = 1;        //flag that there's been button activity, so we know to handle it.
+
+            if (prevOutput[j] == 0 && !longPressUsed[j]) {
+                justPressed[j] = 1;  //the button has just been pressed
+            }
+
+            else {
+                justPressed[j] = 0;
+            }
+
+            if (prevOutput[j] == 1) {  //increase a counter so we know when a button has been held for a long press
+                longPressCounter[j]++;
+            }
+        }
+
+
+
+        else if (integrator[j] >= MAXIMUM) {  //the button is not pressed
+            pressed[j] = 0;
+            integrator[j] = MAXIMUM;  // defensive code if integrator got corrupted
+
+            if (prevOutput[j] == 1 && !longPressUsed[j]) {
+                released[j] = 1;  //the button has just been released
+                buttonUsed = 1;
+            }
+
+            longPress[j] = 0;
+            longPressUsed[j] = 0;  //if a button is not pressed, reset the flag that tells us it's been used for a long press.
+            longPressCounter[j] = 0;
+        }
+
+
+
+        if (longPressCounter[j] > 300 && !longPressUsed[j]) {  //if the counter gets to a certain level, it's a long press
+            longPress[j] = 1;
+        }
+
+
+        prevOutput[j] = pressed[j];  //keep track of state for next time around.
+    }
+
+    if (nowtime < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
+        pressed[2] = 0;
+        released[2] = 0;
+    }
 }
 
 
@@ -2119,8 +2139,8 @@ void saveFactorySettings() {
     EEPROM.write(1009, highByte(fullRunTime));  //The initial estimate of the total run time available on a full charge (minutes)
     EEPROM.write(1010, lowByte(fullRunTime));
 
-    EEPROM.write(1013, highByte(180));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
-    EEPROM.write(1014, lowByte(180));
+    EEPROM.write(1013, highByte(prevRunTime));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
+    EEPROM.write(1014, lowByte(prevRunTime));
 
     EEPROM.write(44, 3);  //indicates settings have been saved
 
@@ -2155,6 +2175,56 @@ void restoreFactorySettings() {
     sendSettings();         //Send the new settings.
 }
 
+
+
+
+
+
+
+
+//save settings for current instrument as defaults for given instrument (i)
+void saveSettings(byte i) {
+
+    EEPROM.write(40 + i, modeSelector[mode]);
+    EEPROM.write(53 + i, noteShiftSelector[mode]);
+    EEPROM.write(50 + i, senseDistanceSelector[mode]);
+
+    for (byte n = 0; n < kSWITCHESnVariables; n++) {
+        EEPROM.write((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
+    }
+
+    EEPROM.write(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
+    EEPROM.write(334 + (i * 2), highByte(vibratoHolesSelector[mode]));
+    EEPROM.write(339 + (i * 2), lowByte(vibratoDepthSelector[mode]));
+    EEPROM.write(340 + (i * 2), highByte(vibratoDepthSelector[mode]));
+    EEPROM.write(345 + i, useLearnedPressureSelector[mode]);
+
+    for (byte j = 0; j < 5; j++) {  //save button configuration for current mode
+        for (byte k = 0; k < 8; k++) {
+            EEPROM.write(100 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
+        }
+    }
+
+    for (byte h = 0; h < 3; h++) {
+        EEPROM.write(250 + (i * 3) + h, momentary[mode][h]);
+    }
+
+    for (byte q = 0; q < 12; q++) {
+        EEPROM.write((260 + q + (i * 20)), pressureSelector[mode][q]);
+    }
+
+    EEPROM.write(273 + (i * 2), lowByte(learnedPressureSelector[mode]));
+    EEPROM.write(274 + (i * 2), highByte(learnedPressureSelector[mode]));
+
+    EEPROM.write(313 + i, pitchBendModeSelector[mode]);
+    EEPROM.write(316 + i, breathModeSelector[mode]);
+    EEPROM.write(319 + i, midiBendRangeSelector[mode]);
+    EEPROM.write(322 + i, midiChannelSelector[mode]);
+
+    for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
+        EEPROM.write((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
+    }
+}
 
 
 
@@ -2269,55 +2339,6 @@ void sendSettings() {
 
 
 
-//save settings for current instrument as defaults for given instrument (i)
-void saveSettings(byte i) {
-
-    EEPROM.write(40 + i, modeSelector[mode]);
-    EEPROM.write(53 + i, noteShiftSelector[mode]);
-    EEPROM.write(50 + i, senseDistanceSelector[mode]);
-
-    for (byte n = 0; n < kSWITCHESnVariables; n++) {
-        EEPROM.write((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
-    }
-
-    EEPROM.write(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
-    EEPROM.write(334 + (i * 2), highByte(vibratoHolesSelector[mode]));
-    EEPROM.write(339 + (i * 2), lowByte(vibratoDepthSelector[mode]));
-    EEPROM.write(340 + (i * 2), highByte(vibratoDepthSelector[mode]));
-    EEPROM.write(345 + i, useLearnedPressureSelector[mode]);
-
-    for (byte j = 0; j < 5; j++) {  //save button configuration for current mode
-        for (byte k = 0; k < 8; k++) {
-            EEPROM.write(100 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
-        }
-    }
-
-    for (byte h = 0; h < 3; h++) {
-        EEPROM.write(250 + (i * 3) + h, momentary[mode][h]);
-    }
-
-    for (byte q = 0; q < 12; q++) {
-        EEPROM.write((260 + q + (i * 20)), pressureSelector[mode][q]);
-    }
-
-    EEPROM.write(273 + (i * 2), lowByte(learnedPressureSelector[mode]));
-    EEPROM.write(274 + (i * 2), highByte(learnedPressureSelector[mode]));
-
-    EEPROM.write(313 + i, pitchBendModeSelector[mode]);
-    EEPROM.write(316 + i, breathModeSelector[mode]);
-    EEPROM.write(319 + i, midiBendRangeSelector[mode]);
-    EEPROM.write(322 + i, midiChannelSelector[mode]);
-
-    for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-        EEPROM.write((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
-    }
-}
-
-
-
-
-
-
 
 //load saved fingering patterns
 void loadFingering() {
@@ -2355,10 +2376,16 @@ void loadSettingsForAllModes() {
         WARBL2settings[r] = EEPROM.read(600 + r);
     }
 
-    fullRunTime = (word(EEPROM.read(1009), EEPROM.read(1010))); //The total run time available on a full charge (minutes)
-    prevRunTime = (word(EEPROM.read(1013), EEPROM.read(1014))); //The previously stored total run time since the last full charge (minutes)
+    fullRunTime = (word(EEPROM.read(1009), EEPROM.read(1010)));  //The total run time available on a full charge (minutes)
+    prevRunTime = (word(EEPROM.read(1013), EEPROM.read(1014)));  //The total run time since the last full charge (minutes)
 
-    for (byte i = 0; i < 3; i++) {  //Do this for each mode.
+    EEPROM.get(1015, gyroXCalibration);
+    EEPROM.get(1019, gyroYCalibration);
+    EEPROM.get(1023, gyroZCalibration);
+
+
+    //Do all this for each mode.
+    for (byte i = 0; i < 3; i++) {
         senseDistanceSelector[i] = EEPROM.read(50 + i);
 
         for (byte n = 0; n < kSWITCHESnVariables; n++) {

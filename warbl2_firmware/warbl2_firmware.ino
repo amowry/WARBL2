@@ -1,6 +1,6 @@
 
 
-//Power budget goal: 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 4 mA for tone hole sensors, 2 mA for other peripherals. 10 mA total, for at least 10 hour battery life
+//Approximate power budget: 2.0 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.5 mA total, for at least 12 hour battery life
 
 
 
@@ -13,10 +13,11 @@
 #include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
-#include <MadgwickAHRS.h>       //IMU sensor fusion
 
-Madgwick filter;
-const float sensorRate = 104.00;
+//#include <MadgwickAHRS.h>       //IMU sensor fusion testing
+
+//Madgwick filter;
+//const float sensorRate = 104.00;
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -26,9 +27,6 @@ Adafruit_LSM6DSOX sox;  //IMU instance
 
 ExternalEEPROM EEPROM;
 
-#define SPI_MOSI MOSI
-#define SPI_MISO MISO
-#define SPI_SCK SCK
 
 //#define RELEASE //Uncomment for release version (turns off CDC)
 
@@ -203,7 +201,7 @@ const uint8_t greenLED = 10;  //also LED_BUILTIN
 const uint8_t blueLED = 3;
 
 const uint8_t powerEnable = 19;    //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
-const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (0.3 C, should take around 3.5 hours to charge)
+const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (~0.33 C, should take around 3 hours to charge)
 const uint8_t STAT = 15;           //STAT pin  -- input with pullup
 const uint8_t battReadEnable = 6;  //Driving this high connects the battery to NRF for reading voltage
 const uint8_t battRead = 16;       //Analog pin for reading battery voltage
@@ -214,11 +212,10 @@ const uint8_t LSM_CS = 12;  //CS pin for IMU
 
 
 //Battery variables
-unsigned long runTimer;     //How long WARBL has been running on battery power
-unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate and then adjusted each time the battery runs low.
-unsigned long prevRunTime;  //The stored run time (minutes) since the last full charge
-bool battPower = false;     //Keeps track of when we're on battery power, for above timer
-
+unsigned long runTimer;           //The time when WARBL started running on battery power
+bool battPower = false;           //Keeps track of when we're on battery power, for above timer
+unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate and then adjusted each time the battery is discharged.
+unsigned long prevRunTime = 360;  //The total run time since the last full charge (minutes). Initialized at around half full. It is zeroed after each full charge.
 
 
 //BLE
@@ -243,6 +240,10 @@ double accelX;
 double accelY;
 double accelZ;
 float IMUtemp;
+float gyroXCalibration;
+float gyroYCalibration;
+float gyroZCalibration;
+
 
 //instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -543,7 +544,7 @@ void setup() {
 #if defined(RELEASE)
     Serial.end();  //Turn off CDC. Necessary for release to make a class-compliant device
 #endif
-    //dwt_enable();  //enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
+    //dwt_enable();  //Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
     sd_clock_hfclk_request();  //Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
 
@@ -554,21 +555,21 @@ void setup() {
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
-    digitalWrite(battReadEnable, LOW);  //the default with this board is for output pins to be high, so drive them all low before setting them as outputs
+    digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
     digitalWrite(redLED, LOW);
     digitalWrite(blueLED, LOW);
     digitalWrite(greenLED, LOW);
 
-    pinMode(battReadEnable, OUTPUT);  //set various pins as outputs
+    pinMode(battReadEnable, OUTPUT);  //Set various pins as outputs.
     pinMode(chargeEnable, OUTPUT);
     pinMode(powerEnable, OUTPUT);
     pinMode(redLED, OUTPUT);
     pinMode(greenLED, OUTPUT);
     pinMode(blueLED, OUTPUT);
 
-    pinMode(buttons[0], INPUT_PULLUP);  //set buttons as inputs and enable internal pullup
+    pinMode(buttons[0], INPUT_PULLUP);  //Set buttons as inputs and enable internal pullup.
     pinMode(buttons[1], INPUT_PULLUP);
     pinMode(buttons[2], INPUT_PULLUP);
 
@@ -577,45 +578,45 @@ void setup() {
     //set up ADC
     analogOversampling(8);  //Takes 55 uS regardless of resolution.
     //analogOversampling(16); //88 uS
-    analogReference(AR_VDD4);  //use VDD for analog reference
-    analogReadResolution(12);  // 12 bit
+    analogReference(AR_VDD4);  //Use VDD for analog reference.
+    analogReadResolution(12);  //12 bit
 
 
     //USB MIDI stuff
-    usb_midi.setStringDescriptor("WARBL USB MIDI");  // Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin()
+    usb_midi.setStringDescriptor("WARBL USB MIDI");  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin()
     MIDI.begin(MIDI_CHANNEL_OMNI);
     MIDI.turnThruOff();
-    MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
+    MIDI.setHandleControlChange(handleControlChange);  //Handle received MIDI CC messages.
 
 
-    digitalWrite(powerEnable, HIGH);  //enable the boost converter at startup at least until we have time to check for USB power.
+    digitalWrite(powerEnable, HIGH);  //Enable the boost converter at startup at least until we have time to check for USB power.
     runTimer = millis();
     battPower = true;
 
 
-    digitalWrite(greenLED, HIGH);  //indicate powerup
+    digitalWrite(greenLED, HIGH);  //Indicate powerup.
     delay(500);
     digitalWrite(greenLED, LOW);
 
 
     //BLE MIDI stuff:
-    Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);  //Not sure if we need to request connection interval too? Connects to iOS @ 15mS
+    Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
     Bluefruit.begin();
-    Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Rewuest the lowest possible connection interval
-    Bluefruit.setTxPower(8);                               // Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
-    Bluefruit.autoConnLed(false);                          // Don't indicate connection
-    bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service
+    Bluefruit.Periph.setConnIntervalMS(7.5, 15);           //Request the lowest possible connection interval.
+    Bluefruit.setTxPower(8);                               //Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
+    Bluefruit.autoConnLed(false);                          //Don't indicate connection.
+    bledis.setManufacturer("Mowry Stringed Instruments");  //Configure and Start Device Information Service.
     bledis.setModel("WARBL BLE MIDI");
     bledis.begin();
-    BLEMIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
+    BLEMIDI.begin(MIDI_CHANNEL_OMNI);  //Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
     BLEMIDI.turnThruOff();
-    BLEMIDI.setHandleControlChange(handleControlChange);          // Handle received MIDI CC messages.
+    BLEMIDI.setHandleControlChange(handleControlChange);          //Handle received MIDI CC messages.
     Bluefruit.Periph.setConnectCallback(connect_callback);        //Allows us to get connection information
-    Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  //Detect disconnect
-    startAdv();                                                   // Set up and start advertising
+    Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  //Detect disconnect.
+    startAdv();                                                   //Set up and start advertising.
 
 
-    Wire.begin();                          // Join i2c bus for EEPROM.
+    Wire.begin();                          //Join i2c bus for EEPROM.
     Wire.setClock(400000);                 //high speed
     EEPROM.setMemorySize(128 * 1024 / 8);  //In bytes. 128kbit = 16kbyte
     EEPROM.setPageSize(64);                //In bytes.
@@ -627,16 +628,16 @@ void setup() {
 
     //Set up SPI
     pinMode(2, OUTPUT);     //SS for Atmega
-    digitalWrite(2, HIGH);  // ensure SS stays high for now
+    digitalWrite(2, HIGH);  //Ensure SS stays high for now.
     SPI.begin();
 
-    sox.begin_SPI(LSM_CS);  //start IMU
+    sox.begin_SPI(LSM_CS);  //Start IMU
     //filter.begin(sensorRate);
 
-    //EEPROM.write(44, 255);  //this line can be uncommented to make a version of the software that will resave factory settings every time it is run.
+    //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
     if (EEPROM.read(44) != 3) {
-        //EEPROM.write(1011, VERSION);  //update the stored software version
+        //EEPROM.write(1011, VERSION);  //Update the stored software version.
         saveFactorySettings();  //If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
     }
 
@@ -644,22 +645,24 @@ void setup() {
         loadCalibration();  //If there has been a calibration saved, reload it at startup.
     }
 
+    //EEPROM.write(1013, 0);  //TESTING--do this after each full charge
+    //EEPROM.write(1014, 0);  //TESTING--do this after each full charge
+
 
     loadFingering();
     loadSettingsForAllModes();
-    mode = defaultMode;  //set the startup instrument
+    mode = defaultMode;  //Set the startup instrument.
 
-    analogRead(A0);  // the first analog readings are sometimes nonsense, so we read a few times and throw them away.
+    analogRead(A0);  //The first analog readings are sometimes nonsense, so we read a few times and throw them away.
     analogRead(A0);
     sensorCalibration = analogRead(A0) >> 2;
-    sensorValue = sensorCalibration;  //an initial reading
+    sensorValue = sensorCalibration;  //An initial reading
 
-    loadPrefs();  //load the correct user settings based on current instrument.
+    loadPrefs();  //Load the correct user settings based on current instrument.
 
-    powerDownTimer = millis();  //reset the powerDown timer
+    powerDownTimer = millis();  //Reset the powerDown timer.
 
-    //EEPROM.write(1013, 0);  //TESTING--do this after each full charge
-    //EEPROM.write(1014, 0);  //TESTING--do this after each full charge
+
 
     //digitalWrite(chargeEnable, HIGH);
 }
