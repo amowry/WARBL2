@@ -176,7 +176,7 @@ ExternalEEPROM EEPROM;
 
 //Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
-#define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb"charging brick.
+#define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
 
@@ -661,10 +661,6 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
-
-
-
-    //digitalWrite(chargeEnable, HIGH);
 }
 
 

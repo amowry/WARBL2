@@ -20,7 +20,7 @@ void manageBattery(bool send) {
 
     static byte chargingStatus = 0;      //0 is not charging, 1 is charging, 2 is fault
     static byte prevChargingStatus = 1;  //Keep track in case it has changed.
-    static bool chargeEnabled = 0;       //Whether the carger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
+    static bool chargeEnabled = 0;       //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
     static float voltageQueue[21];       //Holds readings for finding the slope of the voltage curve while charging.
     static float voltageSlope;           //Change in smoothed voltage over the previous 10 minutes
     static long chargeStartTime = 0;     //When we started charging
@@ -32,8 +32,8 @@ void manageBattery(bool send) {
 
 
     //Monitor STAT pin to tell if we're charging
-    if (digitalRead(STAT) == 0) {  //charging
-        digitalWrite(redLED, HIGH);
+    if (digitalRead(STAT) == 0) {    //charging
+        digitalWrite(redLED, HIGH);  //ToDo: improve indication
         chargingStatus = 1;
     } else {  //Not charging
         digitalWrite(redLED, LOW);
@@ -64,7 +64,7 @@ void manageBattery(bool send) {
 
     //Read the battery
     float battVoltage = getBattVoltage();
-    const float alpha = 0.2;
+    const float alpha = 0.2;  //Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
     smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average -- takes several seconds to level out after powerup.
 
@@ -72,7 +72,7 @@ void manageBattery(bool send) {
 
     //Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
 
-    //If we're charging, every 10 minutes subtract the estimated added run time from the stored run time on the current charge.
+    //If we're charging, every 10 minutes subtract the estimated added run time due to charging from the stored run time on the current charge.
     if (chargingStatus == 1 && (nowtime - chargeStartTime) > 600000) {
         prevRunTime = prevRunTime - (((nowtime - chargeStartTime) / 60000) * (fullRunTime / 0.0055));
         chargeStartTime = nowtime;
