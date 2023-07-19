@@ -1926,7 +1926,7 @@ void performAction(byte action) {
 
 
         case 22:
-            powerDown();
+            powerDown(false);
             break;
 
 
@@ -2102,7 +2102,7 @@ byte findleftmostunsetbit(uint16_t n) {
 
 
 
-//This is used the first time the software is run, to copy all the default settings to EEPROM, and is also used to restore factory settings.
+//This is used the first time the software is run, to copy all the default settings to EEPROM.
 void saveFactorySettings() {
 
     for (byte i = 0; i < 3; i++) {  //save all the current settings for all three instruments.
@@ -2115,6 +2115,12 @@ void saveFactorySettings() {
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
         EEPROM.write(600 + r, WARBL2settings[r]);
     }
+
+    EEPROM.write(1009, highByte(fullRunTime));  //The initial estimate of the total run time available on a full charge (minutes)
+    EEPROM.write(1010, lowByte(fullRunTime));
+
+    EEPROM.write(1013, highByte(180));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
+    EEPROM.write(1014, lowByte(180));
 
     EEPROM.write(44, 3);  //indicates settings have been saved
 
@@ -2136,7 +2142,7 @@ void saveFactorySettings() {
 //restore original settings from EEPROM
 void restoreFactorySettings() {
 
-    for (int i = 1; i < 1501; i++) {  //read factory settings and rewrite to the normal settings locations
+    for (int i = 1; i < 1501; i++) {  //Read factory settings and rewrite to the normal settings locations.
         EEPROM.write(i, EEPROM.read(2000 + i));
     }
 
@@ -2145,8 +2151,8 @@ void restoreFactorySettings() {
     loadCalibration();
     loadSettingsForAllModes();
     loadPrefs();
-    communicationMode = 1;
-    sendSettings();  //send the new settings
+    communicationMode = 1;  //We are connected to the Config Tool because that's what initiated restoring settings.
+    sendSettings();         //Send the new settings.
 }
 
 
@@ -2345,12 +2351,14 @@ void loadSettingsForAllModes() {
 
     defaultMode = EEPROM.read(48);  //load default mode
 
-    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
+    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
         WARBL2settings[r] = EEPROM.read(600 + r);
     }
 
-    for (byte i = 0; i < 3; i++) {  //do this for each mode
+    fullRunTime = (word(EEPROM.read(1009), EEPROM.read(1010))); //The total run time available on a full charge (minutes)
+    prevRunTime = (word(EEPROM.read(1013), EEPROM.read(1014))); //The previously stored total run time since the last full charge (minutes)
 
+    for (byte i = 0; i < 3; i++) {  //Do this for each mode.
         senseDistanceSelector[i] = EEPROM.read(50 + i);
 
         for (byte n = 0; n < kSWITCHESnVariables; n++) {

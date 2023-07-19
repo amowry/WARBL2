@@ -9,8 +9,8 @@
 #include <Arduino.h>
 #include <MIDI.h>
 #include <bluefruit.h>
-#include <Wire.h>  //I2C communication with peripherals
-#include <SPI.h>   //communication with ATmega32U4
+#include <Wire.h>  //I2C communication with EEPROM
+#include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
 #include <MadgwickAHRS.h>       //IMU sensor fusion
@@ -31,6 +31,7 @@ ExternalEEPROM EEPROM;
 #define SPI_SCK SCK
 
 //#define RELEASE //Uncomment for release version (turns off CDC)
+
 #define VERSION 40            //software version number (without decimal point)
 #define HARDWARE_REVISION 41  //hardware
 
@@ -201,12 +202,9 @@ const uint8_t redLED = 8;
 const uint8_t greenLED = 10;  //also LED_BUILTIN
 const uint8_t blueLED = 3;
 
-const uint8_t powerEnable = 19;  //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
-
-const uint8_t chargeEnable = 7;  //Enables charging @ 120 mA current  (0.3 C, should take around 3.5 hours to charge)
-
-const uint8_t STAT = 15;  //STAT pin  -- input with pullup
-
+const uint8_t powerEnable = 19;    //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
+const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (0.3 C, should take around 3.5 hours to charge)
+const uint8_t STAT = 15;           //STAT pin  -- input with pullup
 const uint8_t battReadEnable = 6;  //Driving this high connects the battery to NRF for reading voltage
 const uint8_t battRead = 16;       //Analog pin for reading battery voltage
 
@@ -216,8 +214,12 @@ const uint8_t LSM_CS = 12;  //CS pin for IMU
 
 
 //Battery variables
-unsigned long runTimer;  //how long WARBL has been running on battery power
-bool battPower = false;  //keeps track of when we're on battery power, for above timer
+unsigned long runTimer;     //How long WARBL has been running on battery power
+unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate and then adjusted each time the battery runs low.
+unsigned long prevRunTime;  //The stored run time (minutes) since the last full charge
+bool battPower = false;     //Keeps track of when we're on battery power, for above timer
+
+
 
 //BLE
 uint16_t connIntvl = 0;  // The negotiated connection interval
@@ -369,15 +371,15 @@ byte pressureSelector[3][12] =  //a selector array for all the register control 
                                 //instrument 0
   {
       { 50, 20, 20, 15, 50, 75,  //bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
-        3, 7, 20, 0, 12, 50 },   //breath/mouthpiece: offset, multiplier, hysteresis, **now used for transientFilter**, jump time, drop time
+        3, 7, 20, 0, 3, 10 },    //breath/mouthpiece: offset, multiplier, transientFilter, jump time, drop time
       //instrument 1
       {
         50, 20, 20, 15, 50, 75,
-        3, 7, 20, 0, 12, 50 },
+        3, 7, 20, 0, 3, 10 },
       //instrument 2
       {
         50, 20, 20, 15, 50, 75,
-        3, 7, 20, 0, 12, 50 }
+        3, 7, 20, 0, 3, 10 }
   };
 
 uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default actions as of formware 2.1 to avoid confusion with beginning users). Dimension 1 is the three instruments. Dimension 2 is the button combination: click 1, click 2, click3, hold 2 click 1, hold 2 click 3, longpress 1, longpress2, longpress3
@@ -469,9 +471,9 @@ bool fingersChanged = 1;                                         //keeps track o
 unsigned int prevHoleCovered = 1;                                //so we can track changes.
 volatile int tempNewNote = 0;
 byte prevNote;
-byte newNote = -1;             //the next note to be played, based on the fingering chart (does not include transposition).
-byte notePlaying;              //the actual MIDI note being played, which we remember so we can turn it off again.
-byte transientFilter = 0;      // small delay for filtering out transient notes
+byte newNote = -1;         //the next note to be played, based on the fingering chart (does not include transposition).
+byte notePlaying;          //the actual MIDI note being played, which we remember so we can turn it off again.
+byte transientFilter = 0;  // small delay for filtering out transient notes
 
 
 //pitchbend variables
@@ -756,8 +758,8 @@ void loop() {
 
     get_shift();  //Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
 
-    //if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 2 : 5)) {
-    if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 10 : 20)) {  //need to determine optimal times for BLE
+    //if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 2 : 5)) { //From old WARBL code
+    if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 10 : 20)) {  //ToDo--need to determine optimal times for BLE and use a faster speed if not connected (see pitchbend example below)
         pressureTimer = nowtime;
         if (abs(prevSensorValue - sensorValue) > 1) {  //If pressure has changed more than a little, send it.
             if (ED[mode][SEND_PRESSURE]) {
@@ -795,7 +797,7 @@ void loop() {
 
         calculateAndSendPitchbend();
         printStuff();
-        readIMU();
+        readIMU();  //ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
 
 
         //testing gyro
@@ -822,6 +824,8 @@ void loop() {
         timerF = nowtime;
 
         manageBattery(false);  //Check the battery and manage charging.
+
+        //static float CPUtemp = readCPUTemperature(); //if needed for something like calibrating sensors. Can also use IMU temp.
     }
 
 
