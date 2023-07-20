@@ -1,6 +1,6 @@
 
 
-//Approximate power budget: 2.0 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.5 mA total, for at least 12 hour battery life
+//Approximate power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mA battery and 86% efficient boost converter
 
 
 
@@ -645,9 +645,6 @@ void setup() {
         loadCalibration();  //If there has been a calibration saved, reload it at startup.
     }
 
-    //EEPROM.write(1013, 0);  //TESTING--do this after each full charge
-    //EEPROM.write(1014, 0);  //TESTING--do this after each full charge
-
 
     loadFingering();
     loadSettingsForAllModes();
@@ -672,10 +669,10 @@ void setup() {
 
 void loop() {
 
-    /////////// Things here happen ~ every 3 mS
+    /////////// Things here happen ~ every 2 mS
 
 
-    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.4 mA NRF consumption with delay of 3 (1.5 mA for ATmega32U4) 2 mS delay increases ATmega current to ~ 1.9 mA.
+    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS deay.
 
     byte delayTime = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
 
@@ -817,9 +814,9 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 1.25 S
+    /////////// Things here happen ~ every 0.75 S
 
-    if ((nowtime - timerF) > 1250) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
+    if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
         manageBattery(false);  //Check the battery and manage charging.

@@ -362,8 +362,13 @@ int get_note(unsigned int fingerPattern) {
                 if (fingerPattern == holeCovered) {
                     vibratoEnable = tinwhistle_explicit[tempCovered].vibrato;
                 }
-                if (modeSelector[mode] == kModeBombarde && (0b011111110 & fingerPattern) >> 1 == 0b1111111) {
-                    ret = 61;  //
+                if (modeSelector[mode] == kModeBombarde) {
+                    if ((0b011111110 & fingerPattern) >> 1 == 0b1111111) {
+                            ret = 61;  //
+                        }
+                    if ((0b011111110 & fingerPattern) >> 1 == 0b0100000) {
+                            ret = 72;  //
+                        }
                 }
                 return ret;
             }
