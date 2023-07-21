@@ -22,7 +22,7 @@ void manageBattery(bool send) {
     static byte tempChargingStatus;      //The assumed charging status before it has been finalized by waiting to detect a fault
     static byte prevTempChargingStatus;  //Keep track of when it has changed.
     static bool chargeEnabled = 0;       //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
-    static float voltageQueue[21];       //Holds readings for finding the slope of the voltage curve while charging.
+    static float voltageQueue[21];       //FIFO queue for finding the slope of the voltage curve while charging.
     static float voltageSlope;           //Change in smoothed voltage over the previous 10 minutes
     static long chargeStartTime = 0;     //When we started charging
     static bool chargeTerminated = 0;    //Tells us that a charge cycle has been terminated because the cell is full.
@@ -44,7 +44,7 @@ void manageBattery(bool send) {
 
 
 
-    if (!battPower) {
+    if (!battPower) {  //Don't bother with any of this if we're not plugged in.
 
         //Detect change in charging status
         if (prevTempChargingStatus != tempChargingStatus) {
@@ -207,7 +207,7 @@ void manageBattery(bool send) {
 
 
 
-//Use a timer to delay response to changes in charging status while we try detect a charger fault (blinking STAT pin)
+//Use a timer to delay response to changes in charging status while we try detect a charger fault (blinking STAT pin).
 byte faultDetect(bool statusChanged) {
 
     static unsigned long faultTimer;
