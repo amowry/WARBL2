@@ -37,7 +37,7 @@ ExternalEEPROM EEPROM;
 #define SAMPLE_FREQUENCY 200                        //button sample frequency, in Hz
 #define MAXIMUM (DEBOUNCE_TIME * SAMPLE_FREQUENCY)  //the integrator value required to register a button press
 
-#define BATTERY_POWER 0  //no USB connected (running battery power)
+#define BATTERY_POWER 0  //no USB connected (running on battery power)
 #define DUMB_CHARGER 1   //powered by a dumb USB charger
 #define USB_HOST 2       //connected to a USB host
 
@@ -50,7 +50,7 @@ ExternalEEPROM EEPROM;
 #define CHANNEL_PRESSURE 0xD0  // 208
 #define PITCH_BEND 0xE0        // 224
 
-// Fingering Patterns
+//Fingering Patterns
 #define kModeWhistle 0
 #define kModeUilleann 1
 #define kModeGHB 2
@@ -77,28 +77,28 @@ ExternalEEPROM EEPROM;
 #define kModeBansuri 23
 #define kModeNModes 24
 
-// Pitch bend modes
+//Pitch bend modes
 #define kPitchBendSlideVibrato 0
 #define kPitchBendVibrato 1
 #define kPitchBendNone 2
 #define kPitchBendLegatoSlideVibrato 3
 #define kPitchBendNModes 4
 
-// Register control modes
+//Register control modes
 #define kPressureSingle 0
 #define kPressureBreath 1
 #define kPressureThumb 2
 #define kPressureBell 3
 #define kPressureNModes 4
 
-// Drones control mode
+//Drones control mode
 #define kNoDroneControl 0
 #define kSecretDroneControl 1
 #define kBaglessDroneControl 2
 #define kPressureDroneControl 3
 #define kDroneNModes 4
 
-//used in register state machine
+//Used in register state machine
 #define SILENCE 1
 #define BOTTOM_REGISTER 2
 #define TOP_REGISTER 3
@@ -186,12 +186,12 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
 };
 
 
-// Create instances of the Arduino MIDI Library. ***AS OF 7/17/23, this requires the latest version of the MIDI library from GitHub, rather than the release version. Otherwise just use the instances below.
+//Create instances of the Arduino MIDI Library. ***AS OF 7/17/23, this requires the latest version of the MIDI library from GitHub, rather than the release version. Otherwise just use the instances below.
 MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
 MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 
-// Create instances of the Arduino MIDI Library.
+//Create instances of the Arduino MIDI Library.
 //MIDI_CREATE_INSTANCE(BLEMidi, blemidi, BLEMIDI);
 //MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
 
@@ -221,6 +221,7 @@ unsigned long prevRunTime = 360;  //The total run time since the last full charg
 //BLE
 uint16_t connIntvl = 0;  // The negotiated connection interval
 
+
 //Misc.
 unsigned long timerA = 0;  //for timing various intervals
 unsigned long timerB = 0;
@@ -231,6 +232,7 @@ unsigned long timerF = 0;
 unsigned long nowtime;
 unsigned long powerDownTimer;
 bool playing = 0;  //testing
+
 
 //IMU data
 double gyroX;
@@ -245,14 +247,16 @@ float gyroYCalibration;
 float gyroZCalibration;
 
 
-//instrument
+//Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
 byte defaultMode = 0;  // The default mode, from 0-2.
+
 
 //WARBL2 variables that are independent of instrument
 byte WARBL2settings[] = { 2, 1, 5 };  //see defines above
 
-//variables that can change according to instrument.
+
+//Variables that can change according to instrument.
 int8_t octaveShift = 0;                       //octave transposition
 int8_t noteShift = 0;                         //note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
 byte pitchBendMode = kPitchBendSlideVibrato;  //0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
@@ -262,6 +266,7 @@ unsigned int vibratoDepth = 1024;             //vibrato depth from 0 (no vibrato
 bool useLearnedPressure = 0;                  //whether we use learned pressure for note on threshold, or we use calibration pressure from startup
 byte midiBendRange = 2;                       // +/- semitones that the midi bend range represents
 byte mainMidiChannel = 1;                     // current MIDI channel to send notes on
+
 
 //These are containers for the above variables, storing the value used by the three different instruments.  First variable in array is for instrument 0, etc.
 byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  //the fingering patterns chosen in the configuration tool, for the three instruments.
@@ -401,8 +406,8 @@ uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default 
     //same for instrument 2
     { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };
 
-//other misc. variables
 
+//other misc. variables
 unsigned long ledTimer = 0;  //for blinking LED
 byte blinkNumber = 0;        //the number of remaining blinks when blinking LED to indicate control changes
 bool LEDon = 0;              //whether the LED is currently on
@@ -410,6 +415,7 @@ bool play = 0;               //turns sound off and on (with the use of a button 
 bool bellSensor = 1;         //whether the bell sensor is plugged in
 byte program = 0;            //current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
 bool dronesState = 0;        //keeps track of whether we're above or below the pressure threshold for turning drones on.
+
 
 //variables for reading pressure sensor
 volatile unsigned int tempSensorValue = 0;  //for holding the pressure sensor value inside the ISR
@@ -500,15 +506,18 @@ int expression = 0;                                            //pitchbend up or
 bool customEnabled = 0;                                        //Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                               //vibrato depth scaled to MIDI bend range.
 
+
 //variables for managing MIDI note output
 bool noteon = 0;      //whether a note is currently turned on
 bool shiftState = 0;  //whether the octave is shifted (could be combined with octaveShift)
 int8_t shift = 0;     //the total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
 byte velocity = 127;  //default MIDI note velocity
 
+
 //tonehole calibration variables
 byte calibration = 0;  //whether we're currently calibrating. 1 is for calibrating all sensors, 2 is for calibrating bell sensor only, 3 is for calibrating all sensors plus baseline calibration (normally only done once, in the "factory").
 unsigned long calibrationTimer = 0;
+
 
 //variables for reading buttons
 unsigned long buttonReadTimer = 0;              //for telling when it's time to read the buttons
@@ -524,6 +533,7 @@ bool longPressUsed[] = { 0, 0, 0 };             //if we used a long button press
 bool buttonUsed = 0;                            //flags any button activity, so we know to handle it.
 bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;  //used to monitor drones on/off.
+
 
 //variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;          //whether we are currently communicating with the tool.
@@ -555,7 +565,7 @@ void setup() {
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
-    digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
+    digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs. ToDo: This seems to work fine but I need to check and make sure it's okay to do in this order.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
     digitalWrite(redLED, LOW);
@@ -583,7 +593,7 @@ void setup() {
 
 
     //USB MIDI stuff
-    usb_midi.setStringDescriptor("WARBL USB MIDI");  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin()
+    usb_midi.setStringDescriptor("WARBL USB MIDI");  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
     MIDI.begin(MIDI_CHANNEL_OMNI);
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChange);  //Handle received MIDI CC messages.
@@ -616,6 +626,7 @@ void setup() {
     startAdv();                                                   //Set up and start advertising.
 
 
+    //I2C
     Wire.begin();                          //Join i2c bus for EEPROM.
     Wire.setClock(400000);                 //high speed
     EEPROM.setMemorySize(128 * 1024 / 8);  //In bytes. 128kbit = 16kbyte
@@ -625,14 +636,13 @@ void setup() {
     EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings.
 
 
-
-    //Set up SPI
+    //SPI
     pinMode(2, OUTPUT);     //SS for Atmega
     digitalWrite(2, HIGH);  //Ensure SS stays high for now.
     SPI.begin();
 
     sox.begin_SPI(LSM_CS);  //Start IMU
-    //filter.begin(sensorRate);
+    //filter.begin(sensorRate); //Madgwick filter
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -669,7 +679,8 @@ void setup() {
 
 void loop() {
 
-    /////////// Things here happen ~ every 2 mS
+
+    /////////// Things here happen ~ every 3 mS
 
 
     // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS deay.
@@ -685,26 +696,26 @@ void loop() {
 
     getSensors();
 
-    nowtime = millis();  //get the current time for the timers used below
+    nowtime = millis();  //Get the current time for the timers used below and in the battery management function.
 
-    get_state();  //get the breath state.
+    get_state();  //Get the breath state.
 
-    MIDI.read();  // read any new USBMIDI messages
+    MIDI.read();  // Read any new USBMIDI messages.
 
     if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
         if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
-            BLEMIDI.read();             //read new BLEMIDI messages
+            BLEMIDI.read();             //Read new BLEMIDI messages.
         }
     }
 
     checkButtons();
 
     if (buttonUsed) {
-        handleButtons();  //if a button had been used, process the command. We only do this when we need to, so we're not wasting time.
+        handleButtons();  //If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
     }
 
     if (blinkNumber > 0) {
-        blink();  //blink the LED if necessary)
+        blink();  //Blink the LED if necessary.
     }
 
     if (calibration > 0) {
@@ -725,7 +736,7 @@ void loop() {
         }
 
 
-        if (tempNewNote != -1 && newNote != tempNewNote) {  //if a new note has been triggered
+        if (tempNewNote != -1 && newNote != tempNewNote) {  //If a new note has been triggered
             if (pitchBendMode != kPitchBendNone) {
                 holeLatched = holeCovered;  //Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
@@ -740,14 +751,14 @@ void loop() {
         tempNewNote = -1;
         fingeringChangeTimer = nowtime;  //Start timing after the fingering pattern has changed.
 
-        get_state();  //recalculate state if the fingering has changed
+        get_state();  //Recalculate state if the fingering has changed.
     }
 
 
 
-    if (switches[mode][SEND_VELOCITY]) {  //if we're sending NoteOn velocity based on pressure
+    if (switches[mode][SEND_VELOCITY]) {  //If we're sending NoteOn velocity based on pressure
         if (prevState == SILENCE && newState != SILENCE) {
-            velocityDelayTimer = nowtime;  //reset the delay timer used for calculating velocity when a note is turned on after silence.
+            velocityDelayTimer = nowtime;  //Reset the delay timer used for calculating velocity when a note is turned on after silence.
         }
         prevState = newState;
     }
@@ -774,13 +785,12 @@ void loop() {
             sendPressure(false);
 
             if (communicationMode) {                       //ToDo: can send this less frequently.
-                sendMIDI(CC, 7, 116, sensorValue & 0x7F);  //Send LSB of current pressure to configuration tool.
+                sendMIDI(CC, 7, 116, sensorValue & 0x7F);  //Send LSB of current pressure to Configuration Tool.
                 sendMIDI(CC, 7, 118, sensorValue >> 7);    //Send MSB of current pressure.
             }
             prevSensorValue = sensorValue;
         }
     }
-
 
 
 
@@ -813,7 +823,6 @@ void loop() {
 
 
 
-
     /////////// Things here happen ~ every 0.75 S
 
     if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
@@ -821,12 +830,12 @@ void loop() {
 
         manageBattery(false);  //Check the battery and manage charging.
 
-        //static float CPUtemp = readCPUTemperature(); //if needed for something like calibrating sensors. Can also use IMU temp.
+        //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
 
 
 
 
     /////////////
-    sendNote();  //Send the MIDI note (every 3 mS)
+    sendNote();  //Send the MIDI note (every 3 mS).
 }
