@@ -101,7 +101,9 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //default rate for IMU is 104 Hz (this can be changed -- see library)
+    //default rate for IMU is 104 Hz (this probably should be increased a bit -- see library)
+    //Todo: See if this will run at a higher SPI speed (not essential but will save a bit more time and power)
+    //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA @ 104 Hz).
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -364,11 +366,11 @@ int get_note(unsigned int fingerPattern) {
                 }
                 if (modeSelector[mode] == kModeBombarde) {
                     if ((0b011111110 & fingerPattern) >> 1 == 0b1111111) {
-                            ret = 61;  //
-                        }
+                        ret = 61;  //
+                    }
                     if ((0b011111110 & fingerPattern) >> 1 == 0b0100000) {
-                            ret = 72;  //
-                        }
+                        ret = 72;  //
+                    }
                 }
                 return ret;
             }

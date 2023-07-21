@@ -1,12 +1,12 @@
 /*
--ToDo: indicate charging by pulsing or slowly flashing red or purple LED that times out if WARBL is playing notes (so as not to be annoying). LED should turn green when fully charged
+-ToDo: indicate charging by pulsing or slowly flashing red or purple LED that times out if WARBL is playing notes (so as not to be annoying).
 */
 
 
 /*
 Notes:
 
-The battery is a 400 mAH 2/3 AAA NiMH cell. Example good brands are PKCell, Kastar, Dantona, and GP. Either flat top or button top works. The real-world capacity of these is usually around 350 mAH.
+The battery is a 400 mAH 2/3 AAA NiMH cell. Example brands are PKCell, Kastar, Dantona, and GP. Either flat top or button top works. The real-world capacity of these is usually around 350 mAH.
 The BQ25172 charger will charge safely without any of this code when enabled by driving the chargeEnable pin high. The code monitors the battery level and does a better job of charge termination (0 dV/dt algorithm) to prolong battery life.
 The charger will only start charging if the battery voltage is below ~ 1.35V and the battery temperature is between ~ 0 and 40 degrees C.
 Charging is set by resistors to ~120 mA (0.3C) with a 4-hr safety timer. The charger will also terminate if battery voltage is > 1.7 V or battery temperature is over 40 degrees C.
@@ -114,6 +114,10 @@ void manageBattery(bool send) {
         battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 0, 100);  //If we're not on battery power, just use the saved run time.
     }
 
+    if (chargingStatus == 1 && battLevel > 98) {  //Don't let the percentage reach 100% while charging until there is a termination.
+        battLevel = 98;
+    }
+
 
     //Serial.println(battLevel);
     //Serial.println(chargingStatus);
@@ -157,9 +161,9 @@ void manageBattery(bool send) {
             }
 
 
-            Serial.print(smoothed_voltage, 3);
-            Serial.print(",");
-            Serial.println(voltageSlope, 3);
+            //Serial.print(smoothed_voltage, 3); //For plotting votage while charging
+            //Serial.print(",");
+            //Serial.println(voltageSlope, 3);
         }
     }
     cycles++;
@@ -193,7 +197,7 @@ void manageBattery(bool send) {
     if (nowtime > 2000 && battPower && battVoltage <= 1.0) {  //Give some time to make sure we detect USB power if it's present.
         digitalWrite(redLED, HIGH);                           //Indicate power down.
         delay(5000);                                          //Long red LED to indicate shutdown because of low battery
-        powerDown(true);                                      //power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge)
+        powerDown(true);                                      //Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
     }
 }
 
@@ -205,6 +209,7 @@ void manageBattery(bool send) {
 
 //Use a timer to delay response to changes in charging status while we try detect a charger fault (blinking STAT pin)
 byte faultDetect(bool statusChanged) {
+
     static unsigned long faultTimer;
     static bool timing = false;
     static byte change = 0;
@@ -218,7 +223,7 @@ byte faultDetect(bool statusChanged) {
         }
     }
 
-
+    //ToDo: could probably use shorter than 5 seconds, maybe 4.
     if (((nowtime - faultTimer) > 5000)) {  //If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
         faultTimer = nowtime;
         timing = false;
@@ -228,7 +233,7 @@ byte faultDetect(bool statusChanged) {
             ret = 2;
         }
         change = 0;
-    } else ret = 0;  //Keep waiting to fnalize the current status.
+    } else ret = 0;  //Keep waiting to finalize the current status.
     return ret;
 }
 
