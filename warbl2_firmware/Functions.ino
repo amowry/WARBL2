@@ -19,7 +19,6 @@ void printStuff(void) {
     //Serial.println(gyroY, 3);
     //Serial.println(gyroZ, 3);
     //Serial.println("");
-
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
@@ -304,12 +303,36 @@ bool debounceFingerHoles() {
 
 
 
-//Send the pattern of covered holes to the Configuration Tool
-void send_fingers() {
+//Send the pattern of covered holes to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
+void sendToConfig(bool newPattern, bool newPressure) {
 
-    if (communicationMode) {  //send information about which holes are covered to the Configuration Tool if we're connected. Because it's MIDI we have to send it in two 7-bit chunks.
-        sendMIDI(CC, 7, 114, holeCovered >> 7);
-        sendMIDI(CC, 7, 115, lowByte(holeCovered));
+    static bool patternChanged = false;
+    static bool pressureChanged = false;
+    static unsigned long patternSendTimer;
+    static unsigned long pressureSendTimer;
+
+    if (communicationMode) {
+        if (newPattern && patternChanged == false) {  //If the fingering pattern has changed, start a timer
+            patternChanged = true;
+            patternSendTimer = nowtime;
+        }
+
+        if (newPressure && pressureChanged == false) {  //If the fingering pattern has changed, start a timer
+            pressureChanged = true;
+            pressureSendTimer = nowtime;
+        }
+
+        if (patternChanged && (nowtime - patternSendTimer) > 50) {  //If some time has past, send the new pattern to the Config Tool.
+            sendMIDI(CC, 7, 114, holeCovered >> 7);                 //Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDI(CC, 7, 115, lowByte(holeCovered));
+            patternChanged = false;
+        }
+
+        if (pressureChanged && (nowtime - pressureSendTimer) > 50) {  //If some time has past, send the new pressure to the Config Tool.
+            sendMIDI(CC, 7, 116, sensorValue & 0x7F);                 //Send LSB of current pressure to Configuration Tool.
+            sendMIDI(CC, 7, 118, sensorValue >> 7);                   //Send MSB of current pressure.
+            pressureChanged = false;
+        }
     }
 }
 
@@ -322,8 +345,6 @@ void send_fingers() {
 
 //Return a MIDI note number (0-127) based on the current fingering.
 int get_note(unsigned int fingerPattern) {
-
-
     int ret = -1;  //default for unknown fingering
 
     switch (modeSelector[mode]) {  //determine the note based on the fingering pattern
@@ -724,7 +745,6 @@ int get_note(unsigned int fingerPattern) {
 
 //Add up any transposition based on key and register.
 void get_shift() {
-
     shift = ((octaveShift * 12) + noteShift);  //adjust for key and octave shift.
 
     if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  //if overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
@@ -775,8 +795,6 @@ void get_shift() {
 //State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
 //The jump/drop behavior is from Louis Barman
 void get_state() {
-
-
     sensorValue2 = tempSensorValue;  //transfer last reading
 
 
@@ -847,7 +865,6 @@ void get_state() {
 
 //Delay the overblow state until either it has timed out or the pressure has leveled off.
 byte delayStateChange(byte jumpDrop, int pressure, int upper) {
-
     static unsigned long holdOffTimer;
     unsigned long now = millis();
     bool exitEarly = false;
@@ -898,7 +915,6 @@ byte delayStateChange(byte jumpDrop, int pressure, int upper) {
 
 //Calculate the rate of pressure change to see if the slope has reversed
 int pressureRateChange(int pressure) {
-
     int rateChange = 2000;  //if not valid
     if (rateChangeIdx == 0) {
         rateChangeIdx = 1;
@@ -946,7 +962,6 @@ int calcHysteresis(int currentUpperBound, bool high) {
 
 //calculate pitchbend expression based on pressure
 void getExpression() {
-
     //calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead
 
 
@@ -1000,7 +1015,6 @@ void getExpression() {
 
 //find how many steps down to the next lower note on the scale.
 void findStepsDown() {
-
     slideHole = findleftmostunsetbit(holeCovered);  //determine the highest uncovered hole, to use for sliding
     if (slideHole == 127) {                         //this means no holes are covered.
         // this could mean the highest hole is starting to be uncovered, so use that as the slideHole
@@ -1021,7 +1035,6 @@ void findStepsDown() {
 
 //Custom pitchbend algorithms, tin whistle and uilleann by Michael Eskin
 void handleCustomPitchBend() {
-
     iPitchBend[2] = 0;  //reset pitchbend for the holes that are being used ToDo: may need to do this for all holes because others might be being used for slide.
     iPitchBend[3] = 0;
 
@@ -1130,7 +1143,6 @@ void handleCustomPitchBend() {
 
 //Andrew's version of vibrato
 void handlePitchBend() {
-
     for (byte i = 0; i < 9; i++) {  //reset
         iPitchBend[i] = 0;
     }
@@ -1197,8 +1209,6 @@ void getSlide() {
 
 
 void sendPitchbend() {
-
-
     pitchBend = 0;  //reset the overall pitchbend in preparation for adding up the contributions from all the toneholes.
     for (byte i = 0; i < 9; i++) {
         pitchBend = pitchBend + iPitchBend[i];
@@ -1357,7 +1367,6 @@ void sendNote() {
 
 void blink()  //blink LED given number of times
 {
-
     if ((millis() - ledTimer) >= 200) {
         ledTimer = millis();
 
@@ -1385,9 +1394,6 @@ void blink()  //blink LED given number of times
 
 //check for and handle incoming MIDI messages from the WARBL Configuration Tool.
 void handleControlChange(byte channel, byte number, byte value) {
-
-
-
     //Serial.println(channel);
     //Serial.println(number);
     //Serial.println(value);
@@ -1717,8 +1723,6 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 //interpret button presses. If the button is being used for momentary MIDI messages we ignore other actions with that button (except "secret" actions involving the toneholes).
 void handleButtons() {
-
-
     //first, some housekeeping
 
     if (shiftState == 1 && released[1] == 1) {  //if button 1 was only being used along with another button, we clear the just-released flag for button 1 so it doesn't trigger another control change.
@@ -1819,8 +1823,6 @@ void handleButtons() {
 
 //perform desired action in response to buttons
 void performAction(byte action) {
-
-
     switch (buttonPrefs[mode][action][0]) {
 
         case 0:
@@ -2028,7 +2030,6 @@ void changeInstrument() {
 
 
 void handleMomentary(byte button) {
-
     if (momentary[mode][button]) {
         if (buttonPrefs[mode][button][0] == 1 && buttonPrefs[mode][button][1] == 0) {  //handle momentary press if we're sending a MIDI message
             sendMIDI(NOTE_ON, buttonPrefs[mode][button][2], buttonPrefs[mode][button][3], buttonPrefs[mode][button][4]);
@@ -2107,7 +2108,6 @@ void stopDrones() {
 
 // find leftmost unset bit, used for finding the uppermost uncovered hole when reading from some fingering charts, and for determining the slidehole.
 byte findleftmostunsetbit(uint16_t n) {
-
     if ((n & (n + 1)) == 0) {
         return 127;  // if number contains all 0s then return 127
     }
@@ -2131,7 +2131,6 @@ byte findleftmostunsetbit(uint16_t n) {
 
 //This is used the first time the software is run, to copy all the default settings to EEPROM.
 void saveFactorySettings() {
-
     for (byte i = 0; i < 3; i++) {  //save all the current settings for all three instruments.
         mode = i;
         saveSettings(i);
@@ -2168,7 +2167,6 @@ void saveFactorySettings() {
 
 //restore original settings from EEPROM
 void restoreFactorySettings() {
-
     for (int i = 1; i < 1501; i++) {  //Read factory settings and rewrite to the normal settings locations.
         EEPROM.write(i, EEPROM.read(2000 + i));
     }
@@ -2191,7 +2189,6 @@ void restoreFactorySettings() {
 
 //save settings for current instrument as defaults for given instrument (i)
 void saveSettings(byte i) {
-
     EEPROM.write(40 + i, modeSelector[mode]);
     EEPROM.write(53 + i, noteShiftSelector[mode]);
     EEPROM.write(50 + i, senseDistanceSelector[mode]);
@@ -2243,8 +2240,6 @@ void saveSettings(byte i) {
 
 //send all settings for current instrument to the WARBL Configuration Tool.
 void sendSettings() {
-
-
     sendMIDI(CC, 7, 110, VERSION);  //send software version
 
 
@@ -2349,7 +2344,6 @@ void sendSettings() {
 
 //load saved fingering patterns
 void loadFingering() {
-
     for (byte i = 0; i < 3; i++) {
         modeSelector[i] = EEPROM.read(40 + i);
         noteShiftSelector[i] = (int8_t)EEPROM.read(53 + i);
@@ -2376,7 +2370,6 @@ void loadFingering() {
 
 //load settings for all three instruments from EEPROM
 void loadSettingsForAllModes() {
-
     defaultMode = EEPROM.read(48);  //load default mode
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
@@ -2444,7 +2437,6 @@ void loadSettingsForAllModes() {
 
 //load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
-
     vibratoHoles = vibratoHolesSelector[mode];
     octaveShift = octaveShiftSelector[mode];
     noteShift = noteShiftSelector[mode];
@@ -2542,7 +2534,6 @@ void loadPrefs() {
 //Calibrate the sensors and store them in EEPROM
 //mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
 void calibrate() {
-
     if (!LEDon) {
         digitalWrite(greenLED, HIGH);
         LEDon = 1;
@@ -2596,7 +2587,6 @@ void calibrate() {
 
 //save sensor calibration (EEPROM bytes up to 34 are used (plus byte 37 to indicate a saved calibration)
 void saveCalibration() {
-
     for (byte i = 0; i < 9; i++) {
         EEPROM.write((i + 9) * 2, highByte(toneholeCovered[i]));
         EEPROM.write(((i + 9) * 2) + 1, lowByte(toneholeCovered[i]));
@@ -2634,8 +2624,6 @@ void loadCalibration() {
 //ToDo: the calculations can be made more sophisticated now that we have a fast processor and FPU
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
-
-
     long scaledPressure = sensorValue - 100;  // input pressure range is 100-1000. Bring this down to 0-900
     scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0], inputPressureBounds[pressureOption][1]);
     scaledPressure = (((scaledPressure * pressureInputScale[pressureOption]) >> 10) - inputPressureBounds[pressureOption][2]);  //scale input pressure up to a range of 0-1024 using the precalculated scale factor
@@ -2686,7 +2674,6 @@ void calculatePressure(byte pressureOption) {
 
 //send pressure data
 void sendPressure(bool force) {
-
     if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
         sendMIDI(CC, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  //send MSB of pressure mapped to the output range
         prevCCPressure = inputPressureBounds[0][3];
@@ -2722,8 +2709,6 @@ void sendPressure(bool force) {
 
 //Starting advertsiging BLE
 void startAdv(void) {
-
-
     // Set General Discoverable Mode flag
     Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
 
@@ -2763,7 +2748,6 @@ void startAdv(void) {
 //These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MIDI event over USB
 {
-
     m &= 0xF0;
     c &= 0xF;
     d1 &= 0x7F;
@@ -2849,7 +2833,6 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
 
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over USB
 {
-
     m &= 0xF0;
     c &= 0xF;
     d &= 0x7F;
@@ -2893,7 +2876,6 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over
 
 //retrieve BLE connection information
 void connect_callback(uint16_t conn_handle) {
-
     // Get the reference to current connection
     BLEConnection* connection = Bluefruit.Connection(conn_handle);
 

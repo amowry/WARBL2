@@ -17,25 +17,33 @@ The charger will report a fault (missing battery, out of temperature range) by b
 void manageBattery(bool send) {
 
 
-    static byte chargingStatus = 0;      //0 is not charging, 1 is charging, 2 is fault
-    static byte prevChargingStatus = 0;  //Keep track of when it has changed.
-    static byte tempChargingStatus;      //The assumed charging status before it has been finalized by waiting to detect a fault
-    static byte prevTempChargingStatus;  //Keep track of when it has changed.
-    static bool chargeEnabled = 0;       //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
-    static float voltageQueue[21];       //FIFO queue for finding the slope of the voltage curve while charging.
-    static float voltageSlope;           //Change in smoothed voltage over the previous 10 minutes
-    static long chargeStartTime = 0;     //When we started charging
-    static bool chargeTerminated = 0;    //Tells us that a charge cycle has been terminated because the cell is full.
-    static byte battLevel;               //Estimated battery percentage remaining
-    static bool statusChanged;           //Flag when the charging status has changed.
+    static byte chargingStatus = 0;            //0 is not charging, 1 is charging, 2 is fault
+    static byte prevChargingStatus = 0;        //Keep track of when it has changed.
+    static byte tempChargingStatus;            //The assumed charging status before it has been finalized by waiting to detect a fault
+    static byte prevTempChargingStatus;        //Keep track of when it has changed.
+    static bool chargeEnabled = false;         //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
+    static float voltageQueue[21];             //FIFO queue for finding the slope of the voltage curve while charging.
+    static float voltageSlope;                 //Change in smoothed voltage over the previous 10 minutes
+    static unsigned long chargeStartTime = 0;  //When we started charging
+    static bool chargeTerminated = false;      //Tells us that a charge cycle has been terminated because the cell is full.
+    static byte battLevel;                     //Estimated battery percentage remaining
+    static bool statusChanged;                 //Flag when the charging status has changed.
 
 
     byte USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
+    static byte prevUSBstatus;
+    static unsigned long USBstatusChangeTimer;
+
+    if (USBstatus != prevUSBstatus) {  //Keep track of when USB status changed, because we need to wait a bit for doing some things like enabling charging. USB power may be detected slightly before a USB host, causing us to briefly think there's a dumb charger.
+        USBstatusChangeTimer = nowtime;
+        prevUSBstatus = USBstatus;
+    }
+
 
 
     //Monitor the STAT pin to tell if we're charging.
     if (digitalRead(STAT) == 0) {    //Charging
-        digitalWrite(redLED, HIGH);  //ToDo: improve indication. If there's a fault the LED will bne flashing.
+        digitalWrite(redLED, HIGH);  //ToDo: improve indication. If there's a fault the LED will be flashing.
         tempChargingStatus = 1;      //Provisionally change the status.
     } else {                         //Not charging
         digitalWrite(redLED, LOW);
@@ -49,7 +57,7 @@ void manageBattery(bool send) {
         //Detect change in charging status
         if (prevTempChargingStatus != tempChargingStatus) {
             statusChanged = 1;
-            if (communicationMode) {  //Send the status to the Config Tool if it has changed
+            if (communicationMode) {  //Send the status to the Config Tool if it has changed.
                 sendMIDI(CC, 7, 106, 71);
                 sendMIDI(CC, 7, 119, tempChargingStatus);
             }
@@ -119,9 +127,6 @@ void manageBattery(bool send) {
     }
 
 
-    //Serial.println(battLevel);
-    //Serial.println(chargingStatus);
-
 
     static byte cycles = 40;  //40 cycles is 30 seconds.
 
@@ -170,7 +175,7 @@ void manageBattery(bool send) {
 
 
     //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
-    if (nowtime > 2000 && (!chargeTerminated && !chargeEnabled && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
+    if ((nowtime - USBstatusChangeTimer) > 2000 && (!chargeTerminated && !chargeEnabled && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
     } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.

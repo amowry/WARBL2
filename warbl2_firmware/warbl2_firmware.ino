@@ -680,18 +680,27 @@ void setup() {
 void loop() {
 
 
-    /////////// Things here happen ~ every 3 mS
+    /////////// Things here happen ~ every 3 mS if on battery power and 2 mS if plugged in.
 
 
     // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS deay.
 
-    byte delayTime = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
 
+    byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
 
-    if (delayTime < 3) {  //If it hasn't already been more than 3 mS since the last time through the loop, we can sleep for a bit.
-        delayTime = 3 - delayTime;
-        delay(delayTime);
+    //if (delayCorrection != 0) { Serial.println(delayCorrection); }  //Print the amount of time that other things have consumed.
+
+    byte delayTime = 3;
+
+    if (!battPower) {  //Use a 2 mS sleep instead if we have USB power
+        delayTime = 2;
     }
+
+    if (delayCorrection < delayTime) {  //If we haven't used up too much time since the last time through the loop, we can sleep for a bit.
+        delayCorrection = delayTime - delayCorrection;
+        delay(delayCorrection);
+    }
+
 
 
     getSensors();
@@ -725,12 +734,14 @@ void loop() {
 
     get_fingers();  //Find which holes are covered.
 
+    sendToConfig(false, false);  //Occasionally send the fingering pattern and pressure to the Configuration Tool if it has changed.
+
 
 
     if (debounceFingerHoles()) {
         fingersChanged = 1;
         tempNewNote = get_note(holeCovered);  //Get the next MIDI note from the fingering pattern if it has changed.
-        send_fingers();                       //Send new fingering pattern to the Configuration Tool.
+        sendToConfig(true, false);            //Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
         if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
             findStepsDown();
         }
@@ -784,10 +795,8 @@ void loop() {
 
             sendPressure(false);
 
-            if (communicationMode) {                       //ToDo: can send this less frequently.
-                sendMIDI(CC, 7, 116, sensorValue & 0x7F);  //Send LSB of current pressure to Configuration Tool.
-                sendMIDI(CC, 7, 118, sensorValue >> 7);    //Send MSB of current pressure.
-            }
+            sendToConfig(false, true);  //Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+
             prevSensorValue = sensorValue;
         }
     }
@@ -800,6 +809,7 @@ void loop() {
 
     if ((nowtime - timerC) >= (connIntvl > 0 ? (connIntvl + 2) : 9)) {
         timerC = nowtime;
+
 
         calculateAndSendPitchbend();
         printStuff();
@@ -837,5 +847,5 @@ void loop() {
 
 
     /////////////
-    sendNote();  //Send the MIDI note (every 3 mS).
+    sendNote();  //Send a new MIDI note if there is one.
 }
