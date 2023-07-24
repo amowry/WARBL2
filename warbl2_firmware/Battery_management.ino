@@ -40,7 +40,6 @@ void manageBattery(bool send) {
     }
 
 
-
     //Monitor the STAT pin to tell if we're charging.
     if (digitalRead(STAT) == 0) {    //Charging
         digitalWrite(redLED, HIGH);  //ToDo: improve indication. If there's a fault the LED will be flashing.
@@ -97,7 +96,6 @@ void manageBattery(bool send) {
     const float alpha = 0.2;  //Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
     smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average -- takes several seconds to level out after powerup.
-
 
 
     //Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
@@ -291,7 +289,7 @@ float getBattVoltage() {
 
     //Read battery voltage
     analogReference(AR_INTERNAL_1_8);    //Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
-    analogOversampling(256);             //Increase oversampling for precise 12-bit reading.
+    analogOversampling(64);             //Increase oversampling for precise 12-bit reading.
     digitalWrite(battReadEnable, HIGH);  //We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     float battReading = analogRead(battRead);
     digitalWrite(battReadEnable, LOW);

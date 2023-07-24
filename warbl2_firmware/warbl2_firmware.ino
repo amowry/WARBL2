@@ -208,8 +208,6 @@ const uint8_t battRead = 16;       //Analog pin for reading battery voltage
 
 const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
 
-const uint8_t LSM_CS = 12;  //CS pin for IMU
-
 
 //Battery variables
 unsigned long runTimer;           //The time when WARBL started running on battery power
@@ -227,7 +225,6 @@ unsigned long timerA = 0;  //for timing various intervals
 unsigned long timerB = 0;
 unsigned long timerC = 0;
 unsigned long timerD = 0;
-unsigned long timerE = 0;
 unsigned long timerF = 0;
 unsigned long nowtime;
 unsigned long powerDownTimer;
@@ -641,7 +638,7 @@ void setup() {
     digitalWrite(2, HIGH);  //Ensure SS stays high for now.
     SPI.begin();
 
-    sox.begin_SPI(LSM_CS);  //Start IMU
+    sox.begin_SPI(12);  //Start IMU (CS pin is D12)
     //filter.begin(sensorRate); //Madgwick filter
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -705,7 +702,7 @@ void loop() {
 
     getSensors();
 
-    nowtime = millis();  //Get the current time for the timers used below and in the battery management function.
+    nowtime = millis();  //Get the current time for the timers used below and in various functions.
 
     get_state();  //Get the breath state.
 
@@ -734,7 +731,7 @@ void loop() {
 
     get_fingers();  //Find which holes are covered.
 
-    sendToConfig(false, false);  //Occasionally send the fingering pattern and pressure to the Configuration Tool if it has changed.
+    sendToConfig(false, false);  //Occasionally send the fingering pattern and pressure to the Configuration Tool if they have changed.
 
 
 
@@ -813,8 +810,9 @@ void loop() {
 
         calculateAndSendPitchbend();
         printStuff();
-        readIMU();  //ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
-
+        //timerD = micros(); //testing--micros requres turning on DWT in setup()
+        readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
+        //Serial.println(micros() - timerD);
 
         //testing gyro
         /*
@@ -838,7 +836,9 @@ void loop() {
     if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
-        manageBattery(false);  //Check the battery and manage charging.
+
+        manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage.
+
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
