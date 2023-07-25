@@ -1,5 +1,6 @@
 
 
+
 //Approximate power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
 
 
@@ -13,17 +14,15 @@
 #include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
+#include <simpleFusion.h>       //IMU fusion
 
-//#include <MadgwickAHRS.h>       //IMU sensor fusion testing
-
-//Madgwick filter;
-//const float sensorRate = 104.00;
 
 BLEDis bledis;
 BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
+SimpleFusion fuser;     // Initialize the SimpleFusion object
 
 ExternalEEPROM EEPROM;
 
@@ -638,8 +637,12 @@ void setup() {
     digitalWrite(2, HIGH);  //Ensure SS stays high for now.
     SPI.begin();
 
-    sox.begin_SPI(12);  //Start IMU (CS pin is D12)
-    //filter.begin(sensorRate); //Madgwick filter
+    //IMU
+    sox.begin_SPI(12);                         //Start IMU (CS pin is D12)
+    sox.setAccelDataRate(LSM6DS_RATE_833_HZ);  //Default is 104 if we don't change it here.
+    sox.setGyroDataRate(LSM6DS_RATE_833_HZ);   //Default is 104 if we don't change it here.
+    fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
+
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -705,6 +708,8 @@ void loop() {
     nowtime = millis();  //Get the current time for the timers used below and in various functions.
 
     get_state();  //Get the breath state.
+
+    readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
 
     MIDI.read();  // Read any new USBMIDI messages.
 
@@ -811,7 +816,7 @@ void loop() {
         calculateAndSendPitchbend();
         printStuff();
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
+        //readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
         //Serial.println(micros() - timerD);
 
         //testing gyro

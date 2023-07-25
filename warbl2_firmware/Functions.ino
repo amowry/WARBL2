@@ -100,7 +100,6 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //default rate for IMU is 104 Hz (this probably should be increased a bit -- see library)
     //Todo: See if this will run at a higher SPI speed (not essential but will save a bit more time and power)
     //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA @ 104 Hz).
 
@@ -108,6 +107,7 @@ void readIMU(void) {
     sensors_event_t gyro;
     sensors_event_t temp;
     sox.getEvent(&accel, &gyro, &temp);
+
 
     gyroX = gyro.gyro.x;
     gyroY = gyro.gyro.y;
@@ -123,39 +123,28 @@ void readIMU(void) {
     gyroZ -= gyroZCalibration;
 
     //static float accelFilteredOld;
-
     //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // low pass filter -- this works for extremely basic tilt.
     //accelFilteredOld = accelFiltered;
     //Serial.println(accelFiltered);
 
-    /*
-    Serial.println(gyroX, 4);
-    Serial.println(gyroY, 4);
-    Serial.println(gyroZ, 4);
-    Serial.println(accelX, 4);
-    Serial.println(accelY, 4);
-    Serial.println(accelZ, 4);
-    Serial.println("");
+    FusedAngles fusedAngles;  // Variable to store the output
 
-   
-    gyroX *= 57.29577793F;  //convert to degrees/s 
-    gyroY *= 57.29577793F;  //convert to degrees/s
-    gyroZ *= 57.29577793F;  //convert to degrees/s
+    ThreeAxis accelerometer;  // Units are in meters / second ^ 2
+    accelerometer.x = accelX;
+    accelerometer.y = accelY;
+    accelerometer.z = accelZ;
 
-    //accelX /= 9.80665f;  //convert to g
-    //accelY /= 9.80665f;  //convert to g
-    //accelZ /= 9.80665f;  //convert to g
+    ThreeAxis gyroscope;  // Units are in radians / second
+    gyroscope.x = gyroX;
+    gyroscope.y = gyroY;
+    gyroscope.z = gyroZ;
 
-    
-    //Madgwick-- doesn't seem to be working correctly.
-    float roll, pitch, yaw;
-    filter.updateIMU(gyroX, gyroY, gyroZ, accelX, accelY, accelZ);
-    pitch = filter.getPitch();
-    roll = filter.getRoll();
-    yaw = filter.getYaw();
-    Serial.println(roll);
+    fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the angles
 
-    */
+    // Serial.print(" Roll: ");
+    // Serial.print(fusedAngles.pitch);
+    // Serial.print(" Pitch : ");
+    //Serial.println(fusedAngles.roll);
 }
 
 
