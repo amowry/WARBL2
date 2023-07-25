@@ -700,7 +700,7 @@ int get_note(unsigned int fingerPattern) {
                     }
                 }
 
-                if (fingerPattern >> 8 == 0 && !switches[mode][THUMB_AND_OVERBLOW] && !breathMode == kPressureThumb && ED[mode][38] != 0) {  //thumb hole is open and we're not using it for register
+                if (fingerPattern >> 8 == 0 && !switches[mode][THUMB_AND_OVERBLOW] && breathMode != kPressureThumb && ED[mode][38] != 0) {  //thumb hole is open and we're not using it for register
                     customScalePosition = 38;
                 }
 
