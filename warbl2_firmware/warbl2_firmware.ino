@@ -213,6 +213,7 @@ unsigned long runTimer;           //The time when WARBL started running on batte
 bool battPower = false;           //Keeps track of when we're on battery power, for above timer
 unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate and then adjusted each time the battery is discharged.
 unsigned long prevRunTime = 360;  //The total run time since the last full charge (minutes). Initialized at around half full. It is zeroed after each full charge.
+unsigned long powerDownTimer;     //For powering down after a period of no activity
 
 
 //BLE
@@ -220,14 +221,11 @@ uint16_t connIntvl = 0;  // The negotiated connection interval
 
 
 //Misc.
-unsigned long timerA = 0;  //for timing various intervals
-unsigned long timerB = 0;
-unsigned long timerC = 0;
+unsigned long timerC = 0;  //For timing various intervals
 unsigned long timerD = 0;
+unsigned long timerE = 0;
 unsigned long timerF = 0;
 unsigned long nowtime;
-unsigned long powerDownTimer;
-bool playing = 0;  //testing
 
 
 //IMU data
@@ -639,8 +637,8 @@ void setup() {
 
     //IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
-    sox.setAccelDataRate(LSM6DS_RATE_833_HZ);  //Default is 104 if we don't change it here.
-    sox.setGyroDataRate(LSM6DS_RATE_833_HZ);   //Default is 104 if we don't change it here.
+    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
     fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
 
 
@@ -709,9 +707,6 @@ void loop() {
 
     get_state();  //Get the breath state.
 
-    //timerD = micros(); //testing--micros requres turning on DWT in setup()
-    readIMU();  //Takes 125 uS (without processing data). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
-    //Serial.println(micros() - timerD);
 
     MIDI.read();  // Read any new USBMIDI messages.
 
@@ -721,11 +716,6 @@ void loop() {
         }
     }
 
-    checkButtons();
-
-    if (buttonUsed) {
-        handleButtons();  //If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
-    }
 
     if (blinkNumber > 0) {
         blink();  //Blink the LED if necessary.
@@ -737,9 +727,6 @@ void loop() {
 
 
     get_fingers();  //Find which holes are covered.
-
-    sendToConfig(false, false);  //Occasionally send the fingering pattern and pressure to the Configuration Tool if they have changed.
-
 
 
     if (debounceFingerHoles()) {
@@ -809,29 +796,36 @@ void loop() {
 
 
 
+    /////////// Things here happen ~ every 5 mS --these things should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
+
+    if ((nowtime - timerE) > 5) {
+        timerE = nowtime;
+
+        //timerD = micros(); //testing--micros requres turning on DWT in setup()
+        readIMU();  //Takes 125 uS (without processing data). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
+        //Serial.println(micros() - timerD);
+
+        checkButtons();
+
+        if (buttonUsed) {
+            handleButtons();  //If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
+        }
+
+        sendToConfig(false, false);  //Occasionally send the fingering pattern and pressure to the Configuration Tool if they have changed.
+    }
+
+
+
+
+
     /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
     if ((nowtime - timerC) >= (connIntvl > 0 ? (connIntvl + 2) : 9)) {
         timerC = nowtime;
 
-
         calculateAndSendPitchbend();
         printStuff();
-        //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        //readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?).
-        //Serial.println(micros() - timerD);
 
-        //testing gyro
-        /*
-        if (noteon == true) {
-            static float accelFilteredOld;
-            if (accelY < 0) {
-                float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // testing low pass filter -- this works for extremely basic tilt.
-                accelFilteredOld = accelFiltered;
-                sendMIDI(CC, 1, 11, (accelY + 9.8) * 12.96);  //gyro test
-            }
-            }
-            */
     }
 
 
@@ -843,9 +837,7 @@ void loop() {
     if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
-
         manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage.
-
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }

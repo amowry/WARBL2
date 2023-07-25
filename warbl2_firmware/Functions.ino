@@ -23,7 +23,7 @@ void printStuff(void) {
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(connIntvl);
-    //Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
+    //Serial.println(prevRunTime);
     //Serial.println(pressed[1]);
     //Serial.println(CPUtemp, 2);
     //Serial.println(IMUtemp);
@@ -137,11 +137,11 @@ void readIMU(void) {
     gyroscope.y = gyroY;
     gyroscope.z = gyroZ;
 
-    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the angles -- this seems slow, takes ~200 uS
+    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS
 
-    // Serial.print(" Roll: ");
-    // Serial.print(fusedAngles.pitch);
-    // Serial.print(" Pitch : ");
+     //Serial.print(" Roll: ");
+     //Serial.print(fusedAngles.pitch);
+     //Serial.print(" Pitch : ");
     //Serial.println(fusedAngles.roll);
 }
 
