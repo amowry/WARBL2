@@ -638,7 +638,7 @@ void setup() {
     SPI.begin();
 
     //IMU
-    sox.begin_SPI(12);                         //Start IMU (CS pin is D12) ToDo: would like to figure out how to set SPI frequency here--it defaults to 1 Mhz but according to the datasheet can go as high as 10 Mhz.
+    sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
     sox.setAccelDataRate(LSM6DS_RATE_833_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_833_HZ);   //Default is 104 if we don't change it here.
     fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
@@ -709,7 +709,9 @@ void loop() {
 
     get_state();  //Get the breath state.
 
-    readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
+    //timerD = micros(); //testing--micros requres turning on DWT in setup()
+    readIMU();  //Takes 125 uS (without processing data). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
+    //Serial.println(micros() - timerD);
 
     MIDI.read();  // Read any new USBMIDI messages.
 

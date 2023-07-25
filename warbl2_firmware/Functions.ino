@@ -108,7 +108,6 @@ void readIMU(void) {
     sensors_event_t temp;
     sox.getEvent(&accel, &gyro, &temp);
 
-
     gyroX = gyro.gyro.x;
     gyroY = gyro.gyro.y;
     gyroZ = gyro.gyro.z;
@@ -117,7 +116,7 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
-    //calibrate
+    //calibrate gyro
     gyroX -= gyroXCalibration;
     gyroY -= gyroYCalibration;
     gyroZ -= gyroZCalibration;
@@ -139,7 +138,7 @@ void readIMU(void) {
     gyroscope.y = gyroY;
     gyroscope.z = gyroZ;
 
-    fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the angles
+    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the angles -- this seems slow, takes ~200 uS
 
     // Serial.print(" Roll: ");
     // Serial.print(fusedAngles.pitch);
