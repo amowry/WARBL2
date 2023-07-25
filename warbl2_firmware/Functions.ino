@@ -100,8 +100,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //Todo: See if this will run at a higher SPI speed (not essential but will save a bit more time and power)
-    //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA @ 104 Hz).
+    //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA).
 
     sensors_event_t accel;
     sensors_event_t gyro;

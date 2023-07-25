@@ -683,7 +683,7 @@ void loop() {
     /////////// Things here happen ~ every 3 mS if on battery power and 2 mS if plugged in.
 
 
-    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS deay.
+    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS delay.
 
 
     byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.

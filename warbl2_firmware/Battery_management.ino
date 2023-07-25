@@ -128,7 +128,7 @@ void manageBattery(bool send) {
     static byte cycles = 40;  //40 cycles is 30 seconds.
 
     //Send voltage and charging status to Config Tool.
-    if (cycles == 24 || send) {
+    if (cycles == 40 || send) {
         if (communicationMode) {
             sendMIDI(CC, 7, 106, 70);
             sendMIDI(CC, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  //Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
@@ -226,7 +226,7 @@ byte faultDetect(bool statusChanged) {
     }
 
     //ToDo: could probably use shorter than 5 seconds, maybe 4.
-    if (((nowtime - faultTimer) > 5000)) {  //If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
+    if ((nowtime - faultTimer) > 5000) {  //If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
         faultTimer = nowtime;
         timing = false;
         if (change < 2) {  //If the status has only changed once or not at all,
