@@ -709,7 +709,7 @@ void loop() {
 
     get_state();  //Get the breath state.
 
-    readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
+    readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
 
     MIDI.read();  // Read any new USBMIDI messages.
 
@@ -816,7 +816,7 @@ void loop() {
         calculateAndSendPitchbend();
         printStuff();
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        //readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?). ToDO: the default IMU update rate is 104 Hz (9.6 mS)--this should be increased a bit if we're reading it every 9 mS.
+        //readIMU();  //Takes 225 uS. We could just get the gyro and accel without getting temp, which may take less time(?).
         //Serial.println(micros() - timerD);
 
         //testing gyro
