@@ -626,7 +626,7 @@ void setup() {
     Wire.begin();                          //Join i2c bus for EEPROM.
     Wire.setClock(400000);                 //high speed
     EEPROM.setMemorySize(128 * 1024 / 8);  //In bytes. 128kbit = 16kbyte
-    EEPROM.setPageSize(64);                //In bytes.
+    EEPROM.setPageSize(64);                //In bytes
     EEPROM.enablePollForWriteComplete();   //Supports I2C polling of write completion. This shortens the amount of time waiting between writes but hammers the I2C bus by polling every 100 uS. disablePollForWriteComplete() will add 5 mS between each write.
     EEPROM.setPageWriteTime(5);            //5 ms max write time
     EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings.
@@ -638,7 +638,7 @@ void setup() {
     SPI.begin();
 
     //IMU
-    sox.begin_SPI(12);                         //Start IMU (CS pin is D12)
+    sox.begin_SPI(12);                         //Start IMU (CS pin is D12) ToDo: would like to figure out how to set SPI frequency here--it defaults to 1 Mhz but according to the datasheet can go as high as 10 Mhz.
     sox.setAccelDataRate(LSM6DS_RATE_833_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_833_HZ);   //Default is 104 if we don't change it here.
     fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
@@ -697,8 +697,8 @@ void loop() {
     }
 
     if (delayCorrection < delayTime) {  //If we haven't used up too much time since the last time through the loop, we can sleep for a bit.
-        delayCorrection = delayTime - delayCorrection;
-        delay(delayCorrection);
+        delayTime = delayTime - delayCorrection;
+        delay(delayTime);
     }
 
 
