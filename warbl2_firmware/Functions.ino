@@ -292,7 +292,7 @@ bool debounceFingerHoles() {
 
 
 
-//Send the pattern of covered holes to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
+//Send the finger pattern and pressure to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
 void sendToConfig(bool newPattern, bool newPressure) {
 
     static bool patternChanged = false;
@@ -301,12 +301,12 @@ void sendToConfig(bool newPattern, bool newPressure) {
     static unsigned long pressureSendTimer;
 
     if (communicationMode) {
-        if (newPattern && patternChanged == false) {  //If the fingering pattern has changed, start a timer
+        if (newPattern && patternChanged == false) {  //If the fingering pattern has changed, start a timer.
             patternChanged = true;
             patternSendTimer = nowtime;
         }
 
-        if (newPressure && pressureChanged == false) {  //If the fingering pattern has changed, start a timer
+        if (newPressure && pressureChanged == false) {  //If the pressure has changed, start a timer.
             pressureChanged = true;
             pressureSendTimer = nowtime;
         }
@@ -2696,7 +2696,7 @@ void sendPressure(bool force) {
 
 
 
-//Starting advertsiging BLE
+//Starting advertising BLE
 void startAdv(void) {
     // Set General Discoverable Mode flag
     Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
@@ -2831,12 +2831,12 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over
         case 0xD0:  //Channel pressure
             {
                 if (WARBL2settings[MIDI_DESTINATION] != 1) {
-                    MIDI.sendAfterTouch(d, c);  //deprecated
-                    //MIDI.sendPolyPressure(d, c);
+                    MIDI.sendAfterTouch(d, c);
+                    //MIDI.sendPolyPressure(d, c); //deprecated
                 }
                 if (WARBL2settings[MIDI_DESTINATION] != 0) {
                     BLEMIDI.sendAfterTouch(d, c);
-                    //BLEMIDI.sendPolyPressure(d, c);
+                    //BLEMIDI.sendPolyPressure(d, c); //deprecated
                 }
                 break;
             }
