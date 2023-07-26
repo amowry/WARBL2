@@ -121,9 +121,11 @@ void readIMU(void) {
     gyroZ -= gyroZCalibration;
 
     //static float accelFilteredOld;
-    //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // low pass filter -- this works for extremely basic tilt.
+    //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // low pass filter -- this works for extremely basic pitch.
     //accelFilteredOld = accelFiltered;
     //Serial.println(accelFiltered);
+
+    //*Can also look at turning on built-in filters in IMU (see datasheet and/or library)
 
     FusedAngles fusedAngles;  // Variable to store the output
 
@@ -137,11 +139,11 @@ void readIMU(void) {
     gyroscope.y = gyroY;
     gyroscope.z = gyroZ;
 
-    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS
+    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS. Not sure why that is. It also doesn't detect angles greater than 90 degrees, so might not be the best option.
 
-     //Serial.print(" Roll: ");
-     //Serial.print(fusedAngles.pitch);
-     //Serial.print(" Pitch : ");
+    //Serial.print(" Roll: ");
+    //Serial.print(fusedAngles.pitch);
+    //Serial.print(" Pitch : ");
     //Serial.println(fusedAngles.roll);
 }
 

@@ -753,7 +753,7 @@ void loop() {
         tempNewNote = -1;
         fingeringChangeTimer = nowtime;  //Start timing after the fingering pattern has changed.
 
-        get_state();  //Recalculate state if the fingering has changed.
+        get_state();  //Recalculate state if the fingering has changed because state depends on both pressure and fingering.
     }
 
 
@@ -767,8 +767,20 @@ void loop() {
 
     get_shift();  //Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
 
+
+
+    byte pressureInterval;  //Determine how frequently to send MIDI messages based on pressure.
+    if ((nowtime - noteOnTimestamp) < 20) {
+        pressureInterval = 2;
+    } else pressureInterval = 5;
+    if (pressureInterval < connIntvl + 2) {
+        pressureInterval = connIntvl + 2;
+    }
+
+
     //if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 2 : 5)) { //From old WARBL code
-    if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 10 : 20)) {  //ToDo--need to determine optimal times for BLE and use a faster speed if not connected (see pitchbend example below)
+    if ((nowtime - pressureTimer) >= pressureInterval) {
+
         pressureTimer = nowtime;
         if (abs(prevSensorValue - sensorValue) > 1) {  //If pressure has changed more than a little, send it.
             if (ED[mode][SEND_PRESSURE]) {
@@ -795,14 +807,13 @@ void loop() {
 
 
 
-
     /////////// Things here happen ~ every 5 mS --these things should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
 
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
 
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes 125 uS (without processing data). Reading every 2 mS adds 0.3 mA over reading every 9 mS.
+        readIMU();  //Takes 125 uS (without processing data).
         //Serial.println(micros() - timerD);
 
         checkButtons();
@@ -825,7 +836,6 @@ void loop() {
 
         calculateAndSendPitchbend();
         printStuff();
-
     }
 
 
