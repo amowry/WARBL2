@@ -2747,40 +2747,40 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
 
         case 0x80:  //Note Off
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
-                    MIDI.sendNoteOff(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {  //If we're not only sending BLE or if we're not connected to BLE
+                    MIDI.sendNoteOff(d1, d2, c);                                //Send USB MIDI.
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
-                    BLEMIDI.sendNoteOff(d1, d2, c);
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {  //If we're not only sending USB or if we're not connected to USB
+                    BLEMIDI.sendNoteOff(d1, d2, c);              //Send BLE MIDI.
                 }
                 break;
             }
         case 0x90:  //Note On
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendNoteOn(d1, d2, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendNoteOn(d1, d2, c);
                 }
                 break;
             }
         case 0xA0:  //Key Pressure
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendAfterTouch(d1, d2, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendAfterTouch(d1, d2, c);
                 }
                 break;
             }
         case 0xB0:  //CC
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendControlChange(d1, d2, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendControlChange(d1, d2, c);
                 }
                 break;
@@ -2796,10 +2796,10 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
         case 0xE0:  //Pitchbend
             {
                 int16_t pitch = ((d2 << 7) + d1) - 8192;
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendPitchBend(pitch, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendPitchBend(pitch, c);
                 }
                 break;
@@ -2830,11 +2830,11 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over
 
         case 0xD0:  //Channel pressure
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendAfterTouch(d, c);
                     //MIDI.sendPolyPressure(d, c); //deprecated
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendAfterTouch(d, c);
                     //BLEMIDI.sendPolyPressure(d, c); //deprecated
                 }
@@ -2844,10 +2844,10 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d)  // send a 2-byte MIDI event over
 
         case 0xC0:  //Program Change
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendProgramChange(d, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendProgramChange(d, c);
                 }
                 break;

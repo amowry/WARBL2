@@ -30,7 +30,7 @@ void manageBattery(bool send) {
     static bool statusChanged;                 //Flag when the charging status has changed.
 
 
-    byte USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
+    USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
     static byte prevUSBstatus;
     static unsigned long USBstatusChangeTimer;
 

@@ -208,6 +208,9 @@ const uint8_t battRead = 16;       //Analog pin for reading battery voltage
 const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
 
 
+byte USBstatus = 0;  //Battery power (0), dumb charger (1), or connected USB host (2).
+
+
 //Battery variables
 unsigned long runTimer;           //The time when WARBL started running on battery power
 bool battPower = false;           //Keeps track of when we're on battery power, for above timer
@@ -773,12 +776,12 @@ void loop() {
     if ((nowtime - noteOnTimestamp) < 20) {
         pressureInterval = 2;
     } else pressureInterval = 5;
-    if (pressureInterval < connIntvl + 2) {
+    if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  //Use a longer interval if it's shorter than the connection interval and we're not sending USB only.
         pressureInterval = connIntvl + 2;
     }
 
 
-    //if ((nowtime - pressureTimer) >= ((nowtime - noteOnTimestamp) < 20 ? 2 : 5)) { //From old WARBL code
+
     if ((nowtime - pressureTimer) >= pressureInterval) {
 
         pressureTimer = nowtime;
@@ -831,8 +834,8 @@ void loop() {
 
     /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
-    if ((nowtime - timerC) >= (connIntvl > 0 ? (connIntvl + 2) : 9)) {
-        timerC = nowtime;
+    if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
+
 
         calculateAndSendPitchbend();
         printStuff();
