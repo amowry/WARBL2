@@ -13,7 +13,6 @@ void printStuff(void) {
     //Serial.println(toneholeRead[0]);
     //Serial.println("");
 
-    //EEPROM.get(1015, testRead);
 
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
@@ -2734,7 +2733,7 @@ void startAdv(void) {
 
 
 
-//These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library
+//These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library. ToDo: These could be made shorter/more efficient.
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MIDI event over USB
 {
     m &= 0xF0;
@@ -2751,7 +2750,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // send a 3-byte MI
                     MIDI.sendNoteOff(d1, d2, c);                                //Send USB MIDI.
                 }
                 if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {  //If we're not only sending USB or if we're not connected to USB
-                    BLEMIDI.sendNoteOff(d1, d2, c);              //Send BLE MIDI.
+                    BLEMIDI.sendNoteOff(d1, d2, c);                                    //Send BLE MIDI.
                 }
                 break;
             }

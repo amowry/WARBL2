@@ -620,7 +620,7 @@ void setup() {
     BLEMIDI.setHandleControlChange(handleControlChange);          //Handle received MIDI CC messages.
     Bluefruit.Periph.setConnectCallback(connect_callback);        //Allows us to get connection information
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  //Detect disconnect.
-    startAdv();                                                   //Set up and start advertising.
+    startAdv();                                                   //Set up and start advertising. Comment this out for testing without BLE on.
 
 
     //I2C
@@ -703,13 +703,11 @@ void loop() {
     }
 
 
-
-    getSensors();
+    getSensors();  //180 uS, 55 of which is reading pressure sensor.
 
     nowtime = millis();  //Get the current time for the timers used below and in various functions.
 
-    get_state();  //Get the breath state.
-
+    get_state();  //Get the breath state. 3 uS.
 
     MIDI.read();  // Read any new USBMIDI messages.
 
@@ -729,12 +727,12 @@ void loop() {
     }
 
 
-    get_fingers();  //Find which holes are covered.
+    get_fingers();  //Find which holes are covered. 4 uS.
 
 
     if (debounceFingerHoles()) {
         fingersChanged = 1;
-        tempNewNote = get_note(holeCovered);  //Get the next MIDI note from the fingering pattern if it has changed.
+        tempNewNote = get_note(holeCovered);  //Get the next MIDI note from the fingering pattern if it has changed. 3uS.
         sendToConfig(true, false);            //Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
         if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
             findStepsDown();
@@ -816,7 +814,7 @@ void loop() {
         timerE = nowtime;
 
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes 125 uS (without processing data).
+        readIMU();  //125 uS (without processing data).
         //Serial.println(micros() - timerD);
 
         checkButtons();
@@ -835,9 +833,7 @@ void loop() {
     /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
     if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
-
-
-        calculateAndSendPitchbend();
+        calculateAndSendPitchbend();  //11-200 uS depending on whether holes are partially covered.
         printStuff();
     }
 
@@ -850,7 +846,7 @@ void loop() {
     if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
-        manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage.
+        manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage. Could read the voltage a little less frequently.
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
@@ -858,6 +854,6 @@ void loop() {
 
 
 
-    /////////////
-    sendNote();  //Send a new MIDI note if there is one.
+    ////////////
+    sendNote();  //Send a new MIDI note if there is one. Takes up to 325 uS if there is a new note.
 }
