@@ -94,18 +94,18 @@ void getSensors(void) {
 
 
 
-void printVector( vec3_t r ) {
-  Serial.print( r.x, 4 );
-  Serial.print( "," );
-  Serial.print( r.y, 4 );
-  Serial.print( "," );
-  Serial.print( r.z, 4 );
+void printVector(vec3_t r) {
+    Serial.print(r.x, 4);
+    Serial.print(",");
+    Serial.print(r.y, 4);
+    Serial.print(",");
+    Serial.print(r.z, 4);
 }
 
-void printQuat( quat_t q ) {
-  Serial.print( q.w , 4);
-  Serial.print( "," );
-  printVector( q.v );
+void printQuat(quat_t q) {
+    Serial.print(q.w, 4);
+    Serial.print(",");
+    printVector(q.v);
 }
 
 
@@ -131,7 +131,7 @@ void readIMU(void) {
     float gyroY = rawGyroY - gyroYCalibration;
     float gyroZ = rawGyroZ - gyroZCalibration;
 
-/*
+    /*
     Serial.print(" GX : ");
     Serial.print(gyroX, 4);
     Serial.print(" GY : ");
@@ -147,46 +147,12 @@ void readIMU(void) {
     Serial.println(accelZ, 4);
 */
 
-#if 0
-    static float accelFilteredOld = 0.0f;
-    float accelFiltered = 0.1f * accelY + 0.9f * accelFilteredOld;  // low pass filter -- this works for extremely basic pitch.
-    accelFilteredOld = accelFiltered;
-    Serial.println(accelFiltered);
-#endif
-    //*Can also look at turning on built-in filters in IMU (see datasheet and/or library)
 
-#if 0
-    // simpleFusion implementation 
 
-    FusedAngles fusedAngles;  // Variable to store the output
-
-    ThreeAxis accelerometer;  // Units are in meters / second ^ 2
-    accelerometer.x = accelX;
-    accelerometer.y = accelY;
-    accelerometer.z = accelZ;
-
-    ThreeAxis gyroscope;  // Units are in radians / second
-    gyroscope.x = gyroX;
-    gyroscope.y = gyroY;
-    gyroscope.z = gyroZ;
-
-    fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS. Not sure why that is. It also doesn't detect angles greater than 90 degrees, so might not be the best option.
-
-    //Serial.print(" Roll: ");
-    /*
-    Serial.print(fusedAngles.pitch, 4);
-    Serial.print(", ");
-    Serial.print(fusedAngles.roll, 4);
-    
-    Serial.println(",   -100.0, 100.0");
-   */
-#endif
-
-#if 1
     // imuFilter implementation
     // this takes 43 usec
     const float fusionGain = 0.5f;
-    const float sdAccel = 0.2f; // stddev of accel to use to update... acts as filter
+    const float sdAccel = 0.2f;  // stddev of accel to use to update... acts as filter
     fusion.update(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, fusionGain, sdAccel);
 
     quat_t quat = fusion.getQuat();
@@ -198,17 +164,14 @@ void readIMU(void) {
     currYaw = yaw;
 
     /*
-    // serial plotter friendly    
+    // serial plotter friendly
     Serial.print(roll, 4);
     Serial.print(", ");
     Serial.print(pitch, 4);
     Serial.print(", ");
     Serial.print(yaw, 4);
-    Serial.println(",   -3.2, 3.2"); // to keep plotter bounds fixed
+    Serial.println(",   -3.2, 3.2");  // to keep plotter bounds fixed
     */
-
-#endif
-
 }
 
 
@@ -1386,7 +1349,7 @@ void sendNote() {
 
         pitchBendTimer = millis();  //for some reason it sounds best if we don't send pitchbend right away after starting a new note.
         noteOnTimestamp = pitchBendTimer;
-        powerDownTimer = millis();  //reset the powerDown timer because we're actively sending notes
+        powerDownTimer = pitchBendTimer;  //reset the powerDown timer because we're actively sending notes
 
         prevNote = newNote;
 
@@ -1458,9 +1421,12 @@ void handleControlChange(byte channel, byte number, byte value) {
 
     if (number < 120) {  //Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == 7) {             //If we're on channel 7, we may be receiving messages from the configuration tool.
-            powerDownTimer = millis();           //Reset the powerDown timer because we've heard from the Config Tool.
-            blinkNumber = 1;                     //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+        if ((channel & 0x0f) == 7) {   //If we're on channel 7, we may be receiving messages from the configuration tool.
+            powerDownTimer = nowtime;  //Reset the powerDown timer because we've heard from the Config Tool.
+            blinkNumber = 1;           //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+
+
+            ///////CC 102
             if (number == 102) {                 //Many settings are controlled by a value in CC 102 (always channel 7).
                 if (value > 0 && value <= 18) {  //Handle sensor calibration commands from the configuration tool.
                     if ((value & 1) == 0) {
@@ -1540,20 +1506,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 for (byte i = 0; i < 8; i++) {  //update button configuration
                     if (buttonReceiveMode == i) {
-                        if (value == 119) {  //this is a special value for autocalibration because I ran out of values in the range 0-12 below.
-                            buttonPrefs[mode][i][0] = 19;
-                            //blinkNumber = 0;
-                        }
-                        if (value == 122) {  //this is a special value for powerdown because I ran out of values in the range 0-12 below.
-                            buttonPrefs[mode][i][0] = 22;
-                            //blinkNumber = 0;
-                        }
-                        for (byte j = 0; j < 12; j++) {  //update column 0 (action).
-                            if (value == 100 + j) {
-                                buttonPrefs[mode][i][0] = j;
-                                //blinkNumber = 0;
-                            }
-                        }
+
                         for (byte k = 0; k < 5; k++) {  //update column 1 (MIDI action).
                             if (value == 112 + k) {
                                 buttonPrefs[mode][i][1] = k;
@@ -1604,6 +1557,9 @@ void handleControlChange(byte channel, byte number, byte value) {
             }
 
 
+
+
+            ///////CC 103
             else if (number == 103) {
                 senseDistanceSelector[mode] = value;
                 loadPrefs();
@@ -1628,6 +1584,8 @@ void handleControlChange(byte channel, byte number, byte value) {
             }
 
 
+
+            ///////CC 104
             if (number == 104) {  //update receive mode, used for advanced pressure range sliders, switches, and expression and drones panel settings (this indicates the variable for which the next received byte on CC 105 will be).
                 pressureReceiveMode = value - 1;
             }
@@ -1676,7 +1634,7 @@ void handleControlChange(byte channel, byte number, byte value) {
             }
 
 
-
+            ///////CC 106
             if (number == 106 && value > 15) {
 
 
@@ -1746,10 +1704,25 @@ void handleControlChange(byte channel, byte number, byte value) {
                 else if (value == 60) {  // recenter IMU heading based on current
                     centerIMU();
                 }
+
+                else if (value > 99) {
+                    for (byte i = 0; i < 8; i++) {  //update button configuration
+                        if (buttonReceiveMode == i) {
+
+                            for (byte j = 0; j < 27; j++) {  //update column 0 (action).
+                                if (value == 100 + j) {
+                                    buttonPrefs[mode][i][0] = j;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
 
 
+
+            ///////CC 119
             if (number == 119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
                 for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed bythe Config Tool because it is independent of mode.
@@ -2010,14 +1983,20 @@ void performAction(byte action) {
             break;
 
 
-        case 19:  //autocalibrate
+        case 12:  //autocalibrate
             calibration = 1;
             break;
 
 
-        case 22:
+        case 13:  //Power down
             powerDown(false);
             break;
+
+
+        case 14:  //Recenter yaw
+            centerIMU();
+            break;
+
 
 
         default:
@@ -2301,8 +2280,8 @@ void saveSettings(byte i) {
 
 //send all settings for current instrument to the WARBL Configuration Tool.
 void sendSettings() {
-    sendMIDI(CC, 7, 110, VERSION);  //send software version
 
+    sendMIDI(CC, 7, 110, VERSION);  //send software version
 
     for (byte i = 0; i < 3; i++) {
         sendMIDI(CC, 7, 102, 30 + i);                //indicate that we'll be sending the fingering pattern for instrument i
@@ -2345,7 +2324,7 @@ void sendSettings() {
 
     for (byte i = 0; i < 8; i++) {
         sendMIDI(CC, 7, 102, 90 + i);                         //indicate that we'll be sending data for button commands row i (click 1, click 2, etc.)
-        sendMIDI(CC, 7, 102, 100 + buttonPrefs[mode][i][0]);  //send action (i.e. none, send MIDI message, etc.)
+        sendMIDI(CC, 7, 106, 100 + buttonPrefs[mode][i][0]);  //send action (i.e. none, send MIDI message, etc.)
         if (buttonPrefs[mode][i][0] == 1) {                   //if the action is a MIDI command, send the rest of the MIDI info for that row.
             sendMIDI(CC, 7, 102, 112 + buttonPrefs[mode][i][1]);
             sendMIDI(CC, 7, 106, buttonPrefs[mode][i][2]);

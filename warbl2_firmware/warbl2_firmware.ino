@@ -14,15 +14,13 @@
 #include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
-#include <simpleFusion.h>       //IMU fusion
-#include <imuFilter.h> // IMU test
+#include <imuFilter.h>          // IMU test
 
 BLEDis bledis;
 BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
-SimpleFusion fuser;     // Initialize the SimpleFusion object
 imuFilter fusion;
 
 ExternalEEPROM EEPROM;
@@ -387,9 +385,9 @@ byte pressureSelector[3][12] =  //a selector array for all the register control 
         3, 7, 20, 0, 3, 10 }
   };
 
-uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default actions as of formware 2.1 to avoid confusion with beginning users). Dimension 1 is the three instruments. Dimension 2 is the button combination: click 1, click 2, click3, hold 2 click 1, hold 2 click 3, longpress 1, longpress2, longpress3
+uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default actions as of firmware 2.1 to avoid confusion). Dimension 1 is the three instruments. Dimension 2 is the button combination: click 1, click 2, click3, hold 2 click 1, hold 2 click 3, longpress 1, longpress2, longpress3
                                 //Dimension 3 is the desired action: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
-                                //instrument 0---the actions are: 0 none, 1 send MIDI message, 2 change pitchbend mode, 3 instrument, 4 play/stop (bagless mode), 5 octave shift up, 6 octave shift down, 7 MIDI panic, 8 change register control mode, 9 drones on/off, 10 semitone shift up, 11 semitone shift down, 12 begin autocalibration
+                                //instrument 0---The actions are: 0 none, 1 send MIDI message, 2 change pitchbend mode, 3 instrument, 4 play/stop (bagless mode), 5 octave shift up, 6 octave shift down, 7 MIDI panic, 8 change register control mode, 9 drones on/off, 10 semitone shift up, 11 semitone shift down, 12 begin autocalibration, 13 power down, 14 recenter yaw.
   { { { 0, 0, 0, 0, 0 },
       { 0, 0, 0, 0, 0 },
       { 0, 0, 0, 0, 0 },
@@ -564,7 +562,7 @@ void setup() {
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
-    digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs. ToDo: This seems to work fine but I need to check and make sure it's okay to do in this order.
+    digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
     digitalWrite(redLED, LOW);
@@ -644,7 +642,6 @@ void setup() {
     sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
-    fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
     fusion.setup(0.000001f, 0.000001f, 9.807f);
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -705,7 +702,7 @@ void loop() {
     }
 
 
-    getSensors();  //180 uS, 55 of which is reading pressure sensor.
+    getSensors();  //180 uS, 55 of which is reading the pressure sensor.
 
     nowtime = millis();  //Get the current time for the timers used below and in various functions.
 
