@@ -94,7 +94,19 @@ void getSensors(void) {
 
 
 
+void printVector( vec3_t r ) {
+  Serial.print( r.x, 4 );
+  Serial.print( "," );
+  Serial.print( r.y, 4 );
+  Serial.print( "," );
+  Serial.print( r.z, 4 );
+}
 
+void printQuat( quat_t q ) {
+  Serial.print( q.w , 4);
+  Serial.print( "," );
+  printVector( q.v );
+}
 
 
 void readIMU(void) {
@@ -106,25 +118,45 @@ void readIMU(void) {
     sensors_event_t temp;
     sox.getEvent(&accel, &gyro, &temp);
 
-    gyroX = gyro.gyro.x;
-    gyroY = gyro.gyro.y;
-    gyroZ = gyro.gyro.z;
+    rawGyroX = gyro.gyro.x;
+    rawGyroY = gyro.gyro.y;
+    rawGyroZ = gyro.gyro.z;
     accelX = accel.acceleration.x;
     accelY = accel.acceleration.y;
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
     //calibrate gyro
-    gyroX -= gyroXCalibration;
-    gyroY -= gyroYCalibration;
-    gyroZ -= gyroZCalibration;
+    float gyroX = rawGyroX - gyroXCalibration;
+    float gyroY = rawGyroY - gyroYCalibration;
+    float gyroZ = rawGyroZ - gyroZCalibration;
 
-    //static float accelFilteredOld;
-    //float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // low pass filter -- this works for extremely basic pitch.
-    //accelFilteredOld = accelFiltered;
-    //Serial.println(accelFiltered);
+/*
+    Serial.print(" GX : ");
+    Serial.print(gyroX, 4);
+    Serial.print(" GY : ");
+    Serial.print(gyroY, 4);
+    Serial.print(" GZ : ");
+    Serial.println(gyroZ, 4);
 
+    Serial.print(" AX : ");
+    Serial.print(accelX, 4);
+    Serial.print(" AY : ");
+    Serial.print(accelY, 4);
+    Serial.print(" AZ : ");
+    Serial.println(accelZ, 4);
+*/
+
+#if 0
+    static float accelFilteredOld = 0.0f;
+    float accelFiltered = 0.1f * accelY + 0.9f * accelFilteredOld;  // low pass filter -- this works for extremely basic pitch.
+    accelFilteredOld = accelFiltered;
+    Serial.println(accelFiltered);
+#endif
     //*Can also look at turning on built-in filters in IMU (see datasheet and/or library)
+
+#if 0
+    // simpleFusion implementation 
 
     FusedAngles fusedAngles;  // Variable to store the output
 
@@ -138,12 +170,45 @@ void readIMU(void) {
     gyroscope.y = gyroY;
     gyroscope.z = gyroZ;
 
-    //fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS. Not sure why that is. It also doesn't detect angles greater than 90 degrees, so might not be the best option.
+    fuser.getFilteredAngles(accelerometer, gyroscope, &fusedAngles, UNIT_DEGREES);  // Fuse the sensors -- this seems slow, takes ~200 uS. Not sure why that is. It also doesn't detect angles greater than 90 degrees, so might not be the best option.
 
     //Serial.print(" Roll: ");
-    //Serial.print(fusedAngles.pitch);
-    //Serial.print(" Pitch : ");
-    //Serial.println(fusedAngles.roll);
+    /*
+    Serial.print(fusedAngles.pitch, 4);
+    Serial.print(", ");
+    Serial.print(fusedAngles.roll, 4);
+    
+    Serial.println(",   -100.0, 100.0");
+   */
+#endif
+
+#if 1
+    // imuFilter implementation
+    // this takes 43 usec
+    const float fusionGain = 0.5f;
+    const float sdAccel = 0.2f; // stddev of accel to use to update... acts as filter
+    fusion.update(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, fusionGain, sdAccel);
+
+    quat_t quat = fusion.getQuat();
+    // these are in radians
+    float roll = fusion.roll();
+    float yaw = fusion.yaw();
+    float pitch = fusion.pitch();
+
+    currYaw = yaw;
+
+    /*
+    // serial plotter friendly    
+    Serial.print(roll, 4);
+    Serial.print(", ");
+    Serial.print(pitch, 4);
+    Serial.print(", ");
+    Serial.print(yaw, 4);
+    Serial.println(",   -3.2, 3.2"); // to keep plotter bounds fixed
+    */
+
+#endif
+
 }
 
 
@@ -155,15 +220,19 @@ void readIMU(void) {
 //Calibrate the IMU when the command is received from the Config Tool. ToDo: Add accel if necessary??
 void calibrateIMU() {
 
-    gyroXCalibration = gyroX;  //Take reading and cast double to float (should be plenty of significant figures??).
-    gyroYCalibration = gyroY;
-    gyroZCalibration = gyroZ;
+    gyroXCalibration = rawGyroX;
+    gyroYCalibration = rawGyroY;
+    gyroZCalibration = rawGyroZ;
 
     EEPROM.put(1015, gyroXCalibration);  //Put the current readings into EEPROM.
     EEPROM.put(1019, gyroYCalibration);
     EEPROM.put(1023, gyroZCalibration);
 }
 
+// reset heading 0 to current heading
+void centerIMU() {
+    fusion.rotateHeading(-currYaw, false);
+}
 
 
 
@@ -1672,6 +1741,10 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) {  //save current sensor calibration as factory calibration
                     WARBL2settingsReceiveMode = value - 55;
+                }
+
+                else if (value == 60) {  // recenter IMU heading based on current
+                    centerIMU();
                 }
             }
 

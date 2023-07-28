@@ -15,7 +15,7 @@
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
 #include <simpleFusion.h>       //IMU fusion
-
+#include <imuFilter.h> // IMU test
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -23,6 +23,7 @@ Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
 SimpleFusion fuser;     // Initialize the SimpleFusion object
+imuFilter fusion;
 
 ExternalEEPROM EEPROM;
 
@@ -232,16 +233,17 @@ unsigned long nowtime;
 
 
 //IMU data
-double gyroX;
-double gyroY;
-double gyroZ;
-double accelX;
-double accelY;
-double accelZ;
-float IMUtemp;
-float gyroXCalibration;
-float gyroYCalibration;
-float gyroZCalibration;
+float rawGyroX = 0.0f;
+float rawGyroY = 0.0f;
+float rawGyroZ = 0.0f;
+float accelX = 0.0f;
+float accelY = 0.0f;
+float accelZ = 0.0f;
+float currYaw = 0.0f;
+float IMUtemp = 0.0f;
+float gyroXCalibration = 0.0f;
+float gyroYCalibration = 0.0f;
+float gyroZCalibration = 0.0f;
 
 
 //Instrument
@@ -643,7 +645,7 @@ void setup() {
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
     fuser.init(833, 0.5, 0.5);                 // Initialize the fusion object with the filter update rate (hertz), pitch gyro favoring, and roll gyro favoring.
-
+    fusion.setup(0.000001f, 0.000001f, 9.807f);
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -814,7 +816,7 @@ void loop() {
         timerE = nowtime;
 
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //125 uS (without processing data).
+        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 151 uS with fusion (imuFilter).
         //Serial.println(micros() - timerD);
 
         checkButtons();
