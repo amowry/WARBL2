@@ -1,4 +1,5 @@
 
+#include <math.h>
 
 //debug
 void printStuff(void) {
@@ -93,22 +94,6 @@ void getSensors(void) {
 }
 
 
-
-void printVector(vec3_t r) {
-    Serial.print(r.x, 4);
-    Serial.print(",");
-    Serial.print(r.y, 4);
-    Serial.print(",");
-    Serial.print(r.z, 4);
-}
-
-void printQuat(quat_t q) {
-    Serial.print(q.w, 4);
-    Serial.print(",");
-    printVector(q.v);
-}
-
-
 void readIMU(void) {
 
     //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA).
@@ -145,33 +130,44 @@ void readIMU(void) {
     Serial.print(accelY, 4);
     Serial.print(" AZ : ");
     Serial.println(accelZ, 4);
-*/
+    */
+
+    float deltat = sfusion.deltatUpdate();
+    deltat = constrain(deltat, 0.001f, 0.01f); // just to keep it from freaking out, consider just giving it a fixed deltat in future
 
 
+    //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
+    sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
-    // imuFilter implementation
-    // this takes 43 usec
-    const float fusionGain = 0.5f;
-    const float sdAccel = 0.2f;  // stddev of accel to use to update... acts as filter
-    fusion.update(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, fusionGain, sdAccel);
+    // pitch and roll are swapped due to PCB sensor orientation
+    float pitch = sfusion.getRollRadians();
+    float roll = sfusion.getPitchRadians();
+    float yaw = sfusion.getYawRadians();
+    currYaw = yaw; // needs to be the unadjusted value
 
-    quat_t quat = fusion.getQuat();
-    // these are in radians
-    float roll = fusion.roll();
-    float yaw = fusion.yaw();
-    float pitch = fusion.pitch();
+    yaw += yawOffset;
+    if (yaw > PI) yaw -= TWO_PI;
+    else if (yaw < -PI) yaw += TWO_PI;
 
-    currYaw = yaw;
 
-    /*
+    // adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
+    pitch += PI;
+    if (pitch > PI) pitch -= TWO_PI;
+
+    // invert roll
+    roll = -roll;
+
     // serial plotter friendly
-    Serial.print(roll, 4);
-    Serial.print(", ");
+    
+    /*
     Serial.print(pitch, 4);
+    Serial.print(", ");
+    Serial.print(roll, 4);
     Serial.print(", ");
     Serial.print(yaw, 4);
     Serial.println(",   -3.2, 3.2");  // to keep plotter bounds fixed
     */
+
 }
 
 
@@ -194,7 +190,7 @@ void calibrateIMU() {
 
 // reset heading 0 to current heading
 void centerIMU() {
-    fusion.rotateHeading(-currYaw, false);
+    yawOffset = -currYaw;
 }
 
 

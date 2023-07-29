@@ -14,14 +14,16 @@
 #include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
-#include <imuFilter.h>          // IMU test
+#include <SensorFusion.h> // IMU fusion
+#include <MadgwickAHRS.h>
 
 BLEDis bledis;
 BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
-imuFilter fusion;
+SF sfusion;
+Madgwick mfusion;
 
 ExternalEEPROM EEPROM;
 
@@ -238,6 +240,7 @@ float accelX = 0.0f;
 float accelY = 0.0f;
 float accelZ = 0.0f;
 float currYaw = 0.0f;
+float yawOffset = 0.0f;
 float IMUtemp = 0.0f;
 float gyroXCalibration = 0.0f;
 float gyroYCalibration = 0.0f;
@@ -551,7 +554,7 @@ void setup() {
 #if defined(RELEASE)
     Serial.end();  //Turn off CDC. Necessary for release to make a class-compliant device
 #endif
-    //dwt_enable();  //Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
+    // dwt_enable();  //Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
     sd_clock_hfclk_request();  //Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
 
@@ -642,7 +645,8 @@ void setup() {
     sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
-    fusion.setup(0.000001f, 0.000001f, 9.807f);
+    
+    mfusion.begin(208.0f);
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -813,7 +817,7 @@ void loop() {
         timerE = nowtime;
 
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 151 uS with fusion (imuFilter).
+        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 129us for SensorFusion's Madgewick
         //Serial.println(micros() - timerD);
 
         checkButtons();
