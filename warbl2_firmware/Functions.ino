@@ -133,17 +133,18 @@ void readIMU(void) {
     */
 
     float deltat = sfusion.deltatUpdate();
-    deltat = constrain(deltat, 0.001f, 0.01f); // just to keep it from freaking out, consider just giving it a fixed deltat in future
+    deltat = constrain(deltat, 0.001f, 0.01f);  // just to keep it from freaking out, consider just giving it a fixed deltat in future
 
 
     //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
     // pitch and roll are swapped due to PCB sensor orientation
+
     float pitch = sfusion.getRollRadians();
     float roll = sfusion.getPitchRadians();
     float yaw = sfusion.getYawRadians();
-    currYaw = yaw; // needs to be the unadjusted value
+    currYaw = yaw;  // needs to be the unadjusted value
 
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
@@ -157,17 +158,20 @@ void readIMU(void) {
     // invert roll
     roll = -roll;
 
+
+   // pitch = pitch * 57.926;
+    //roll = roll * 57.926;
+    //yaw = yaw * 57.926;
+
     // serial plotter friendly
-    
-    /*
-    Serial.print(pitch, 4);
+/*
+    Serial.print(yaw, 4);
     Serial.print(", ");
     Serial.print(roll, 4);
     Serial.print(", ");
-    Serial.print(yaw, 4);
-    Serial.println(",   -3.2, 3.2");  // to keep plotter bounds fixed
+    Serial.println(pitch, 4);
+    //Serial.println(",   -3.2, 3.2");  // to keep plotter bounds fixed
     */
-
 }
 
 

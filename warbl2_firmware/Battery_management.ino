@@ -170,7 +170,7 @@ void manageBattery(bool send) {
     }
     cycles++;
 
-
+    //ToDo: check the logic here. Not sure the parentheses are correct. It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
     //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
     if ((nowtime - USBstatusChangeTimer) > 2000 && (!chargeTerminated && !chargeEnabled && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
