@@ -14,7 +14,7 @@
 #include <SPI.h>   //communication with ATmega32U4 and IMU
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
-#include <SensorFusion.h> // IMU fusion
+#include <SensorFusion.h>       // IMU fusion
 #include <MadgwickAHRS.h>
 
 BLEDis bledis;
@@ -180,6 +180,38 @@ ExternalEEPROM EEPROM;
 #define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
 
+//Variables in the IMUsettings array
+#define SEND_ROLL 0  //On/off
+#define SEND_PITCH 1
+#define SEND_YAW 2
+#define CENTER_ROLL 3  //On/off
+#define CENTER_YAW 4
+#define ROLL_INPUT_MIN 5  //0-100%
+#define ROLL_INPUT_MAX 6
+#define ROLL_OUTPUT_MIN 7  //0-127
+#define ROLL_OUTPUT_MAX 8
+#define PITCH_INPUT_MIN 9
+#define PITCH_INPUT_MAX 10
+#define PITCH_OUTPUT_MIN 11
+#define PITCH_OUTPUT_MAX 12
+#define YAW_INPUT_MIN 13
+#define YAW_INPUT_MAX 14
+#define YAW_OUTPUT_MIN 15
+#define YAW_OUTPUT_MAX 16
+#define ROLL_CC_CHANNEL 17
+#define PITCH_CC_CHANNEL 18
+#define YAW_CC_CHANNEL 19
+#define ROLL_CC_NUMBER 20
+#define PITCH_CC_NUMBER 21
+#define YAW_CC_NUMBER 22
+#define X_SHAKE_PITCHBEND 23  //On/off
+#define Y_SHAKE_PITCHBEND 24
+#define Z_SHAKE_PITCHBEND 25
+#define X_PITCHBEND_DEPTH 26  //0-127
+#define Y_PITCHBEND_DEPTH 27
+#define Z_PITCHBEND_DEPTH 28
+#define kIMUnVariables 29
+
 
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
@@ -245,6 +277,9 @@ float IMUtemp = 0.0f;
 float gyroXCalibration = 0.0f;
 float gyroYCalibration = 0.0f;
 float gyroZCalibration = 0.0f;
+float roll;
+float pitch;
+float yaw;
 
 
 //Instrument
@@ -309,6 +344,14 @@ byte switches[3][13] =  //the settings for the switches in various Config Tool p
 
       //same for instrument 2
       { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }
+  };
+
+byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see defines above)
+
+  {
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Same for instrument 2
   };
 
 byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool.
@@ -538,7 +581,7 @@ bool dronesOn = 0;  //used to monitor drones on/off.
 //variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;          //whether we are currently communicating with the tool.
 byte buttonReceiveMode = 100;        //which row in the button configuration matrix for which we're currently receiving data.
-byte pressureReceiveMode = 100;      //which pressure variable we're currently receiving date for. From 1-12: Closed: offset, multiplier, jump, drop, jump time, drop time, Vented: offset, multiplier, jump, drop, jump time, drop time
+int pressureReceiveMode = 100;       //indicates the variable for which we're currently receiving data
 byte fingeringReceiveMode = 0;       // indicates the mode (instrument) for  which a fingering pattern is going to be sent
 byte WARBL2settingsReceiveMode = 0;  // indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
@@ -645,7 +688,7 @@ void setup() {
     sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
-    
+
     mfusion.begin(208.0f);
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -838,6 +881,7 @@ void loop() {
     if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
         calculateAndSendPitchbend();  //11-200 uS depending on whether holes are partially covered.
         printStuff();
+        sendIMU();
     }
 
 

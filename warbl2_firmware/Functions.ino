@@ -14,6 +14,7 @@ void printStuff(void) {
     //Serial.println(toneholeRead[0]);
     //Serial.println("");
 
+    //loadSettingsForAllModes();
 
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
@@ -94,6 +95,13 @@ void getSensors(void) {
 }
 
 
+
+
+
+
+
+
+
 void readIMU(void) {
 
     //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA).
@@ -141,37 +149,37 @@ void readIMU(void) {
 
     // pitch and roll are swapped due to PCB sensor orientation
 
-    float pitch = sfusion.getRollRadians();
-    float roll = sfusion.getPitchRadians();
-    float yaw = sfusion.getYawRadians();
+    pitch = sfusion.getRollRadians();
+    roll = sfusion.getPitchRadians();
+    yaw = sfusion.getYawRadians();
+
     currYaw = yaw;  // needs to be the unadjusted value
 
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
     else if (yaw < -PI) yaw += TWO_PI;
 
-
     // adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
     if (pitch > PI) pitch -= TWO_PI;
 
-    // invert roll
+    // invert all three
     roll = -roll;
+    pitch = -pitch;
+    yaw = -yaw;
 
-
-   // pitch = pitch * 57.926;
-    //roll = roll * 57.926;
-    //yaw = yaw * 57.926;
+    roll = roll * RAD_TO_DEG;
+    pitch = pitch * RAD_TO_DEG;
+    yaw = yaw * RAD_TO_DEG;
 
     // serial plotter friendly
-/*
-    Serial.print(yaw, 4);
-    Serial.print(", ");
-    Serial.print(roll, 4);
-    Serial.print(", ");
-    Serial.println(pitch, 4);
-    //Serial.println(",   -3.2, 3.2");  // to keep plotter bounds fixed
-    */
+
+    // Serial.print(yaw, 4);
+    // Serial.print(", ");
+    //Serial.print(roll, 4);
+    // Serial.print(", ");
+    // Serial.print(pitch, 4);
+    // Serial.println(",   -95, 95");  // to keep plotter bounds fixed
 }
 
 
@@ -192,9 +200,46 @@ void calibrateIMU() {
     EEPROM.put(1023, gyroZCalibration);
 }
 
+
+
+
+
+
+
+
 // reset heading 0 to current heading
 void centerIMU() {
     yawOffset = -currYaw;
+}
+
+
+
+
+
+
+
+//Map IMU to CC and send
+void sendIMU() {
+
+    //The min and max settings from the Config Tool range from 0-36 and are scaled up to the maximum range of angles for each DOF.
+
+    if (IMUsettings[mode][SEND_ROLL]) {
+        byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[mode][ROLL_INPUT_MIN] * 5000, IMUsettings[mode][ROLL_INPUT_MAX] * 5000, IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]), IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]);
+        //Serial.println(rollOutput);
+        sendMIDI(CC, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
+    }
+
+    if (IMUsettings[mode][SEND_PITCH]) {
+        byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[mode][PITCH_INPUT_MIN] * 5000, IMUsettings[mode][PITCH_INPUT_MAX] * 5000, IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]), IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]);
+        //Serial.println(pitchOutput);
+        sendMIDI(CC, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
+    }
+
+    if (IMUsettings[mode][SEND_YAW]) {
+        byte yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]);
+        //Serial.println(yawOutput);
+        sendMIDI(CC, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
+    }
 }
 
 
@@ -1590,7 +1635,12 @@ void handleControlChange(byte channel, byte number, byte value) {
                 pressureReceiveMode = value - 1;
             }
 
+
+
+            ///////CC 105
             else if (number == 105) {
+
+
                 if (pressureReceiveMode < 12) {
                     pressureSelector[mode][pressureReceiveMode] = value;  //advanced pressure values
                     loadPrefs();
@@ -1631,7 +1681,22 @@ void handleControlChange(byte channel, byte number, byte value) {
                     ED[mode][pressureReceiveMode - 48] = value;  //more expression and drones settings
                     loadPrefs();
                 }
+
+                else if (pressureReceiveMode >= 200 && pressureReceiveMode < (kIMUnVariables + 200)) {
+                    //Serial.println(pressureReceiveMode);
+                    //Serial.println(value);
+                    IMUsettings[mode][pressureReceiveMode - 200] = value;  //IMU settings
+                    loadPrefs();
+                }
             }
+
+
+
+            ///////CC 109
+            if (number == 109 && value < kIMUnVariables) {  //Indicates that value for IMUsettings variable will be sent on CC 105.
+                pressureReceiveMode = value + 200;          //Add to the value because lower pressureReceiveModes are used for other variables.
+            }
+
 
 
             ///////CC 106
@@ -1725,9 +1790,10 @@ void handleControlChange(byte channel, byte number, byte value) {
             ///////CC 119
             if (number == 119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
-                for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed bythe Config Tool because it is independent of mode.
+                for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
                     EEPROM.write(600 + r, WARBL2settings[r]);
                 }
+                Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
             }
 
 
@@ -2233,7 +2299,7 @@ void saveSettings(byte i) {
     EEPROM.write(53 + i, noteShiftSelector[mode]);
     EEPROM.write(50 + i, senseDistanceSelector[mode]);
 
-    for (byte n = 0; n < kSWITCHESnVariables; n++) {
+    for (byte n = 0; n < kSWITCHESnVariables; n++) {  //Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
         EEPROM.write((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
     }
 
@@ -2268,6 +2334,10 @@ void saveSettings(byte i) {
     for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
         EEPROM.write((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
     }
+
+    for (byte n = 0; n < kIMUnVariables; n++) {
+        EEPROM.write((625 + n + (i * kIMUnVariables)), IMUsettings[mode][n]);
+    }
 }
 
 
@@ -2278,54 +2348,54 @@ void saveSettings(byte i) {
 
 
 
-//send all settings for current instrument to the WARBL Configuration Tool.
+//Send all settings for current instrument to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
 void sendSettings() {
 
-    sendMIDI(CC, 7, 110, VERSION);  //send software version
+    sendMIDI(CC, 7, 110, VERSION);  //Send the firmware version.
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDI(CC, 7, 102, 30 + i);                //indicate that we'll be sending the fingering pattern for instrument i
-        sendMIDI(CC, 7, 102, 33 + modeSelector[i]);  //send
+        sendMIDI(CC, 7, 102, 30 + i);                //Indicate that we'll be sending the fingering pattern for instrument i.
+        sendMIDI(CC, 7, 102, 33 + modeSelector[i]);  //Send
 
         if (noteShiftSelector[i] >= 0) {
             sendMIDI(CC, 7, 111 + i, noteShiftSelector[i]);
-        }  //send noteShift, with a transformation for sending negative values over MIDI.
+        }  //Send noteShift, with a transformation for sending negative values over MIDI.
         else {
             sendMIDI(CC, 7, 111 + i, noteShiftSelector[i] + 127);
         }
     }
 
-    sendMIDI(CC, 7, 102, 60 + mode);         //send current instrument
-    sendMIDI(CC, 7, 102, 85 + defaultMode);  //send default instrument
+    sendMIDI(CC, 7, 102, 60 + mode);         //Send current instrument.
+    sendMIDI(CC, 7, 102, 85 + defaultMode);  //Send default instrument.
 
-    sendMIDI(CC, 7, 103, senseDistance);  //send sense distance
+    sendMIDI(CC, 7, 103, senseDistance);  //Send sense distance
 
-    sendMIDI(CC, 7, 117, vibratoDepth * 100UL / 8191);  //send vibrato depth, scaled down to cents
-    sendMIDI(CC, 7, 102, 70 + pitchBendMode);           //send current pitchBend mode
-    sendMIDI(CC, 7, 102, 80 + breathMode);              //send current breathMode
-    sendMIDI(CC, 7, 102, 120 + bellSensor);             //send bell sensor state
-    sendMIDI(CC, 7, 106, 39 + useLearnedPressure);      //send calibration option
-    sendMIDI(CC, 7, 104, 34);                           //indicate that LSB of learned pressure is about to be sent
-    sendMIDI(CC, 7, 105, learnedPressure & 0x7F);       //send LSB of learned pressure
-    sendMIDI(CC, 7, 104, 35);                           //indicate that MSB of learned pressure is about to be sent
-    sendMIDI(CC, 7, 105, learnedPressure >> 7);         //send MSB of learned pressure
+    sendMIDI(CC, 7, 117, vibratoDepth * 100UL / 8191);  //Send vibrato depth, scaled down to cents.
+    sendMIDI(CC, 7, 102, 70 + pitchBendMode);           //Send current pitchBend mode.
+    sendMIDI(CC, 7, 102, 80 + breathMode);              //Send current breathMode.
+    sendMIDI(CC, 7, 102, 120 + bellSensor);             //Send bell sensor state.
+    sendMIDI(CC, 7, 106, 39 + useLearnedPressure);      //Send calibration option.
+    sendMIDI(CC, 7, 104, 34);                           //Indicate that LSB of learned pressure is about to be sent.
+    sendMIDI(CC, 7, 105, learnedPressure & 0x7F);       //Send LSB of learned pressure.
+    sendMIDI(CC, 7, 104, 35);                           //Indicate that MSB of learned pressure is about to be sent.
+    sendMIDI(CC, 7, 105, learnedPressure >> 7);         //Send MSB of learned pressure.
 
-    sendMIDI(CC, 7, 104, 61);             // indicate midi bend range is about to be sent
-    sendMIDI(CC, 7, 105, midiBendRange);  //midi bend range
+    sendMIDI(CC, 7, 104, 61);             // Indicate midi bend range is about to be sent.
+    sendMIDI(CC, 7, 105, midiBendRange);  //MIDI bend range
 
-    sendMIDI(CC, 7, 104, 62);               // indicate midi channel is about to be sent
-    sendMIDI(CC, 7, 105, mainMidiChannel);  //midi bend range
+    sendMIDI(CC, 7, 104, 62);               // Indicate MIDI channel is about to be sent.
+    sendMIDI(CC, 7, 105, mainMidiChannel);  //Midi bend range
 
 
 
     for (byte i = 0; i < 9; i++) {
-        sendMIDI(CC, 7, 106, 20 + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  //send enabled vibrato holes
+        sendMIDI(CC, 7, 106, 20 + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  //Send enabled vibrato holes.
     }
 
     for (byte i = 0; i < 8; i++) {
-        sendMIDI(CC, 7, 102, 90 + i);                         //indicate that we'll be sending data for button commands row i (click 1, click 2, etc.)
-        sendMIDI(CC, 7, 106, 100 + buttonPrefs[mode][i][0]);  //send action (i.e. none, send MIDI message, etc.)
-        if (buttonPrefs[mode][i][0] == 1) {                   //if the action is a MIDI command, send the rest of the MIDI info for that row.
+        sendMIDI(CC, 7, 102, 90 + i);                         //Indicate that we'll be sending data for button commands row i (click 1, click 2, etc.).
+        sendMIDI(CC, 7, 106, 100 + buttonPrefs[mode][i][0]);  //Send action (i.e. none, send MIDI message, etc.).
+        if (buttonPrefs[mode][i][0] == 1) {                   //If the action is a MIDI command, send the rest of the MIDI info for that row.
             sendMIDI(CC, 7, 102, 112 + buttonPrefs[mode][i][1]);
             sendMIDI(CC, 7, 106, buttonPrefs[mode][i][2]);
             sendMIDI(CC, 7, 107, buttonPrefs[mode][i][3]);
@@ -2333,44 +2403,49 @@ void sendSettings() {
         }
     }
 
-    for (byte i = 0; i < kSWITCHESnVariables; i++) {  //send settings for switches in the slide/vibrato and register control panels
+    for (byte i = 0; i < kSWITCHESnVariables; i++) {  //Send settings for switches in the slide/vibrato and register control panels.
         sendMIDI(CC, 7, 104, i + 40);
         sendMIDI(CC, 7, 105, switches[mode][i]);
     }
 
-    for (byte i = 0; i < 21; i++) {  //send settings for expression and drones control panels
+    for (byte i = 0; i < 21; i++) {  //Send settings for expression and drones control panels.
         sendMIDI(CC, 7, 104, i + 13);
         sendMIDI(CC, 7, 105, ED[mode][i]);
     }
 
-    for (byte i = 21; i < 49; i++) {  //more settings for expression and drones control panels
+    for (byte i = 21; i < 49; i++) {  //More settings for expression and drones control panels.
         sendMIDI(CC, 7, 104, i + 49);
         sendMIDI(CC, 7, 105, ED[mode][i]);
     }
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDI(CC, 7, 102, 90 + i);  //indicate that we'll be sending data for momentary
+        sendMIDI(CC, 7, 102, 90 + i);  //Indicate that we'll be sending data for momentary.
         sendMIDI(CC, 7, 102, 117 + momentary[mode][i]);
     }
 
     for (byte i = 0; i < 12; i++) {
-        sendMIDI(CC, 7, 104, i + 1);                      //indicate which pressure variable we'll be sending data for
-        sendMIDI(CC, 7, 105, pressureSelector[mode][i]);  //send the data
+        sendMIDI(CC, 7, 104, i + 1);                      //Indicate which pressure variable we'll be sending.
+        sendMIDI(CC, 7, 105, pressureSelector[mode][i]);  //Send the data.
     }
 
     sendMIDI(CC, 7, 102, 121);  //Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
 
-    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  //send the WARBL2settings array
+    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  //Send the WARBL2settings array.
         sendMIDI(CC, 7, 106, i);
         sendMIDI(CC, 7, 119, WARBL2settings[i - 55]);
     }
 
-    manageBattery(true);  //do this to send voltage and charging status to Config Tool
+    manageBattery(true);  //Do this to send voltage and charging status to Config Tool.
 
     sendMIDI(CC, 7, 106, 72);
     sendMIDI(CC, 7, 119, (connIntvl * 100) & 0x7F);  //Send low byte of the connection interval.
     sendMIDI(CC, 7, 106, 73);
     sendMIDI(CC, 7, 119, (connIntvl * 100) >> 7);  //Send high byte of the connection interval.
+
+    for (byte i = 0; i < kIMUnVariables; i++) {  //IMU settings
+        sendMIDI(CC, 7, 109, i);
+        sendMIDI(CC, 7, 105, IMUsettings[mode][i]);
+    }
 }
 
 
@@ -2410,6 +2485,8 @@ void loadFingering() {
 
 //load settings for all three instruments from EEPROM
 void loadSettingsForAllModes() {
+
+    //Some things that are independent of mode.
     defaultMode = EEPROM.read(48);  //load default mode
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
@@ -2465,6 +2542,11 @@ void loadSettingsForAllModes() {
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
             ED[i][n] = EEPROM.read(351 + n + (i * kEXPRESSIONnVariables));
+        }
+
+        for (byte p = 0; p < kIMUnVariables; p++) {
+            IMUsettings[i][p] = EEPROM.read(625 + p + (i * kIMUnVariables));
+            Serial.println();
         }
     }
 }
