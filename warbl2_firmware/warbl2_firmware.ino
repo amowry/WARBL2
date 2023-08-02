@@ -536,6 +536,9 @@ int pitchBendPerSemi = 4096;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
+byte prevRollCC = 0;
+byte prevPitchCC = 0;
+byte prevYawCC = 0;
 unsigned long pressureTimer = 0;                               //to keep track of the last time we sent a pressure message
 unsigned long noteOnTimestamp = 0;                             // ms timestamp the note was activated
 byte slideHole;                                                //the hole above the current highest uncovered hole. Used for detecting slides between notes.
