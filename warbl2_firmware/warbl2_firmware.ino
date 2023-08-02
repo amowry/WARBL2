@@ -186,7 +186,7 @@ ExternalEEPROM EEPROM;
 #define SEND_YAW 2
 #define CENTER_ROLL 3  //On/off
 #define CENTER_YAW 4
-#define ROLL_INPUT_MIN 5  //0-100%
+#define ROLL_INPUT_MIN 5  //0-36
 #define ROLL_INPUT_MAX 6
 #define ROLL_OUTPUT_MIN 7  //0-127
 #define ROLL_OUTPUT_MAX 8
@@ -536,9 +536,6 @@ int pitchBendPerSemi = 4096;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
-byte prevRollCC = 0;
-byte prevPitchCC = 0;
-byte prevYawCC = 0;
 unsigned long pressureTimer = 0;                               //to keep track of the last time we sent a pressure message
 unsigned long noteOnTimestamp = 0;                             // ms timestamp the note was activated
 byte slideHole;                                                //the hole above the current highest uncovered hole. Used for detecting slides between notes.

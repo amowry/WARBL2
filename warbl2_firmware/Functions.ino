@@ -30,8 +30,9 @@ void printStuff(void) {
     //Serial.println(IMUtemp);
     // Serial.println(USBstatus);
     //Serial.println(battPower);
-    //Serial.println("");
-    //Serial.println("");
+    //Serial.print(roll);
+    //Serial.print(",");
+    //Serial.println(pitch);
 
     //Serial.println(holeCovered, BIN);
     //Serial.println(newState);
@@ -124,21 +125,6 @@ void readIMU(void) {
     float gyroY = rawGyroY - gyroYCalibration;
     float gyroZ = rawGyroZ - gyroZCalibration;
 
-    /*
-    Serial.print(" GX : ");
-    Serial.print(gyroX, 4);
-    Serial.print(" GY : ");
-    Serial.print(gyroY, 4);
-    Serial.print(" GZ : ");
-    Serial.println(gyroZ, 4);
-
-    Serial.print(" AX : ");
-    Serial.print(accelX, 4);
-    Serial.print(" AY : ");
-    Serial.print(accelY, 4);
-    Serial.print(" AZ : ");
-    Serial.println(accelZ, 4);
-    */
 
     float deltat = sfusion.deltatUpdate();
     deltat = constrain(deltat, 0.001f, 0.01f);  // just to keep it from freaking out, consider just giving it a fixed deltat in future
@@ -148,7 +134,6 @@ void readIMU(void) {
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
     // pitch and roll are swapped due to PCB sensor orientation
-
     pitch = sfusion.getRollRadians();
     roll = sfusion.getPitchRadians();
     yaw = sfusion.getYawRadians();
@@ -172,14 +157,13 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-    // serial plotter friendly
-
-    // Serial.print(yaw, 4);
-    // Serial.print(", ");
-    //Serial.print(roll, 4);
-    // Serial.print(", ");
-    // Serial.print(pitch, 4);
-    // Serial.println(",   -95, 95");  // to keep plotter bounds fixed
+    //testing transformation for roll
+    if (roll > 0) {
+        roll = roll + ((abs(pitch) / 90) * (abs(pitch) / 90) * roll * 2);
+    } else {
+        roll = roll - ((abs(pitch) / 90) * (abs(pitch) / 90) * -roll * 2);
+    }
+    //Serial.println((abs(pitch) * abs(pitch)));
 }
 
 
@@ -221,29 +205,82 @@ void centerIMU() {
 //Map IMU to CC and send
 void sendIMU() {
 
+    static byte prevRollCC = 0;
+    static byte prevPitchCC = 0;
+    static byte prevYawCC = 0;
+
     //The min and max settings from the Config Tool range from 0-36 and are scaled up to the maximum range of angles for each DOF.
 
     if (IMUsettings[mode][SEND_ROLL]) {
-        byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[mode][ROLL_INPUT_MIN] * 5000, IMUsettings[mode][ROLL_INPUT_MAX] * 5000, IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]), IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]);
-        //Serial.println(rollOutput);
+
+        byte lowerConstraint;
+        byte upperConstraint;
+
+        if (IMUsettings[mode][ROLL_OUTPUT_MIN] > IMUsettings[mode][ROLL_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[mode][ROLL_OUTPUT_MAX];
+            upperConstraint = IMUsettings[mode][ROLL_OUTPUT_MIN];
+        }
+
+        else {
+            lowerConstraint = IMUsettings[mode][ROLL_OUTPUT_MIN];
+            upperConstraint = IMUsettings[mode][ROLL_OUTPUT_MAX];
+        }
+
+        byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[mode][ROLL_INPUT_MIN] * 5000, IMUsettings[mode][ROLL_INPUT_MAX] * 5000, IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        //Serial.println(pitchOutput);
+
         if (prevRollCC != rollOutput) {
             sendMIDI(CC, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
             prevRollCC = rollOutput;
         }
     }
 
+
+
     if (IMUsettings[mode][SEND_PITCH]) {
-        byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[mode][PITCH_INPUT_MIN] * 5000, IMUsettings[mode][PITCH_INPUT_MAX] * 5000, IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]), IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]);
+
+        byte lowerConstraint;
+        byte upperConstraint;
+
+        if (IMUsettings[mode][PITCH_OUTPUT_MIN] > IMUsettings[mode][PITCH_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[mode][PITCH_OUTPUT_MAX];
+            upperConstraint = IMUsettings[mode][PITCH_OUTPUT_MIN];
+        }
+
+        else {
+            lowerConstraint = IMUsettings[mode][PITCH_OUTPUT_MIN];
+            upperConstraint = IMUsettings[mode][PITCH_OUTPUT_MAX];
+        }
+
+        byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[mode][PITCH_INPUT_MIN] * 5000, IMUsettings[mode][PITCH_INPUT_MAX] * 5000, IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]), lowerConstraint, upperConstraint);
         //Serial.println(pitchOutput);
+
         if (prevPitchCC != pitchOutput) {
             sendMIDI(CC, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
             prevPitchCC = pitchOutput;
         }
     }
 
+
+
     if (IMUsettings[mode][SEND_YAW]) {
-        byte yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]);
+
+        byte lowerConstraint;
+        byte upperConstraint;
+
+        if (IMUsettings[mode][YAW_OUTPUT_MIN] > IMUsettings[mode][YAW_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
+            upperConstraint = IMUsettings[mode][YAW_OUTPUT_MIN];
+        }
+
+        else {
+            lowerConstraint = IMUsettings[mode][YAW_OUTPUT_MIN];
+            upperConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
+        }
+
+        byte yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
         //Serial.println(yawOutput);
+
         if (prevYawCC != yawOutput) {
             sendMIDI(CC, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
             prevYawCC = yawOutput;
