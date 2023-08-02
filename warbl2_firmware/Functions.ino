@@ -138,6 +138,15 @@ void readIMU(void) {
     roll = sfusion.getPitchRadians();
     yaw = sfusion.getYawRadians();
 
+#if 0
+    float * quat = sfusion.getQuat();
+    for (int i=0; i < 4; ++i) {
+        Serial.print(quat[i], 4);
+        Serial.print(", ");
+    }
+    Serial.println(" 1.1, -1.1");
+#endif
+
     currYaw = yaw;  // needs to be the unadjusted value
 
     yaw += yawOffset;
