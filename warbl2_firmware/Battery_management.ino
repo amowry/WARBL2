@@ -94,16 +94,22 @@ void manageBattery(bool send) {
 
     //Read the battery
     float battVoltage = getBattVoltage();
-    const float alpha = 0.2;  //Time constant can be tweaked.
+    const float alpha = 0.05;  //Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
-    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average -- takes several seconds to level out after powerup.
+    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average
+
+    //Serial.println(smoothed_voltage, 3);
+    //Serial.println("");
 
 
     //Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
 
-    //If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge.
+    //If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery precentage as we're charging)
     if (chargingStatus == 1 && (nowtime - chargeStartTime) > 60000) {
         prevRunTime = prevRunTime - (fullRunTime * 0.0055);  //Subtract the estimated run time added per one minute of charging
+        if (prevRunTime < 0) {
+          prevRunTime = 0); //Never go below 0.
+        }
         chargeStartTime = nowtime;
         static byte computeCycles = 0;
         computeCycles++;
@@ -170,7 +176,7 @@ void manageBattery(bool send) {
             }
 
 
-            //Serial.print(smoothed_voltage, 3); //For plotting votage while charging
+            //Serial.print(smoothed_voltage, 3);  //For plotting votage while charging
             //Serial.print(",");
             //Serial.println(voltageSlope, 3);
         }
