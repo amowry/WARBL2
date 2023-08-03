@@ -55,6 +55,11 @@ void manageBattery(bool send) {
 
         //Detect change in charging status
         if (prevTempChargingStatus != tempChargingStatus) {
+
+            if (chargeEnabled && tempChargingStatus == 0) {  //For testing-- increment this if the charger interrupted charging while charging was enabled.
+                EEPROM.write(1007, EEPROM.read(1007) + 1);
+            }
+
             statusChanged = 1;
             if (communicationMode) {  //Send the status to the Config Tool if it has changed.
                 sendMIDI(CC, 7, 106, 71);
@@ -98,6 +103,7 @@ void manageBattery(bool send) {
     static float smoothed_voltage = battVoltage;
     smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average
 
+    //Serial.println(battVoltage, 3);
     //Serial.println(smoothed_voltage, 3);
     //Serial.println("");
 
@@ -107,9 +113,10 @@ void manageBattery(bool send) {
     //If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery precentage as we're charging)
     if (chargingStatus == 1 && (nowtime - chargeStartTime) > 60000) {
         prevRunTime = prevRunTime - (fullRunTime * 0.0055);  //Subtract the estimated run time added per one minute of charging
-        if (prevRunTime < 0) {
-          prevRunTime = 0); //Never go below 0.
+        if (prevRunTime < 1) {
+            prevRunTime = 1;  //Never go below 1.
         }
+
         chargeStartTime = nowtime;
         static byte computeCycles = 0;
         computeCycles++;
@@ -120,21 +127,26 @@ void manageBattery(bool send) {
         }
     }
 
-    //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
-    if (prevRunTime - ((nowtime - runTimer) / 60000) > fullRunTime) {  //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
-        battLevel = 1;
-    } else {
-        if (battPower) {
-            battLevel = constrain(((fullRunTime - prevRunTime - ((nowtime - runTimer) / 60000)) / float(fullRunTime)) * 100, 1, 100);  //If we're on battery power we also have to subtract time since we powered up.
+    ;
 
-        } else {
-            battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 1, 100);  //If we're not on battery power, just use the saved run time.
+    //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
+    unsigned long currentRun = (nowtime - runTimer) / 60000; //Minutes we've been running since powerup
+
+    if (battPower) {
+        battLevel = constrain(((fullRunTime - prevRunTime - currentRun) / float(fullRunTime)) * 100, 1, 100);  //If we're on battery power we also have to subtract time since we powered up.
+        if (prevRunTime - currentRun > fullRunTime) {                                                          //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
+            battLevel = 1;
         }
+    } else {
+        battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 1, 100);  //If we're not on battery power, just use the saved run time.
     }
+
 
     if (chargingStatus == 1 && battLevel > 98) {  //Don't let the percentage reach 100% while charging until there is a termination.
         battLevel = 98;
     }
+
+
 
 
     static byte cycles = 40;  //40 cycles is 30 seconds.
@@ -178,7 +190,9 @@ void manageBattery(bool send) {
 
             //Serial.print(smoothed_voltage, 3);  //For plotting votage while charging
             //Serial.print(",");
-            //Serial.println(voltageSlope, 3);
+            //Serial.print(voltageSlope, 3);
+            //Serial.print(",");
+            //Serial.println(EEPROM.read(1007));
         }
     }
     cycles++;
@@ -189,6 +203,7 @@ void manageBattery(bool send) {
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
+        EEPROM.write(1007, 0);                                                                                          //For testing
     } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
         digitalWrite(chargeEnable, LOW);                                                                                //Disable charging.
         chargeEnabled = 0;
