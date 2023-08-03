@@ -78,11 +78,12 @@ void manageBattery(bool send) {
         if (prevChargingStatus != chargingStatus) {
             if (chargingStatus == 1) {
                 chargeStartTime = millis();                                                                   //Start a timer if we just started charging.
-            } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger
+            } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger.
                 chargeTerminated = 1;                                                                         //If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
                 digitalWrite(greenLED, HIGH);                                                                 //Indicate end of charge. ToDo: improve indication
                 EEPROM.write(1013, 0);                                                                        //Reset the total run time because we are now fully charged (high byte).
                 EEPROM.write(1014, 0);                                                                        //Low byte
+                EEPROM.write(1008, 3);                                                                        //Remember that there has been a termination.
                 prevRunTime = 0;
             }
             prevChargingStatus = chargingStatus;
@@ -114,10 +115,15 @@ void manageBattery(bool send) {
     }
 
     //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
-    if (battPower) {
-        battLevel = constrain(((fullRunTime - prevRunTime - ((nowtime - runTimer) / 60000)) / float(fullRunTime)) * 100, 1, 100);  //If we're on battery power we also have to subtract time since we powered up.
+    if (prevRunTime - ((nowtime - runTimer) / 60000) > fullRunTime) {  //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
+        battLevel = 1;
     } else {
-        battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 1, 100);  //If we're not on battery power, just use the saved run time.
+        if (battPower) {
+            battLevel = constrain(((fullRunTime - prevRunTime - ((nowtime - runTimer) / 60000)) / float(fullRunTime)) * 100, 1, 100);  //If we're on battery power we also have to subtract time since we powered up.
+
+        } else {
+            battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 1, 100);  //If we're not on battery power, just use the saved run time.
+        }
     }
 
     if (chargingStatus == 1 && battLevel > 98) {  //Don't let the percentage reach 100% while charging until there is a termination.
@@ -159,6 +165,7 @@ void manageBattery(bool send) {
                 digitalWrite(greenLED, HIGH);  //Indicate end of charge. ToDo: improve indication
                 EEPROM.write(1013, 0);         //Reset the total run time because we are now fully charged (high byte).
                 EEPROM.write(1014, 0);         //Low byte
+                EEPROM.write(1008, 3);         //Remember that there has been a termination.
                 prevRunTime = 0;
             }
 
@@ -170,9 +177,10 @@ void manageBattery(bool send) {
     }
     cycles++;
 
-    //ToDo: check the logic here. Not sure the parentheses are correct. It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
+
     //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
-    if ((nowtime - USBstatusChangeTimer) > 2000 && (!chargeTerminated && !chargeEnabled && (WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
+    //It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
+    if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
     } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
@@ -268,9 +276,12 @@ void recordRuntime(bool resetTotalRuntime) {
 
     runTimer = runTimer + prevRunTime;  //Rebuild stored run time.
 
-    if (resetTotalRuntime) {  //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
-        EEPROM.write(1009, highByte(runTimer));
-        EEPROM.write(1010, lowByte(runTimer));
+    if (resetTotalRuntime) {           //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
+        if (EEPROM.read(1008) == 3) {  //If we haven't already recorded the total run time
+            EEPROM.write(1009, highByte(runTimer));
+            EEPROM.write(1010, lowByte(runTimer));
+            EEPROM.write(1008, 1);  //Record that we've done this so we won't do it again until there has been another full charge.
+        }
     }
 
     EEPROM.write(1013, highByte(runTimer));  //Update the recorded run time in EEPROM.
