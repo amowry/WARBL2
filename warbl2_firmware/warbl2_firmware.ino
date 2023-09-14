@@ -15,7 +15,6 @@
 #include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>  //IMU
 #include <SensorFusion.h>       // IMU fusion
-#include <MadgwickAHRS.h>
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -23,7 +22,6 @@ Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
 SF sfusion;
-Madgwick mfusion;
 
 ExternalEEPROM EEPROM;
 
@@ -205,7 +203,7 @@ ExternalEEPROM EEPROM;
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
 #define X_SHAKE_PITCHBEND 23  //On/off
-#define Y_SHAKE_PITCHBEND 24
+#define Y_SHAKE_PITCHBEND 24 //On/OffF (Only this axis is currently used for shake vibrato.)
 #define Z_SHAKE_PITCHBEND 25
 #define X_PITCHBEND_DEPTH 26  //0-127
 #define Y_PITCHBEND_DEPTH 27
@@ -280,6 +278,7 @@ float gyroZCalibration = 0.0f;
 float roll;
 float pitch;
 float yaw;
+int shakeVibrato;  //Shake vibrato depth, from -8192 to 8192
 
 
 //Instrument
@@ -689,7 +688,6 @@ void setup() {
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
 
-    mfusion.begin(208.0f);
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -860,7 +858,7 @@ void loop() {
         timerE = nowtime;
 
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 129us for SensorFusion's Madgewick
+        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 129us for SensorFusion's Madgwick
         //Serial.println(micros() - timerD);
 
         checkButtons();
@@ -882,6 +880,9 @@ void loop() {
         calculateAndSendPitchbend();  //11-200 uS depending on whether holes are partially covered.
         printStuff();
         sendIMU();
+        if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+            shakeForVibrato();
+        }
     }
 
 

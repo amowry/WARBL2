@@ -19,7 +19,7 @@ void printStuff(void) {
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
     //Serial.println(gyroZ, 3);
-    //Serial.println("");
+    //Serial.println(IMUsettings[mode][SEND_ROLL]);
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
@@ -165,14 +165,6 @@ void readIMU(void) {
     roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
-
-    //testing transformation for roll
-    if (roll > 0) {
-        roll = roll + ((abs(pitch) / 90) * (abs(pitch) / 90) * roll * 2);
-    } else {
-        roll = roll - ((abs(pitch) / 90) * (abs(pitch) / 90) * -roll * 2);
-    }
-    //Serial.println((abs(pitch) * abs(pitch)));
 }
 
 
@@ -296,6 +288,71 @@ void sendIMU() {
         }
     }
 }
+
+
+
+
+
+
+
+
+
+void shakeForVibrato() {
+
+    static float accelFilteredOld;
+
+    float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+    accelFilteredOld = accelFiltered;
+    float highPassY = accelY - accelFiltered;  //subtract gravity to high-pass Y
+
+    //Serial.print(5);
+    //Serial.print(",");
+    //Serial.print(highPassY);
+    //Serial.print(",");
+    //Serial.println(-5);
+
+
+    //a second low pass filter to minimize spikes from tapping the tone holes (a median filter might be better?)
+    static float accelFilteredBOld;
+
+    float accelFilteredB = 0.4 * highPassY + 0.6 * accelFilteredBOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+    accelFilteredBOld = accelFilteredB;
+
+    //Serial.print(5);
+    //Serial.print(",");
+    //Serial.print(accelFilteredB);
+    //Serial.print(",");
+    //Serial.println(-5);
+
+
+    shakeVibrato = 0;
+
+    if (accelFilteredB > 20) {  //Constrain the acceleration to a high value that will resilt in mapping to max pitchbend (8192).
+        shakeVibrato = 8192;
+    }
+
+    else if (accelFilteredB < -20) {
+        shakeVibrato = -8192;
+    }
+
+    else if (accelFilteredB < -0.5 || accelFilteredB > 0.5) {
+        shakeVibrato = accelFilteredB * 400;  //Map acceleration to pitchbend.
+    }
+
+
+    //Serial.print(8192);
+    //Serial.print(",");
+    //Serial.print(shakeVibrato);
+    //Serial.print(",");
+    //Serial.println(-8192);
+
+    if (pitchBendMode == kPitchBendNone) {  //If we don't have finger vibrato and/or slide tuend on, we need to send the pitchbend now.
+        sendPitchbend();
+    }
+}
+
+
+
 
 
 
@@ -1297,6 +1354,7 @@ void handlePitchBend() {
         }
     }
 
+
     sendPitchbend();
 }
 
@@ -1340,7 +1398,8 @@ void sendPitchbend() {
         pitchBend += noteshift * pitchBendPerSemi;
     }
 
-    pitchBend = 8192 - pitchBend + expression;
+    pitchBend = 8192 - pitchBend + expression + shakeVibrato;
+
     if (pitchBend < 0) {
         pitchBend = 0;
     } else if (pitchBend > 16383) {
