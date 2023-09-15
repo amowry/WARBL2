@@ -202,12 +202,12 @@ ExternalEEPROM EEPROM;
 #define ROLL_CC_NUMBER 20
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
-#define X_SHAKE_PITCHBEND 23  //On/off
-#define Y_SHAKE_PITCHBEND 24 //On/OffF (Only this axis is currently used for shake vibrato.)
-#define Z_SHAKE_PITCHBEND 25
-#define X_PITCHBEND_DEPTH 26  //0-127
-#define Y_PITCHBEND_DEPTH 27
-#define Z_PITCHBEND_DEPTH 28
+#define X_SHAKE_PITCHBEND 23  //unused
+#define Y_SHAKE_PITCHBEND 24  //On/OffF (Only this axis is currently used for shake vibrato.)
+#define Z_SHAKE_PITCHBEND 25  //unused
+#define X_PITCHBEND_DEPTH 26  //unused
+#define Y_PITCHBEND_DEPTH 27  //0-100
+#define Z_PITCHBEND_DEPTH 28  //unused
 #define kIMUnVariables 29
 
 
@@ -856,7 +856,6 @@ void loop() {
 
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
-
         //timerD = micros(); //testing--micros requres turning on DWT in setup()
         readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 129us for SensorFusion's Madgwick
         //Serial.println(micros() - timerD);
@@ -883,6 +882,7 @@ void loop() {
         if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
             shakeForVibrato();
         }
+        timerC = nowtime;
     }
 
 
