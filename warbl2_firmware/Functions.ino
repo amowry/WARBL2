@@ -324,27 +324,45 @@ void shakeForVibrato() {
     //Serial.print(",");
     //Serial.println(-5);
 
+    // should make this a parameter in the future for the bend shake feature
+    const float shakeBendDepth = 2.0f;
+
+    const float kShakeStartThresh = 0.5f;
+    const float kShakeFinishThresh = 0.35f;
+    const long kShakeFinishTimeMs = 400;
+
+    static bool shakeActive = false;
+    static long lastThreshExceedTime = 0;
 
     shakeVibrato = 0;
 
-    if (accelFilteredB > 20) {  //Constrain the acceleration to a high value that will resilt in mapping to max pitchbend (8192).
-        shakeVibrato = 8192;
+    long nowtime = millis();
+
+    if (abs(accelFilteredB) > kShakeStartThresh) {
+        shakeActive = true;
+        lastThreshExceedTime = nowtime;
+    }
+    else if (abs(accelFilteredB) > kShakeFinishThresh) {
+        lastThreshExceedTime = nowtime;
     }
 
-    else if (accelFilteredB < -20) {
-        shakeVibrato = -8192;
+    if (shakeActive && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
+        // stop shake vibrato
+        shakeActive = false;
     }
 
-    else if (accelFilteredB < -0.5 || accelFilteredB > 0.5) {
-        shakeVibrato = accelFilteredB * 400;  //Map acceleration to pitchbend.
+    if (shakeActive) {
+        // normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
+        float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+
+        shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
+
+        //Serial.print(1.0f);
+        //Serial.print(",");
+        //Serial.print(normshake);
+        //Serial.print(",");
+        //Serial.println(-1.0f);
     }
-
-
-    //Serial.print(8192);
-    //Serial.print(",");
-    //Serial.print(shakeVibrato);
-    //Serial.print(",");
-    //Serial.println(-8192);
 
     if (pitchBendMode == kPitchBendNone) {  //If we don't have finger vibrato and/or slide tuend on, we need to send the pitchbend now.
         sendPitchbend();
@@ -2698,6 +2716,8 @@ void loadPrefs() {
 
     pitchBend = 8192;
     expression = 0;
+    shakeVibrato = 0;
+
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
 
     for (byte i = 0; i < 9; i++) {
