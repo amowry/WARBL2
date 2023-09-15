@@ -311,6 +311,7 @@ void shakeForVibrato() {
     static float accelFilteredBOld;
 
     float accelFilteredB = 0.4 * highPassY + 0.6 * accelFilteredBOld;
+    float lastFilteredB = accelFilteredBOld;
     accelFilteredBOld = accelFilteredB;
 
     const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
@@ -318,39 +319,53 @@ void shakeForVibrato() {
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
-    const long ktapFilterTimeMs = 10;  //mS window for further filtering out taps on the tone holes
+    const long ktapFilterTimeMs = 12;  //mS window for further filtering out taps on the tone holes
 
     static bool shakeActive = false;
     static bool tapFilterActive = false;
     static long lastThreshExceedTime = 0;
     static long tapFilterStartTime = 0;
+    static bool preTrigger = false;
 
     shakeVibrato = 0;
 
     long nowtime = millis();
 
 
-    if (abs(accelFilteredB) > kShakeStartThresh && tapFilterActive == false) {
+    if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
         tapFilterActive = true;
         tapFilterStartTime = nowtime;
+        // Serial.println("Shake Tap Filt");
     }
 
     if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
         return;
     }
 
+    if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
+        preTrigger = true;
+        // Serial.println("Pre Shake Trigger");
+    }
 
-    if (abs(accelFilteredB) > kShakeStartThresh) {
+    // start shake vib only when doing a zero crossing after threshold has been triggered
+    if (!shakeActive && preTrigger
+        // comment out next line to test without the zero crossing requirement 
+        && ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
+        )
+    {
         shakeActive = true;
         lastThreshExceedTime = nowtime;
+        // Serial.println("Start ShakeVib");
     } else if (abs(accelFilteredB) > kShakeFinishThresh) {
         lastThreshExceedTime = nowtime;
     }
 
-    if (shakeActive && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
+    if ((shakeActive || tapFilterActive) && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
         // Stop shake vibrato.
         shakeActive = false;
         tapFilterActive = false;
+        preTrigger = false;
+        // Serial.println("Cancel ShakeVib");
     }
 
     if (shakeActive) {
