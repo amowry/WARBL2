@@ -169,11 +169,11 @@ void readIMU(void) {
     yaw = yaw * RAD_TO_DEG;
 
 
-    //experimenting with integrating gyroY without accelerometer for roll in the local frame:
-    static float rollLocal = 0;
+    //Experimenting with integrating gyroY without accelerometer for roll in the local frame.
+    static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
     rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
-    if (abs(roll) < 1 && abs(pitch) < 45) {                           //If roll in the global frame is close to zero, zero the local roll as well.
-        rollLocal = 0;
+    if (abs(roll) < 0.5 && abs(pitch) < 60) {                           //If roll in the global frame is close to zero, zero the local roll as well. Doing this at high pitch can cause artifacts, so limit to low pitch.
+        rollLocal = 0;                                                  //It would be better to use a correction factor to "nudge" the zero point to the correct location rather than doing it abruptly, unless perhaps it's far out of range (like after powerup).
     }
 
     //Serial.println(rollLocal, 0);
