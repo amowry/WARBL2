@@ -128,7 +128,9 @@ void readIMU(void) {
 
     float deltat = sfusion.deltatUpdate();
     deltat = constrain(deltat, 0.001f, 0.01f);  // just to keep it from freaking out, consider just giving it a fixed deltat in future
-
+    //AM 9/16/23 Not sure if this matters, but this functions is called @ 10 mS or less frequently, so the returned deltat is always 0.01.
+    //I also see that this function calls micros(), which only has 1 mS resolution unless we enable the DWT (which we can do in setup).
+    //Would having a more accurate deltat help in any way, i.e. with drift? There is definitely some jitter involved.
 
     //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
@@ -165,6 +167,19 @@ void readIMU(void) {
     roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
+
+
+    //experimenting with integrating gyroY without accelerometer for roll in the local frame:
+    static float rollLocal = 0;
+    rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
+    if (abs(roll) < 1 && abs(pitch) < 45) {                           //If roll in the global frame is close to zero, zero the local roll as well.
+        rollLocal = 0;
+    }
+
+    //Serial.println(rollLocal, 0);
+
+    //comment out this line to switch back to global frame for roll.
+    roll = rollLocal;
 }
 
 
@@ -338,9 +353,11 @@ void shakeForVibrato() {
         // Serial.println("Shake Tap Filt");
     }
 
+
     if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
         return;
     }
+
 
     if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
         preTrigger = true;
@@ -349,10 +366,9 @@ void shakeForVibrato() {
 
     // start shake vib only when doing a zero crossing after threshold has been triggered
     if (!shakeActive && preTrigger
-        // comment out next line to test without the zero crossing requirement 
-        && ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
-        )
-    {
+        // comment out next line to test without the zero crossing requirement
+        //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
+    ) {
         shakeActive = true;
         lastThreshExceedTime = nowtime;
         // Serial.println("Start ShakeVib");
@@ -374,11 +390,11 @@ void shakeForVibrato() {
 
         shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
 
-        // Serial.print(1.0f);
-        // Serial.print(",");
-        // Serial.print(normshake);
-        // Serial.print(",");
-        // Serial.println(-1.0f);
+        //Serial.print(1.0f);
+        //Serial.print(",");
+        //Serial.print(normshake);
+        //Serial.print(",");
+        //Serial.println(-1.0f);
     }
 
     if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide tuend on, we need to send the pitchbend now.
