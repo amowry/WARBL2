@@ -168,8 +168,8 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-
-    //Experimenting with integrating gyroY without accelerometer for roll in the local frame.
+/*
+    //Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
     static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
     rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
     if (abs(roll) < 0.5 && abs(pitch) < 60) {                           //If roll in the global frame is close to zero, zero the local roll as well. Doing this at high pitch can cause artifacts, so limit to low pitch.
@@ -180,6 +180,7 @@ void readIMU(void) {
 
     //comment out this line to switch back to global frame for roll.
     roll = rollLocal;
+    */
 }
 
 
