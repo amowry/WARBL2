@@ -128,9 +128,9 @@ void readIMU(void) {
 
     float deltat = sfusion.deltatUpdate();
     deltat = constrain(deltat, 0.001f, 0.01f);  // just to keep it from freaking out, consider just giving it a fixed deltat in future
-    //AM 9/16/23 Not sure if this matters, but this functions is called @ 10 mS or less frequently, so the returned deltat is always 0.01.
-    //I also see that this function calls micros(), which only has 1 mS resolution unless we enable the DWT (which we can do in setup).
-    //Would having a more accurate deltat help in any way, i.e. with drift? There is definitely some jitter involved.
+    //AM 9/16/23 Enabled DWT to make micros() higher resolution for this calculation. Not sure that it matters.
+
+    //Serial.println(deltat, 4);
 
     //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
@@ -139,6 +139,7 @@ void readIMU(void) {
     pitch = sfusion.getRollRadians();
     roll = sfusion.getPitchRadians();
     yaw = sfusion.getYawRadians();
+
 
 #if 0
     float * quat = sfusion.getQuat();
@@ -168,7 +169,13 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-/*
+
+    //Serial.print(roll);
+    //Serial.print(", ");
+    //Serial.println(pitch);
+
+
+    /*
     //Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
     static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
     rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
@@ -180,7 +187,7 @@ void readIMU(void) {
 
     //comment out this line to switch back to global frame for roll.
     roll = rollLocal;
-    */
+   */
 }
 
 
