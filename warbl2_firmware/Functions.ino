@@ -4,7 +4,7 @@
 //debug
 void printStuff(void) {
 
-    //Serial.println(accelY);
+    //Serial.println(nowtime - autoCenterYawTimer);
     //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
@@ -150,11 +150,14 @@ void readIMU(void) {
     Serial.println(" 1.1, -1.1");
 #endif
 
+
     currYaw = yaw;  // needs to be the unadjusted value
 
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
     else if (yaw < -PI) yaw += TWO_PI;
+
+
 
     // adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
@@ -165,14 +168,11 @@ void readIMU(void) {
     pitch = -pitch;
     yaw = -yaw;
 
+
     roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-
-    //Serial.print(roll);
-    //Serial.print(", ");
-    //Serial.println(pitch);
 
 
     /*
@@ -342,7 +342,7 @@ void shakeForVibrato() {
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
-    const long ktapFilterTimeMs = 12;  //mS window for further filtering out taps on the tone holes
+    const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
 
     static bool shakeActive = false;
     static bool tapFilterActive = false;
@@ -1535,7 +1535,12 @@ void sendNote() {
             if (switches[mode][SEND_AFTERTOUCH] & 2) {
                 calculatePressure(3);
             }
+
+            if (IMUsettings[mode][AUTOCENTER_YAW] == true && (nowtime - autoCenterYawTimer) > (IMUsettings[mode][AUTOCENTER_YAW_INTERVAL] * 250)) {  //Recenter yaw when we send a new note if there has been enough silence.
+                centerIMU();
+            }
         }
+
 
         if (notewason && !switches[mode][LEGATO]) {
             // send prior noteoff now if legato is selected.
@@ -1585,6 +1590,10 @@ void sendNote() {
           (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            //or completely closed pipe with any fingering chart
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 //turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
             noteon = 0;                                                                           //keep track
+
+            if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  //Reset the autocenter yaw timer.
+                autoCenterYawTimer = nowtime;
+            }
 
             sendPressure(true);
 
@@ -3030,7 +3039,7 @@ void startAdv(void) {
    * https://developer.apple.com/library/content/qa/qa1931/_index.html   
    */
     Bluefruit.Advertising.restartOnDisconnect(true);
-    Bluefruit.Advertising.setInterval(32, 244);  // in unit of 0.625 ms -- these are the settings recommended by Apple (20 mS and 152.5 mS)
+    Bluefruit.Advertising.setInterval(32, 244);  // in unit of 0.625 ms -- these are the settings recommended by Apple (20 ms and 152.5 ms)
     Bluefruit.Advertising.setFastTimeout(30);    // number of seconds in fast mode
     Bluefruit.Advertising.start(0);              // 0 = Don't stop advertising after n seconds
 }
@@ -3181,9 +3190,9 @@ void connect_callback(uint16_t conn_handle) {
 
     connection->getPeerName(central_name, sizeof(central_name));
 
-    // Get the current connection agreed upon connection interval in units of 0.625 mS
+    // Get the current connection agreed upon connection interval in units of 0.625 ms
     connIntvl = connection->getConnectionInterval();
-    connIntvl = connIntvl * 0.625;  //convert to mS
+    connIntvl = connIntvl * 0.625;  //convert to ms
     //Serial.print("Connected to ");
     //Serial.println(central_name);
 

@@ -1,6 +1,5 @@
 
 
-
 //Approximate power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
 
 //ToDo: restoring factory settings shouldn't reset the run time or run time/charge
@@ -202,9 +201,9 @@ ExternalEEPROM EEPROM;
 #define ROLL_CC_NUMBER 20
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
-#define X_SHAKE_PITCHBEND 23  //unused
+#define AUTOCENTER_YAW 23  //On/Off
 #define Y_SHAKE_PITCHBEND 24  //On/OffF (Only this axis is currently used for shake vibrato.)
-#define Z_SHAKE_PITCHBEND 25  //unused
+#define AUTOCENTER_YAW_INTERVAL 25  //0-20 (represents 0-5s pause interval for yaw recentering)
 #define X_PITCHBEND_DEPTH 26  //unused
 #define Y_PITCHBEND_DEPTH 27  //0-100
 #define Z_PITCHBEND_DEPTH 28  //unused
@@ -279,6 +278,7 @@ float roll;
 float pitch;
 float yaw;
 int shakeVibrato;  //Shake vibrato depth, from -8192 to 8192
+unsigned long autoCenterYawTimer; //For determining when to auto-recenter the yaw after silence
 
 
 //Instrument
@@ -348,9 +348,9 @@ byte switches[3][13] =  //the settings for the switches in various Config Tool p
 byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see defines above)
 
   {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 0, 64, 64, 64 },  //Same for instrument 2
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
   };
 
 byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool.
@@ -596,7 +596,7 @@ void setup() {
 #if defined(RELEASE)
     Serial.end();  //Turn off CDC. Necessary for release to make a class-compliant device
 #endif
-     dwt_enable();  //Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
+    dwt_enable();  //Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
     sd_clock_hfclk_request();  //Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
 
@@ -675,7 +675,8 @@ void setup() {
     EEPROM.setPageSize(64);                //In bytes
     EEPROM.enablePollForWriteComplete();   //Supports I2C polling of write completion. This shortens the amount of time waiting between writes but hammers the I2C bus by polling every 100 uS. disablePollForWriteComplete() will add 5 mS between each write.
     EEPROM.setPageWriteTime(5);            //5 ms max write time
-    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000 --this must be called *after* configuring the settings.
+    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000
+
 
 
     //SPI
@@ -725,10 +726,10 @@ void setup() {
 void loop() {
 
 
-    /////////// Things here happen ~ every 3 mS if on battery power and 2 mS if plugged in.
+    /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
 
 
-    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 mS delay. Total device consumption is 8.7 mA with 3 mS delay, or 10.9 mA with 2 mS delay.
+    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
 
 
     byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
@@ -737,7 +738,7 @@ void loop() {
 
     byte delayTime = 3;
 
-    if (!battPower) {  //Use a 2 mS sleep instead if we have USB power
+    if (!battPower) {  //Use a 2 ms sleep instead if we have USB power
         delayTime = 2;
     }
 
@@ -852,7 +853,7 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 5 mS --these things should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
+    /////////// Things here happen ~ every 5 ms --these things should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
 
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
@@ -873,7 +874,7 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 mS if not connected to BLE and connInvl + 2 mS if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
+    /////////// Things here happen ~ every 9 ms if not connected to BLE and connInvl + 2 ms if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
     if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
         calculateAndSendPitchbend();  //11-200 uS depending on whether holes are partially covered.
@@ -895,6 +896,7 @@ void loop() {
         timerF = nowtime;
 
         manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage. Could read the voltage a little less frequently.
+
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }

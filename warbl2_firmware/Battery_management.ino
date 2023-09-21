@@ -120,7 +120,7 @@ void manageBattery(bool send) {
         chargeStartTime = nowtime;
         static byte computeCycles = 0;
         computeCycles++;
-        if (computeCycles == 5) {  //Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 mS.
+        if (computeCycles == 5) {  //Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 ms.
             EEPROM.write(1013, highByte(prevRunTime));
             EEPROM.write(1014, lowByte(prevRunTime));
             computeCycles = 0;
