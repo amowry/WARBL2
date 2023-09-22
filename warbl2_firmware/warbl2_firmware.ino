@@ -72,7 +72,11 @@ ExternalEEPROM EEPROM;
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
 #define kModeBansuri 23
-#define kModeNModes 24
+#define kWARBL2Custom1 67
+#define kWARBL2Custom2 68
+#define kWARBL2Custom3 69
+#define kWARBL2Custom4 70
+#define kModeNModes 28
 
 //Pitch bend modes
 #define kPitchBendSlideVibrato 0
@@ -201,15 +205,15 @@ ExternalEEPROM EEPROM;
 #define ROLL_CC_NUMBER 20
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
-#define AUTOCENTER_YAW 23  //On/Off
-#define Y_SHAKE_PITCHBEND 24  //On/OffF (Only this axis is currently used for shake vibrato.)
+#define AUTOCENTER_YAW 23           //On/Off
+#define Y_SHAKE_PITCHBEND 24        //On/OffF (Only this axis is currently used for shake vibrato.)
 #define AUTOCENTER_YAW_INTERVAL 25  //0-20 (represents 0-5s pause interval for yaw recentering)
-#define X_PITCHBEND_DEPTH 26  //unused
-#define Y_PITCHBEND_DEPTH 27  //0-100
-#define Z_PITCHBEND_DEPTH 28  //unused
+#define X_PITCHBEND_DEPTH 26        //unused
+#define Y_PITCHBEND_DEPTH 27        //0-100
+#define Z_PITCHBEND_DEPTH 28        //unused
 #define kIMUnVariables 29
 
-
+//Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
 };
@@ -218,7 +222,6 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
 //Create instances of the Arduino MIDI Library. ***AS OF 7/17/23, this requires the latest version of the MIDI library from GitHub, rather than the release version. Otherwise just use the instances below.
 MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
 MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
-
 
 //Create instances of the Arduino MIDI Library.
 //MIDI_CREATE_INSTANCE(BLEMidi, blemidi, BLEMIDI);
@@ -277,8 +280,8 @@ float gyroZCalibration = 0.0f;
 float roll;
 float pitch;
 float yaw;
-int shakeVibrato;  //Shake vibrato depth, from -8192 to 8192
-unsigned long autoCenterYawTimer; //For determining when to auto-recenter the yaw after silence
+int shakeVibrato;                  //Shake vibrato depth, from -8192 to 8192
+unsigned long autoCenterYawTimer;  //For determining when to auto-recenter the yaw after silence
 
 
 //Instrument
@@ -287,7 +290,9 @@ byte defaultMode = 0;  // The default mode, from 0-2.
 
 
 //WARBL2 variables that are independent of instrument
-byte WARBL2settings[] = { 2, 1, 5 };  //see defines above
+byte WARBL2settings[] = { 2, 1, 5 };    //see defines above
+uint8_t WARBL2CustomChart[256];            //The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
+int WARBL2CustomChartReceiveByte = 0;  //The byte in the custom chart currently being received from the Config Tool
 
 
 //Variables that can change according to instrument.
@@ -897,6 +902,7 @@ void loop() {
 
         manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage. Could read the voltage a little less frequently.
 
+        //Serial.println(EEPROM.read(3000));
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }

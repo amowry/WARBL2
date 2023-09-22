@@ -32,7 +32,7 @@ void printStuff(void) {
     //Serial.println(battPower);
     //Serial.print(roll);
     //Serial.print(",");
-    //Serial.println(pitch);
+    //Serial.println(modeSelector[0]);
 
     //Serial.println(holeCovered, BIN);
     //Serial.println(newState);
@@ -963,6 +963,31 @@ int get_note(unsigned int fingerPattern) {
                 break;
             }
 
+
+
+
+        case kWARBL2Custom1:  //We've already loaded the currently chosen chart into the arrray, so these can all fall through here.
+            {
+            }
+        case kWARBL2Custom2:
+            {
+            }
+        case kWARBL2Custom3:
+            {
+            }
+        case kWARBL2Custom4:
+            {
+                tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
+                ret = WARBL2CustomChart[tempCovered];
+                if (ret == 0) {
+                    ret = -1;
+                }
+                return ret;
+            }
+
+
+
+
         default:
             {
                 return ret;
@@ -1693,7 +1718,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     }
                 }
 
-                if (value > 32 && value < 60) {
+                if ((value > 32 && value < 60) || (value > 99 && value < 104)) {
                     modeSelector[fingeringReceiveMode] = value - 33;
                     loadPrefs();
                 }
@@ -1823,7 +1848,6 @@ void handleControlChange(byte channel, byte number, byte value) {
             ///////CC 105
             else if (number == 105) {
 
-
                 if (pressureReceiveMode < 12) {
                     pressureSelector[mode][pressureReceiveMode] = value;  //advanced pressure values
                     loadPrefs();
@@ -1866,20 +1890,34 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode >= 200 && pressureReceiveMode < (kIMUnVariables + 200)) {
-                    //Serial.println(pressureReceiveMode);
-                    //Serial.println(value);
                     IMUsettings[mode][pressureReceiveMode - 200] = value;  //IMU settings
                     loadPrefs();
+                }
+
+                else if (pressureReceiveMode >= 300 && pressureReceiveMode < 304) {  //WARBL2 Custom fingering charts
+                    blinkNumber = 0;
+                    WARBL2CustomChart[WARBL2CustomChartReceiveByte] = value;  //Put the value in the custom chart.
+                    WARBL2CustomChartReceiveByte++;                           //Increment the location
+
+                    if (WARBL2CustomChartReceiveByte == 256) {
+                        WARBL2CustomChartReceiveByte = 0;  //Reset for next time;
+                        for (int i = 0; i < 256; i++) {    //Write the chart to EEPROM.
+                            EEPROM.write((3000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
+                        }
+                        blinkNumber = 3;
+                        sendMIDI(CC, 7, 109, 100);  //Indicate success.
+                        loadPrefs();
+                    }
                 }
             }
 
 
 
             ///////CC 109
-            if (number == 109 && value < kIMUnVariables) {  //Indicates that value for IMUsettings variable will be sent on CC 105.
-                pressureReceiveMode = value + 200;          //Add to the value because lower pressureReceiveModes are used for other variables.
+            if ((number == 109 && value < kIMUnVariables) || (number == 109 && value > 99 && value < 104)) {  //Indicates that value for IMUsettings variable will be sent on CC 105.
+                pressureReceiveMode = value + 200;                                                            //Add to the value because lower pressureReceiveModes are used for other variables.
+                blinkNumber = 0;
             }
-
 
 
             ///////CC 106
@@ -2762,8 +2800,12 @@ void loadPrefs() {
     jumpTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 4]) + 1) / 1.25;  //Includes a correction for milliseconds
     dropTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 5]) + 1) / 1.25;  //Includes a correction for milliseconds
 
-
-
+    //Read a custom chart from EEPROM if we're using one.
+    if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
+        for (int i = 0; i < 256; i++) {
+            WARBL2CustomChart[i] = EEPROM.read((3000 + (256 * (modeSelector[mode] - 67))) + i);
+        }
+    }
 
     pitchBend = 8192;
     expression = 0;
