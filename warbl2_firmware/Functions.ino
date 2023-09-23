@@ -894,7 +894,7 @@ int get_note(unsigned int fingerPattern) {
             {
             }
 
-        case kModeBansuri:
+        case kModeBansuri:  //ToDO: Make sure this matches the old firmware (2.2)
             {
 
                 //check the chart.
@@ -914,55 +914,6 @@ int get_note(unsigned int fingerPattern) {
                 }
                 return ret;
             }
-
-
-
-        case kModeCustom:
-            {
-                tempCovered = (0b011111110 & fingerPattern) >> 1;      //ignore thumb hole and bell sensor for now
-                uint8_t leftmost = findleftmostunsetbit(tempCovered);  //here we find the index of the leftmost uncovered hole, which will be used to determine the note from the chart.
-
-                for (uint8_t i = 0; i < 6; i++) {  //look only at leftmost uncovered hole for lower several notes
-                    if (leftmost == i) {
-                        customScalePosition = 47 - i;
-                    }
-                }
-
-                //several ugly special cases
-                if (tempCovered >> 3 == 0b0111) {
-                    customScalePosition = 39;
-                }
-
-                else if (tempCovered >> 3 == 0b0110) {
-                    customScalePosition = 41;
-                }
-
-                else if (tempCovered >> 5 == 0b00) {
-                    customScalePosition = 40;
-                }
-
-                if (tempCovered == 0b1111111) {
-                    if (!switches[mode][R4_FLATTEN]) {  //all holes covered but not R4 flatten
-                        customScalePosition = 48;
-                    } else {
-                        customScalePosition = 47;
-                    }
-                }
-
-                if (fingerPattern >> 8 == 0 && !switches[mode][THUMB_AND_OVERBLOW] && breathMode != kPressureThumb && ED[mode][38] != 0) {  //thumb hole is open and we're not using it for register
-                    customScalePosition = 38;
-                }
-
-                ret = ED[mode][customScalePosition];
-
-                if (bitRead(tempCovered, 0) == 1 && switches[mode][R4_FLATTEN] && ret != 0) {  //flatten one semitone if using R4 for that purpose
-                    ret = ret - 1;
-                }
-
-                return ret;
-                break;
-            }
-
 
 
 
@@ -986,8 +937,6 @@ int get_note(unsigned int fingerPattern) {
             }
 
 
-
-
         default:
             {
                 return ret;
@@ -996,8 +945,6 @@ int get_note(unsigned int fingerPattern) {
 
     return ret;
 }
-
-
 
 
 
@@ -1025,7 +972,7 @@ void get_shift() {
         }
     }
 
-    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF || modeSelector[mode] == kModeCustom)) || (breathMode == kPressureBreath && modeSelector[mode] == kModeCustom && switches[mode][THUMB_AND_OVERBLOW])) {  //if we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
+    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  //if we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
 
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
             shift = shift + 12;  //add an octave jump to the transposition if necessary.
@@ -1059,15 +1006,10 @@ void get_shift() {
 void get_state() {
     sensorValue2 = tempSensorValue;  //transfer last reading
 
-
-
     byte scalePosition;
 
-    if (modeSelector[mode] == kModeCustom) {
-        scalePosition = 110 - customScalePosition;  //scalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
-    } else {
-        scalePosition = newNote;
-    }
+    scalePosition = newNote;  //scalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
+
 
     if (ED[mode][DRONES_CONTROL_MODE] == 3) {  //Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
 
@@ -1094,7 +1036,7 @@ void get_state() {
         }
 
 
-        if (breathMode == kPressureBreath || (breathMode == kPressureThumb && modeSelector[mode] == kModeCustom && switches[mode][THUMB_AND_OVERBLOW])) {  //if overblowing is enabled
+        if (breathMode == kPressureBreath) {  //if overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
             if (sensorValue2 > upperBoundHigh) {

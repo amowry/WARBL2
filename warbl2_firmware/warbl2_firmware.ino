@@ -162,7 +162,7 @@ ExternalEEPROM EEPROM;
 #define POLY_CURVE 35
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
-#define CUSTOM_FINGERING_1 38
+#define CUSTOM_FINGERING_1 38 //None of these "custom" variables these are used by WARBL2.
 #define CUSTOM_FINGERING_2 39
 #define CUSTOM_FINGERING_3 40
 #define CUSTOM_FINGERING_4 41
