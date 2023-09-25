@@ -23,7 +23,7 @@ void printStuff(void) {
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
-    //Serial.println(connIntvl);
+    //Serial.println(scalePosition);
     //Serial.println(prevRunTime);
     //Serial.println(pressed[1]);
     //Serial.println(CPUtemp, 2);
@@ -917,7 +917,7 @@ int get_note(unsigned int fingerPattern) {
 
 
 
-        case kWARBL2Custom1:  //We've already loaded the currently chosen chart into the arrray, so these can all fall through here.
+        case kWARBL2Custom1:  //If we're using a custom chart we've already loaded the currently selected one from EEPROM into the array, so these can all fall through here.
             {
             }
         case kWARBL2Custom2:
@@ -1002,14 +1002,22 @@ void get_shift() {
 
 
 //State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
-//The jump/drop behavior is from Louis Barman
+//The current jump/drop behavior is from Louis Barman
 void get_state() {
-    sensorValue2 = tempSensorValue;  //transfer last reading
+    sensorValue2 = tempSensorValue;  //Transfer last reading.
 
-    byte scalePosition;
+    byte scalePosition;  //ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
 
-    scalePosition = newNote;  //scalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
+    if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
+        scalePosition = findleftmostunsetbit(holeCovered) + 62;
+        if (scalePosition > 69) {
+            scalePosition = 70;
+        }
+    }
 
+    else {
+        scalePosition = newNote;
+    }
 
     if (ED[mode][DRONES_CONTROL_MODE] == 3) {  //Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
 
@@ -1036,7 +1044,7 @@ void get_state() {
         }
 
 
-        if (breathMode == kPressureBreath) {  //if overblowing is enabled
+        if (breathMode == kPressureBreath) {  //If overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
             if (sensorValue2 > upperBoundHigh) {
@@ -1056,7 +1064,7 @@ void get_state() {
     }
 
     currentState = newState;
-    sensorValue = sensorValue2;  //we'll use the current reading as the baseline next time around, so we can monitor the rate of change.
+    sensorValue = sensorValue2;  //We'll use the current reading as the baseline next time around, so we can monitor the rate of change.
 }
 
 
