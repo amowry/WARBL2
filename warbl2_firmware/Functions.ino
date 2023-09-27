@@ -2927,7 +2927,7 @@ void loadCalibration() {
 
 
 
-
+//ToDo: should possible change this so that the zero output value coresponds to the NoteOn pressure, which is higher than zero pressure(?).
 //Note that the time constant in the smoothing algorithm in get_sensors can be tweaked if there's too much pressure lag.
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {

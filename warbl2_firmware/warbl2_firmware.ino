@@ -834,7 +834,7 @@ void loop() {
     if ((nowtime - pressureTimer) >= pressureInterval) {
 
         pressureTimer = nowtime;
-        if (abs(prevSensorValue - sensorValue) > 1) {  //If pressure has changed more than a little, send it.
+        if (abs(prevSensorValue - smoothed_pressure) > 1) {  //If pressure has changed more than a little, send it.
             if (ED[mode][SEND_PRESSURE]) {
                 calculatePressure(0);
             }
@@ -852,7 +852,7 @@ void loop() {
 
             sendToConfig(false, true);  //Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
-            prevSensorValue = sensorValue;
+            prevSensorValue = smoothed_pressure;
         }
     }
 
