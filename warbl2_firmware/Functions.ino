@@ -50,12 +50,10 @@ void printStuff(void) {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    //tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution to 10 bit for now to match the old WARBL code-- we can also use 12 bit if needed.
     tempSensorValue = analogRead(A0);  //Read the pressure sensor.
 
     //Make a smoothed 12-bit reading to map to CC, aftertouch, poly.
-    const float alpha = 0.4;  //Time constant can be tweaked.
-    smoothed_pressure = tempSensorValue;
+    const float alpha = 0.2;                                                          //Time constant can be tweaked.
     smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * tempSensorValue;  //Exponential moving average
     //Serial.println(smoothed_pressure);
 
@@ -360,8 +358,6 @@ void shakeForVibrato() {
     static bool preTrigger = false;
 
     shakeVibrato = 0;
-
-    long nowtime = millis();
 
 
     if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
@@ -1573,13 +1569,15 @@ void sendNote() {
           (modeSelector[mode] == kModeNorthumbrian && newNote == 60) ||                           //or closed Northumbrian pipe
           (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            //or completely closed pipe with any fingering chart
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 //turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
-            noteon = 0;                                                                           //keep track
+                                                                                                  //keep track
 
             if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  //Reset the autocenter yaw timer.
                 autoCenterYawTimer = nowtime;
             }
 
             sendPressure(true);
+
+            noteon = 0;
 
             if (ED[mode][DRONES_CONTROL_MODE] == 2 && dronesOn) {  //stop drones if drones are being controlled with chanter on/off
                 stopDrones();

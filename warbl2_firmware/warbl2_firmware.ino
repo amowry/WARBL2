@@ -848,11 +848,17 @@ void loop() {
                 calculatePressure(3);
             }
 
-            sendPressure(false);
+           // if (noteon) { //Only send if there's a note playing.
+                sendPressure(false);
+           // }
 
-            sendToConfig(false, true);  //Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+            static int previousTenBitPressure = sensorValue;
 
-            prevSensorValue = smoothed_pressure;
+            if (abs(previousTenBitPressure - sensorValue) > 1) {  //Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
+                sendToConfig(false, true);                        //Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+                previousTenBitPressure = sensorValue;
+                prevSensorValue = smoothed_pressure;
+            }
         }
     }
 
