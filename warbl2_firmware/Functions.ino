@@ -50,7 +50,16 @@ void printStuff(void) {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution to 10 bit for now to match the old WARBL code-- we can also use 12 bit if needed.
+    //tempSensorValue = analogRead(A0) >> 2;  //Read the pressure sensor. ***Reducing the resolution to 10 bit for now to match the old WARBL code-- we can also use 12 bit if needed.
+    tempSensorValue = analogRead(A0);  //Read the pressure sensor.
+
+    //Make a smoothed 12-bit reading to map to CC, aftertouch, poly.
+    const float alpha = 0.4;  //Time constant can be tweaked.
+    smoothed_pressure = tempSensorValue;
+    smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * tempSensorValue;  //Exponential moving average
+    //Serial.println(smoothed_pressure);
+
+    tempSensorValue = tempSensorValue >> 2;  //Reduce the reading to stable 10 bits for state machine.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
@@ -2919,13 +2928,19 @@ void loadCalibration() {
 
 
 
-
-//ToDo: the calculations can be made more sophisticated now that we have a fast processor and FPU
+//Note that the time constant in the smoothing algorithm in get_sensors can be tweaked if there's too much pressure lag.
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
-    long scaledPressure = sensorValue - 100;  // input pressure range is 100-1000. Bring this down to 0-900
-    scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0], inputPressureBounds[pressureOption][1]);
-    scaledPressure = (((scaledPressure * pressureInputScale[pressureOption]) >> 10) - inputPressureBounds[pressureOption][2]);  //scale input pressure up to a range of 0-1024 using the precalculated scale factor
+    long scaledPressure = smoothed_pressure - 400;  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
+    if (scaledPressure < 0) {
+        scaledPressure = 0;
+    }
+    scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     //Constrain the pressure to the input range
+    scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  //Scale pressure to a range of 0-1024
+
+    //Serial.println(scaledPressure);
+    //Serial.println(inputPressureBounds[pressureOption][1] << 2);
+    //Serial.println("");
 
     if (curve[pressureOption] == 1) {  //for this curve, cube the input and scale back down.
         scaledPressure = ((scaledPressure * scaledPressure * scaledPressure) >> 20);

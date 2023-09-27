@@ -162,7 +162,7 @@ ExternalEEPROM EEPROM;
 #define POLY_CURVE 35
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
-#define CUSTOM_FINGERING_1 38 //None of these "custom" variables these are used by WARBL2.
+#define CUSTOM_FINGERING_1 38  //None of these "custom" variables these are used by WARBL2.
 #define CUSTOM_FINGERING_2 39
 #define CUSTOM_FINGERING_3 40
 #define CUSTOM_FINGERING_4 41
@@ -290,8 +290,8 @@ byte defaultMode = 0;  // The default mode, from 0-2.
 
 
 //WARBL2 variables that are independent of instrument
-byte WARBL2settings[] = { 2, 1, 5 };    //see defines above
-uint8_t WARBL2CustomChart[256];            //The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
+byte WARBL2settings[] = { 2, 1, 5 };   //see defines above
+uint8_t WARBL2CustomChart[256];        //The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
 int WARBL2CustomChartReceiveByte = 0;  //The byte in the custom chart currently being received from the Config Tool
 
 
@@ -469,6 +469,7 @@ volatile unsigned int tempSensorValue = 0;  //for holding the pressure sensor va
 int sensorValue = 0;                        // first value read from the pressure sensor
 int sensorValue2 = 0;                       // second value read from the pressure sensor, for measuring rate of change in pressure
 int prevSensorValue = 0;                    // previous sensor reading, used to tell if the pressure has changed and should be sent.
+static int smoothed_pressure;               // smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
 int sensorCalibration = 0;                  //the sensor reading at startup, used as a base value
 byte offset = 15;                           //called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
 byte multiplier = 15;                       //controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes. Increasing this makes playing with a bag more forgiving but requires more force to reach highest second-octave notes. Can be set according to fingering mode and breath mode (i.e. a higher jump factor may be used for playing with a bag). Array indices 1-3 are for breath mode jump factor, indices 4-6 are for bag mode jump factor.
@@ -500,7 +501,7 @@ unsigned int inputPressureBounds[4][4] = {
     { 100, 800, 0, 0 },
 };
 
-unsigned long pressureInputScale[4] =  // precalculated scale factor for mapping the input pressure range, for CC, velocity, aftertouch, and poly.
+unsigned long pressureInputScale[4] =  // precalculated scale factor for mapping the input pressure range, for CC, velocity, aftertouch, and poly. ***No longer used for WARBL2 because calculations are done on the fly.
   { 0, 0, 0, 0 };
 
 byte outputBounds[4][2] = {  // container for ED output pressure range variables (CC, velocity, aftertouch, poly)-- the ED variables will be copied here so they're in a more logical order. This is a fix for variables that were added later.
@@ -824,7 +825,7 @@ void loop() {
     if ((nowtime - noteOnTimestamp) < 20) {
         pressureInterval = 2;
     } else pressureInterval = 5;
-    if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  //Use a longer interval if it's shorter than the connection interval and we're not sending USB only.
+    if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  //Use a longer interval if sending BLE.
         pressureInterval = connIntvl + 2;
     }
 
