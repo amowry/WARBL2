@@ -129,19 +129,18 @@ void manageBattery(bool send) {
 
 
 
-
+    //ToDo: there still may be an issue where the percentage will read 100 just before shutdown because of low power-- possible when the run time extends beyond the expected run time/charge.
     //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
     unsigned long currentRun = (nowtime - runTimer) / 60000;  //Minutes we've been running since powerup
 
-    if (battPower) {
-        battLevel = constrain(((fullRunTime - prevRunTime - currentRun) / float(fullRunTime)) * 100, 1, 100);  //If we're on battery power we also have to subtract time since we powered up.
-        if (prevRunTime - currentRun > fullRunTime && (prevRunTime > currentRun)) {                            //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
-            battLevel = 1;
-        }
-    } else {
-        battLevel = constrain(((fullRunTime - prevRunTime) / float(fullRunTime)) * 100, 1, 100);  //If we're not on battery power, just use the saved run time.
+    if (!battPower) {  //Ignore time since powerup if we're plugged in.
+        currentRun = 0;
     }
 
+    battLevel = constrain(((fullRunTime - prevRunTime - currentRun) / float(fullRunTime)) * 100, 1, 100);  //Calculate percentage remaining.
+    if (prevRunTime - currentRun > fullRunTime) {                                                          //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
+        battLevel = 1;
+    }
 
     if (chargingStatus == 1 && battLevel > 98) {  //Don't let the percentage reach 100% while charging until there is a termination.
         battLevel = 98;

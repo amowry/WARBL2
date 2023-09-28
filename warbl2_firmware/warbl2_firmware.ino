@@ -469,7 +469,8 @@ volatile unsigned int tempSensorValue = 0;  //for holding the pressure sensor va
 int sensorValue = 0;                        // first value read from the pressure sensor
 int sensorValue2 = 0;                       // second value read from the pressure sensor, for measuring rate of change in pressure
 int prevSensorValue = 0;                    // previous sensor reading, used to tell if the pressure has changed and should be sent.
-static int smoothed_pressure;               // smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
+int twelveBitPressure;                      //Raw 12-bit reading
+int smoothed_pressure;                      // smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
 int sensorCalibration = 0;                  //the sensor reading at startup, used as a base value
 byte offset = 15;                           //called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
 byte multiplier = 15;                       //controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes. Increasing this makes playing with a bag more forgiving but requires more force to reach highest second-octave notes. Can be set according to fingering mode and breath mode (i.e. a higher jump factor may be used for playing with a bag). Array indices 1-3 are for breath mode jump factor, indices 4-6 are for bag mode jump factor.
@@ -848,9 +849,9 @@ void loop() {
                 calculatePressure(3);
             }
 
-           // if (noteon) { //Only send if there's a note playing.
-                sendPressure(false);
-           // }
+            // if (noteon) { //Only send if there's a note playing.
+            sendPressure(false);
+            // }
 
             static int previousTenBitPressure = sensorValue;
 

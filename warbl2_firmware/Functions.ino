@@ -25,7 +25,7 @@ void printStuff(void) {
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(scalePosition);
     //Serial.println(prevRunTime);
-    //Serial.println(pressed[1]);
+    //Serial.println(fullRunTime);
     //Serial.println(CPUtemp, 2);
     //Serial.println(IMUtemp);
     // Serial.println(USBstatus);
@@ -50,14 +50,14 @@ void printStuff(void) {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    tempSensorValue = analogRead(A0);  //Read the pressure sensor.
+    twelveBitPressure = analogRead(A0);  //Read the pressure sensor.
 
     //Make a smoothed 12-bit reading to map to CC, aftertouch, poly.
-    const float alpha = 0.2;                                                          //Time constant can be tweaked.
-    smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * tempSensorValue;  //Exponential moving average
+    const float alpha = 0.2;                                                            //Time constant can be tweaked.
+    smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * twelveBitPressure;  //Exponential moving average
     //Serial.println(smoothed_pressure);
 
-    tempSensorValue = tempSensorValue >> 2;  //Reduce the reading to stable 10 bits for state machine.
+    tempSensorValue = twelveBitPressure >> 2;  //Reduce the reading to stable 10 bits for state machine.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
@@ -2929,16 +2929,24 @@ void loadCalibration() {
 //Note that the time constant in the smoothing algorithm in get_sensors can be tweaked if there's too much pressure lag.
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
-    long scaledPressure = smoothed_pressure - 400;  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
+
+    long scaledPressure;
+
+    if (pressureOption == 1) {
+        scaledPressure = twelveBitPressure - 400;  //Use raw pressure for velocity so the response is as fast as possible (the low pass adds a small lag).
+    }
+
+    else {
+        scaledPressure = smoothed_pressure - 400;  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
+    }
+
+
     if (scaledPressure < 0) {
         scaledPressure = 0;
     }
     scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     //Constrain the pressure to the input range
     scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  //Scale pressure to a range of 0-1024
 
-    //Serial.println(scaledPressure);
-    //Serial.println(inputPressureBounds[pressureOption][1] << 2);
-    //Serial.println("");
 
     if (curve[pressureOption] == 1) {  //for this curve, cube the input and scale back down.
         scaledPressure = ((scaledPressure * scaledPressure * scaledPressure) >> 20);
