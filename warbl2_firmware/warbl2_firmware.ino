@@ -740,7 +740,8 @@ void loop() {
 
 
     byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
-
+                                                  // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
+                                                  //With USB MIDI only there is virtually no jitter with a loop rate of 2 ms.
     //if (delayCorrection != 0) { Serial.println(delayCorrection); }  //Print the amount of time that other things have consumed.
 
     byte delayTime = 3;
@@ -755,11 +756,11 @@ void loop() {
     }
 
 
-    getSensors();  //180 uS, 55 of which is reading the pressure sensor.
+    getSensors();  //180 us, 55 of which is reading the pressure sensor.
 
     nowtime = millis();  //Get the current time for the timers used below and in various functions.
 
-    get_state();  //Get the breath state. 3 uS.
+    get_state();  //Get the breath state. 3 us.
 
     MIDI.read();  // Read any new USBMIDI messages.
 
@@ -779,23 +780,23 @@ void loop() {
     }
 
 
-    get_fingers();  //Find which holes are covered. 4 uS.
+    get_fingers();  //Find which holes are covered. 4 us.
 
 
     if (debounceFingerHoles()) {
         fingersChanged = 1;
-        tempNewNote = get_note(holeCovered);  //Get the next MIDI note from the fingering pattern if it has changed. 3uS.
+        tempNewNote = get_note(holeCovered);  //Get the next MIDI note from the fingering pattern if it has changed. 3us.
         sendToConfig(true, false);            //Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
         if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
             findStepsDown();
         }
 
 
-        if (tempNewNote != -1 && newNote != tempNewNote) {  //If a new note has been triggered
+        if (tempNewNote != -1 && newNote != tempNewNote) {  //If a new note has been triggered,
             if (pitchBendMode != kPitchBendNone) {
-                holeLatched = holeCovered;  //Remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = holeCovered;  //remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
-                    iPitchBend[i] = 0;  //and reset pitchbend
+                    iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;
                 }
             }
@@ -811,9 +812,9 @@ void loop() {
 
 
 
-    if (switches[mode][SEND_VELOCITY]) {  //If we're sending NoteOn velocity based on pressure
+    if (switches[mode][SEND_VELOCITY]) {  //If we're sending NoteOn velocity based on pressure,
         if (prevState == SILENCE && newState != SILENCE) {
-            velocityDelayTimer = nowtime;  //Reset the delay timer used for calculating velocity when a note is turned on after silence.
+            velocityDelayTimer = nowtime;  //reset the delay timer used for calculating velocity when a note is turned on after silence.
         }
         prevState = newState;
     }
@@ -829,7 +830,6 @@ void loop() {
     if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  //Use a longer interval if sending BLE.
         pressureInterval = connIntvl + 2;
     }
-
 
 
     if ((nowtime - pressureTimer) >= pressureInterval) {
@@ -849,14 +849,14 @@ void loop() {
                 calculatePressure(3);
             }
 
-            // if (noteon) { //Only send if there's a note playing.
+            // if (noteon) { //Only send if there's a note playing? The issue with this is that the output won't necessarily drop all the way to zero when a note turns off.
             sendPressure(false);
             // }
 
             static int previousTenBitPressure = sensorValue;
 
-            if (abs(previousTenBitPressure - sensorValue) > 1) {  //Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
-                sendToConfig(false, true);                        //Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+            if (abs(previousTenBitPressure - sensorValue) > 1) {  // Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
+                sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
                 previousTenBitPressure = sensorValue;
                 prevSensorValue = smoothed_pressure;
             }
@@ -870,9 +870,9 @@ void loop() {
 
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
-        //timerD = micros(); //testing--micros requres turning on DWT in setup()
-        readIMU();  //Takes about 108 uS (for sensor read only, without fusion), and 129us for SensorFusion's Madgwick
-        //Serial.println(micros() - timerD);
+        // timerD = micros(); // testing--micros requres turning on DWT in setup()
+        readIMU();  // Takes about 145 us using SensorFusion's Mahony
+        // Serial.println(micros() - timerD);
 
         checkButtons();
 
@@ -890,12 +890,11 @@ void loop() {
     /////////// Things here happen ~ every 9 ms if not connected to BLE and connInvl + 2 ms if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
 
     if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
-        calculateAndSendPitchbend();  //11-200 uS depending on whether holes are partially covered.
+        calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();
-        sendIMU();
-        if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
-            shakeForVibrato();
-        }
+        sendIMU();          // ~ 130 us
+        shakeForVibrato();  // ~ 200 uS
+
         timerC = nowtime;
     }
 
@@ -908,9 +907,7 @@ void loop() {
     if ((nowtime - timerF) > 750) {  //This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
 
-        manageBattery(false);  //Check the battery and manage charging. Takes about 300 uS because of reading the battery voltage. Could read the voltage a little less frequently.
-
-        //Serial.println(EEPROM.read(3000));
+        manageBattery(false);  //Check the battery and manage charging. Takes about 300 us because of reading the battery voltage. Could read the voltage a little less frequently.
 
         //static float CPUtemp = readCPUTemperature(); //If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
@@ -919,5 +916,5 @@ void loop() {
 
 
     ////////////
-    sendNote();  //Send a new MIDI note if there is one. Takes up to 325 uS if there is a new note.
+    sendNote();  //Send a new MIDI note if there is one. Takes up to 325 us if there is a new note.
 }

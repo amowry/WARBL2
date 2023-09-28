@@ -113,6 +113,7 @@ void getSensors(void) {
 void readIMU(void) {
 
     //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA).
+    //Also, we don't have to read this if we're not using the IMU. However, we'd have to change the gyro calibration routine so we get readings before calibrating.
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -203,7 +204,7 @@ void readIMU(void) {
 
 
 
-//Calibrate the IMU when the command is received from the Config Tool. ToDo: Add accel if necessary??
+//Calibrate the IMU when the command is received from the Config Tool.
 void calibrateIMU() {
 
     gyroXCalibration = rawGyroX;
@@ -330,88 +331,91 @@ void sendIMU() {
 
 void shakeForVibrato() {
 
-    static float accelFilteredOld;
+    if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
 
-    float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
-    accelFilteredOld = accelFiltered;
-    float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
+        static float accelFilteredOld;
 
-
-    // A second low pass filter to minimize spikes from tapping the tone holes.
-    static float accelFilteredBOld;
-
-    float accelFilteredB = 0.4 * highPassY + 0.6 * accelFilteredBOld;
-    float lastFilteredB = accelFilteredBOld;
-    accelFilteredBOld = accelFilteredB;
-
-    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
-
-    const float kShakeStartThresh = 0.5f;
-    const float kShakeFinishThresh = 0.35f;
-    const long kShakeFinishTimeMs = 400;
-    const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
-
-    static bool shakeActive = false;
-    static bool tapFilterActive = false;
-    static long lastThreshExceedTime = 0;
-    static long tapFilterStartTime = 0;
-    static bool preTrigger = false;
-
-    shakeVibrato = 0;
+        float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+        accelFilteredOld = accelFiltered;
+        float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
 
 
-    if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
-        tapFilterActive = true;
-        tapFilterStartTime = nowtime;
-        // Serial.println("Shake Tap Filt");
-    }
+        // A second low pass filter to minimize spikes from tapping the tone holes.
+        static float accelFilteredBOld;
+
+        float accelFilteredB = 0.4 * highPassY + 0.6 * accelFilteredBOld;
+        float lastFilteredB = accelFilteredBOld;
+        accelFilteredBOld = accelFilteredB;
+
+        const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
+
+        const float kShakeStartThresh = 0.5f;
+        const float kShakeFinishThresh = 0.35f;
+        const long kShakeFinishTimeMs = 400;
+        const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
+
+        static bool shakeActive = false;
+        static bool tapFilterActive = false;
+        static long lastThreshExceedTime = 0;
+        static long tapFilterStartTime = 0;
+        static bool preTrigger = false;
+
+        shakeVibrato = 0;
 
 
-    if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
-        return;
-    }
+        if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
+            tapFilterActive = true;
+            tapFilterStartTime = nowtime;
+            // Serial.println("Shake Tap Filt");
+        }
 
 
-    if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
-        preTrigger = true;
-        // Serial.println("Pre Shake Trigger");
-    }
+        if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
+            return;
+        }
 
-    // start shake vib only when doing a zero crossing after threshold has been triggered
-    if (!shakeActive && preTrigger
-        // comment out next line to test without the zero crossing requirement
-        //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
-    ) {
-        shakeActive = true;
-        lastThreshExceedTime = nowtime;
-        // Serial.println("Start ShakeVib");
-    } else if (abs(accelFilteredB) > kShakeFinishThresh) {
-        lastThreshExceedTime = nowtime;
-    }
 
-    if ((shakeActive || tapFilterActive) && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
-        // Stop shake vibrato.
-        shakeActive = false;
-        tapFilterActive = false;
-        preTrigger = false;
-        // Serial.println("Cancel ShakeVib");
-    }
+        if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
+            preTrigger = true;
+            // Serial.println("Pre Shake Trigger");
+        }
 
-    if (shakeActive) {
-        // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
-        float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+        // start shake vib only when doing a zero crossing after threshold has been triggered
+        if (!shakeActive && preTrigger
+            // comment out next line to test without the zero crossing requirement
+            //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
+        ) {
+            shakeActive = true;
+            lastThreshExceedTime = nowtime;
+            // Serial.println("Start ShakeVib");
+        } else if (abs(accelFilteredB) > kShakeFinishThresh) {
+            lastThreshExceedTime = nowtime;
+        }
 
-        shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
+        if ((shakeActive || tapFilterActive) && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
+            // Stop shake vibrato.
+            shakeActive = false;
+            tapFilterActive = false;
+            preTrigger = false;
+            // Serial.println("Cancel ShakeVib");
+        }
 
-        //Serial.print(1.0f);
-        //Serial.print(",");
-        //Serial.print(normshake);
-        //Serial.print(",");
-        //Serial.println(-1.0f);
-    }
+        if (shakeActive) {
+            // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
+            float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
 
-    if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide tuend on, we need to send the pitchbend now.
-        sendPitchbend();
+            shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
+
+            //Serial.print(1.0f);
+            //Serial.print(",");
+            //Serial.print(normshake);
+            //Serial.print(",");
+            //Serial.println(-1.0f);
+        }
+
+        if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
+            sendPitchbend();
+        }
     }
 }
 
