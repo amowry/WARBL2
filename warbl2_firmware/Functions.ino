@@ -53,7 +53,7 @@ void getSensors(void) {
     twelveBitPressure = analogRead(A0);  //Read the pressure sensor.
 
     //Make a smoothed 12-bit reading to map to CC, aftertouch, poly.
-    const float alpha = 0.2;                                                            //Time constant can be tweaked.
+    const float alpha = 0.1;                                                            //Time constant can be tweaked.
     smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * twelveBitPressure;  //Exponential moving average
     //Serial.println(smoothed_pressure);
 
@@ -939,9 +939,6 @@ int get_note(unsigned int fingerPattern) {
             {
                 tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
                 ret = WARBL2CustomChart[tempCovered];
-                if (ret == 0) {
-                    ret = -1;
-                }
                 return ret;
             }
 
@@ -2816,10 +2813,12 @@ void loadPrefs() {
     inputPressureBounds[3][0] = (ED[mode][POLY_INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as poly
     inputPressureBounds[3][1] = (ED[mode][POLY_INPUT_PRESSURE_MAX] * 9);
 
+    /*// No longer used.
     for (byte j = 0; j < 4; j++) {                                                                    // CC, velocity, aftertouch, poly
         pressureInputScale[j] = (1048576 / (inputPressureBounds[j][1] - inputPressureBounds[j][0]));  //precalculate scaling factors for pressure input, which will be used to scale it up to a range of 1024.
         inputPressureBounds[j][2] = (inputPressureBounds[j][0] * pressureInputScale[j]) >> 10;
     }
+    */
 
     outputBounds[0][0] = ED[mode][OUTPUT_PRESSURE_MIN];  //move all these variables to a more logical order so they can be accessed in FOR loops
     outputBounds[0][1] = ED[mode][OUTPUT_PRESSURE_MAX];
@@ -2934,14 +2933,16 @@ void loadCalibration() {
 //calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
 
+
+
     long scaledPressure;
 
     if (pressureOption == 1) {
-        scaledPressure = twelveBitPressure - 400;  //Use raw pressure for velocity so the response is as fast as possible (the low pass adds a small lag).
+        scaledPressure = twelveBitPressure - (sensorThreshold[0] << 2);  //Use raw pressure for velocity so the response is as fast as possible (the low pass adds a small lag).
     }
 
     else {
-        scaledPressure = smoothed_pressure - 400;  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
+        scaledPressure = smoothed_pressure - (sensorThreshold[0] << 2);  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
     }
 
 
