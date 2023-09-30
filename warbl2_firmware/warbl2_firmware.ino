@@ -741,8 +741,8 @@ void loop() {
 
     byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
                                                   // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
-                                                  //With USB MIDI only there is virtually no jitter with a loop rate of 2 ms.
-    //if (delayCorrection != 0) { Serial.println(delayCorrection); }  //Print the amount of time that other things have consumed.
+                                                  //With USB MIDI only there is virtually no jitter with a loop period of 2 ms.
+    //if (delayCorrection > 3) { Serial.println(delayCorrection); }  //Print the amount of time that other things have consumed.
 
     byte delayTime = 3;
 
@@ -852,15 +852,14 @@ void loop() {
             // if (noteon) { //Only send if there's a note playing? The issue with this is that the output won't necessarily drop all the way to zero when a note turns off.
             sendPressure(false);
             // }
-
-            static int previousTenBitPressure = sensorValue;
-
-            if (abs(previousTenBitPressure - sensorValue) > 1) {  // Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
-                sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
-                previousTenBitPressure = sensorValue;
-                prevSensorValue = smoothed_pressure;
-            }
         }
+        static int previousTenBitPressure = sensorValue;
+
+        if (abs(previousTenBitPressure - sensorValue) > 1) {  // Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
+            sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+            previousTenBitPressure = sensorValue;
+        }
+        prevSensorValue = smoothed_pressure;
     }
 
 

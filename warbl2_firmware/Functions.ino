@@ -1529,9 +1529,11 @@ void sendNote() {
             notewason = 0;
         }
 
-        // need to send pressure prior to note, in case we are using it for velocity
-        if (ED[mode][SEND_PRESSURE] == 1 || switches[mode][SEND_AFTERTOUCH] != 0 || switches[mode][SEND_VELOCITY] == 1) {
-            sendPressure(true);
+
+        if (WARBL2settings[MIDI_DESTINATION] == 0 || connIntvl == 0) {                                                         //Only send here if not connected to BLE (to reduce jitter). I can't detect much difference, if any. (AM)
+            if (ED[mode][SEND_PRESSURE] == 1 || switches[mode][SEND_AFTERTOUCH] != 0 || switches[mode][SEND_VELOCITY] == 1) {  // need to send pressure prior to note, in case we are using it for velocity
+                sendPressure(true);
+            }
         }
 
         // set it now so that send pitchbend will operate correctly
@@ -1576,7 +1578,8 @@ void sendNote() {
                 autoCenterYawTimer = nowtime;
             }
 
-            sendPressure(true);
+            //Not sure if this is necessary here because it won't have an effect if there's no note playing(?) (AM)
+            //sendPressure(true);
 
             noteon = 0;
 
