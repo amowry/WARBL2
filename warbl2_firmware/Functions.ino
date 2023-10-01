@@ -11,10 +11,9 @@ void printStuff(void) {
         // Serial.println(toneholeRead[i]);
     }
 
-    //Serial.println(toneholeRead[0]);
+    //Serial.println(gyroXCalibration);
     //Serial.println("");
 
-    //loadSettingsForAllModes();
 
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
@@ -206,6 +205,10 @@ void readIMU(void) {
 
 //Calibrate the IMU when the command is received from the Config Tool.
 void calibrateIMU() {
+
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Make sure the gyro is on.
+    delay(5);                                 //Give it a bit of time.
+    readIMU();                                //Get a reading in case we haven't been reading it.
 
     gyroXCalibration = rawGyroX;
     gyroYCalibration = rawGyroY;
@@ -2836,6 +2839,15 @@ void loadPrefs() {
     curve[1] = ED[mode][VELOCITY_CURVE];
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
+
+    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
+        sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
+        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
+    }
+
+    else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+        sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
+    }
 }
 
 
@@ -2931,9 +2943,8 @@ void loadCalibration() {
 
 
 
-//ToDo: should possible change this so that the zero output value coresponds to the NoteOn pressure, which is higher than zero pressure(?).
+//Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
 //Note that the time constant in the smoothing algorithm in get_sensors can be tweaked if there's too much pressure lag.
-//calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected
 void calculatePressure(byte pressureOption) {
 
 

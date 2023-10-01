@@ -692,9 +692,9 @@ void setup() {
     SPI.begin();
 
     //IMU
-    sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
-    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Default is 104 if we don't change it here.
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Default is 104 if we don't change it here.
+    sox.begin_SPI(12, &SPI, 0, 10000000);        //Start IMU (CS pin is D12) at 10 Mhz.
+    sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+    sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
 
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -852,6 +852,7 @@ void loop() {
             // if (noteon) { //Only send if there's a note playing? The issue with this is that the output won't necessarily drop all the way to zero when a note turns off.
             sendPressure(false);
             // }
+            prevSensorValue = smoothed_pressure;
         }
         static int previousTenBitPressure = sensorValue;
 
@@ -859,7 +860,6 @@ void loop() {
             sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
             previousTenBitPressure = sensorValue;
         }
-        prevSensorValue = smoothed_pressure;
     }
 
 
@@ -870,9 +870,10 @@ void loop() {
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
         // timerD = micros(); // testing--micros requres turning on DWT in setup()
-        readIMU();  // Takes about 145 us using SensorFusion's Mahony
-        // Serial.println(micros() - timerD);
-
+        if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+            readIMU();  // Takes about 145 us using SensorFusion's Mahony
+            // Serial.println(micros() - timerD);
+        }
         checkButtons();
 
         if (buttonUsed) {
