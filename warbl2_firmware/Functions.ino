@@ -2440,10 +2440,9 @@ void saveFactorySettings() {
 
     EEPROM.write(44, 3);  //indicates settings have been saved
 
-    for (int i = 1; i < 1000; i++) {             //then we read every byte in EEPROM from 1 to 999
+    for (int i = 39; i < 980; i++) {             //then we read every byte in EEPROM from 39 to 999 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations)
         EEPROM.write(1500 + i, EEPROM.read(i));  //and rewrite them from 1501 to 2499. Then they'll be available to restore later if necessary.
     }
-
 
     blinkNumber = 3;
 }

@@ -717,10 +717,9 @@ void setup() {
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
 
 
-    //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
+    EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
     if (EEPROM.read(44) != 3) {
-        //EEPROM.write(1011, VERSION);  //Update the stored software version.
         saveFactorySettings();  //If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
     }
 
