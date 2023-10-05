@@ -55,11 +55,6 @@ void manageBattery(bool send) {
 
         //Detect change in charging status
         if (prevTempChargingStatus != tempChargingStatus) {
-
-            if (chargeEnabled && tempChargingStatus == 0) {  //For testing-- increment this if the charger interrupted charging while charging was enabled.
-                EEPROM.write(1007, EEPROM.read(1007) + 1);
-            }
-
             statusChanged = 1;
             if (communicationMode) {  //Send the status to the Config Tool if it has changed.
                 sendMIDI(CC, 7, 106, 71);
@@ -96,16 +91,12 @@ void manageBattery(bool send) {
     }
 
 
-
     //Read the battery
     float battVoltage = getBattVoltage();
     const float alpha = 0.05;  //Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
     smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average
 
-    //Serial.println(battVoltage, 3);
-    //Serial.println(smoothed_voltage, 3);
-    //Serial.println("");
 
 
     //Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
@@ -137,8 +128,8 @@ void manageBattery(bool send) {
         currentRun = 0;
     }
 
-    battLevel = constrain(((fullRunTime - prevRunTime - currentRun) / float(fullRunTime)) * 100, 1, 100);  //Calculate percentage remaining.
-    if (prevRunTime - currentRun > fullRunTime) {                                                          //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
+    battLevel = constrain(((fullRunTime - (prevRunTime + currentRun)) / float(fullRunTime)) * 100, 1, 100);  //Calculate percentage remaining.
+    if ((prevRunTime + currentRun) > fullRunTime) {                                                          //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
         battLevel = 1;
     }
 
@@ -175,6 +166,17 @@ void manageBattery(bool send) {
                 voltageQueue[20 - i] = voltageQueue[(20 - i) - 1];
             }
             voltageQueue[0] = smoothed_voltage;
+
+            //On occasion the battery voltage will suddenly jump up or down while charging. Currently undiagnosed-- it may be the charger or a change in battery load. The block below detects a sudden drop in voltage and adjusts previous measurements accordingly to prevent false termination.
+            float voltageDrop = voltageQueue[1] - voltageQueue[0];
+            if (voltageDrop > 0.002) {
+                for (byte i = 1; i < 21; i++) {  //Adjust all previous measurements.
+                    voltageQueue[i] = voltageQueue[i]-voltageDrop;
+                }
+                EEPROM.write(1007, EEPROM.read(1007) + 1);  //testing--record if there's been an adjustment
+            }
+
+
             voltageSlope = voltageQueue[0] - voltageQueue[20];  //Find the difference in voltage over the past ten minutes (this number will be large and meaningless meaningless until 10 minutes has past and the queue has been populated--that's okay because we don't need to terminate in the first 10 minutes anyway).
             if (voltageSlope < 0.001) {                         //If the curve has been flat for the previous 10 minutes, terminate charging. ToDo: it may be best to wait for a few of these flat readings, to avoid the risk of early termination in the middle of the charge curve.
                 digitalWrite(chargeEnable, LOW);                //Disable charging.
@@ -220,7 +222,7 @@ void manageBattery(bool send) {
 
     //Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        powerDown(false);
+        // powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
     }
 
 

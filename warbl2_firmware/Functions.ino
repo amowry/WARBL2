@@ -1978,7 +1978,6 @@ void handleControlChange(byte channel, byte number, byte value) {
                 for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
                     EEPROM.write(600 + r, WARBL2settings[r]);
                 }
-                Serial.println(WARBL2settings[CHARGE_FROM_HOST]);
             }
 
 
@@ -2731,7 +2730,6 @@ void loadSettingsForAllModes() {
 
         for (byte p = 0; p < kIMUnVariables; p++) {
             IMUsettings[i][p] = EEPROM.read(625 + p + (i * kIMUnVariables));
-            Serial.println();
         }
     }
 }
@@ -3225,11 +3223,6 @@ void connect_callback(uint16_t conn_handle) {
     // Get the current connection agreed upon connection interval in units of 0.625 ms
     connIntvl = connection->getConnectionInterval();
     connIntvl = connIntvl * 0.625;  //convert to ms
-    //Serial.print("Connected to ");
-    //Serial.println(central_name);
-
-    //Serial.print("At connection interval ");
-    //Serial.println(connIntvl);
 
     if (communicationMode) {
         sendMIDI(CC, 7, 106, 72);
@@ -3250,9 +3243,6 @@ void connect_callback(uint16_t conn_handle) {
 void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
     (void)conn_handle;
     (void)reason;
-
-    //Serial.println();
-    //Serial.print("Disconnected, reason = 0x"); Serial.println(reason, HEX);
 
     connIntvl = 0;
 

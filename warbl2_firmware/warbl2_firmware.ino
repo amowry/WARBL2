@@ -9,11 +9,11 @@
 #include <Arduino.h>
 #include <MIDI.h>
 #include <bluefruit.h>
-#include <Wire.h>  //I2C communication with EEPROM
-#include <SPI.h>   //communication with ATmega32U4 and IMU
-#include <SparkFun_External_EEPROM.h>
-#include <Adafruit_LSM6DSOX.h>  //IMU
-#include <SensorFusion.h>       // IMU fusion
+#include <Wire.h>                      //I2C communication with EEPROM
+#include <SPI.h>                       //communication with ATmega32U4 and IMU
+#include <SparkFun_External_EEPROM.h>  //The release version doesn't work-- use v. 1.0.14 for now.
+#include <Adafruit_LSM6DSOX.h>         //IMU
+#include <SensorFusion.h>              // IMU fusion
 
 BLEDis bledis;
 BLEMidi blemidi;
