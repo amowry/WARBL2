@@ -171,7 +171,7 @@ void manageBattery(bool send) {
             float voltageDrop = voltageQueue[1] - voltageQueue[0];
             if (voltageDrop > 0.002) {
                 for (byte i = 1; i < 21; i++) {  //Adjust all previous measurements.
-                    voltageQueue[i] = voltageQueue[i]-voltageDrop;
+                    voltageQueue[i] = voltageQueue[i] - voltageDrop;
                 }
                 EEPROM.write(1007, EEPROM.read(1007) + 1);  //testing--record if there's been an adjustment
             }
@@ -222,7 +222,7 @@ void manageBattery(bool send) {
 
     //Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        // powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
+        powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
     }
 
 
