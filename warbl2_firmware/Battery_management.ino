@@ -222,7 +222,7 @@ void manageBattery(bool send) {
 
     //Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
+        //powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
     }
 
 

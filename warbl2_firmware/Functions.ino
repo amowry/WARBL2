@@ -214,9 +214,9 @@ void calibrateIMU() {
     gyroYCalibration = rawGyroY;
     gyroZCalibration = rawGyroZ;
 
-    EEPROM.put(1015, gyroXCalibration);  //Put the current readings into EEPROM.
-    EEPROM.put(1019, gyroYCalibration);
-    EEPROM.put(1023, gyroZCalibration);
+    EEPROM.put(985, gyroXCalibration);  //Put the current readings into EEPROM.
+    EEPROM.put(989, gyroYCalibration);
+    EEPROM.put(993, gyroZCalibration);
 }
 
 
@@ -2440,8 +2440,8 @@ void saveFactorySettings() {
 
     EEPROM.write(44, 3);  //indicates settings have been saved
 
-    for (int i = 1; i < 1501; i++) {             //then we read every byte in EEPROM from 1 to 1500
-        EEPROM.write(2000 + i, EEPROM.read(i));  //and rewrite them from 2001 to 3500. Then they'll be available to restore later if necessary.
+    for (int i = 1; i < 1000; i++) {             //then we read every byte in EEPROM from 1 to 999
+        EEPROM.write(1500 + i, EEPROM.read(i));  //and rewrite them from 1501 to 2499. Then they'll be available to restore later if necessary.
     }
 
 
@@ -2457,8 +2457,8 @@ void saveFactorySettings() {
 
 //restore original settings from EEPROM
 void restoreFactorySettings() {
-    for (int i = 1; i < 1501; i++) {  //Read factory settings and rewrite to the normal settings locations.
-        EEPROM.write(i, EEPROM.read(2000 + i));
+    for (int i = 1; i < 1000; i++) {  //Read factory settings and rewrite to the normal settings locations.
+        EEPROM.write(i, EEPROM.read(1500 + i));
     }
 
     //load the newly restored settings
@@ -2477,7 +2477,7 @@ void restoreFactorySettings() {
 
 
 
-//save settings for current instrument as defaults for given instrument (i)
+//Save settings for current instrument as defaults for given instrument (i).
 void saveSettings(byte i) {
     EEPROM.write(40 + i, modeSelector[mode]);
     EEPROM.write(53 + i, noteShiftSelector[mode]);
@@ -2680,9 +2680,9 @@ void loadSettingsForAllModes() {
     fullRunTime = (word(EEPROM.read(1009), EEPROM.read(1010)));  //The total run time available on a full charge (minutes)
     prevRunTime = (word(EEPROM.read(1013), EEPROM.read(1014)));  //The total run time since the last full charge (minutes)
 
-    EEPROM.get(1015, gyroXCalibration);
-    EEPROM.get(1019, gyroYCalibration);
-    EEPROM.get(1023, gyroZCalibration);
+    EEPROM.get(985, gyroXCalibration);
+    EEPROM.get(989, gyroYCalibration);
+    EEPROM.get(993, gyroZCalibration);
 
 
     //Do all this for each mode.

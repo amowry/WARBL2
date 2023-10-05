@@ -1,8 +1,28 @@
 
+/*
+    Copyright (C) 2018-2023 Andrew Mowry warbl.xyz
 
-//Approximate power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
+    Many thanks to Michael Eskin, Jesse Chappell, and Louis Barman for their additions.
 
-//ToDo: restoring factory settings shouldn't reset the run time or run time/charge
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see http://www.gnu.org/licenses/
+
+
+Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
+
+
+*/
+
 
 #include "nrfx_power.h"  //for detecting VBUS
 #include <nrf_nvic.h>
