@@ -9,7 +9,7 @@ Notes:
 The battery is a 400 mAH 2/3 AAA NiMH cell. Example brands are PKCell, Kastar, Dantona, and GP. Either flat top or button top works. The real-world capacity of these is usually around 350 mAH.
 The BQ25172 charger will charge safely without any of this code when enabled by driving the chargeEnable pin high. The code monitors the battery level and does a better job of charge termination (0 dV/dt algorithm) to prolong battery life.
 The charger will only start charging if the battery voltage is below ~ 1.35V and the battery temperature is between ~ 0 and 40 degrees C.
-Charging is set by resistors to ~120 mA (0.3C) with a 4-hr safety timer. The charger will also terminate if battery voltage is > 1.7 V or battery temperature is over 40 degrees C.
+Charging is set by resistors to ~110 mA (0.275 C) with a 4-hr safety timer. The charger will also terminate if battery voltage is > 1.7 V or battery temperature is over 40 degrees C.
 Total device consumption is < 100 mA @ 5V, so any USB host (including iOS) will be able to charge.
 The charger will report a fault (missing battery, out of temperature range) by blinking the STAT pin at 1 Hz.
 */
@@ -24,7 +24,7 @@ void manageBattery(bool send) {
     static bool chargeEnabled = false;         //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
     static float voltageQueue[21];             //FIFO queue for finding the slope of the voltage curve while charging.
     static float voltageSlope;                 //Change in smoothed voltage over the previous 10 minutes
-    static unsigned long chargeStartTime = 0;  //When we started charging
+    static unsigned long chargeStartTime = 0;  //Resets every minute while charging to recalculate battery percentage.
     static bool chargeTerminated = false;      //Tells us that a charge cycle has been terminated because the cell is full.
     static byte battLevel;                     //Estimated battery percentage remaining
     static bool statusChanged;                 //Flag when the charging status has changed.
@@ -222,7 +222,7 @@ void manageBattery(bool send) {
 
     //Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        //powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
+        powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
     }
 
 

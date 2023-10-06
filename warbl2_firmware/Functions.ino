@@ -13,7 +13,7 @@ void printStuff(void) {
 
     //Serial.println(gyroXCalibration);
     //Serial.println("");
-
+    //Serial.println(toneholeRead[0]);
 
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
