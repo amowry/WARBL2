@@ -1,7 +1,6 @@
 //Fingering Charts
 //As constants, these are automatically stored in program memory with the ARM architecture.
-//The fingering charts can be either explicit, meaning an exact pattern is required to return a note, or general, where the highest uncovered hole is used to determine the note. This allows use to ignore all the holes below that, so we catch various open fingering patterns without having to list all of them.
-//We check the explicit patterns first, and if there's not a match we check the general patterns (if desired).
+
 
 
 // MAE FOOFOO 17 Nov 2018 - Added full key map and vibrato flags
