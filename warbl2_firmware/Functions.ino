@@ -44,16 +44,15 @@ void printStuff(void) {
 
 
 
-
-
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    twelveBitPressure = analogRead(A0);  //Read the pressure sensor.
+    analogPressure.update(); // reads the pressure sensor and applies adaptive filtering
+    twelveBitPressure = analogPressure.getRawValue();
 
-    //Make a smoothed 12-bit reading to map to CC, aftertouch, poly.
-    const float alpha = 0.1;                                                            //Time constant can be tweaked.
-    smoothed_pressure = (1.0 - alpha) * smoothed_pressure + alpha * twelveBitPressure;  //Exponential moving average
+    // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+    smoothed_pressure = analogPressure.getValue();
+
     //Serial.println(smoothed_pressure);
 
     tempSensorValue = twelveBitPressure >> 2;  //Reduce the reading to stable 10 bits for state machine.

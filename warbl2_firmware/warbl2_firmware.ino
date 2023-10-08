@@ -34,6 +34,7 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include <SparkFun_External_EEPROM.h>  //The release version doesn't work-- use v. 1.0.14 for now.
 #include <Adafruit_LSM6DSOX.h>         //IMU
 #include <SensorFusion.h>              // IMU fusion
+#include "ResponsiveAnalogRead.h"
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -41,6 +42,8 @@ Adafruit_USBD_MIDI usb_midi;
 
 Adafruit_LSM6DSOX sox;  //IMU instance
 SF sfusion;
+
+ResponsiveAnalogRead analogPressure(A0, true);
 
 ExternalEEPROM EEPROM;
 
@@ -655,11 +658,18 @@ void setup() {
     pinMode(STAT, INPUT_PULLUP);  //STAT from charger
 
     //set up ADC
+    const int adcBits = 12;
     analogOversampling(8);  //Takes 55 uS regardless of resolution.
     //analogOversampling(16); //88 uS
     analogReference(AR_VDD4);  //Use VDD for analog reference.
-    analogReadResolution(12);  //12 bit
+    analogReadResolution(adcBits);  //12 bit
 
+    // setup responsive analog read for adaptive filtering of pressure
+    const float snapmult = 0.01f;
+    const float actthresh = 2.0f;
+    analogPressure.setSnapMultiplier(snapmult);
+    analogPressure.setActivityThreshold(actthresh);
+    analogPressure.setAnalogResolution(1 << adcBits);
 
     //USB MIDI stuff
     usb_midi.setStringDescriptor("WARBL USB MIDI");  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
