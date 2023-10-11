@@ -4,7 +4,7 @@ Please see the web site for more info:
 
 https://warbl.xyz
 
-For updating the firmware, typical users would just double-click the WARBL reset button (while connected by USB) and then drag/drop the supplied .uf2 file to the drive named Itsyboot.
+For updating the firmware, typical users would just double-click the WARBL reset button (while connected by USB) and then drag/drop the supplied .uf2 file to the drive named ITSY840BOOT.
  
 Advanced users can use the Arduino IDE to modify and upload the code. Modify the code at your own risk and note that while modifying the battery management code won't have dangerous results it could result in reducing the lifespan of the battery.
 
@@ -30,13 +30,13 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 
 Be sure to make a backup of the boards.txt file!
 
- Open the file, find the entry for # Adafruit ItsyBitsy nRF52840 Express and make the following changes:
+ * Open the file, find the entry for # Adafruit ItsyBitsy nRF52840 Express and make the following changes:
 
- Change the itsybitsy52840.name entry to: 
+ * Change the itsybitsy52840.name entry to: 
  
  itsybitsy52840.name=WARBL
 
- Then, in the "VID/PID for Bootloader, Arduino & CircuitPython" section change VID 1, 2, and 3; and PID 1, 2, and 3 to the following (leave VID 0 and PID 0 the same):
+ * Then, in the "VID/PID for Bootloader, Arduino & CircuitPython" section change VID 1, 2, and 3; and PID 1, 2, and 3 to the following (leave VID 0 and PID 0 the same):
 
 itsybitsy52840.vid.1=0x04D8
 
@@ -51,7 +51,7 @@ itsybitsy52840.vid.3=0x04D8
 itsybitsy52840.pid.3=0xE63A 
  
 
- Finally, find the "Build" section make the following changes:
+ * Finally, find the "Build" section make the following changes:
 
 Change the manufacturer:
 
@@ -67,12 +67,12 @@ itsybitsy52840.build.vid=0x04D8
 
 itsybitsy52840.build.pid=0xE63A
 
-Save your changes. If the Arduino IDE is open, close and reopen it.
+* Save your changes. If the Arduino IDE is open, close and reopen it.
 
 
 *	Now open the WARBL sketch that you saved to in your sketchbook folder. Four tabs should open. 
 
-*	Next, you’ll need to install libraries includedin the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one. **Note:** As of 10/23 you'll need to install v. 1.0.14 of the SparkFun_External_EEPROM library, not the newest version, as there is a bug in the newest release.
+*	Next, you’ll need to install libraries included in the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one. **Note:** As of 10/23 you'll need to install v. 1.0.14 of the SparkFun_External_EEPROM library, not the newest version, as there is a bug in the newest release.
  
  
 *	Next, tell it which board you have by going Tools > Board and select `Adafruit ItsyBitsy NRF32840 Express` The entry may also say 'WARBL' at this point.
