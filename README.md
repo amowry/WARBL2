@@ -55,13 +55,13 @@ itsybitsy52840.build.pid=0xE63A
 
 *	Now open the WARBL sketch that you saved to in your sketchbook folder. Four tabs should open. 
 
-*	Next, you’ll need to install libraries includedin the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one.
+*	Next, you’ll need to install libraries includedin the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one. **Note:** As of 10/23 you'll need to install v. 1.0.14 of the SparkFun_External_EEPROM library, not the newest version, as there is a bug in the newest release.
  
  
 *	Next, tell it which board you have by going Tools > Board and select `Adafruit ItsyBitsy NRF32840 Express` The entry may also say 'WARBL' at this point.
 
 
-*	Then turn on “show verbose output during upload” under File > Preferences. Now, click the upload button and check that it compiles without errors. 
+*	Then turn on “show verbose ouput" for both "compile" and "upload" under File > Preferences. Now, click the upload button and check that it compiles without errors. 
 
 
 *	Then, when it tries to upload, you should see this message at the bottom of the screen:
