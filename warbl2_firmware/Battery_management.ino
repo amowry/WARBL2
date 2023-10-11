@@ -17,9 +17,6 @@ The charger will report a fault (missing battery, out of temperature range) by b
 void manageBattery(bool send) {
 
 
-           // EEPROM.write(1013, highByte(800));  //Update the recorded run time in EEPROM.
-   // EEPROM.write(1014, lowByte(800));
-
     static byte chargingStatus = 0;            //0 is not charging, 1 is charging, 2 is fault
     static byte prevChargingStatus = 0;        //Keep track of when it has changed.
     static byte tempChargingStatus;            //The assumed charging status before it has been finalized by waiting to detect a fault
@@ -201,7 +198,7 @@ void manageBattery(bool send) {
         }
     }
     cycles++;
- 
+
     //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
     //It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
