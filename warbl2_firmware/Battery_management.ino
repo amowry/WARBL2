@@ -17,6 +17,9 @@ The charger will report a fault (missing battery, out of temperature range) by b
 void manageBattery(bool send) {
 
 
+           // EEPROM.write(1013, highByte(800));  //Update the recorded run time in EEPROM.
+   // EEPROM.write(1014, lowByte(800));
+
     static byte chargingStatus = 0;            //0 is not charging, 1 is charging, 2 is fault
     static byte prevChargingStatus = 0;        //Keep track of when it has changed.
     static byte tempChargingStatus;            //The assumed charging status before it has been finalized by waiting to detect a fault
@@ -120,7 +123,7 @@ void manageBattery(bool send) {
 
 
 
-    //ToDo: there still may be an issue where the percentage will read 100 just before shutdown because of low power-- possible when the run time extends beyond the expected run time/charge.
+
     //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
     unsigned long currentRun = (nowtime - runTimer) / 60000;  //Minutes we've been running since powerup
 
@@ -198,14 +201,16 @@ void manageBattery(bool send) {
         }
     }
     cycles++;
-
-
+ 
     //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
     //It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
-        EEPROM.write(1007, 0);                                                                                          //For testing
+        EEPROM.write(1007, 0);
+        if (prevRunTime > fullRunTime) {  //If we've run longer than expected on battery, make the run time the same as the expected run time when we start charging. This will allow the battery percentage to start increasing right away rather than being stuck at 1% for a while.
+            prevRunTime = fullRunTime;
+        }
     } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
         digitalWrite(chargeEnable, LOW);                                                                                //Disable charging.
         chargeEnabled = 0;

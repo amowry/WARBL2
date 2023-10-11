@@ -47,7 +47,7 @@ void printStuff(void) {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    analogPressure.update(); // reads the pressure sensor and applies adaptive filtering
+    analogPressure.update();  // reads the pressure sensor and applies adaptive filtering
     twelveBitPressure = analogPressure.getRawValue();
 
     // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
@@ -2815,13 +2815,6 @@ void loadPrefs() {
     inputPressureBounds[3][0] = (ED[mode][POLY_INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as poly
     inputPressureBounds[3][1] = (ED[mode][POLY_INPUT_PRESSURE_MAX] * 9);
 
-    /*// No longer used.
-    for (byte j = 0; j < 4; j++) {                                                                    // CC, velocity, aftertouch, poly
-        pressureInputScale[j] = (1048576 / (inputPressureBounds[j][1] - inputPressureBounds[j][0]));  //precalculate scaling factors for pressure input, which will be used to scale it up to a range of 1024.
-        inputPressureBounds[j][2] = (inputPressureBounds[j][0] * pressureInputScale[j]) >> 10;
-    }
-    */
-
     outputBounds[0][0] = ED[mode][OUTPUT_PRESSURE_MIN];  //move all these variables to a more logical order so they can be accessed in FOR loops
     outputBounds[0][1] = ED[mode][OUTPUT_PRESSURE_MAX];
     outputBounds[1][0] = ED[mode][VELOCITY_OUTPUT_PRESSURE_MIN];
@@ -2836,6 +2829,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
+/* //Roll this back for now for development
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
         sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
@@ -2844,6 +2838,7 @@ void loadPrefs() {
     else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
         sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
     }
+    */
 }
 
 

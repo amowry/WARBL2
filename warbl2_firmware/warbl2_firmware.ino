@@ -242,7 +242,7 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
 };
 
 
-//Create instances of the Arduino MIDI Library. ***AS OF 7/17/23, this requires the latest version of the MIDI library from GitHub, rather than the release version. Otherwise just use the instances below.
+//Create instances of the Arduino MIDI Library.
 MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
 MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
@@ -661,7 +661,7 @@ void setup() {
     const int adcBits = 12;
     analogOversampling(8);  //Takes 55 uS regardless of resolution.
     //analogOversampling(16); //88 uS
-    analogReference(AR_VDD4);  //Use VDD for analog reference.
+    analogReference(AR_VDD4);       //Use VDD for analog reference.
     analogReadResolution(adcBits);  //12 bit
 
     // setup responsive analog read for adaptive filtering of pressure
@@ -723,8 +723,10 @@ void setup() {
 
     //IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);        //Start IMU (CS pin is D12) at 10 Mhz.
-    sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
-    sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+   // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+   // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
 
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -750,6 +752,7 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
+
 }
 
 
@@ -899,10 +902,12 @@ void loop() {
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
         // timerD = micros(); // testing--micros requres turning on DWT in setup()
-        if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
-            readIMU();  // Takes about 145 us using SensorFusion's Mahony
-            // Serial.println(micros() - timerD);
-        }
+
+        //Read the IMU all the time for now (for development)
+        //if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+        readIMU();  // Takes about 145 us using SensorFusion's Mahony
+        // Serial.println(micros() - timerD);
+        //}
         checkButtons();
 
         if (buttonUsed) {
