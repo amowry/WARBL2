@@ -64,16 +64,10 @@ itsybitsy52840.build.pid=0xE63A
 *	Then turn on “show verbose output during upload” under File > Preferences. Now, click the upload button and check that it compiles without errors. 
 
 
-*	Then, when it tries to upload, you should see this output repeating in the messages at the bottom of the screen:
+*	Then, when it tries to upload, you should see this message at the bottom of the screen:
+  
 
-    ```
-    PORTS {} / {} => {}   
-    PORTS {} / {} => {}    
-    PORTS {} / {} => {}    
-    PORTS {} / {} => {}    
-    PORTS {} / {} => {}
-    ```
-
+Waiting for upload port...
 
 
 *	Now, use a toothpick to double-click the WARBL reset button. The LED should illuminate blue and the code should upload. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right.
