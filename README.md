@@ -36,7 +36,22 @@ Be sure to make a backup of the boards.txt file!
  
  itsybitsy52840.name=WARBL
 
- Then, find the Build section make the following changes:
+ Then, in the "VID/PID for Bootloader, Arduino & CircuitPython" section change VID 1, 2, and 3; and PID 1, 2, and 3 to the following (leave VID 0 and PID 0 the same):
+
+itsybitsy52840.vid.1=0x04D8
+
+itsybitsy52840.pid.1=0xE63A 
+
+itsybitsy52840.vid.2=0x04D8
+
+itsybitsy52840.pid.2=0xE63A 
+
+itsybitsy52840.vid.3=0x04D8
+
+itsybitsy52840.pid.3=0xE63A 
+ 
+
+ Finally, find the "Build" section make the following changes:
 
 Change the manufacturer:
 
@@ -46,11 +61,13 @@ Then the product name:
 
 itsybitsy52840.build.usb_product="WARBL"
 
-...and finally the VID and PID:
+...and finally the VID and PID here as well:
 
 itsybitsy52840.build.vid=0x04D8
 
 itsybitsy52840.build.pid=0xE63A
+
+Save your changes. If the Arduino IDE is open, close and reopen it.
 
 
 *	Now open the WARBL sketch that you saved to in your sketchbook folder. Four tabs should open. 
