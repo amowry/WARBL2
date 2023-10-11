@@ -376,9 +376,9 @@ byte switches[3][13] =  //the settings for the switches in various Config Tool p
 byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see defines above)
 
   {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 2, 2, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
   };
 
 byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool.
@@ -722,9 +722,9 @@ void setup() {
     SPI.begin();
 
     //IMU
-    sox.begin_SPI(12, &SPI, 0, 10000000);        //Start IMU (CS pin is D12) at 10 Mhz.
-   // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
-   // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+    sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
+                                               // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+                                               // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
 
@@ -752,7 +752,6 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
-
 }
 
 
