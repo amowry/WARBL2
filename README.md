@@ -70,7 +70,7 @@ itsybitsy52840.build.pid=0xE63A
 * Save your changes. If the Arduino IDE is open, close and reopen it.
 
 
-*	Now open the WARBL sketch that you saved to in your sketchbook folder. Four tabs should open. 
+*	Now open the WARBL sketch that you saved in your sketchbook folder. Four tabs should open. 
 
 *	Next, you’ll need to install libraries included in the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one. **Note:** As of 10/23 you'll need to install v. 1.0.14 of the SparkFun_External_EEPROM library, not the newest version, as there is a bug in the newest release.
  
