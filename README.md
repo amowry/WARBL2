@@ -28,7 +28,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
    
    * Linux: `/home/(username)/.arduino15/packages/adafruit/hardware/nrf52/1.3.0`
 
-Be sure to make a backup of the boards.txt file!
+Be sure to make a backup of the boards.txt file! **Also note:** Changing the boards.txt file will also affect any other Itsybitsy NRF52840 Express boards that you may have.
 
  * Open the file, find the entry for # Adafruit ItsyBitsy nRF52840 Express and make the following changes:
 
