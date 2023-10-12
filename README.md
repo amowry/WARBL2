@@ -28,7 +28,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
    
    * Linux: `/home/(username)/.arduino15/packages/adafruit/hardware/nrf52/1.3.0`
 
-Be sure to make a backup of the boards.txt file!
+Be sure to make a backup of the boards.txt file! **Also note:** Changing the boards.txt file will also affect any other Itsybitsy NRF52840 Express boards that you may have.
 
  * Open the file, find the entry for # Adafruit ItsyBitsy nRF52840 Express and make the following changes:
 
@@ -70,9 +70,9 @@ itsybitsy52840.build.pid=0xE63A
 * Save your changes. If the Arduino IDE is open, close and reopen it.
 
 
-*	Now open the WARBL sketch that you saved to in your sketchbook folder. Four tabs should open. 
+*	Now open the WARBL sketch that you saved in your sketchbook folder. Four tabs should open. 
 
-*	Next, you’ll need to install libraries included in the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one. **Note:** As of 10/23 you'll need to install v. 1.0.14 of the SparkFun_External_EEPROM library, not the newest version, as there is a bug in the newest release.
+*	Next, you’ll need to install libraries included in the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one.
  
  
 *	Next, tell it which board you have by going Tools > Board and select `Adafruit ItsyBitsy NRF32840 Express` The entry may also say 'WARBL' at this point.
