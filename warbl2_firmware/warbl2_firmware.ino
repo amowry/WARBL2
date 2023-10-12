@@ -270,8 +270,8 @@ byte USBstatus = 0;  //Battery power (0), dumb charger (1), or connected USB hos
 //Battery variables
 unsigned long runTimer;           //The time when WARBL started running on battery power
 bool battPower = false;           //Keeps track of when we're on battery power, for above timer
-unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate and then adjusted each time the battery is discharged.
-unsigned long prevRunTime = 360;  //The total run time since the last full charge (minutes). Initialized at around half full. It is zeroed after each full charge.
+unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate of 12 hours and then adjusted each time the battery is discharged.
+unsigned long prevRunTime = 600;  //The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
 unsigned long powerDownTimer;     //For powering down after a period of no activity
 
 

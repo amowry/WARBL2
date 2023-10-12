@@ -1493,9 +1493,9 @@ void sendNote() {
       (!noteon
        || (pitchBendModeSelector[mode] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
        || (pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
-      &&                                                                                                //if there wasn't any note playing or the current note is different than the previous one
-      ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&              //and the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
-      !(prevNote == 62 && (newNote + shift) == 86) &&                                                   // and if we're currently on a middle D in state 3 (all finger holes covered), we wait until we get a new state reading before switching notes. This it to prevent erroneous octave jumps to a high D.
+      &&                                                                                    //if there wasn't any note playing or the current note is different than the previous one
+      ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&  //and the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
+      //!(prevNote == 62 && (newNote + shift) == 86) &&                                                   // and if we're currently on a middle D in state 3 (all finger holes covered), we wait until we get a new state reading before switching notes. This it to prevent erroneous octave jumps to a high D.
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // and not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
       !(modeSelector[mode] == kModeNorthumbrian && newNote == 60) &&                                    //and if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
       !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {                     // don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
@@ -2829,7 +2829,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-/* //Roll this back for now for development
+    /* //Roll this back for now for development
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
         sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
