@@ -833,9 +833,9 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected. This ensures that we aren't sending pitchbend too much faster than the connection interval.
+    /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
-    if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+    if ((nowtime - timerC) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();
         sendIMU();          // ~ 130 us
