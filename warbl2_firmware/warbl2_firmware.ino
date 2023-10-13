@@ -29,11 +29,11 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include <Arduino.h>
 #include <MIDI.h>
 #include <bluefruit.h>
-#include <Wire.h>                      //I2C communication with EEPROM
-#include <SPI.h>                       //communication with ATmega32U4 and IMU
-#include <SparkFun_External_EEPROM.h> 
-#include <Adafruit_LSM6DSOX.h>         //IMU
-#include <SensorFusion.h>              // IMU fusion
+#include <Wire.h>  //I2C communication with EEPROM
+#include <SPI.h>   //communication with ATmega32U4 and IMU
+#include <SparkFun_External_EEPROM.h>
+#include <Adafruit_LSM6DSOX.h>  //IMU
+#include <SensorFusion.h>       // IMU fusion
 #include "ResponsiveAnalogRead.h"
 
 BLEDis bledis;
@@ -347,24 +347,10 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  //whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
-byte switches[3][13] =  //the settings for the switches in various Config Tool panels
-                        //instrument 0
-  {
-      {
-        1,  // vented (breath/mouthpiece) on or off (there are different pressure settings for breath/mouthpiece)
-        0,  // bagless mode off or on
-        0,  // secret button command mode off or on
-        0,  // whether the functionality for using the right thumb or the bell sensor for increasing the register is inverted.
-        0,  // off/on for Michael Eskin's custom vibrato approach
-        0,  // send pressure as NoteOn velocity off or on
-        0,  // send pressure as aftertouch (channel pressure) off or on, and/or poly aftertouch (2nd bit)
-        1,  // force maximum velocity (127)
-        0,  // send pitchbend immediately before Note On (recommnded for MPE)
-        1,  // send legato (Note On message before Note Off for previous note)
-        0,  //override pitch expression pressure range
-        0,  //use both thumb and overblowing for register control with custom fingering chart
-        0   //use R4 finger to flatten any note one semitone with custom fingering chart
-      },
+byte switches[3][13] =  //the settings for the switches in various Config Tool panels (see defines above)
+
+  {  //instrument 0
+      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },
 
       //same for instrument 1
       { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },
@@ -381,60 +367,10 @@ byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see 
       { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
   };
 
-byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool.
-                  //instrument 0
-  {
-      {
-        0,    //EXPRESSION_ON
-        3,    //EXPRESSION_DEPTH (can have a value of 1-8)
-        0,    //SEND_PRESSURE
-        0,    //CURVE (0 is linear)
-        1,    //PRESSURE_CHANNEL
-        7,    //PRESSURE_CC
-        0,    //INPUT_PRESSURE_MIN range is from 0-100, to be scaled later up to maximum input values
-        100,  //INPUT_PRESSURE_MAX range is from 0-100, to be scaled later
-        0,    //OUTPUT_PRESSURE_MIN range is from 0-127, to be scaled later
-        127,  //OUTPUT_PRESSURE_MAX range is from 0-127, to be scaled later
-        0,    //DRONES_ON_COMMAND
-        1,    //DRONES_ON_CHANNEL
-        51,   //DRONES_ON_BYTE2
-        36,   //DRONES_ON_BYTE3
-        0,    //DRONES_OFF_COMMAND
-        1,    //DRONES_OFF_CHANNEL
-        51,   //DRONES_OFF_BYTE2
-        36,   //DRONES_OFF_BYTE3
-        0,    //DRONES_CONTROL_MODE (0 is no drone control, 1 is use secret button, 2 is use chanter, 3 is use pressure.
-        0,    //DRONES_PRESSURE_LOW_BYTE
-        0,    //DRONES_PRESSURE_HIGH_BYTE
-        0,    //VELOCITY_INPUT_PRESSURE_MIN
-        100,  //VELOCITY_INPUT_PRESSURE_MAX
-        0,    //VELOCITY_OUTPUT_PRESSURE_MIN
-        127,  //VELOCITY_OUTPUT_PRESSURE_MAX
-        0,    //AFTERTOUCH_INPUT_PRESSURE_MIN
-        100,  //AFTERTOUCH_INPUT_PRESSURE_MAX
-        0,    //AFTERTOUCH_OUTPUT_PRESSURE_MIN
-        127,  //AFTERTOUCH_OUTPUT_PRESSURE_MAX
-        0,    //POLY_INPUT_PRESSURE_MIN
-        100,  //POLY_INPUT_PRESSURE_MAX
-        0,    //POLY_OUTPUT_PRESSURE_MIN
-        127,  //POLY_OUTPUT_PRESSURE_MAX
-        0,    //VELOCITY_CURVE
-        0,    //AFTERTOUCH_CURVE
-        0,    //POLY_CURVE
-        0,    //EXPRESSION_MIN
-        100,  //EXPRESSION_MAX
-        0,    //CUSTOM_FINGERING_1
-        74,   //CUSTOM_FINGERING_2
-        73,   //CUSTOM_FINGERING_3
-        72,   //CUSTOM_FINGERING_4
-        71,   //CUSTOM_FINGERING_5
-        69,   //CUSTOM_FINGERING_6
-        67,   //CUSTOM_FINGERING_7
-        66,   //CUSTOM_FINGERING_8
-        64,   //CUSTOM_FINGERING_9
-        62,   //CUSTOM_FINGERING_10
-        61    //CUSTOM_FINGERING_11
-      },
+byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool (see defines above).
+
+  {  //instrument 0
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },
 
       //same for instrument 1
       { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },
@@ -444,8 +380,8 @@ byte ED[3][49] =  //an array that holds all the settings for the Expression and 
   };
 
 byte pressureSelector[3][12] =  //a selector array for all the register control variables that can be changed in the Configuration Tool
-                                //instrument 0
-  {
+
+  {                              //instrument 0
       { 50, 20, 20, 15, 50, 75,  //bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
         3, 7, 20, 0, 3, 10 },    //breath/mouthpiece: offset, multiplier, transientFilter, jump time, drop time
       //instrument 1
@@ -461,14 +397,7 @@ byte pressureSelector[3][12] =  //a selector array for all the register control 
 uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default actions as of firmware 2.1 to avoid confusion). Dimension 1 is the three instruments. Dimension 2 is the button combination: click 1, click 2, click3, hold 2 click 1, hold 2 click 3, longpress 1, longpress2, longpress3
                                 //Dimension 3 is the desired action: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
                                 //instrument 0---The actions are: 0 none, 1 send MIDI message, 2 change pitchbend mode, 3 instrument, 4 play/stop (bagless mode), 5 octave shift up, 6 octave shift down, 7 MIDI panic, 8 change register control mode, 9 drones on/off, 10 semitone shift up, 11 semitone shift down, 12 begin autocalibration, 13 power down, 14 recenter yaw.
-  { { { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 } },
+  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },
 
     //same for instrument 1
     { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },
@@ -524,9 +453,6 @@ unsigned int inputPressureBounds[4][4] = {
     { 100, 800, 0, 0 },
     { 100, 800, 0, 0 },
 };
-
-unsigned long pressureInputScale[4] =  // precalculated scale factor for mapping the input pressure range, for CC, velocity, aftertouch, and poly. ***No longer used for WARBL2 because calculations are done on the fly.
-  { 0, 0, 0, 0 };
 
 byte outputBounds[4][2] = {  // container for ED output pressure range variables (CC, velocity, aftertouch, poly)-- the ED variables will be copied here so they're in a more logical order. This is a fix for variables that were added later.
     { 0, 127 },

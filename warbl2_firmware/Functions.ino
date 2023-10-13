@@ -8,10 +8,11 @@ void printStuff(void) {
     //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
-        // Serial.println(toneholeRead[i]);
+        //Serial.println(toneholeCovered[i]);
     }
 
-    //Serial.println(gyroXCalibration);
+
+    //Serial.println(gyroXCalibration, 4);
     //Serial.println("");
     //Serial.println(toneholeRead[0]);
 
@@ -570,13 +571,13 @@ void sendToConfig(bool newPattern, bool newPressure) {
             pressureSendTimer = nowtime;
         }
 
-        if (patternChanged && (nowtime - patternSendTimer) > 50) {  //If some time has past, send the new pattern to the Config Tool.
+        if (patternChanged && (nowtime - patternSendTimer) > 25) {  //If some time has past, send the new pattern to the Config Tool.
             sendMIDI(CC, 7, 114, holeCovered >> 7);                 //Because it's MIDI we have to send it in two 7-bit chunks.
             sendMIDI(CC, 7, 115, lowByte(holeCovered));
             patternChanged = false;
         }
 
-        if (pressureChanged && (nowtime - pressureSendTimer) > 50) {  //If some time has past, send the new pressure to the Config Tool.
+        if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  //If some time has past, send the new pressure to the Config Tool.
             sendMIDI(CC, 7, 116, sensorValue & 0x7F);                 //Send LSB of current pressure to Configuration Tool.
             sendMIDI(CC, 7, 118, sensorValue >> 7);                   //Send MSB of current pressure.
             pressureChanged = false;
@@ -1934,19 +1935,22 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
                 else if (value == 45) {  //save current sensor calibration as factory calibration
-                    for (byte i = 19; i < 36; i++) {
-                        EEPROM.write(i + 2000, EEPROM.read(i));
+                    for (byte i = 18; i < 38; i++) {
+                        EEPROM.write(i + 1500, EEPROM.read(i));
                     }
                     for (int i = 1; i < 10; i++) {  //save baseline calibration as factory baseline
-                        EEPROM.write(i + 2000, EEPROM.read(i));
+                        EEPROM.write(i + 1500, EEPROM.read(i));
+                    }
+                    for (int i = 985; i < 997; i++) {  //save gyroscope calibration as factory calibration
+                        EEPROM.write(i + 1500, EEPROM.read(i));
                     }
                 }
 
-                else if (value == 54) {  //save current sensor calibration as factory calibration
+                else if (value == 54) {
                     calibrateIMU();
                 }
 
-                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) {  //save current sensor calibration as factory calibration
+                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) { 
                     WARBL2settingsReceiveMode = value - 55;
                 }
 
@@ -2829,7 +2833,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    /* //Roll this back for now for development
+    //Roll this back for now for development
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
         sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
@@ -2838,7 +2842,6 @@ void loadPrefs() {
     else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
         sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
     }
-    */
 }
 
 
@@ -2912,7 +2915,6 @@ void saveCalibration() {
     digitalWrite(greenLED, LOW);
     LEDon = 0;
 }
-
 
 
 
