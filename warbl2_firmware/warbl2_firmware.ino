@@ -347,16 +347,12 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  //whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
-byte switches[3][13] =  //the settings for the switches in various Config Tool panels (see defines above)
+byte switches[3][13] =  //Settings for the switches in various Config Tool panels (see defines above)
 
-  {  //instrument 0
-      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },
-
-      //same for instrument 1
-      { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },
-
-      //same for instrument 2
-      { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }
+  {
+      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  //instrument 0
+      { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  //same for instrument 1
+      { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   //same for instrument 2
   };
 
 byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see defines above)
@@ -367,19 +363,15 @@ byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see 
       { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
   };
 
-byte ED[3][49] =  //an array that holds all the settings for the Expression and Drones Control panels in the Configuration Tool (see defines above).
+byte ED[3][49] =  //Settings for the Expression and Drones Control panels in the Configuration Tool (see defines above).
 
-  {  //instrument 0
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },
-
-      //same for instrument 1
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },
-
-      //same for instrument 2
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }
+  {
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  //instrument 0
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  //same for instrument 1
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   //same for instrument 2
   };
 
-byte pressureSelector[3][12] =  //a selector array for all the register control variables that can be changed in the Configuration Tool
+byte pressureSelector[3][12] =  //A selector array for all the register control variables that can be changed in the Configuration Tool
 
   {                              //instrument 0
       { 50, 20, 20, 15, 50, 75,  //bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
@@ -398,12 +390,8 @@ uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default 
                                 //Dimension 3 is the desired action: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
                                 //instrument 0---The actions are: 0 none, 1 send MIDI message, 2 change pitchbend mode, 3 instrument, 4 play/stop (bagless mode), 5 octave shift up, 6 octave shift down, 7 MIDI panic, 8 change register control mode, 9 drones on/off, 10 semitone shift up, 11 semitone shift down, 12 begin autocalibration, 13 power down, 14 recenter yaw.
   { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },
-
-    //same for instrument 1
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },
-
-    //same for instrument 2
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    //same for instrument 1
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  //same for instrument 2
 
 
 //other misc. variables
@@ -712,7 +700,6 @@ void loop() {
         delay(delayTime);
     }
 
-
     getSensors();  //180 us, 55 of which is reading the pressure sensor.
 
     nowtime = millis();  //Get the current time for the timers used below and in various functions.
@@ -846,9 +833,9 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 ms if not connected to BLE and connInvl + 2 ms if connected. This ensures that we aren't sending pitchbend faster than the connection interval.
+    /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
-    if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (connIntvl + 2) : 9)) {
+    if ((nowtime - timerC) >= ((connIntvl > 0 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();
         sendIMU();          // ~ 130 us
