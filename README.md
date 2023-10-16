@@ -22,21 +22,20 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 
 *  I used the Adafruit ItsyBitsy NRF52840 Express for prototyping WARBL, so the easiest way to set up the IDE is to install the Adafruit boards package, [following the instructions here](https://learn.adafruit.com/adafruit-itsybitsy-nrf52840-express/arduino-support-setup).
 
-* To optionally change the board name, manufacturer, and VID and PID numbers, copy the boards.local.txt file from the repository into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
+* Copy the boards.local.txt file from the "firmware" directory in the repository into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
    
    * Windows: `C:\Users\(username)\AppData\Local\Arduino15\packages\adafruit\hardware\nrf52\1.3.0` 
    
    * Linux: `/home/(username)/.arduino15/packages/adafruit/hardware/nrf52/1.3.0`
      
-   * Mac: ~/LibraryArduino15/packages/adafruit/hardware/nrf52/1.5.0/
+   * Mac: ` ~/LibraryArduino15/packages/adafruit/hardware/nrf52/1.5.0/`
 
 
-*	Now open the WARBL sketch that you saved in your sketchbook folder. Four tabs should open. 
+*	Now open the WARBL sketch that you saved in your sketchbook folder. Four tabs should open.
+  
+*	In the Tools menu select: Board: > Adafruit nRF52 > WARBL2
 
 *	Next, you’ll need to install libraries included in the sketch that aren’t installed by default. To install them, go to Sketch > Include Library > Manage Libraries, then search for the name of each, one at a time. Then it will give you an option to install each one.
- 
- 
-*	Next, tell it which board you have by going Tools > Board and select `Adafruit ItsyBitsy NRF32840 Express` The entry may also say 'WARBL' at this point.
 
 
 *	Then turn on “show verbose ouput" for both "compile" and "upload" under File > Preferences. Now, click the upload button and check that it compiles without errors. 
@@ -45,7 +44,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 *	Then, when it tries to upload, you should see this message at the bottom of the screen:
   
 
-Waiting for upload port...
+`Waiting for upload port...`
 
 
 *	Now, use a toothpick to double-click the WARBL reset button. The LED should illuminate blue and the code should upload. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right.
@@ -55,7 +54,7 @@ Waiting for upload port...
 ### A few additional notes:
 The serial CDC class on WARBL needs to be turned off to make it a USB MIDI class-compliant device. This also means that you won't be able to use the serial monitor in Arduino IDE, and you'll have to double-click the programming button to install firmware. To turn serial back on, you can comment out the following line in the sketch:
 
-#define RELEASE //Uncomment for release version (turns off CDC)
+`#define RELEASE //Uncomment for release version (turns off CDC)`
 
 Turning on CDC makes it easier to debug and makes it so uploads should proceed automatically.
 
