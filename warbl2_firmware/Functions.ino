@@ -48,7 +48,7 @@ void printStuff(void) {
 //Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    analogPressure.update();  // reads the pressure sensor and applies adaptive filtering
+    analogPressure.update();  // Reads the pressure sensor and applies adaptive filtering
     twelveBitPressure = analogPressure.getRawValue();
 
     // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
@@ -61,8 +61,8 @@ void getSensors(void) {
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);   //SS -- wake up ATmega
-    delayMicroseconds(10);  //give it time to wake up
-    SPI.transfer(0);        //we don't receive anything useful back from the first transfer
+    delayMicroseconds(10);  //Give it time to wake up.
+    SPI.transfer(0);        //We don't receive anything useful back from the first transfer.
     for (byte i = 0; i < 12; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
@@ -70,32 +70,32 @@ void getSensors(void) {
     SPI.endTransaction();
 
 
-    //unpack the readings from bytes to ints
+    //Unpack the readings from bytes to ints.
     for (byte i = 0; i < 9; i++) {
-        toneholeRead[i] = toneholePacked[i];  // unpack lower 8 bits
+        toneholeRead[i] = toneholePacked[i];  // Unpack lower 8 bits.
     }
 
-    for (byte i = 0; i < 4; i++) {  //unpack the upper 2 bits of holes 0-3
+    for (byte i = 0; i < 4; i++) {  //Unpack the upper 2 bits of holes 0-3.
         toneholePacked[9] = toneholePacked[9] & 0b11111111, BIN;
         toneholeRead[i] = toneholeRead[i] | (toneholePacked[9] << 2) & 0b1100000000;
         toneholePacked[9] = toneholePacked[9] << 2;
     }
 
-    for (byte i = 4; i < 8; i++) {  //unpack the upper 2 bits of holes 4-7
+    for (byte i = 4; i < 8; i++) {  //Unpack the upper 2 bits of holes 4-7.
         toneholePacked[10] = toneholePacked[10] & 0b11111111, BIN;
         toneholeRead[i] = toneholeRead[i] | (toneholePacked[10] << 2) & 0b1100000000;
         toneholePacked[10] = toneholePacked[10] << 2;
     }
 
-    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  //unpack the upper 2 bits of hole 8
+    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  //Unpack the upper 2 bits of hole 8.
 
 
 
     for (byte i = 0; i < 9; i++) {
-        if (calibration == 0) {  //if we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered)
+        if (calibration == 0) {  //If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
             toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
         }
-        if (toneholeRead[i] < 0) {  //in rare cases the adjusted readings can end up being negative.
+        if (toneholeRead[i] < 0) {  //In rare cases the adjusted readings might end up being negative.
             toneholeRead[i] = 0;
         }
     }
@@ -111,8 +111,6 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //ToDo: There are several power modes available and I'm not sure what current mode it's in. We might be able to lower the power consumption a little more (currently around 0.5 mA).
-    //Also, we don't have to read this if we're not using the IMU. However, we'd have to change the gyro calibration routine so we get readings before calibrating.
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -1950,7 +1948,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     calibrateIMU();
                 }
 
-                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) { 
+                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) {
                     WARBL2settingsReceiveMode = value - 55;
                 }
 

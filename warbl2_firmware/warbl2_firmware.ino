@@ -586,8 +586,8 @@ void setup() {
     analogPressure.setAnalogResolution(1 << adcBits);
 
     //USB MIDI stuff
-    usb_midi.setStringDescriptor("WARBL USB MIDI");  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
-    MIDI.begin(MIDI_CHANNEL_OMNI);
+    usb_midi.setStringDescriptor("WARBL USB MIDI");
+    MIDI.begin(MIDI_CHANNEL_OMNI);  //Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChange);  //Handle received MIDI CC messages.
 
@@ -639,8 +639,8 @@ void setup() {
     sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
                                                // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
                                                // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
-    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
+    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel.
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro.
 
 
     //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
