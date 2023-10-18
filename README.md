@@ -31,7 +31,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
    * Mac: ` ~/LibraryArduino15/packages/adafruit/hardware/nrf52/1.5.0/`
 
 
-*	Now open the WARBL sketch that you saved in your sketchbook folder. Four tabs should open.
+*	Now open the WARBL sketch that you saved in your sketchbook folder.
   
 *	In the Tools menu select: Board: > Adafruit nRF52 > WARBL2
 
