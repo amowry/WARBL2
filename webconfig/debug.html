@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+        <meta charset="utf-8"/>
+        <title>WARBL Debug Page</title>
+        <meta name="viewport" content="width=device-width">
+        <meta name="description" content="WARBL Configuration Tool" />
+        <meta name="author" content="Andrew Mowry" />
+        <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet'/>
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+
+ 
+ <script src="js/nouislider.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi"></script>
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+    <link href="css/nouislider.css" rel="stylesheet" type="text/css">
+
+    <link href="css/debug.css" rel="stylesheet" type="text/css">
+    
+        <style>
+    .topnav.responsive {background: transparent;}
+	</style>
+   
+   
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-129157937-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-129157937-1');
+</script>
+
+   
+   
+    
+    
+</head>
+<body> 
+
+
+
+
+
+
+   <div class="toplogo">
+  <a href="index.html"><img src="img/small_logo.png" width="50"></a>
+    </div>
+
+
+<div class="topnav" id="myTopnav">
+  
+ <a href="index.html" >Home</a>
+<a href="https://warbl.xyz/documentation.html" >Documentation</a>
+<a href="https://warbl.xyz/purchase.html" >Purchase</a>
+<a href="https://warbl.xyz/FAQ.html" >FAQ</a>
+<a href="https://warbl.xyz/contact.html" >Contact</a>
+<a class = "active" href="https://warbl.xyz/configure.html" >Configure WARBL</a>
+ <a href="javascript:void(0);" class="icon" onClick="topNavFunction()">
+    <i class="fa fa-bars"></i>
+  </a> 
+
+</div>
+
+
+
+
+
+
+<div class="pagewrapper">
+
+ <div class="topcontrolbox">
+ 
+ <div class="topheader">
+	<h1 >WARBL Debug Console
+
+</h1>
+
+<span class="leddot" id="leddot1" ></span>
+
+ <div class="volume">
+
+<button type="button" id = "on"  button><i class="fa fa-volume-off"></i></button>
+</div>
+
+
+<p id="status">WARBL not detected.</p>
+
+<p id="refresh">Refresh browser (F5) to update status.</p>
+
+<p id="versionLabel">WARBL software version:</p>
+
+<p id="version">Unknown</p>
+
+</div>
+
+<button type="button" class="headerbuttons noTouch" id="dumpEEPROM" onClick="dumpEEPROM()" button>Dump EEPROM</button>
+
+
+ <div class="debugConsole" id ="debugConsole">
+</div>
+
+</div>
+
+
+
+<script src="js/midiDebug.js"></script>
+ 
+    
+  
+     
+</body>
+</html>
