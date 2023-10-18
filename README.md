@@ -56,7 +56,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 
 
 ### A few additional notes:
-The serial CDC class on WARBL needs to be turned off to make it a USB MIDI class-compliant device. This also means that you won't be able to use the serial monitor in Arduino IDE, and you'll have to double-click the programming button to install firmware. To turn serial back on, you can comment out the following line in the sketch:
+The serial CDC class on WARBL needs to be turned off to make it a USB MIDI class-compliant device. This also means that you won't be able to use the serial monitor in Arduino IDE, and you'll have to double-click the programming button to install firmware (as described above). To turn serial back on, you can comment out the following line in the sketch:
 
 `#define RELEASE //Uncomment for release version (turns off CDC)`
 
