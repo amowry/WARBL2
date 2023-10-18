@@ -4,7 +4,7 @@ Please see the web site for more info:
 
 https://warbl.xyz
 
-To power the WARBL on, hold down button 3 until the LED turns green, then release.
+To power the WARBL on, plug into USB or hold down button 3 until the LED turns green, then release.
 
 To manually power off the WARBL, you can click the reset button (or use a button action assigned in  the Configuration Tool).
 
