@@ -23,19 +23,21 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 
 */
 
-
+//Installed with board package
 #include "nrfx_power.h"  //For detecting VBUS
 #include <nrf_nvic.h>
 #include "nrf_wdt.h"  //Watchdog timer
-#include <Arduino.h>
-#include <MIDI.h>
 #include <bluefruit.h>
+#include <Arduino.h>
 #include <Wire.h>  //I2C communication with EEPROM
 #include <SPI.h>   //communication with ATmega32U4 and IMU
+
+//Libraries below may need to be installed.
+#include <MIDI.h>
 #include <SparkFun_External_EEPROM.h>
-#include <Adafruit_LSM6DSOX.h>  //IMU
-#include <SensorFusion.h>       // IMU fusion
-#include "ResponsiveAnalogRead.h"
+#include <Adafruit_LSM6DSOX.h>     //IMU
+#include <SensorFusion.h>          // IMU fusion
+#include "ResponsiveAnalogRead.h"  //Fast smoothing of 12 bt pressure sensor readings
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -610,7 +612,7 @@ void setup() {
     Bluefruit.begin();
     Bluefruit.Periph.setConnIntervalMS(7.5, 15);           //Request the lowest possible connection interval.
     Bluefruit.setTxPower(8);                               //Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
-    Bluefruit.autoConnLed(false);                          //Don't indicate connection.
+    Bluefruit.autoConnLed(false);                          //Don't indicate connection (the blue LED may still flash briefly when connecting).
     bledis.setManufacturer("Mowry Stringed Instruments");  //Configure and Start Device Information Service.
     bledis.setModel("WARBL BLE MIDI");
     bledis.begin();
@@ -870,5 +872,4 @@ void loop() {
     sendNote();  //Send a new MIDI note if there is one. Takes up to 325 us if there is a new note.
 
     //watchdog_reset();  //Feed the watchdog.
-
 }
