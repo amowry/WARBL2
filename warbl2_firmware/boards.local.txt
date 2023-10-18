@@ -1,0 +1,66 @@
+# -----------------------------------
+# WARBL2 - based on Adafruit ItsyBitsy nRF52840 Express
+# -----------------------------------
+warbl2.name=WARBL2
+
+# VID/PID for Bootloader, Arduino & CircuitPython
+#warbl2.vid.0=0x239A
+#warbl2.pid.0=0x8051
+#warbl2.vid.1=0x239A
+#warbl2.pid.1=0x0051
+#warbl2.vid.2=0x239A
+#warbl2.pid.2=0x0052
+
+# earlier warbl2
+warbl2.vid.0=0x239A
+warbl2.pid.0=0x8053
+#latest warbl2
+warbl2.vid.1=0x04D8
+warbl2.pid.1=0xE63A
+
+# Upload
+warbl2.bootloader.tool=bootburn
+warbl2.upload.tool=nrfutil
+warbl2.upload.protocol=nrfutil
+warbl2.upload.use_1200bps_touch=true
+warbl2.upload.wait_for_upload_port=true
+warbl2.upload.maximum_size=815104
+warbl2.upload.maximum_data_size=237568
+
+# Build
+warbl2.build.mcu=cortex-m4
+warbl2.build.f_cpu=64000000
+warbl2.build.board=NRF52840_ITSYBITSY -DARDUINO_NRF52_ITSYBITSY
+warbl2.build.core=nRF5
+warbl2.build.variant=itsybitsy_nrf52840_express
+warbl2.build.usb_manufacturer="Mowry Stringed Instruments"
+warbl2.build.usb_product="WARBL"
+warbl2.build.extra_flags=-DNRF52840_XXAA {build.flags.usb}
+warbl2.build.ldscript=nrf52840_s140_v6.ld
+warbl2.build.vid=0x239A
+warbl2.build.pid=0x8053
+
+# SoftDevice Menu
+warbl2.menu.softdevice.s140v6=S140 6.1.1
+warbl2.menu.softdevice.s140v6.build.sd_name=s140
+warbl2.menu.softdevice.s140v6.build.sd_version=6.1.1
+warbl2.menu.softdevice.s140v6.build.sd_fwid=0x00B6
+
+# Debug Menu
+warbl2.menu.debug.l0=Level 0 (Release)
+warbl2.menu.debug.l0.build.debug_flags=-DCFG_DEBUG=0
+warbl2.menu.debug.l1=Level 1 (Error Message)
+warbl2.menu.debug.l1.build.debug_flags=-DCFG_DEBUG=1
+warbl2.menu.debug.l2=Level 2 (Full Debug)
+warbl2.menu.debug.l2.build.debug_flags=-DCFG_DEBUG=2
+warbl2.menu.debug.l3=Level 3 (Segger SystemView)
+warbl2.menu.debug.l3.build.debug_flags=-DCFG_DEBUG=3
+warbl2.menu.debug.l3.build.sysview_flags=-DCFG_SYSVIEW=1
+
+# Debug Output Menu
+warbl2.menu.debug_output.serial=Serial
+warbl2.menu.debug_output.serial.build.logger_flags=-DCFG_LOGGER=0
+warbl2.menu.debug_output.serial1=Serial1
+warbl2.menu.debug_output.serial1.build.logger_flags=-DCFG_LOGGER=1 -DCFG_TUSB_DEBUG=CFG_DEBUG
+warbl2.menu.debug_output.rtt=Segger RTT
+warbl2.menu.debug_output.rtt.build.logger_flags=-DCFG_LOGGER=2 -DCFG_TUSB_DEBUG=CFG_DEBUG -DSEGGER_RTT_MODE_DEFAULT=SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL
