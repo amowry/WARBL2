@@ -24,8 +24,9 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 */
 
 
-#include "nrfx_power.h"  //for detecting VBUS
+#include "nrfx_power.h"  //For detecting VBUS
 #include <nrf_nvic.h>
+#include "nrf_wdt.h"  //Watchdog timer
 #include <Arduino.h>
 #include <MIDI.h>
 #include <bluefruit.h>
@@ -52,6 +53,8 @@ ExternalEEPROM EEPROM;
 
 #define VERSION 40            //software version number (without decimal point)
 #define HARDWARE_REVISION 41  //hardware
+
+#define HARDWARE_WATCHDOG_TIMEOUT_SECS 15  //To recover from hangups. The timeout needs to be set longer than any task. Currently, receiving custom fingering charts from the Config Tool takes about 6 seconds.
 
 #define DEBOUNCE_TIME 0.02                          //button debounce time, in seconds---Integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
 #define SAMPLE_FREQUENCY 200                        //button sample frequency, in Hz
@@ -666,6 +669,8 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
+
+    //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
 }
 
 
@@ -863,4 +868,7 @@ void loop() {
 
     ////////////
     sendNote();  //Send a new MIDI note if there is one. Takes up to 325 us if there is a new note.
+
+    //watchdog_reset();  //Feed the watchdog.
+
 }

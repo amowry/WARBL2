@@ -2833,12 +2833,12 @@ void loadPrefs() {
 
     //Roll this back for now for development
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
-        sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
-        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
+       // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
+       // sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
     }
 
     else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
-        sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
+       // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
     }
 }
 
@@ -3246,3 +3246,42 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
         sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
     }
 }
+
+
+
+
+
+
+
+
+//Watchdog enable, taken from Adafruit Sleepydog library
+void watchdog_enable(int maxPeriodMS) {
+  if (maxPeriodMS < 0)
+    return;
+
+  // cannot change wdt config register once it is started
+  if (nrf_wdt_started(NRF_WDT))
+    return;
+
+  // WDT run when CPU is asleep
+  nrf_wdt_behaviour_set(NRF_WDT, NRF_WDT_BEHAVIOUR_RUN_SLEEP);
+  nrf_wdt_reload_value_set(NRF_WDT, (maxPeriodMS * 32768) / 1000);
+
+  // use channel 0
+  nrf_wdt_reload_request_enable(NRF_WDT, NRF_WDT_RR0);
+
+  // Start WDT
+  // After started CRV, RREN and CONFIG is blocked
+  // There is no way to stop/disable watchdog using source code
+  // It can only be reset by WDT timeout, Pin reset, Power reset
+  nrf_wdt_task_trigger(NRF_WDT, NRF_WDT_TASK_START);
+}
+
+
+
+
+
+
+
+//Watchdog reset
+void watchdog_reset() { nrf_wdt_reload_request_set(NRF_WDT, NRF_WDT_RR0); }
