@@ -296,6 +296,9 @@ unsigned long nowtime;
 float rawGyroX = 0.0f;
 float rawGyroY = 0.0f;
 float rawGyroZ = 0.0f;
+float gyroX = 0.0f;
+float gyroY = 0.0f;
+float gyroZ = 0.0f;
 float accelX = 0.0f;
 float accelY = 0.0f;
 float accelZ = 0.0f;
@@ -310,6 +313,7 @@ float pitch;
 float yaw;
 int shakeVibrato;                  //Shake vibrato depth, from -8192 to 8192
 unsigned long autoCenterYawTimer;  //For determining when to auto-recenter the yaw after silence
+bool nudge;                        //Whether a register nudge has occurred
 
 
 //Instrument
@@ -847,7 +851,6 @@ void loop() {
         printStuff();
         sendIMU();          // ~ 130 us
         shakeForVibrato();  // ~ 200 uS
-
         timerC = nowtime;
     }
 

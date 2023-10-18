@@ -4,6 +4,7 @@
 //debug
 void printStuff(void) {
 
+
     //Serial.println(nowtime - autoCenterYawTimer);
     //Serial.println(gyroX, 8);
 
@@ -126,9 +127,9 @@ void readIMU(void) {
     IMUtemp = temp.temperature;
 
     //calibrate gyro
-    float gyroX = rawGyroX - gyroXCalibration;
-    float gyroY = rawGyroY - gyroYCalibration;
-    float gyroZ = rawGyroZ - gyroZCalibration;
+    gyroX = rawGyroX - gyroXCalibration;
+    gyroY = rawGyroY - gyroYCalibration;
+    gyroZ = rawGyroZ - gyroZCalibration;
 
 
     float deltat = sfusion.deltatUpdate();
@@ -421,6 +422,37 @@ void shakeForVibrato() {
 }
 
 
+
+
+
+
+
+//Experimental way to nudge the register up or down using only the X gyro. I think IMU pitch mapping is probably a better way to go. The only advantage of this is that you don't have to hold the WARBL at a given pitch to stay in the current register.
+int nudgeRegister() {
+
+#if 0
+
+    if (gyroX > 1.5 && nudge == false) {
+        nudge = true;
+        //Serial.println("nudge down");
+        return -1;
+    }
+
+    else if (gyroX < -1.5 && nudge == false) {
+        nudge = true;
+        //Serial.println("nudge up");
+        return 1;
+    }
+
+    else if (gyroX > -0.5 and gyroX < 0.5) { //wait for gyro to be mostly motionless before allowing another register shift.
+        nudge = false;
+        return 0;
+    }
+
+#endif
+
+    return 0;
+}
 
 
 
@@ -961,6 +993,9 @@ int get_note(unsigned int fingerPattern) {
 
 //Add up any transposition based on key and register.
 void get_shift() {
+
+    octaveShift += nudgeRegister();
+
     shift = ((octaveShift * 12) + noteShift);  //adjust for key and octave shift.
 
     if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  //if overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
