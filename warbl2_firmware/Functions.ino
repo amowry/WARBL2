@@ -12,7 +12,6 @@ void printStuff(void) {
         //Serial.println(toneholeCovered[i]);
     }
 
-
     //Serial.println(gyroXCalibration, 4);
     //Serial.println("");
     //Serial.println(toneholeRead[0]);
@@ -20,7 +19,11 @@ void printStuff(void) {
     //Serial.println(gyroX, 3);
     //Serial.println(gyroY, 3);
     //Serial.println(gyroZ, 3);
-    //Serial.println(IMUsettings[mode][SEND_ROLL]);
+    //Serial.println(IMUsettings[mode][PITCH_REGISTER]);
+    //Serial.println(IMUsettings[mode][PITCH_REGISTER_NUMBER]);
+    //Serial.println(IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]);
+    //Serial.println(IMUsettings[mode][PITCH_REGISTER_INPUT_MAX]);
+
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
     //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
@@ -427,30 +430,16 @@ void shakeForVibrato() {
 
 
 
-//Experimental way to nudge the register up or down using only the X gyro. I think IMU pitch mapping is probably a better way to go. The only advantage of this is that you don't have to hold the WARBL at a given pitch to stay in the current register.
-int nudgeRegister() {
 
-#if 0
 
-    if (gyroX > 1.5 && nudge == false) {
-        nudge = true;
-        //Serial.println("nudge down");
-        return -1;
+//Return number of registers to jump based on IMU pitch.
+int pitchRegister() {
+
+    for (byte i = 1; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
+        if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  //See if IMU pitch is within the bounds for each register.
+            return i - 1;
+        }
     }
-
-    else if (gyroX < -1.5 && nudge == false) {
-        nudge = true;
-        //Serial.println("nudge up");
-        return 1;
-    }
-
-    else if (gyroX > -0.5 and gyroX < 0.5) { //wait for gyro to be mostly motionless before allowing another register shift.
-        nudge = false;
-        return 0;
-    }
-
-#endif
-
     return 0;
 }
 
@@ -994,9 +983,14 @@ int get_note(unsigned int fingerPattern) {
 //Add up any transposition based on key and register.
 void get_shift() {
 
-    octaveShift += nudgeRegister();
+    byte pitchShift;
 
-    shift = ((octaveShift * 12) + noteShift);  //adjust for key and octave shift.
+    if (IMUsettings[mode][PITCH_REGISTER] == true) {
+        pitchShift = pitchRegister();
+    }
+
+
+    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  //adjust for key and octave shift.
 
     if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  //if overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
         shift = shift + 12;                                                                                                                                                                                                                                                                                                                      //add a register jump to the transposition if overblowing.
@@ -2874,6 +2868,12 @@ void loadPrefs() {
 
     else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
         // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
+    }
+
+    //Calculate upper and lower bounds for IMU pitch register mapping
+    byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  //Number of degrees per register
+    for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
+        pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  //Upper/lower bounds for each register
     }
 }
 

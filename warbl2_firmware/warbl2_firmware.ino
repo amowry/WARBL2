@@ -210,11 +210,11 @@ ExternalEEPROM EEPROM;
 #define kWARBL2SETTINGSnVariables 3
 
 //Variables in the IMUsettings array
-#define SEND_ROLL 0  //On/off
-#define SEND_PITCH 1
-#define SEND_YAW 2
-#define CENTER_ROLL 3  //On/off
-#define CENTER_YAW 4
+#define SEND_ROLL 0       //On/off
+#define SEND_PITCH 1      //On/Off
+#define SEND_YAW 2        //On/Off
+#define CENTER_ROLL 3     //On/off
+#define CENTER_YAW 4      //On/Off
 #define ROLL_INPUT_MIN 5  //0-36
 #define ROLL_INPUT_MAX 6
 #define ROLL_OUTPUT_MIN 7  //0-127
@@ -234,12 +234,14 @@ ExternalEEPROM EEPROM;
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
 #define AUTOCENTER_YAW 23           //On/Off
-#define Y_SHAKE_PITCHBEND 24        //On/OffF (Only this axis is currently used for shake vibrato.)
+#define Y_SHAKE_PITCHBEND 24        //On/Off
 #define AUTOCENTER_YAW_INTERVAL 25  //0-20 (represents 0-5s pause interval for yaw recentering)
-#define X_PITCHBEND_DEPTH 26        //unused
+#define PITCH_REGISTER 26           //On/Off
 #define Y_PITCHBEND_DEPTH 27        //0-100
-#define Z_PITCHBEND_DEPTH 28        //unused
-#define kIMUnVariables 29
+#define PITCH_REGISTER_INPUT_MIN 28
+#define PITCH_REGISTER_INPUT_MAX 29
+#define PITCH_REGISTER_NUMBER 30
+#define kIMUnVariables 31
 
 //Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
@@ -313,7 +315,8 @@ float pitch;
 float yaw;
 int shakeVibrato;                  //Shake vibrato depth, from -8192 to 8192
 unsigned long autoCenterYawTimer;  //For determining when to auto-recenter the yaw after silence
-bool nudge;                        //Whether a register nudge has occurred
+bool pitchRegisterShifted;         //Whether the register has been shifted by IMU pitch
+int pitchRegisterBounds[6];        //Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
 
 
 //Instrument
@@ -364,12 +367,12 @@ byte switches[3][13] =  //Settings for the switches in various Config Tool panel
       { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   //same for instrument 2
   };
 
-byte IMUsettings[3][29] =  //Settings for mapping and sending IMU readings (see defines above)
+byte IMUsettings[3][31] =  //Settings for mapping and sending IMU readings (see defines above)
 
   {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 64 },  //Same for instrument 2
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Same for instrument 2
   };
 
 byte ED[3][49] =  //Settings for the Expression and Drones Control panels in the Configuration Tool (see defines above).
