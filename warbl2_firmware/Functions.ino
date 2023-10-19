@@ -1406,7 +1406,9 @@ void handlePitchBend() {
             (bitWrite(holeLatched, i, 0));  //we "unlatch" (enable for vibrato) a hole if it was covered when the note was triggered but now the finger has been completely removed.
         }
 
-        if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0 && (pitchBendMode == kPitchBendVibrato || i != slideHole)) {  //if this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched
+        //if this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched, and not the slide-hole and not the chromatic hole
+        if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0 
+            && (pitchBendMode == kPitchBendVibrato || (i != slideHole && !(modeSelector[mode] == kModeChromatic && i == 1)))) {  
             if (toneholeRead[i] > senseDistance) {
                 if (bitRead(holeCovered, i) != 1) {
                     iPitchBend[i] = (((toneholeRead[i] - senseDistance) * vibratoScale[i]) >> 3);  //bend downward
@@ -1439,9 +1441,14 @@ void handlePitchBend() {
 //calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
-        if (toneholeRead[i] > senseDistance && i == slideHole && stepsDown > 0) {
+        if (toneholeRead[i] > senseDistance 
+            && ((i == slideHole && stepsDown > 0) || (i == 1 && modeSelector[mode] == kModeChromatic))) {
             if (bitRead(holeCovered, i) != 1) {
-                iPitchBend[i] = ((toneholeRead[i] - senseDistance) * toneholeScale[i]) >> (4 - stepsDown);  //bend down toward the next lowest note in the scale, the amount of bend depending on the number of steps down.
+                if (i == 1 && modeSelector[mode] == kModeChromatic) {
+                    iPitchBend[i] = ((toneholeRead[i] - senseDistance) * toneholeScale[i]) >> (3); // bend down a half-step
+                } else {
+                    iPitchBend[i] = ((toneholeRead[i] - senseDistance) * toneholeScale[i]) >> (4 - stepsDown);  //bend down toward the next lowest note in the scale, the amount of bend depending on the number of steps down.
+                }
             }
         } else {
             iPitchBend[i] = 0;
