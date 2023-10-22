@@ -339,8 +339,9 @@ void shakeForVibrato() {
     if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
 
         static float accelFilteredOld;
+        const float timeConstant = 0.4f;
 
-        float accelFiltered = 0.1 * accelY + 0.9 * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+        float accelFiltered = timeConstant * accelY + (1 - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
         accelFilteredOld = accelFiltered;
         float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
 
