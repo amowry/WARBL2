@@ -339,9 +339,9 @@ void shakeForVibrato() {
     if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
 
         static float accelFilteredOld;
-        const float timeConstant = 0.4f;
+        const float timeConstant = 0.01f;
 
-        float accelFiltered = timeConstant * accelY + (1 - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+        float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
         accelFilteredOld = accelFiltered;
         float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
 
@@ -349,12 +349,12 @@ void shakeForVibrato() {
         // A second low pass filter to minimize spikes from tapping the tone holes.
         static float accelFilteredBOld;
 
-
-        float accelFilteredB = 0.4 * highPassY + 0.6 * accelFilteredBOld;
+        const float timeConstant2 = 0.5f;
+        float accelFilteredB = timeConstant2 * highPassY + (1.0f - timeConstant2) * accelFilteredBOld;
         float lastFilteredB = accelFilteredBOld;
         accelFilteredBOld = accelFilteredB;
 
-        accelFilteredB == highPassY;  //Temporarily eliminate this lowpass to see if speeds up response noticeably.
+        //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
         const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
 
