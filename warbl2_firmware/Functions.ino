@@ -339,7 +339,7 @@ void shakeForVibrato() {
     if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
 
         static float accelFilteredOld;
-        const float timeConstant = 0.01f;
+        const float timeConstant = 0.07f;
 
         float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
         accelFilteredOld = accelFiltered;
@@ -412,6 +412,15 @@ void shakeForVibrato() {
         if (shakeActive) {
             // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
             float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+            if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                normshake *= -1.0f; // reverse phase
+            }
+            else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                normshake = constrain(normshake, -1.0f, 0.0f);
+            }
+            else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
+            }
 
             shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
 

@@ -2118,11 +2118,6 @@ input:disabled + .vibratoSlider:before {
 	left: 280px;
 }
 
-#switch24 {
-	top: 328px;
-	left: 270px;
-}
-
 #switch27 {
 	top: 269px;
 	left: 230px;
@@ -2178,11 +2173,29 @@ input:disabled + .vibratoSlider:before {
 .sendShakeLabel {
 	display: block;
 	position: absolute;
-	left: 165px;
-	top: 330px;
+	left: 100px;
+	top: 332px;
 	z-index: 99;
 	font-size: 14px;
 }
+
+#switch24 {
+	top: 328px;
+	left: 200px;
+}
+
+.shakeVibModeContainer {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	top: 327px;
+	left: 270px;
+}
+
+#shakeVibModeCommand {
+	width: 90%;
+}
+
 
 .slidecontainer4 {
 	width: 60%;
@@ -3603,12 +3616,20 @@ h3 {
 	top: 110px;
 }
 
+#dronesOnCommand {
+	width: 90%;
+}
+
 .droneOffContainer {
 	display: block;
 	position: absolute;
 	height: 200px;
 	left: 40px;
 	top: 180px;
+}
+
+#dronesOffCommand {
+	width: 90%;
 }
 
 .offCommandLabel {

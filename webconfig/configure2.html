@@ -1538,12 +1538,28 @@
                         <span class="slider round"></span>
                     </label>
 
+                    <div class="shakeVibModeContainer">
+
+                        <div class="styled-select2 blue semi-square">
+
+                            <select id="shakeVibModeCommand" onChange="sendShakeVibModeOnCommand(value)">
+                                <option selected="selected" value="0">Up/Down</option>
+                                <option value="1">Down/Up</option>
+                                <option value="2">Up Only</option>
+                                <option value="3">Down Only</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+					
                     <div class="slidecontainer4" id="shakeDepthContainer">
                         <input type="range" min="1" max="100" value="50" class="ranger" id="shakeDepth" onChange="sendShakeDepth(value)" />
 
                     </div>
 
                     <div class="shakeDepthlabel noTouch">Shake vibrato depth (percent)</div>
+
 
                     <div class="jumpvalues jumpvalue15">
 

@@ -241,7 +241,14 @@ ExternalEEPROM EEPROM;
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
-#define kIMUnVariables 31
+#define Y_PITCHBEND_MODE 31         // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
+#define kIMUnVariables 32
+
+
+#define Y_PITCHBEND_MODE_UPDOWN 0
+#define Y_PITCHBEND_MODE_DOWNUP 1
+#define Y_PITCHBEND_MODE_UPONLY 2
+#define Y_PITCHBEND_MODE_DOWNONLY 3
 
 //Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
@@ -367,12 +374,12 @@ byte switches[3][13] =  //Settings for the switches in various Config Tool panel
       { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   //same for instrument 2
   };
 
-byte IMUsettings[3][31] =  //Settings for mapping and sending IMU readings (see defines above)
+byte IMUsettings[3][kIMUnVariables] =  //Settings for mapping and sending IMU readings (see defines above)
 
   {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2 },  //Same for instrument 2
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2, 0 },  //Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2, 0 },  //Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 64, 50, 0, 90, 2, 0 },  //Same for instrument 2
   };
 
 byte ED[3][49] =  //Settings for the Expression and Drones Control panels in the Configuration Tool (see defines above).

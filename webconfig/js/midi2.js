@@ -294,7 +294,7 @@ function onMIDIInit(midi) {
 
         deviceName = input.value.name;
 
-        //console.log("deviceName = "+deviceName);
+        //console.log("midiinit deviceName = "+deviceName + "   id: " + input.value.id);
         //alert("deviceName = "+deviceName);
 
         setPing(); //start checking to make sure WARBL is still connected   
@@ -530,14 +530,18 @@ function WARBL_Receive(event) {
 
             }
 
-            //console.log("Searching for WARBL output port matching input port name: "+targetName);
+            console.log("Searching for WARBL output port matching input port name: "+event.target.name);
             //alert("Searching for WARBL output port matching input port name: "+targetName);
             // Send to all MIDI output ports
             var iter = midiAccess.outputs.values();
 
+			var backupout = null;
+
             for (var o = iter.next(); !o.done; o = iter.next()) {
 
                 var outputName = o.value.name;
+
+                //console.log("output name: " + outputName + "  id: " + o.value.id)
 
                 // Strip any [] postfix
 
@@ -551,17 +555,23 @@ function WARBL_Receive(event) {
 
                 }
 
-                //if (outputName == inputName){
-                if (outputName == inputName || outputName.includes("WARBL")) { //The "WARBL" part is a hack because when we're on BLE the input and output ports don't necessarily have the same name, for example with the Korg BLE MIDI Driver they are WARBL IN and WARBL OUT. AM 10/23
-
-                    //console.log("Found the matching WARBL output port!")
+					
+                if (outputName == inputName) {
+                    // console.log("Found the matching WARBL output port!")
 
                     WARBLout = o.value;
-
-
                     break;
                 }
+                else if (outputName.includes("WARBL")) { //The "WARBL" part is a hack because when we're on BLE the input and output ports don't necessarily have the same name, for example with the Korg BLE MIDI Driver they are WARBL IN and WARBL OUT. AM 10/23
+                    // console.log("Found backup WARBL output port: " + outputName)
+					backupout = o.value;
+				}
             }
+
+			// only if an exact match wasn't found do we use the backup "includes-WARBL" output
+			if (!WARBLout && backupout) {
+				WARBLout = backupout;
+			}
 
             if (!WARBLout) {
 
@@ -1226,9 +1236,9 @@ function WARBL_Receive(event) {
                             pitchRegisterNumber.dispatchEvent(new Event('input'));
                             output.innerHTML = data2;
                         }
-						
-						
-						
+                        else if (jumpFactorWrite == 231) {
+                            document.getElementById("shakeVibModeCommand").value = data2;
+                        }
                     } //End of WARBL2 IMU settings
 
                 } //end of CC105
@@ -2040,6 +2050,13 @@ function sendShakeDepth(selection) {
     blink(1);
     selection = parseFloat(selection);
     sendToWARBL(109, 27);
+    sendToWARBL(105, selection);
+}
+
+function sendShakeVibModeOnCommand(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(109, 31);
     sendToWARBL(105, selection);
 }
 
