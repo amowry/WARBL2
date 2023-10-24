@@ -2189,13 +2189,18 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	z-index: 99;
 	top: 327px;
-	left: 270px;
+	left: 270px;	
 }
 
-#shakeVibModeCommand {
-	width: 90%;
+.customFingeringFillLabel {
+	display: block;
+	position: absolute;
+	left: 730px;
+	top: 510px;
+	width: 200px;
+	z-index: 99;
+	font-size: 14px;	
 }
-
 
 .slidecontainer4 {
 	width: 60%;
@@ -3616,20 +3621,12 @@ h3 {
 	top: 110px;
 }
 
-#dronesOnCommand {
-	width: 90%;
-}
-
 .droneOffContainer {
 	display: block;
 	position: absolute;
 	height: 200px;
 	left: 40px;
 	top: 180px;
-}
-
-#dronesOffCommand {
-	width: 90%;
 }
 
 .offCommandLabel {
