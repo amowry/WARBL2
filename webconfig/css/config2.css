@@ -1352,15 +1352,24 @@ fieldset {
 
 .infocircle {
 	position: relative;
-	top: 2px;
-	font-size: 20px;
+	top: 7px;
 	background: transparent;
 	border: none;
-	color: var(--primary-color);
 	padding: 5px;
 	cursor: pointer;
 	z-index:100;
 }
+
+.info {
+	position: relative;
+	pointer-events: none;
+	top: -4px;
+}
+
+#volumeOn {
+	display: none;
+}
+	
 
 .infocircle:focus {
 	outline: none;

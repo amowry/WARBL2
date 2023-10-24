@@ -29,8 +29,6 @@
 
     <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' />
 
-    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css" />
-
     <link href="css/nouislider.css" rel="stylesheet" type="text/css" />
 
     <link href="css/config2.css" rel="stylesheet" type="text/css" />
@@ -95,7 +93,7 @@
 
         <a href="javascript:void(0);" class="icon" onClick="topNavFunction()">
 
-            <i class="fa fa-bars"></i>
+            <object class = "info" data="img/bars.svg" type="image/svg+xml"></object>
 
         </a>
 
@@ -110,7 +108,9 @@
                 <h1>
                     WARBL Configuration Tool
 
-                    <button type="button" class="infocircle" onClick="modal(10)"><i class="fa fa-info-circle"></i></button>
+                    <button type="button" class="infocircle" onClick="modal(10)"><object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
+                    
+                  
 
                 </h1>
 
@@ -120,7 +120,7 @@
 
                 <div class="volume">
 
-                    <button type="button" id="on"><i class="fa fa-volume-off"></i></button>
+                    <button type="button" id="on"><object class = "info" id = "volumeOff" data="img/volume-off.svg" type="image/svg+xml"></object><object class = "info" id = "volumeOn" data="img/volume-up.svg" type="image/svg+xml"></object></button>
 
                 </div>
 
@@ -196,8 +196,7 @@
                     <h2 class="controlboxtitle noTouch" id="customControlsHeader">
                         Custom Fingering Configuration
 
-                        <button type="button" class="infocircle" onClick="modal(19)"><i class="fa fa-info-circle"></i></button>
-
+                    <button type="button" class="infocircle" onClick="modal(19)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div id="customChart">
@@ -490,8 +489,7 @@
                     <h2 class="controlboxtitle noTouch" id="WARBL2customControlsHeader">
                         Custom Fingering Configuration
 
-                        <button type="button" class="infocircle" onClick="modal(19)"><i class="fa fa-info-circle"></i></button>
-
+                    <button type="button" class="infocircle" onClick="modal(19)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <textarea placeholder="Paste custom chart here" id="WARBL2CustomTextArea"></textarea>
@@ -800,8 +798,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Note Trigger and Register Control
 
-                        <button type="button" class="infocircle" onClick="modal(6)"><i class="fa fa-info-circle"></i></button>
-
+                    <button type="button" class="infocircle" onClick="modal(6)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div class="pressureLabel noTouch">Pressure (inH<sub>2</sub>0)</div>
@@ -958,8 +955,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Advanced Register Control Settings
 
-                        <button type="button" class="infocircle" onClick="modal(11)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(11)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div id="advancedSliders">
@@ -1151,8 +1147,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Pressure Graph
 
-                        <button type="button" class="infocircle" onClick="modal(16)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(16)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                         <div id="d3PressureGraph"></div>
 
                         <button type="button" class="smallbutton noTouch pressureOkay" onClick="pressureOkay()">OK</button>
@@ -1168,8 +1163,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Vibrato and Slide
 
-                        <button type="button" class="infocircle" onClick="modal(7)"><i class="fa fa-info-circle"></i></button>
-
+                    <button type="button" class="infocircle" onClick="modal(7)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div class="slidecontainer2" id="pitchBendContainer">
@@ -1337,8 +1331,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Advanced Pitch Bend Settings
 
-                        <button type="button" class="infocircle" onClick="modal(17)"><i class="fa fa-info-circle"></i></button>
-
+                     <button type="button" class="infocircle" onClick="modal(17)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div class="bendrangelabel noTouch">MIDI Bend Range (semitones)</div>
@@ -1379,8 +1372,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Pressure Mapping
 
-                        <button type="button" class="infocircle" onClick="modal(12)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(12)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div class="slidecontainer2" id="ExpressionDepthContainer">
@@ -1477,8 +1469,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Pressure and IMU Mapping
 
-                        <button type="button" class="infocircle" onClick="modal(28)"><i class="fa fa-info-circle"></i></button>
-
+                    <button type="button" class="infocircle" onClick="modal(28)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <button type="button" id="pressureMapButton" class="smallbutton noTouch pressureMapping" onClick="mapPressure()">Pressure mapping...</button>
@@ -1500,8 +1491,7 @@
                     <h2 class="controlboxtitle noTouch">
                         IMU Mapping
 
-                        <button type="button" class="infocircle" onClick="modal(26)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(26)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <button type="button" id="backIMUButton" class="smallbutton noTouch backIMU" onClick="backIMU()"><-- Back</button>
@@ -1588,8 +1578,8 @@
                         <span id="IMUMappingHeader">
                             Roll Mapping
                         </span>
-                        <button type="button" class="infocircle" onClick="modal(27)"><i class="fa fa-info-circle"></i></button>
-                    </h2>
+                    <button type="button" class="infocircle" onClick="modal(27)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
+                                        </h2>
 
                     <div class="IMUMappingControls" id="IMUMappingControls">
 
@@ -1688,7 +1678,7 @@
                         <span id="IMUMappingHeader">
                             Control Register with Elevation
                         </span>
-                        <button type="button" class="infocircle" onClick="modal(29)"><i class="fa fa-info-circle"></i></button>
+                    <button type="button" class="infocircle" onClick="modal(29)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>             
                     </h2>
 
                 
@@ -1744,8 +1734,7 @@
                             Pressure Mapping
                         </span>
 
-                        <button type="button" class="infocircle" onClick="modal(21)"><i class="fa fa-info-circle"></i></button>
-
+                     <button type="button" class="infocircle" onClick="modal(21)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
 
@@ -1866,7 +1855,7 @@
 
                     <h2 class="controlboxtitle noTouch">
                         Pitch Expression Pressure-Range Override
-                        <button type="button" class="infocircle" onClick="modal(20)"><i class="fa fa-info-circle"></i></button>
+                    <button type="button" class="infocircle" onClick="modal(20)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>               
                     </h2>
 
                     <div id="overrideLabel" class="overrideLabel noTouch">Override pitch expression range</div>
@@ -1902,8 +1891,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Drones Control
 
-                        <button type="button" class="infocircle" onClick="modal(13)"><i class="fa fa-info-circle"></i></button>
-
+                     <button type="button" class="infocircle" onClick="modal(13)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
                     <div class="onCommandLabel noTouch">Drone on command</div>
@@ -2045,8 +2033,7 @@
                     <h2 class="controlboxtitle noTouch">
                         Button Behavior
 
-                        <button type="button" class="infocircle" onClick="modal(8)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(8)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
 
@@ -2473,8 +2460,7 @@
             <h2 class="controlboxtitle noTouch">
                 Optical Sensor Calibration
 
-                <button type="button" class="infocircle" onClick="modal(9)"><i class="fa fa-info-circle"></i></button>
-
+                      <button type="button" class="infocircle" onClick="modal(9)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
             </h2>
 
 
@@ -2535,41 +2521,41 @@
 
             <button type="button" class="smallbutton noTouch autoCalibrateBell" id="autoCalibrateBell" onClick="autoCalibrateBell()">Auto-calibrate bell sensor only</button>
 
-            <button type="button" class="toprowbuttons button b1" id="18" onClick="sendToWARBL(102,18)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b1" id="18" onClick="sendToWARBL(102,18)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b1" id="17" onClick="sendToWARBL(102,17)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b1" id="17" onClick="sendToWARBL(102,17)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b2" id="16" onClick="sendToWARBL(102,16)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b2" id="16" onClick="sendToWARBL(102,16)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b2" id="15" onClick="sendToWARBL(102,15)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b2" id="15" onClick="sendToWARBL(102,15)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></i></button>
 
-            <button type="button" class="toprowbuttons button b3" id="14" onClick="sendToWARBL(102,14)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b3" id="14" onClick="sendToWARBL(102,14)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b3" id="13" onClick="sendToWARBL(102,13)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b3" id="13" onClick="sendToWARBL(102,13)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b4" id="12" onClick="sendToWARBL(102,12)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b4" id="12" onClick="sendToWARBL(102,12)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b4" id="11" onClick="sendToWARBL(102,11)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b4" id="11" onClick="sendToWARBL(102,11)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b5" id="10" onClick="sendToWARBL(102,10)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b5" id="10" onClick="sendToWARBL(102,10)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b5" id="9" onClick="sendToWARBL(102,9)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b5" id="9" onClick="sendToWARBL(102,9)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b6" id="8" onClick="sendToWARBL(102,8)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b6" id="8" onClick="sendToWARBL(102,8)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b6" id="7" onClick="sendToWARBL(102,7)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b6" id="7" onClick="sendToWARBL(102,7)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b7" id="6" onClick="sendToWARBL(102,6)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b7" id="6" onClick="sendToWARBL(102,6)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b7" id="5" onClick="sendToWARBL(102,5)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b7" id="5" onClick="sendToWARBL(102,5)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b8" id="4" onClick="sendToWARBL(102,4)"><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b8" id="4" onClick="sendToWARBL(102,4)"><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b8" id="3" onClick="sendToWARBL(102,3)"><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b8" id="3" onClick="sendToWARBL(102,3)"><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="toprowbuttons button b9" id="2" onClick="sendToWARBL(102,2)" disabled=disabled><i class="fa fa-angle-up"></i></button>
+            <button type="button" class="toprowbuttons button b9" id="2" onClick="sendToWARBL(102,2)" disabled=disabled><object class = "info" data="img/angle-up.svg" type="image/svg+xml"></object></button>
 
-            <button type="button" class="bottomrowbuttons button b9" id="1" onClick="sendToWARBL(102,1)" disabled=disabled><i class="fa fa-angle-down"></i></button>
+            <button type="button" class="bottomrowbuttons button b9" id="1" onClick="sendToWARBL(102,1)" disabled=disabled><object class = "info" data="img/angle-down.svg" type="image/svg+xml"></object></i></button>
 
             <div class="sensorvalue noTouch b1" id="v9">0</div>
 
@@ -2602,8 +2588,7 @@
             <h2 class="controlboxtitle noTouch">
                 WARBL2 Settings
 
-                <button type="button" class="infocircle" onClick="modal(23)"><i class="fa fa-info-circle"></i></button>
-
+                     <button type="button" class="infocircle" onClick="modal(23)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
             </h2>
 
 
@@ -2809,7 +2794,7 @@
 
             <h2 class="importexportboxtitle noTouch">
                 Preset Import/Export
-                <button type="button" class="infocircle" onClick="modal(15)"><i class="fa fa-info-circle"></i></button>
+                    <button type="button" class="infocircle" onClick="modal(15)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button> 
             </h2>
 
             <!-- <input type="file" name="importPreset" id="importPreset" class="warbl-preset-import" accept=".warbl" onChange="importPreset(this)">  -->

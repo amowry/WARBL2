@@ -128,7 +128,6 @@ window.addEventListener('load', function () {
 
     $(".volume").click(function () {
         toggleOn();
-        $(this).find('i').toggleClass('fa-volume-up fa-volume-off')
     });
 
 
@@ -3402,10 +3401,14 @@ function LEDon() {
 function toggleOn() {
     volume = +!volume;
     if (volume == 0) {
-        noteOff(currentNote)
+		document.getElementById("volumeOff").style.display = "block";
+		document.getElementById("volumeOn").style.display = "none";
+        noteOff(currentNote);
     }
-    //else{context.resume();
-    //}
+    else{
+		document.getElementById("volumeOff").style.display = "none";
+		document.getElementById("volumeOn").style.display = "block";
+    }
 }
 
 
