@@ -1507,9 +1507,10 @@
                     <button type="button" id="backIMUButton" class="smallbutton noTouch backIMU" onClick="backIMU()"><-- Back</button>
 
 
-                    <div id="sendRollLabel" class="sendRollLabel noTouch">Send roll</div>
-                    <div id="sendPitchLabel" class="sendPitchLabel noTouch">Send pitch</div>
-                    <div id="sendYawLabel" class="sendYawLabel noTouch">Send yaw</div>
+                    <div id="sendRollLabel" class="sendRollLabel noTouch">Send roll as CC</div>
+                    <div id="sendPitchLabel" class="sendPitchLabel noTouch">Send elevation as CC</div>
+                    <div id="sendYawLabel" class="sendYawLabel noTouch">Send yaw as CC</div>
+                    <div id="sendPitchRegisterLabel" class="sendPitchRegisterLabel noTouch">Control register with elevation</div>
                     <div id="sendShakeLabel" class="sendShakeLabel noTouch">Shake vibrato</div>
 
                     <label class="switch" id="switch20">
@@ -1527,6 +1528,11 @@
                         <span class="slider round"></span>
                     </label>
 
+                    <label class="switch" id="switch27">
+                        <input type="checkbox" class="checkboxes" id="checkbox27" onChange="sendPitchRegister(this.checked)" />
+                        <span class="slider round"></span>
+                    </label>
+                    
                     <label class="switch" id="switch24">
                         <input type="checkbox" class="checkboxes" id="checkbox24" onChange="sendShake(this.checked)" />
                         <span class="slider round"></span>
@@ -1549,7 +1555,7 @@
                     <button type="button" id="rollMapButton" class="smallbutton noTouch mapRoll" onClick="mapRoll()">Map...</button>
                     <button type="button" id="rollPitchButton" class="smallbutton noTouch mapPitch" onClick="mapPitch()">Map...</button>
                     <button type="button" id="rollYawButton" class="smallbutton noTouch mapYaw" onClick="mapYaw()">Map...</button>
-
+					<button type="button" id="pitchRegisterButton" class="smallbutton noTouch pitchRegister" onClick="mapPitchRegister()">Map...</button>
 
                 </div>
 
@@ -1647,14 +1653,67 @@
 
                     </div>
 
+                </div>
 
 
 
 
 
 
+
+
+
+
+
+            <div class="smallcontrolbox expressionBox" id="box12">
+
+                    <h2 class="controlboxtitle noTouch">
+
+                        <span id="IMUMappingHeader">
+                            Control Register with Elevation
+                        </span>
+                        <button type="button" class="infocircle" onClick="modal(29)"><i class="fa fa-info-circle"></i></button>
+                    </h2>
+
+                
+                        <div class="jumpvalues noTouch" id="slider6-value-min"></div>
+                        <div class="jumpvalues noTouch" id="slider6-value-max"></div>
+  
+
+
+                        <div class="maxMinContainer6" id="slider6"></div>
+
+
+                        <div class="rangeLabel6 noTouch">Input range (degrees)</div>
+
+                        <div class="rangeLabel7 noTouch">Number of registers</div>
+
+    
+
+
+                        <button type="button" class="smallbutton noTouch advancedOkayIMU" onClick="okayPitchRegistermap()">OK</button>
+
+
+
+                       <div class="slidecontainer6" id="pitchRegisterContainer">
+                            <input type="range" min="2" max="5" value="2" class="ranger" id="pitchRegisterNumber" onChange="sendpitchRegisterNumber(value)" />
+
+                        </div>
+
+
+                        <div class="jumpvalues jumpvalue17">
+
+                            <p><span id="demo17"></span></p>
+                        </div>
+
+              
 
                 </div>
+
+
+
+
+
 
 
 
@@ -1812,6 +1871,12 @@
                     <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="okayOverride()">OK</button>
 
                 </div>
+
+
+
+
+
+
 
 
 
@@ -3518,12 +3583,12 @@
 
             <h2 title="Close" onClick="modalclose(27)" class="modal-close">Close</h2>
 
-            <h1>Roll, Pitch, Yaw Mapping</h1>
+            <h1>Roll, Elevation, Yaw Mapping</h1>
 
             <div>
 
                 <p>
-                    Roll, pitch, yaw documentation here
+                    Roll, elevation, yaw documentation here
                 </p>
 
             </div>
@@ -3550,6 +3615,25 @@
     </div>
 
 
+
+
+    <div id="open-modal29" onClick="" class="modal-window">
+        <div id="modal-center29">
+
+            <h2 title="Close" onClick="modalclose(29)" class="modal-close">Close</h2>
+
+            <h1>Control Register with IMU Elevation</h1>
+
+            <div>
+
+                <p>
+                    Elevation register documentation here
+                </p>
+
+            </div>
+        </div>
+    </div>
+    
 
 
     </div>
@@ -3627,6 +3711,21 @@
 
     var slider5 = document.getElementById('slider5');
     noUiSlider.create(slider5, {
+        start: [-90, 90],
+        step: 5,
+        connect: false,
+        range: {
+            'min': -90,
+            'max': 90
+        }
+    });
+
+</script>
+
+<script>
+
+    var slider6 = document.getElementById('slider6');
+    noUiSlider.create(slider6, {
         start: [-90, 90],
         step: 5,
         connect: false,

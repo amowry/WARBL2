@@ -731,6 +731,7 @@ function WARBL_Receive(event) {
                         advancedOkayPB();
                         okayCCmap();
                         okayIMUmap();
+						okayPitchRegistermap();
                         okayOverride();
                         backIMU();
                         backPressure();
@@ -752,6 +753,7 @@ function WARBL_Receive(event) {
                         advancedOkayPB();
                         okayCCmap();
                         okayIMUmap();
+						okayPitchRegistermap();
                         okayOverride();
                         backIMU();
                         backPressure();
@@ -773,6 +775,7 @@ function WARBL_Receive(event) {
                         advancedOkayPB();
                         okayCCmap();
                         okayIMUmap();
+						okayPitchRegistermap();
                         okayOverride();
                         backIMU();
                         backPressure();
@@ -1202,12 +1205,30 @@ function WARBL_Receive(event) {
                             autoCenterYawInterval.dispatchEvent(new Event('input'));
                             output.innerHTML = data2 / 4;
                         }
+						else if (jumpFactorWrite == 226) {
+                            document.getElementById("checkbox27").checked = data2;
+                        }
                         else if (jumpFactorWrite == 227) {
                             document.getElementById("shakeDepth").value = data2;
                             var output = document.getElementById("demo15");
                             shakeDepth.dispatchEvent(new Event('input'));
                             output.innerHTML = data2;
+                        }		
+						else if (jumpFactorWrite == 228) { //input (-90 to 90)
+							  slider6.noUiSlider.set([(data2 * 5) - 90, null]);
                         }
+						else if (jumpFactorWrite == 229) { //input (-90 to 90)
+							  slider6.noUiSlider.set([null, (data2 * 5) - 90]);
+                        }
+						else if (jumpFactorWrite == 230) {
+                            document.getElementById("pitchRegisterNumber").value = data2;
+                            var output = document.getElementById("demo17");
+                            pitchRegisterNumber.dispatchEvent(new Event('input'));
+                            output.innerHTML = data2;
+                        }
+						
+						
+						
                     } //End of WARBL2 IMU settings
 
                 } //end of CC105
@@ -1663,7 +1684,7 @@ function WARBL_Receive(event) {
                         connIntvlLSB = data2;
                     }
                     else if (WARBL2SettingsReceive == 18) { //high byte of BLE connection interval
-                        var x = parseInt((data2 << 7) | connIntvlLSB); //receive pressure between 100 and 900
+                        var x = parseInt((data2 << 7) | connIntvlLSB); 
                         x = x / 100; //convert back to a decimal
                         x = parseFloat(x.toFixed(4));
                         if (x == 0) {
@@ -1947,6 +1968,7 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
     pressureOkay();
     okayCCmap();
     okayIMUmap();
+	okayPitchRegistermap();
     okayOverride();
     backIMU();
     backPressure();
@@ -2025,6 +2047,13 @@ function sendAutoCenterYawInterval(selection) {
     blink(1);
     selection = parseFloat(selection);
     sendToWARBL(109, 25);
+    sendToWARBL(105, selection);
+}
+
+function sendpitchRegisterNumber(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(109, 30);
     sendToWARBL(105, selection);
 }
 
@@ -2296,6 +2325,29 @@ slider5.noUiSlider.on('update', function (values, handle) {
     }
 });
 
+slider6.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('slider6-value-min'),
+        marginMax = document.getElementById('slider6-value-max');
+        if (handle) {
+            marginMax.innerHTML = parseInt(values[handle]);
+        } else {
+            marginMin.innerHTML = parseInt(values[handle]);
+    }
+});
+
+
+slider6.noUiSlider.on('change', function (values, handle) {
+    blink(1);
+	 var handles = slider6.noUiSlider.get();
+    inputSliderMin[IMUmapSelection + 3] = parseInt(handles[0]);
+    inputSliderMax[IMUmapSelection + 3] = parseInt(handles[1]);
+    sendToWARBL(109, 28);
+    sendToWARBL(105, (parseInt(handles[0]) + 90) / 5); //convert to 1-36 steps to send
+    sendToWARBL(109, 29);
+    sendToWARBL(105, (parseInt(handles[1]) + 90) / 5); //convert to 1-36 steps to send
+});
+
+
 
 
 function sendRoll(selection) {
@@ -2330,6 +2382,13 @@ function sendAutoCenterYaw(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
     sendToWARBL(109, 23);
+    sendToWARBL(105, selection);
+}
+
+function sendPitchRegister(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(109, 26);
     sendToWARBL(105, selection);
 }
 
@@ -2776,7 +2835,7 @@ function mapPitch() {
     slider4.noUiSlider.set([outputSliderMin[5], outputSliderMax[5]]);
     document.getElementById("box10").style.display = "none";
     document.getElementById("box11").style.display = "block";
-    document.getElementById("IMUMappingHeader").innerHTML = "Pitch Mapping";
+    document.getElementById("IMUMappingHeader").innerHTML = "Elevation Mapping";
     document.getElementById("centerLabel").style.display = "none";
     document.getElementById("switch23").style.display = "none";
 }
@@ -2801,6 +2860,21 @@ function mapYaw() {
 }
 
 
+function mapPitchRegister() {
+    document.getElementById('receivedCC').innerHTML = null;
+    document.getElementById("CClevel").style.width = 0 + "%";
+    document.getElementById("IMUChannelInput").value = IMUchannel[1];
+    document.getElementById("IMUCC").value = IMUnumber[1];
+    slider5.noUiSlider.set([inputSliderMin[5], inputSliderMax[5]]);
+    slider4.noUiSlider.set([outputSliderMin[5], outputSliderMax[5]]);
+    document.getElementById("box10").style.display = "none";
+    document.getElementById("box12").style.display = "block";
+    document.getElementById("IMUMappingHeader").innerHTML = "Pitch Mapping";
+    document.getElementById("centerLabel").style.display = "none";
+    document.getElementById("switch23").style.display = "none";
+}
+
+
 function okayIMUmap() {
     document.getElementById("YawCenterControls").style.display = "none";
     document.getElementById("IMUMappingControls").style.top = "-170px";
@@ -2808,6 +2882,11 @@ function okayIMUmap() {
     document.getElementById("box10").style.display = "block";
 }
 
+
+function okayPitchRegistermap() {
+    document.getElementById("box12").style.display = "none";
+    document.getElementById("box10").style.display = "block";
+}
 
 
 function sendCenter(selection) {
@@ -3367,6 +3446,13 @@ var autoCenterYawSlider = document.getElementById('autoCenterYawInterval');
 autoCenterYawSlider.addEventListener('input', slider16Change);
 function slider16Change() {
     output16.innerHTML = autoCenterYawSlider.value / 4;
+}
+
+var output17 = document.getElementById("demo17");
+var pitchRegisterSlider = document.getElementById('pitchRegisterNumber');
+pitchRegisterSlider.addEventListener('input', slider17Change);
+function slider17Change() {
+    output17.innerHTML = pitchRegisterSlider.value;
 }
 
 var output1 = document.getElementById("demo1");

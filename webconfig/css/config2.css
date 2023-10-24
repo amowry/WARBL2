@@ -756,7 +756,7 @@ input {
 	display: block;
 	position: absolute;
 	height: 40px !important;
-	width: 140px;
+	width: 140px !important;
 	top: 120px;
 	left: 820px;
 }
@@ -765,7 +765,7 @@ input {
 	display: block;
 	position: absolute;
 	height: 40px !important;
-	width: 140px;
+	width: 140px !important;
 	top: 180px;
 	left: 820px;
 }
@@ -1327,6 +1327,12 @@ fieldset {
 	display: none;
 }
 
+#box12 {
+	left: 30px;
+	top: 900px;
+	height: 405px;
+	display: none;
+}
 
 #pressuregraph {
 	display: none;
@@ -2062,7 +2068,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 80px;
-	top: 150px;
+	top: 130px;
 	left: 300px;
 }
 
@@ -2070,7 +2076,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 80px;
-	top: 200px;
+	top: 175px;
 	left: 300px;
 }
 
@@ -2078,23 +2084,33 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 80px;
-	top: 250px;
+	top: 220px;
 	left: 300px;
 }
 
+.pitchRegister {
+	position: absolute;
+	height: 30px;
+	width: 80px;
+	top: 265px;
+	left: 300px;
+}
+
+
+
 #switch20 {
-	top: 154px;
-	left: 200px;
+	top: 134px;
+	left: 230px;
 }
 
 #switch21 {
-	top: 204px;
-	left: 200px;
+	top: 179px;
+	left: 230px;
 }
 
 #switch22 {
-	top: 254px;
-	left: 200px;
+	top: 224px;
+	left: 230px;
 }
 
 #switch23 {
@@ -2103,16 +2119,21 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch24 {
-	top: 323px;
+	top: 328px;
 	left: 270px;
+}
+
+#switch27 {
+	top: 269px;
+	left: 230px;
 }
 
 
 .sendRollLabel {
 	display: block;
 	position: absolute;
-	left: 128px;
-	top: 156px;
+	left: 118px;
+	top: 136px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2129,8 +2150,8 @@ input:disabled + .vibratoSlider:before {
 .sendPitchLabel {
 	display: block;
 	position: absolute;
-	left: 120px;
-	top: 206px;
+	left: 82px;
+	top: 181px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2138,17 +2159,27 @@ input:disabled + .vibratoSlider:before {
 .sendYawLabel {
 	display: block;
 	position: absolute;
-	left: 125px;
-	top: 256px;
+	left: 115px;
+	top: 226px;
 	z-index: 99;
 	font-size: 14px;
 }
+
+.sendPitchRegisterLabel {
+	display: block;
+	position: absolute;
+	left: 35px;
+	top: 271px;
+	z-index: 99;
+	font-size: 14px;
+}
+
 
 .sendShakeLabel {
 	display: block;
 	position: absolute;
 	left: 165px;
-	top: 325px;
+	top: 330px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2202,6 +2233,10 @@ input:disabled + .vibratoSlider:before {
 	width: 30%;
 }
 
+.slidecontainer6 {
+	width: 69%;
+}
+
 #autoCenterYawContainer {
 	display: block;
 	position: absolute;
@@ -2219,9 +2254,23 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
+#pitchRegisterContainer {
+	display: block;
+	position: absolute;
+	left: 75px;
+	top: 240px;
+	z-index: 99;
+}
+
+
 .jumpvalue16 {
 	left: 395px;
 	top: 385px;
+}
+
+.jumpvalue17 {
+	left: 410px;
+	top: 225px;
 }
 
 
@@ -3351,6 +3400,15 @@ h3 {
 	z-index: 99;
 }
 
+.maxMinContainer6 {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 135px;
+	z-index: 99;
+}
+
 #slider-value-min {
 	display: block;
 	width: 65%;
@@ -3441,6 +3499,24 @@ h3 {
 	z-index: 99;
 }
 
+#slider6-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 130px;
+	z-index: 99;
+}
+
+#slider6-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 130px;
+	z-index: 99;
+}
+
 .IMUMappingControls {
 	position: relative;
 	top: -170px;
@@ -3478,6 +3554,24 @@ h3 {
 	position: absolute;
 	left: 195px;
 	top: 255px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.rangeLabel6 {
+	display: block;
+	position: absolute;
+	left: 170px;
+	top: 100px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.rangeLabel7 {
+	display: block;
+	position: absolute;
+	left: 175px;
+	top: 215px;
 	z-index: 99;
 	font-size: 14px;
 }
