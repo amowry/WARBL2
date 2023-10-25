@@ -41,11 +41,11 @@ void manageBattery(bool send) {
 
 
     //Monitor the STAT pin to tell if we're charging.
-    if (digitalRead(STAT) == 0) {    //Charging
-        digitalWrite(redLED, HIGH);  //ToDo: improve indication. If there's a fault the LED will be flashing.
-        tempChargingStatus = 1;      //Provisionally change the status.
-    } else {                         //Not charging
-        digitalWrite(redLED, LOW);
+    if (digitalRead(STAT) == 0) {  //Chargings
+        pulseLED[RED_LED] = true;
+        tempChargingStatus = 1;  //Provisionally change the status.
+    } else {                     //Not charging
+        pulseLED[RED_LED] = false;
         tempChargingStatus = 0;  //Provisionally change the status.
     }
 
@@ -80,7 +80,7 @@ void manageBattery(bool send) {
                 chargeStartTime = millis();                                                                   //Start a timer if we just started charging.
             } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger.
                 chargeTerminated = 1;                                                                         //If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
-                digitalWrite(greenLED, HIGH);                                                                 //Indicate end of charge. ToDo: improve indication
+                digitalWrite(LEDpins[GREEN_LED], HIGH);                                                       //Indicate end of charge. ToDo: improve indication
                 EEPROM.write(1013, 0);                                                                        //Reset the total run time because we are now fully charged (high byte).
                 EEPROM.write(1014, 0);                                                                        //Low byte
                 EEPROM.write(1008, 3);                                                                        //Remember that there has been a termination.
@@ -181,20 +181,21 @@ void manageBattery(bool send) {
             if (voltageSlope < 0.001) {                         //If the curve has been flat for the previous 10 minutes, terminate charging. ToDo: it may be best to wait for a few of these flat readings, to avoid the risk of early termination in the middle of the charge curve.
                 digitalWrite(chargeEnable, LOW);                //Disable charging.
                 chargeEnabled = 0;
-                chargeTerminated = 1;          //This tells us not to enable charging again until the power is cycled.
-                digitalWrite(greenLED, HIGH);  //Indicate end of charge. ToDo: improve indication
-                EEPROM.write(1013, 0);         //Reset the total run time because we are now fully charged (high byte).
-                EEPROM.write(1014, 0);         //Low byte
-                EEPROM.write(1008, 3);         //Remember that there has been a termination.
+                chargeTerminated = 1;                    //This tells us not to enable charging again until the power is cycled.
+                digitalWrite(LEDpins[GREEN_LED], HIGH);  //Indicate end of charge. ToDo: improve indication
+                EEPROM.write(1013, 0);                   //Reset the total run time because we are now fully charged (high byte).
+                EEPROM.write(1014, 0);                   //Low byte
+                EEPROM.write(1008, 3);                   //Remember that there has been a termination.
                 prevRunTime = 0;
             }
 
-
-            //Serial.print(smoothed_voltage, 3);  //For plotting votage while charging
-            //Serial.print(",");
-            //Serial.print(voltageSlope, 3);
-            //Serial.print(",");
-            //Serial.println(EEPROM.read(1007));
+            /*
+            Serial.print(smoothed_voltage, 3);  //For plotting votage while charging
+            Serial.print(",");
+            Serial.print(voltageSlope, 3);
+            Serial.print(",");
+            Serial.println(EEPROM.read(1007));
+            */
         }
     }
     cycles++;
@@ -230,7 +231,7 @@ void manageBattery(bool send) {
 
     //Shut down when the battery is low.
     if (nowtime > 2000 && battPower && battVoltage <= 1.0) {  //Give some time to make sure we detect USB power if it's present.
-        digitalWrite(redLED, HIGH);                           //Indicate power down.
+        digitalWrite(LEDpins[RED_LED], HIGH);                 //Indicate power down.
         delay(5000);                                          //Long red LED to indicate shutdown because of low battery
         powerDown(true);                                      //Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
     }
@@ -282,7 +283,7 @@ void powerDown(bool resetTotalRuntime) {
 
     if (battPower) {
         recordRuntime(resetTotalRuntime);
-        digitalWrite(redLED, HIGH);  //Indicate power down.
+        digitalWrite(LEDpins[RED_LED], HIGH);  //Indicate power down.
         delay(500);
         digitalWrite(powerEnable, LOW);  //Disable the boost converter to cut power to the entire device.
     }

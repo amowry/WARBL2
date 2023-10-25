@@ -12,7 +12,7 @@ void printStuff(void) {
         //Serial.println(toneholeCovered[i]);
     }
 
-    //Serial.println(gyroXCalibration, 4);
+    //Serial.println(mode);
     //Serial.println("");
     //Serial.println(toneholeRead[0]);
 
@@ -21,7 +21,7 @@ void printStuff(void) {
     //Serial.println(gyroZ, 3);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER]);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER_NUMBER]);
-    //Serial.println(IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]);
+    //Serial.println(IMUsettings[2][PITCH_REGISTER_INPUT_MIN]);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER_INPUT_MAX]);
 
     //Serial.println(digitalRead(STAT));
@@ -339,7 +339,7 @@ void shakeForVibrato() {
     if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
 
         static float accelFilteredOld;
-        const float timeConstant = 0.07f;
+        const float timeConstant = 0.1f;
 
         float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
         accelFilteredOld = accelFiltered;
@@ -413,12 +413,10 @@ void shakeForVibrato() {
             // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
             float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
             if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
-                normshake *= -1.0f; // reverse phase
-            }
-            else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                normshake *= -1.0f;  // reverse phase
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                 normshake = constrain(normshake, -1.0f, 0.0f);
-            }
-            else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                 normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
             }
 
@@ -1651,23 +1649,58 @@ void sendNote() {
 
 void blink()  //blink LED given number of times
 {
-    if ((millis() - ledTimer) >= 200) {
-        ledTimer = millis();
+    if (blinkNumber > 0) {
+        if ((millis() - ledTimer) >= 200) {
+            ledTimer = millis();
 
-        if (LEDon) {
-            digitalWrite(greenLED, LOW);
-            blinkNumber--;
-            LEDon = 0;
-            return;
-        }
+            if (LEDon) {
+                digitalWrite(LEDpins[GREEN_LED], LOW);
+                blinkNumber--;
+                LEDon = 0;
+                return;
+            }
 
-        else {
-            digitalWrite(greenLED, HIGH);
-            LEDon = 1;
+            else {
+                digitalWrite(LEDpins[GREEN_LED], HIGH);
+                LEDon = 1;
+            }
         }
     }
 }
 
+
+
+
+
+
+
+
+
+
+void pulse()  //pulse LED
+{
+    static int writeValue[] = { 0, 0, 0 };
+    static bool prevPulseState[] = { false, false, false };
+    static int increment[] = { 1, 1, 1 };  //1 if currently increasing analog value, -1 if decreasing
+
+    for (byte i = 0; i < 3; i++) {
+        if (pulseLED[i] == true) {
+            prevPulseState[i] = true;
+            writeValue[i] += increment[i];  //Increment the analogWrite value.
+            if (writeValue[i] == 1024) {
+                increment[i] = -1;
+            }
+            if (writeValue[i] == 0) {
+                increment[i] = 1;
+            }
+            analogWrite(LEDpins[i], writeValue[i]);
+        } else if (prevPulseState[i] == true) {
+            prevPulseState[i] = false;
+            analogWrite(LEDpins[i], 0);  //If pulsing was just turned off, write 0.
+            writeValue[i] = 0;           // //Reset so we'll start from 0 bext time pulse is turned on.
+        }
+    }
+}
 
 
 
@@ -2890,8 +2923,10 @@ void loadPrefs() {
         // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
     }
 
+
     //Calculate upper and lower bounds for IMU pitch register mapping
     byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  //Number of degrees per register
+    IMUsettings[mode][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[mode][PITCH_REGISTER_NUMBER], 2, 5);                                                                //Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
     for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
         pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  //Upper/lower bounds for each register
     }
@@ -2906,7 +2941,7 @@ void loadPrefs() {
 //mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
 void calibrate() {
     if (!LEDon) {
-        digitalWrite(greenLED, HIGH);
+        digitalWrite(LEDpins[GREEN_LED], HIGH);
         LEDon = 1;
         calibrationTimer = millis();
 
@@ -2965,7 +3000,7 @@ void saveCalibration() {
     }
     calibration = 0;
     EEPROM.write(37, 3);  //we write a 3 to address 37 to indicate that we have stored a set of calibrations.
-    digitalWrite(greenLED, LOW);
+    digitalWrite(LEDpins[GREEN_LED], LOW);
     LEDon = 0;
 }
 

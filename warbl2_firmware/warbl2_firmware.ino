@@ -241,7 +241,7 @@ ExternalEEPROM EEPROM;
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
-#define Y_PITCHBEND_MODE 31         // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
+#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
 #define kIMUnVariables 32
 
 
@@ -249,6 +249,11 @@ ExternalEEPROM EEPROM;
 #define Y_PITCHBEND_MODE_DOWNUP 1
 #define Y_PITCHBEND_MODE_UPONLY 2
 #define Y_PITCHBEND_MODE_DOWNONLY 3
+
+#define RED_LED 0
+#define GREEN_LED 1
+#define BLUE_LED 2
+
 
 //Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
@@ -265,9 +270,7 @@ MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 //MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
 
 //GPIO constants
-const uint8_t redLED = 8;
-const uint8_t greenLED = 10;  //also LED_BUILTIN
-const uint8_t blueLED = 3;
+const uint8_t LEDpins[] = { 8, 10, 3 };  //RGB. Green is also LED_BUILTIN.
 
 const uint8_t powerEnable = 19;    //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
 const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (~0.33 C, should take around 3 hours to charge)
@@ -414,13 +417,14 @@ uint8_t buttonPrefs[3][8][5] =  //The button configuration settings (no default 
 
 
 //other misc. variables
-unsigned long ledTimer = 0;  //for blinking LED
-byte blinkNumber = 0;        //the number of remaining blinks when blinking LED to indicate control changes
-bool LEDon = 0;              //whether the LED is currently on
-bool play = 0;               //turns sound off and on (with the use of a button action) when in bagless mode
-bool bellSensor = 1;         //whether the bell sensor is plugged in
-byte program = 0;            //current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
-bool dronesState = 0;        //keeps track of whether we're above or below the pressure threshold for turning drones on.
+unsigned long ledTimer = 0;     //for blinking LED
+byte blinkNumber = 0;           //the number of remaining blinks when blinking LED to indicate control changes
+bool LEDon = 0;                 //whether the LED is currently on
+bool play = 0;                  //turns sound off and on (with the use of a button action) when in bagless mode
+bool bellSensor = 1;            //whether the bell sensor is plugged in
+byte program = 0;               //current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
+bool dronesState = 0;           //keeps track of whether we're above or below the pressure threshold for turning drones on.
+bool pulseLED[] = { 0, 0, 0 };  //Whether currently pulsing LEDs
 
 
 //variables for reading pressure sensor
@@ -573,22 +577,24 @@ void setup() {
     digitalWrite(battReadEnable, LOW);  //The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
-    digitalWrite(redLED, LOW);
-    digitalWrite(blueLED, LOW);
-    digitalWrite(greenLED, LOW);
+    digitalWrite(LEDpins[RED_LED], LOW);
+    digitalWrite(LEDpins[BLUE_LED], LOW);
+    digitalWrite(LEDpins[GREEN_LED], LOW);
 
     pinMode(battReadEnable, OUTPUT);  //Set various pins as outputs.
     pinMode(chargeEnable, OUTPUT);
     pinMode(powerEnable, OUTPUT);
-    pinMode(redLED, OUTPUT);
-    pinMode(greenLED, OUTPUT);
-    pinMode(blueLED, OUTPUT);
+    pinMode(LEDpins[RED_LED], OUTPUT);
+    pinMode(LEDpins[GREEN_LED], OUTPUT);
+    pinMode(LEDpins[BLUE_LED], OUTPUT);
 
     pinMode(buttons[0], INPUT_PULLUP);  //Set buttons as inputs and enable internal pullup.
     pinMode(buttons[1], INPUT_PULLUP);
     pinMode(buttons[2], INPUT_PULLUP);
 
     pinMode(STAT, INPUT_PULLUP);  //STAT from charger
+
+    analogWriteResolution(10);  //Increase resolution for pulsing LEDs
 
     //set up ADC
     const int adcBits = 12;
@@ -616,9 +622,9 @@ void setup() {
     battPower = true;
 
 
-    digitalWrite(greenLED, HIGH);  //Indicate powerup.
+    digitalWrite(LEDpins[GREEN_LED], HIGH);  //Indicate powerup.
     delay(500);
-    digitalWrite(greenLED, LOW);
+    digitalWrite(LEDpins[GREEN_LED], LOW);
 
 
     //BLE MIDI stuff:
@@ -736,9 +742,10 @@ void loop() {
     }
 
 
-    if (blinkNumber > 0) {
-        blink();  //Blink the LED if necessary.
-    }
+
+    blink();  //Blink green LED if necessary.
+    pulse();  //Pulse any LED if necessary.
+
 
     if (calibration > 0) {
         calibrate();  //Calibrate/continue calibrating if the command has been received.
