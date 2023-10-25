@@ -1687,13 +1687,14 @@ void pulse()  //pulse LED
         if (pulseLED[i] == true) {
             prevPulseState[i] = true;
             writeValue[i] += increment[i];  //Increment the analogWrite value.
-            if (writeValue[i] == 1024) {
+            if (writeValue[i] == 1023) {
                 increment[i] = -1;
             }
             if (writeValue[i] == 0) {
                 increment[i] = 1;
             }
             analogWrite(LEDpins[i], writeValue[i]);
+
         } else if (prevPulseState[i] == true) {
             prevPulseState[i] = false;
             analogWrite(LEDpins[i], 0);  //If pulsing was just turned off, write 0.
@@ -1701,6 +1702,8 @@ void pulse()  //pulse LED
         }
     }
 }
+
+
 
 
 
