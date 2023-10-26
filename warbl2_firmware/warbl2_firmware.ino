@@ -271,7 +271,7 @@ MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 //GPIO constants
 const uint8_t LEDpins[] = { 8, 10, 3 };  //RGB. Green is also LED_BUILTIN.
-//const uint8_t LEDpins[] = { 27, 10, 3 };  //TESTING uploading code to ATmega from NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to rest Atmega.
+//const uint8_t LEDpins[] = { 27, 10, 3 };  //TESTING programming ATmega with NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to rest Atmega.
 
 const uint8_t powerEnable = 19;    //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
 const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (~0.33 C, should take around 3 hours to charge)
@@ -695,7 +695,7 @@ void setup() {
 
     //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
 
-    //programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
+    //bool ATmega_success = programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
 }
 
 
