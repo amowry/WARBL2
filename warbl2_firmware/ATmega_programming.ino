@@ -16,9 +16,9 @@ Adafruit_AVRProg avrprog = Adafruit_AVRProg();
 extern const image_t *images[];
 
 const image_t PROGMEM image_32u4_boot = {
-    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0xCB }, { 0x2F, 0xFF, 0xD9, 0xCB }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash zie, page size
+    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0xCB }, { 0x2F, 0xFF, 0xD9, 0xCB }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
 
-    // The firmwawre file to flash. Make sure to keep the start and end markers {R"( and
+    // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and
     // )"} in place.
     { R"(
 :100000000C94BB000C94C6040C949F040C947804CC
@@ -326,10 +326,6 @@ uint8_t NUMIMAGES = sizeof(images) / sizeof(images[0]);
 
 
 bool programATmega(void) {
-
-    while (!Serial)
-        ;
-    delay(100);
 
     avrprog.setProgramLED(LED_PROGMODE);
     avrprog.setErrorLED(LED_ERR);
