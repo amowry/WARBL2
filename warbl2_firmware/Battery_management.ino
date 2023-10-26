@@ -41,7 +41,7 @@ void manageBattery(bool send) {
 
 
     //Monitor the STAT pin to tell if we're charging.
-    if (digitalRead(STAT) == 0) {  //Chargings
+    if (digitalRead(STAT) == 0) {  //Charging
         pulseLED[RED_LED] = true;
         tempChargingStatus = 1;  //Provisionally change the status.
     } else {                     //Not charging

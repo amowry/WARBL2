@@ -13,7 +13,7 @@ void printStuff(void) {
     }
 
     //Serial.println(mode);
-    //Serial.println("");
+    Serial.println(EEPROM.read(38));
     //Serial.println(toneholeRead[0]);
 
     //Serial.println(gyroX, 3);

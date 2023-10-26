@@ -363,7 +363,7 @@ bool programATmega(void) {
         return false;
     }
 
-    if (!avrprog.verifyImage(targetimage->image_hexcode)) {  //Verify flash.
+    if (!avrprog.verifyImage(targetimage->image_hexcode)) {  // Verify flash.
         return false;
     }
 
@@ -371,19 +371,19 @@ bool programATmega(void) {
         return false;
     }
 
-    for (byte i = 0; i < 4; i++) {  //Indicate success.
+    for (byte i = 0; i < 4; i++) {  // Indicate success.
         digitalWrite(LED_BUILTIN, HIGH);
         delay(200);
         digitalWrite(LED_BUILTIN, LOW);
         delay(200);
     }
 
-    return true;  //Added to skip fuse verification.
+    return true;  // Added to skip fuse verification.
 
     //need to fix this-- the fuse verification process fails on the extended fuse. AM 10/26/23 Could be the fuse verification mask setting?
     if (!avrprog.verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
     } else {
-        return true;  //success
+        return true;  // Success
     }
 }
