@@ -331,35 +331,47 @@ bool programATmega(void) {
     avrprog.setErrorLED(LED_ERR);
     avrprog.setSPI(AVRPROG_RESET, AVRPROG_SCK, AVRPROG_MOSI, AVRPROG_MISO);
 
-    const image_t *targetimage = images[0];
-    avrprog.eraseChip();
 
-    if (!avrprog.programFuses(
-          targetimage->image_progfuses)) {  // get fuses ready to program
+    if (!avrprog.targetPower(true)) {
         return false;
     }
 
-    avrprog.targetPower(false);  // We should disconnect/reconnect after fusing
+    uint16_t signature = avrprog.readSignature();
+    if (signature == 0 || signature == 0xFFFF) {
+        return false;
+    }
+
+    const image_t *targetimage = images[0];
+    if (targetimage->image_chipsig != signature) {
+        return false;
+    }
+
+    avrprog.eraseChip();
+
+    if (!avrprog.programFuses(
+          targetimage->image_progfuses)) {  // Get fuses ready to program.
+        return false;
+    }
+
+    avrprog.targetPower(false);  // We should disconnect/reconnect after fusing.
     delay(100);
     if (!avrprog.targetPower(true)) {
         return false;
     }
 
-    if (!avrprog.writeImage(targetimage->image_hexcode,  //Program flash
-                            pgm_read_byte(&targetimage->image_pagesize),
-                            pgm_read_word(&targetimage->chipsize))) {
+    if (!avrprog.writeImage(targetimage->image_hexcode, pgm_read_byte(&targetimage->image_pagesize), pgm_read_word(&targetimage->chipsize))) {
         return false;
     }
 
-    if (!avrprog.verifyImage(targetimage->image_hexcode)) {  //Verify flash
+    if (!avrprog.verifyImage(targetimage->image_hexcode)) {  //Verify flash.
         return false;
     }
 
-    if (!avrprog.programFuses(targetimage->image_normfuses)) {  // Set fuses to 'final' state
+    if (!avrprog.programFuses(targetimage->image_normfuses)) {  // Set fuses to 'final' state.
         return false;
     }
 
-    for (byte i = 0; i < 4; i++) {  //Indicate success
+    for (byte i = 0; i < 4; i++) {  //Indicate success.
         digitalWrite(LED_BUILTIN, HIGH);
         delay(200);
         digitalWrite(LED_BUILTIN, LOW);
@@ -369,8 +381,7 @@ bool programATmega(void) {
     return true;  //Added to skip fuse verification.
 
     //need to fix this-- the fuse verification process fails on the extended fuse. AM 10/26/23 Could be the fuse verification mask setting?
-    if (!avrprog.verifyFuses(targetimage->image_normfuses,
-                             targetimage->fusemask)) {
+    if (!avrprog.verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
     } else {
         return true;  //success
