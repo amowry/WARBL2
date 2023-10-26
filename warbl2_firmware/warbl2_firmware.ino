@@ -18,7 +18,7 @@
     along with this program.  If not, see http://www.gnu.org/licenses/
 
 
-Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
+Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total (at 3.0 V), for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
 
 
 */
@@ -38,6 +38,7 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include "ResponsiveAnalogRead.h"  //Fast smoothing of 12 bt pressure sensor readings
+#include "Adafruit_AVRProg.h"      //For using the NRF52840 to reprogram the ATmega32U4
 
 BLEDis bledis;
 BLEMidi blemidi;
@@ -244,7 +245,6 @@ ExternalEEPROM EEPROM;
 #define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
 #define kIMUnVariables 32
 
-
 #define Y_PITCHBEND_MODE_UPDOWN 0
 #define Y_PITCHBEND_MODE_DOWNUP 1
 #define Y_PITCHBEND_MODE_UPONLY 2
@@ -271,6 +271,7 @@ MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 //GPIO constants
 const uint8_t LEDpins[] = { 8, 10, 3 };  //RGB. Green is also LED_BUILTIN.
+//const uint8_t LEDpins[] = { 27, 10, 3 };  //TESTING uploading code to ATmega from NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to rest Atmega.
 
 const uint8_t powerEnable = 19;    //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
 const uint8_t chargeEnable = 7;    //Enables charging @ 120 mA current  (~0.33 C, should take around 3 hours to charge)
@@ -693,6 +694,8 @@ void setup() {
     powerDownTimer = millis();  //Reset the powerDown timer.
 
     //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
+
+    //programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
 }
 
 

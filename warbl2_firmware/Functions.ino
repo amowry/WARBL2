@@ -9,7 +9,7 @@ void printStuff(void) {
     //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeCovered[i]);
+        //Serial.println(toneholeRead[i]);
     }
 
     //Serial.println(mode);
