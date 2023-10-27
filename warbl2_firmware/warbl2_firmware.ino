@@ -645,8 +645,8 @@ void setup() {
 
 
     //I2C
-    Wire.begin();                          //Join i2c bus for EEPROM.
-    Wire.setClock(400000);                 //high speed
+    Wire.begin();           //Join i2c bus for EEPROM.
+    Wire.setClock(400000);  //high speed
 
     //SPI
     pinMode(2, OUTPUT);     //SS for Atmega
@@ -684,8 +684,6 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
-
-    writeEEPROM(5000, 17);
 
     //bool ATmega_success = programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
 
