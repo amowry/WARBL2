@@ -3064,21 +3064,23 @@ function sendRow(rowNum) {
     }
     else sendToWARBL(106, y);
     if (rowNum < 3) {
+		sendMomentary(rowNum);
     }
 }
 
 function sendMIDIrow(MIDIrowNum) {
-
     blink(1);
     updateCells();
     sendToWARBL(102, 90 + MIDIrowNum);
     var y = (112) + parseFloat(document.getElementById("MIDIrow" + MIDIrowNum).value);
+
     sendToWARBL(102, y);
     //sendChannel(MIDIrowNum);
     //sendByte2(MIDIrowNum);
     //sendByte3(MIDIrowNum);
+
     if (MIDIrowNum < 3) {
-        //sendMomentary(MIDIrowNum);
+        sendMomentary(MIDIrowNum);
     }
 
 }
@@ -3111,6 +3113,7 @@ function sendMomentary(rowNum) { //send momentary
     blink(1);
     updateCells();
     var y = document.getElementById("checkbox" + rowNum).checked
+
     sendToWARBL(102, 90 + rowNum);
     if (y == false) {
         sendToWARBL(102, 117);
