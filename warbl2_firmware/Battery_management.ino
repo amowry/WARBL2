@@ -81,9 +81,9 @@ void manageBattery(bool send) {
             } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger.
                 chargeTerminated = 1;                                                                         //If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
                 digitalWrite(LEDpins[GREEN_LED], HIGH);                                                       //Indicate end of charge. ToDo: improve indication
-                EEPROM.write(1013, 0);                                                                        //Reset the total run time because we are now fully charged (high byte).
-                EEPROM.write(1014, 0);                                                                        //Low byte
-                EEPROM.write(1008, 3);                                                                        //Remember that there has been a termination.
+                writeEEPROM(1013, 0);                                                                        //Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1014, 0);                                                                        //Low byte
+                writeEEPROM(1008, 3);                                                                        //Remember that there has been a termination.
                 prevRunTime = 0;
             }
             prevChargingStatus = chargingStatus;
@@ -112,8 +112,8 @@ void manageBattery(bool send) {
         static byte computeCycles = 0;
         computeCycles++;
         if (computeCycles == 5) {  //Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 ms.
-            EEPROM.write(1013, highByte(prevRunTime));
-            EEPROM.write(1014, lowByte(prevRunTime));
+            writeEEPROM(1013, highByte(prevRunTime));
+            writeEEPROM(1014, lowByte(prevRunTime));
             computeCycles = 0;
         }
     }
@@ -173,7 +173,7 @@ void manageBattery(bool send) {
                 for (byte i = 1; i < 21; i++) {  //Adjust all previous measurements.
                     voltageQueue[i] = voltageQueue[i] - voltageDrop;
                 }
-                EEPROM.write(1007, EEPROM.read(1007) + 1);  //testing--record if there's been an adjustment
+                writeEEPROM(1007, readEEPROM(1007) + 1);  //testing--record if there's been an adjustment
             }
 
 
@@ -183,9 +183,9 @@ void manageBattery(bool send) {
                 chargeEnabled = 0;
                 chargeTerminated = 1;                    //This tells us not to enable charging again until the power is cycled.
                 digitalWrite(LEDpins[GREEN_LED], HIGH);  //Indicate end of charge. ToDo: improve indication
-                EEPROM.write(1013, 0);                   //Reset the total run time because we are now fully charged (high byte).
-                EEPROM.write(1014, 0);                   //Low byte
-                EEPROM.write(1008, 3);                   //Remember that there has been a termination.
+                writeEEPROM(1013, 0);                   //Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1014, 0);                   //Low byte
+                writeEEPROM(1008, 3);                   //Remember that there has been a termination.
                 prevRunTime = 0;
             }
 
@@ -194,7 +194,7 @@ void manageBattery(bool send) {
             Serial.print(",");
             Serial.print(voltageSlope, 3);
             Serial.print(",");
-            Serial.println(EEPROM.read(1007));
+            Serial.println(readEEPROM(1007));
             */
         }
     }
@@ -205,7 +205,7 @@ void manageBattery(bool send) {
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
-        EEPROM.write(1007, 0);
+        writeEEPROM(1007, 0);
         if (prevRunTime > fullRunTime) {  //If we've run longer than expected on battery, make the run time the same as the expected run time when we start charging. This will allow the battery percentage to start increasing right away rather than being stuck at 1% for a while.
             prevRunTime = fullRunTime;
         }
@@ -303,15 +303,15 @@ void recordRuntime(bool resetTotalRuntime) {
     runTimer = runTimer + prevRunTime;  //Rebuild stored run time.
 
     if (resetTotalRuntime) {           //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
-        if (EEPROM.read(1008) == 3) {  //If we haven't already recorded the total run time
-            EEPROM.write(1009, highByte(runTimer));
-            EEPROM.write(1010, lowByte(runTimer));
-            EEPROM.write(1008, 1);  //Record that we've done this so we won't do it again until there has been another full charge.
+        if (readEEPROM(1008) == 3) {  //If we haven't already recorded the total run time
+            writeEEPROM(1009, highByte(runTimer));
+            writeEEPROM(1010, lowByte(runTimer));
+            writeEEPROM(1008, 1);  //Record that we've done this so we won't do it again until there has been another full charge.
         }
     }
 
-    EEPROM.write(1013, highByte(runTimer));  //Update the recorded run time in EEPROM.
-    EEPROM.write(1014, lowByte(runTimer));
+    writeEEPROM(1013, highByte(runTimer));  //Update the recorded run time in EEPROM.
+    writeEEPROM(1014, lowByte(runTimer));
 }
 
 

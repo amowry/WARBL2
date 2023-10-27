@@ -1,5 +1,5 @@
 //Reprogram the ATmega32u4 if neccessary.
-//Taken from Adafruit_AVRProg library examples
+//Modofied from Adafruit_AVRProg library examples.
 //Notes: It is currently necessary to alter the library to add the NRF52840 to the list of architectures that support a larger buffer for the hex code (line 34 in Adafruit_AVRProg.h). Hopefully this will be added to the library.
 //LED_BUILTIN will blink 3 times to indicate success.
 

@@ -30,11 +30,10 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include <bluefruit.h>
 #include <Arduino.h>
 #include <Wire.h>  //I2C communication with EEPROM
-#include <SPI.h>   //communication with ATmega32U4 and IMU
+#include <SPI.h>   //Communication with ATmega32U4 and IMU
 
 //Libraries below may need to be installed.
 #include <MIDI.h>
-#include <SparkFun_External_EEPROM.h>
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include "ResponsiveAnalogRead.h"  //Fast smoothing of 12 bt pressure sensor readings
@@ -49,8 +48,6 @@ SF sfusion;
 
 ResponsiveAnalogRead analogPressure(A0, true);
 
-ExternalEEPROM EEPROM;
-
 
 //#define RELEASE //Uncomment for release version (turns off CDC)
 
@@ -58,6 +55,8 @@ ExternalEEPROM EEPROM;
 #define HARDWARE_REVISION 41  //hardware
 
 #define HARDWARE_WATCHDOG_TIMEOUT_SECS 15  //To recover from hangups. The timeout needs to be set longer than any task. Currently, receiving custom fingering charts from the Config Tool takes about 6 seconds.
+
+#define EEPROM_I2C_ADDRESS 0x50
 
 #define DEBOUNCE_TIME 0.02                          //button debounce time, in seconds---Integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
 #define SAMPLE_FREQUENCY 200                        //button sample frequency, in Hz
@@ -648,13 +647,6 @@ void setup() {
     //I2C
     Wire.begin();                          //Join i2c bus for EEPROM.
     Wire.setClock(400000);                 //high speed
-    EEPROM.setMemorySize(128 * 1024 / 8);  //In bytes. 128kbit = 16kbyte
-    EEPROM.setPageSize(64);                //In bytes
-    EEPROM.enablePollForWriteComplete();   //Supports I2C polling of write completion. This shortens the amount of time waiting between writes but hammers the I2C bus by polling every 100 uS. disablePollForWriteComplete() will add 5 mS between each write.
-    EEPROM.setPageWriteTime(5);            //5 ms max write time
-    EEPROM.begin();                        //Start M24128 EEPROM communication using the default address of 0b1010000
-
-
 
     //SPI
     pinMode(2, OUTPUT);     //SS for Atmega
@@ -669,13 +661,13 @@ void setup() {
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro.
 
 
-    //EEPROM.write(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
+    //writeEEPROM(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
-    if (EEPROM.read(44) != 3) {
+    if (readEEPROM(44) != 3) {
         saveFactorySettings();  //If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
     }
 
-    if (EEPROM.read(37) == 3) {
+    if (readEEPROM(37) == 3) {
         loadCalibration();  //If there has been a calibration saved, reload it at startup.
     }
 
@@ -692,6 +684,8 @@ void setup() {
     loadPrefs();  //Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  //Reset the powerDown timer.
+
+    writeEEPROM(5000, 17);
 
     //bool ATmega_success = programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
 
@@ -743,8 +737,6 @@ void loop() {
             BLEMIDI.read();             //Read new BLEMIDI messages.
         }
     }
-
-
 
     blink();  //Blink green LED if necessary.
     pulse();  //Pulse any LED if necessary.
@@ -852,7 +844,6 @@ void loop() {
         // Serial.println(micros() - timerD);
         //}
         checkButtons();
-
         if (buttonUsed) {
             handleButtons();  //If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
         }

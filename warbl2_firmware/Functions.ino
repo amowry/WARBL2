@@ -12,8 +12,7 @@ void printStuff(void) {
         //Serial.println(toneholeRead[i]);
     }
 
-    //Serial.println(mode);
-    Serial.println(EEPROM.read(38));
+
     //Serial.println(toneholeRead[0]);
 
     //Serial.println(gyroX, 3);
@@ -26,7 +25,7 @@ void printStuff(void) {
 
     //Serial.println(digitalRead(STAT));
     //Serial.println(sensorValue);
-    //Serial.println(word(EEPROM.read(1013), EEPROM.read(1014)));  //read the run time on battery since last full charge (minutes)
+    //Serial.println(word(readEEPROM(1013), readEEPROM(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(scalePosition);
     //Serial.println(prevRunTime);
     //Serial.println(fullRunTime);
@@ -216,9 +215,9 @@ void calibrateIMU() {
     gyroYCalibration = rawGyroY;
     gyroZCalibration = rawGyroZ;
 
-    EEPROM.put(985, gyroXCalibration);  //Put the current readings into EEPROM.
-    EEPROM.put(989, gyroYCalibration);
-    EEPROM.put(993, gyroZCalibration);
+    putEEPROM(985, gyroXCalibration);  //Put the current readings into EEPROM.
+    putEEPROM(989, gyroYCalibration);
+    putEEPROM(993, gyroZCalibration);
 }
 
 
@@ -479,7 +478,7 @@ void checkButtons() {
 
         if (integrator[j] == 0) {  //the button is pressed.
             pressed[j] = 1;        //we make the output the inverse of the input so that a pressed button reads as a "1".
-            buttonUsed = 1;        //flag that there's been button activity, so we know to handle it.
+            //buttonUsed = 1;        //flag that there's been button activity, so we know to handle it.
 
             if (prevOutput[j] == 0 && !longPressUsed[j]) {
                 justPressed[j] = 1;  //the button has just been pressed
@@ -514,6 +513,7 @@ void checkButtons() {
 
         if (longPressCounter[j] > 300 && !longPressUsed[j]) {  //if the counter gets to a certain level, it's a long press
             longPress[j] = 1;
+            buttonUsed = 1;
         }
 
 
@@ -1829,7 +1829,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 if (value == 85) {  //set current Instrument as default and save default to settings.
                     defaultMode = mode;
-                    EEPROM.write(48, defaultMode);
+                    writeEEPROM(48, defaultMode);
                 }
 
 
@@ -1949,7 +1949,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (WARBL2CustomChartReceiveByte == 256) {
                         WARBL2CustomChartReceiveByte = 0;  //Reset for next time;
                         for (int i = 0; i < 256; i++) {    //Write the chart to EEPROM.
-                            EEPROM.write((3000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
+                            writeEEPROM((3000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
                         }
                         blinkNumber = 3;
                         sendMIDI(CC, 7, 109, 100);  //Indicate success.
@@ -2019,13 +2019,13 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 else if (value == 45) {  //save current sensor calibration as factory calibration
                     for (byte i = 18; i < 38; i++) {
-                        EEPROM.write(i + 1500, EEPROM.read(i));
+                        writeEEPROM(i + 1500, readEEPROM(i));
                     }
                     for (int i = 1; i < 10; i++) {  //save baseline calibration as factory baseline
-                        EEPROM.write(i + 1500, EEPROM.read(i));
+                        writeEEPROM(i + 1500, readEEPROM(i));
                     }
                     for (int i = 985; i < 997; i++) {  //save gyroscope calibration as factory calibration
-                        EEPROM.write(i + 1500, EEPROM.read(i));
+                        writeEEPROM(i + 1500, readEEPROM(i));
                     }
                 }
 
@@ -2062,7 +2062,7 @@ void handleControlChange(byte channel, byte number, byte value) {
             if (number == 119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
                 for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
-                    EEPROM.write(600 + r, WARBL2settings[r]);
+                    writeEEPROM(600 + r, WARBL2settings[r]);
                 }
             }
 
@@ -2100,7 +2100,6 @@ void handleButtons() {
         buttonUsed = 0;  //clear the button activity flag, so we won't handle them again until there's been new button activity.
         shiftState = 0;
     }
-
 
 
     //then, a few hard-coded actions that can't be changed by the configuration tool:
@@ -2152,6 +2151,7 @@ void handleButtons() {
 
 
         if (longPress[i] && (pressed[0] + pressed[1] + pressed[2] == 1) && !momentary[mode][i]) {  //do action for long press, assuming no other button is pressed.
+
             performAction(5 + i);
             longPressUsed[i] = 1;
             longPress[i] = 0;
@@ -2182,7 +2182,7 @@ void handleButtons() {
     }
 
 
-    buttonUsed = 0;  // Now that we've caught any important button acticity, clear the flag so we won't enter this function again until there's been new activity.
+    buttonUsed = 0;  // Now that we've caught any important button activity, clear the flag so we won't enter this function again until there's been new activity.
 }
 
 
@@ -2193,6 +2193,9 @@ void handleButtons() {
 
 //perform desired action in response to buttons
 void performAction(byte action) {
+
+    //Serial.println((buttonPrefs[mode][action][0]));
+
     switch (buttonPrefs[mode][action][0]) {
 
         case 0:
@@ -2512,22 +2515,22 @@ void saveFactorySettings() {
         saveSettings(i);
     }
 
-    EEPROM.write(48, defaultMode);  //save default mode
+    writeEEPROM(48, defaultMode);  //save default mode
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
-        EEPROM.write(600 + r, WARBL2settings[r]);
+        writeEEPROM(600 + r, WARBL2settings[r]);
     }
 
-    EEPROM.write(1009, highByte(fullRunTime));  //The initial estimate of the total run time available on a full charge (minutes)
-    EEPROM.write(1010, lowByte(fullRunTime));
+    writeEEPROM(1009, highByte(fullRunTime));  //The initial estimate of the total run time available on a full charge (minutes)
+    writeEEPROM(1010, lowByte(fullRunTime));
 
-    EEPROM.write(1013, highByte(prevRunTime));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
-    EEPROM.write(1014, lowByte(prevRunTime));
+    writeEEPROM(1013, highByte(prevRunTime));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
+    writeEEPROM(1014, lowByte(prevRunTime));
 
-    EEPROM.write(44, 3);  //indicates settings have been saved
+    writeEEPROM(44, 3);  //indicates settings have been saved
 
-    for (int i = 39; i < 980; i++) {             //then we read every byte in EEPROM from 39 to 999 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations)
-        EEPROM.write(1500 + i, EEPROM.read(i));  //and rewrite them from 1501 to 2499. Then they'll be available to restore later if necessary.
+    for (int i = 39; i < 980; i++) {           //then we read every byte in EEPROM from 39 to 999 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations)
+        writeEEPROM(1500 + i, readEEPROM(i));  //and rewrite them from 1501 to 2499. Then they'll be available to restore later if necessary.
     }
 
     blinkNumber = 3;
@@ -2543,7 +2546,7 @@ void saveFactorySettings() {
 //restore original settings from EEPROM
 void restoreFactorySettings() {
     for (int i = 1; i < 1000; i++) {  //Read factory settings and rewrite to the normal settings locations.
-        EEPROM.write(i, EEPROM.read(1500 + i));
+        writeEEPROM(i, readEEPROM(1500 + i));
     }
 
     //load the newly restored settings
@@ -2564,48 +2567,48 @@ void restoreFactorySettings() {
 
 //Save settings for current instrument as defaults for given instrument (i).
 void saveSettings(byte i) {
-    EEPROM.write(40 + i, modeSelector[mode]);
-    EEPROM.write(53 + i, noteShiftSelector[mode]);
-    EEPROM.write(50 + i, senseDistanceSelector[mode]);
+    writeEEPROM(40 + i, modeSelector[mode]);
+    writeEEPROM(53 + i, noteShiftSelector[mode]);
+    writeEEPROM(50 + i, senseDistanceSelector[mode]);
 
     for (byte n = 0; n < kSWITCHESnVariables; n++) {  //Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
-        EEPROM.write((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
+        writeEEPROM((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
     }
 
-    EEPROM.write(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
-    EEPROM.write(334 + (i * 2), highByte(vibratoHolesSelector[mode]));
-    EEPROM.write(339 + (i * 2), lowByte(vibratoDepthSelector[mode]));
-    EEPROM.write(340 + (i * 2), highByte(vibratoDepthSelector[mode]));
-    EEPROM.write(345 + i, useLearnedPressureSelector[mode]);
+    writeEEPROM(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
+    writeEEPROM(334 + (i * 2), highByte(vibratoHolesSelector[mode]));
+    writeEEPROM(339 + (i * 2), lowByte(vibratoDepthSelector[mode]));
+    writeEEPROM(340 + (i * 2), highByte(vibratoDepthSelector[mode]));
+    writeEEPROM(345 + i, useLearnedPressureSelector[mode]);
 
     for (byte j = 0; j < 5; j++) {  //save button configuration for current mode
         for (byte k = 0; k < 8; k++) {
-            EEPROM.write(100 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
+            writeEEPROM(100 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
         }
     }
 
     for (byte h = 0; h < 3; h++) {
-        EEPROM.write(250 + (i * 3) + h, momentary[mode][h]);
+        writeEEPROM(250 + (i * 3) + h, momentary[mode][h]);
     }
 
     for (byte q = 0; q < 12; q++) {
-        EEPROM.write((260 + q + (i * 20)), pressureSelector[mode][q]);
+        writeEEPROM((260 + q + (i * 20)), pressureSelector[mode][q]);
     }
 
-    EEPROM.write(273 + (i * 2), lowByte(learnedPressureSelector[mode]));
-    EEPROM.write(274 + (i * 2), highByte(learnedPressureSelector[mode]));
+    writeEEPROM(273 + (i * 2), lowByte(learnedPressureSelector[mode]));
+    writeEEPROM(274 + (i * 2), highByte(learnedPressureSelector[mode]));
 
-    EEPROM.write(313 + i, pitchBendModeSelector[mode]);
-    EEPROM.write(316 + i, breathModeSelector[mode]);
-    EEPROM.write(319 + i, midiBendRangeSelector[mode]);
-    EEPROM.write(322 + i, midiChannelSelector[mode]);
+    writeEEPROM(313 + i, pitchBendModeSelector[mode]);
+    writeEEPROM(316 + i, breathModeSelector[mode]);
+    writeEEPROM(319 + i, midiBendRangeSelector[mode]);
+    writeEEPROM(322 + i, midiChannelSelector[mode]);
 
     for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-        EEPROM.write((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
+        writeEEPROM((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
     }
 
     for (byte n = 0; n < kIMUnVariables; n++) {
-        EEPROM.write((625 + n + (i * kIMUnVariables)), IMUsettings[mode][n]);
+        writeEEPROM((625 + n + (i * kIMUnVariables)), IMUsettings[mode][n]);
     }
 }
 
@@ -2729,8 +2732,8 @@ void sendSettings() {
 //load saved fingering patterns
 void loadFingering() {
     for (byte i = 0; i < 3; i++) {
-        modeSelector[i] = EEPROM.read(40 + i);
-        noteShiftSelector[i] = (int8_t)EEPROM.read(53 + i);
+        modeSelector[i] = readEEPROM(40 + i);
+        noteShiftSelector[i] = (int8_t)readEEPROM(53 + i);
 
         if (communicationMode) {
             sendMIDI(CC, 7, 102, 30 + i);                //indicate that we'll be sending the fingering pattern for instrument i
@@ -2756,65 +2759,65 @@ void loadFingering() {
 void loadSettingsForAllModes() {
 
     //Some things that are independent of mode.
-    defaultMode = EEPROM.read(48);  //load default mode
+    defaultMode = readEEPROM(48);  //load default mode
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
-        WARBL2settings[r] = EEPROM.read(600 + r);
+        WARBL2settings[r] = readEEPROM(600 + r);
     }
 
-    fullRunTime = (word(EEPROM.read(1009), EEPROM.read(1010)));  //The total run time available on a full charge (minutes)
-    prevRunTime = (word(EEPROM.read(1013), EEPROM.read(1014)));  //The total run time since the last full charge (minutes)
+    fullRunTime = (word(readEEPROM(1009), readEEPROM(1010)));  //The total run time available on a full charge (minutes)
+    prevRunTime = (word(readEEPROM(1013), readEEPROM(1014)));  //The total run time since the last full charge (minutes)
 
-    EEPROM.get(985, gyroXCalibration);
-    EEPROM.get(989, gyroYCalibration);
-    EEPROM.get(993, gyroZCalibration);
+    getEEPROM(985, gyroXCalibration);
+    getEEPROM(989, gyroYCalibration);
+    getEEPROM(993, gyroZCalibration);
 
 
     //Do all this for each mode.
     for (byte i = 0; i < 3; i++) {
-        senseDistanceSelector[i] = EEPROM.read(50 + i);
+        senseDistanceSelector[i] = readEEPROM(50 + i);
 
         for (byte n = 0; n < kSWITCHESnVariables; n++) {
-            switches[i][n] = EEPROM.read(56 + n + (i * kSWITCHESnVariables));
+            switches[i][n] = readEEPROM(56 + n + (i * kSWITCHESnVariables));
         }
 
-        vibratoHolesSelector[i] = word(EEPROM.read(334 + (i * 2)), EEPROM.read(333 + (i * 2)));
-        vibratoDepthSelector[i] = word(EEPROM.read(340 + (i * 2)), EEPROM.read(339 + (i * 2)));
-        useLearnedPressureSelector[i] = EEPROM.read(345 + i);
+        vibratoHolesSelector[i] = word(readEEPROM(334 + (i * 2)), readEEPROM(333 + (i * 2)));
+        vibratoDepthSelector[i] = word(readEEPROM(340 + (i * 2)), readEEPROM(339 + (i * 2)));
+        useLearnedPressureSelector[i] = readEEPROM(345 + i);
 
         for (byte j = 0; j < 5; j++) {
             for (byte k = 0; k < 8; k++) {
-                buttonPrefs[i][k][j] = EEPROM.read(100 + (i * 50) + (j * 10) + k);
+                buttonPrefs[i][k][j] = readEEPROM(100 + (i * 50) + (j * 10) + k);
             }
         }
 
         for (byte h = 0; h < 3; h++) {
-            momentary[i][h] = EEPROM.read(250 + (i * 3) + h);
+            momentary[i][h] = readEEPROM(250 + (i * 3) + h);
         }
 
         for (byte m = 0; m < 12; m++) {
-            pressureSelector[i][m] = EEPROM.read(260 + m + (i * 20));
+            pressureSelector[i][m] = readEEPROM(260 + m + (i * 20));
         }
 
-        learnedPressureSelector[i] = word(EEPROM.read(274 + (i * 2)), EEPROM.read(273 + (i * 2)));
+        learnedPressureSelector[i] = word(readEEPROM(274 + (i * 2)), readEEPROM(273 + (i * 2)));
 
 
-        pitchBendModeSelector[i] = EEPROM.read(313 + i);
-        breathModeSelector[i] = EEPROM.read(316 + i);
+        pitchBendModeSelector[i] = readEEPROM(313 + i);
+        breathModeSelector[i] = readEEPROM(316 + i);
 
-        midiBendRangeSelector[i] = EEPROM.read(319 + i);
+        midiBendRangeSelector[i] = readEEPROM(319 + i);
         midiBendRangeSelector[i] = midiBendRangeSelector[i] > 96 ? 2 : midiBendRangeSelector[i];  // sanity check in case uninitialized
 
-        midiChannelSelector[i] = EEPROM.read(322 + i);
+        midiChannelSelector[i] = readEEPROM(322 + i);
         midiChannelSelector[i] = midiChannelSelector[i] > 16 ? 1 : midiChannelSelector[i];  // sanity check in case uninitialized
 
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-            ED[i][n] = EEPROM.read(351 + n + (i * kEXPRESSIONnVariables));
+            ED[i][n] = readEEPROM(351 + n + (i * kEXPRESSIONnVariables));
         }
 
         for (byte p = 0; p < kIMUnVariables; p++) {
-            IMUsettings[i][p] = EEPROM.read(625 + p + (i * kIMUnVariables));
+            IMUsettings[i][p] = readEEPROM(625 + p + (i * kIMUnVariables));
         }
     }
 }
@@ -2850,7 +2853,7 @@ void loadPrefs() {
     //Read a custom chart from EEPROM if we're using one.
     if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
         for (int i = 0; i < 256; i++) {
-            WARBL2CustomChart[i] = EEPROM.read((3000 + (256 * (modeSelector[mode] - 67))) + i);
+            WARBL2CustomChart[i] = readEEPROM((3000 + (256 * (modeSelector[mode] - 67))) + i);
         }
     }
 
@@ -2997,12 +3000,12 @@ void calibrate() {
 //save sensor calibration (EEPROM bytes up to 34 are used (plus byte 37 to indicate a saved calibration)
 void saveCalibration() {
     for (byte i = 0; i < 9; i++) {
-        EEPROM.write((i + 9) * 2, highByte(toneholeCovered[i]));
-        EEPROM.write(((i + 9) * 2) + 1, lowByte(toneholeCovered[i]));
-        EEPROM.write((1 + i), lowByte(toneholeBaseline[i]));  //the baseline readings can be stored in a single byte because they should be close to zero.
+        writeEEPROM((i + 9) * 2, highByte(toneholeCovered[i]));
+        writeEEPROM(((i + 9) * 2) + 1, lowByte(toneholeCovered[i]));
+        writeEEPROM((1 + i), lowByte(toneholeBaseline[i]));  //the baseline readings can be stored in a single byte because they should be close to zero.
     }
     calibration = 0;
-    EEPROM.write(37, 3);  //we write a 3 to address 37 to indicate that we have stored a set of calibrations.
+    writeEEPROM(37, 3);  //we write a 3 to address 37 to indicate that we have stored a set of calibrations.
     digitalWrite(LEDpins[GREEN_LED], LOW);
     LEDon = 0;
 }
@@ -3016,10 +3019,10 @@ void saveCalibration() {
 //Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
     for (byte i = 0; i < 9; i++) {
-        byte high = EEPROM.read((i + 9) * 2);
-        byte low = EEPROM.read(((i + 9) * 2) + 1);
+        byte high = readEEPROM((i + 9) * 2);
+        byte low = readEEPROM(((i + 9) * 2) + 1);
         toneholeCovered[i] = word(high, low);
-        toneholeBaseline[i] = EEPROM.read(1 + i);
+        toneholeBaseline[i] = readEEPROM(1 + i);
     }
 }
 
@@ -3379,4 +3382,105 @@ void watchdog_enable(int maxPeriodMS) {
 //Watchdog reset
 void watchdog_reset() {
     nrf_wdt_reload_request_set(NRF_WDT, NRF_WDT_RR0);
+}
+
+
+
+
+
+
+
+//EEPROM functions
+
+// Write to EEPROOM
+void writeEEPROM(int address, byte val) {
+
+    if (address < 16384) {                 //Make sure we're not trying to write beyond the highest address in the M24128 EEPROM.
+        if (val != readEEPROM(address)) {  //Don't write if the value is already there.
+            Wire.beginTransmission(EEPROM_I2C_ADDRESS);
+            Wire.write((int)(address >> 8));    //writes the MSB
+            Wire.write((int)(address & 0xFF));  //writes the LSB
+            Wire.write(val);
+            Wire.endTransmission();
+            while (EEPROMbusy() == true) {  //Poll until the previous transmission has completed.
+                delayMicroseconds(200);
+            }
+        }
+    }
+}
+
+
+// Read from EEPROM
+byte readEEPROM(int address) {
+
+    byte rcvData = 0xFF;
+    Wire.beginTransmission(EEPROM_I2C_ADDRESS);
+    Wire.write((int)(address >> 8));    //writes the MSB
+    Wire.write((int)(address & 0xFF));  //writes the LSB
+    Wire.endTransmission();
+    Wire.requestFrom(EEPROM_I2C_ADDRESS, 1);
+    rcvData = Wire.read();
+    while (EEPROMbusy() == true) {  //Poll until the previous transmission has completed.
+        delayMicroseconds(200);
+    }
+    return rcvData;
+}
+
+
+// ACK polling to see if previous EEPROM transaction has finished
+bool EEPROMbusy(void) {
+
+    Wire.beginTransmission(EEPROM_I2C_ADDRESS);
+    if (Wire.endTransmission() == 0) {
+        return (false);
+    }
+    return (true);
+}
+
+
+// Put an int to EEPROM
+void putEEPROM(int address, int val) {
+
+    byte byte1 = val >> 8;
+    byte byte2 = val & 0xFF;
+    writeEEPROM(address, byte1);
+    writeEEPROM(address + 1, byte2);
+}
+
+
+// Get an int from EEPROM
+void getEEPROM(int address, int& var) {
+
+    byte byte1 = readEEPROM(address);
+    byte byte2 = readEEPROM(address + 1);
+    var = (byte1 << 8) + byte2;
+}
+
+
+// Put a float to EEPROM
+void putEEPROM(int address, float value) {
+
+    byte* p = (byte*)(void*)&value;
+    for (int i = 0; i < sizeof(value); i++)
+        writeEEPROM(address++, *p++);
+}
+
+
+// Get a float from EEPROM
+void getEEPROM(int address, float& var) {
+
+    float value = 0.0;
+    byte* p = (byte*)(void*)&value;
+    for (int i = 0; i < sizeof(value); i++)
+        *p++ = readEEPROM(address++);
+    var = value;
+}
+
+
+// For testing purposes
+void eraseEEPROM(void) {
+
+    for (int i = 1; i < 16384; i++) {
+        writeEEPROM(i, 255);
+    }
 }
