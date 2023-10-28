@@ -26,7 +26,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 
 *  I used the Adafruit ItsyBitsy NRF52840 Express for prototyping WARBL, so the easiest way to set up the IDE is to install the Adafruit boards package, [following the instructions here](https://learn.adafruit.com/adafruit-itsybitsy-nrf52840-express/arduino-support-setup).
 
-* Copy the boards.local.txt file from the "firmware" directory in the repository into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
+* Move the boards.local.txt file from the "firmware" directory in the repository into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
    
    * Windows: `C:\Users\(username)\AppData\Local\Arduino15\packages\adafruit\hardware\nrf52\1.3.0` 
    
