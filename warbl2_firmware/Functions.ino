@@ -3469,7 +3469,7 @@ void putEEPROM(int address, float value) {
 // Get a float from EEPROM
 void getEEPROM(int address, float& var) {
 
-    float value = 0.0;
+    float value = 0.0f;
     byte* p = (byte*)(void*)&value;
     for (int i = 0; i < sizeof(value); i++)
         *p++ = readEEPROM(address++);
@@ -3480,7 +3480,7 @@ void getEEPROM(int address, float& var) {
 // For testing purposes
 void eraseEEPROM(void) {
 
-    for (int i = 1; i < 16384; i++) {
+    for (int i = 0; i < 16384; i++) {
         writeEEPROM(i, 255);
     }
 }

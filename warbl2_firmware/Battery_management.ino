@@ -93,7 +93,7 @@ void manageBattery(bool send) {
 
     //Read the battery
     float battVoltage = getBattVoltage();
-    const float alpha = 0.05;  //Time constant can be tweaked.
+    const float alpha = 0.05f;  //Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
     smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average
 
