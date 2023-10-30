@@ -654,11 +654,18 @@ void setup() {
     SPI.begin();
 
     //IMU
-    sox.begin_SPI(12, &SPI, 0, 10000000);      //Start IMU (CS pin is D12) at 10 Mhz.
-                                               // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
-                                               // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
-    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel.
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro.
+    sox.begin_SPI(12, &SPI, 0, 10000000);  //Start IMU (CS pin is D12) at 10 Mhz.
+                                           // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+                                           // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+    //sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel.
+    //sox.setAccelDataRate(LSM6DS_RATE_416_HZ);  //Turn on the accel.
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Turn on the gyro.
+    sox.enableWakeup(true, 50, 5);            // Enable shake detection, duration, threshold;
+
+    //Experimental--enable accelerometer highpass filter/slope filter in hardware.
+    //Filtering in hardware with a higher data rate might let us filter out gravity faster for shake vibrato?
+    //Unfortunately I'm not sure if it's possible to use this and also get raw readings for 6D orientation.
+    //sox.highPassFilter(true, LSM6DS_HPF_ODR_DIV_100);
 
 
     //writeEEPROM(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.

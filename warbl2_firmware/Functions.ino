@@ -12,10 +12,21 @@ void printStuff(void) {
         //Serial.println(toneholeRead[i]);
     }
 
+    //Can add shake an an action in the "button" behavior (along with "sip"?). Can play with duration and threshold settings in setup(). Needs to be debounced.
+    if (sox.shake()) {
+        //Serial.println("SHAKE!");
+    }
 
     //Serial.println(toneholeRead[0]);
 
-    //Serial.println(gyroX, 3);
+    //Experimenting with highpass filter in hardware
+    /*
+    Serial.print(4.0f);
+    Serial.print(",");
+    Serial.print(accelY, 3);
+    Serial.print(",");
+    Serial.println(-4.0f);
+    */
     //Serial.println(gyroY, 3);
     //Serial.println(gyroZ, 3);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER]);

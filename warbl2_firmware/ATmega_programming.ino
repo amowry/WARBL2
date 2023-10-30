@@ -348,8 +348,7 @@ bool programATmega(void) {
 
     avrprog.eraseChip();
 
-    if (!avrprog.programFuses(
-          targetimage->image_progfuses)) {  // Get fuses ready to program.
+    if (!avrprog.programFuses(targetimage->image_progfuses)) {  // Get fuses ready to program.
         return false;
     }
 
