@@ -12,12 +12,6 @@ void printStuff(void) {
         //Serial.println(toneholeRead[i]);
     }
 
-    //Can add shake an an action in the "button" behavior (along with "sip"?). Can play with duration and threshold settings in setup(). Needs to be debounced.
-    if (sox.shake()) {
-        //Serial.println("SHAKE!");
-    }
-
-    //Serial.println(toneholeRead[0]);
 
     //Experimenting with highpass filter in hardware
     /*
@@ -34,7 +28,7 @@ void printStuff(void) {
     //Serial.println(IMUsettings[2][PITCH_REGISTER_INPUT_MIN]);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER_INPUT_MAX]);
 
-    //Serial.println(digitalRead(STAT));
+    //Serial.println(buttonPrefs[mode][8][1]);
     //Serial.println(sensorValue);
     //Serial.println(word(readEEPROM(1013), readEEPROM(1014)));  //read the run time on battery since last full charge (minutes)
     //Serial.println(scalePosition);
@@ -139,10 +133,14 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
+
+
     //calibrate gyro
     gyroX = rawGyroX - gyroXCalibration;
     gyroY = rawGyroY - gyroYCalibration;
     gyroZ = rawGyroZ - gyroZCalibration;
+
+
 
 
     float deltat = sfusion.deltatUpdate();
@@ -158,6 +156,8 @@ void readIMU(void) {
     pitch = sfusion.getRollRadians();
     roll = sfusion.getPitchRadians();
     yaw = sfusion.getYawRadians();
+
+
 
 
 #if 0
@@ -193,7 +193,6 @@ void readIMU(void) {
     yaw = yaw * RAD_TO_DEG;
 
 
-
     /*
     //Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
     static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
@@ -226,9 +225,10 @@ void calibrateIMU() {
     gyroYCalibration = rawGyroY;
     gyroZCalibration = rawGyroZ;
 
-    putEEPROM(985, gyroXCalibration);  //Put the current readings into EEPROM.
-    putEEPROM(989, gyroYCalibration);
-    putEEPROM(993, gyroZCalibration);
+    putEEPROM(1975, gyroXCalibration);  //Put the current readings into EEPROM.
+    putEEPROM(1979, gyroYCalibration);
+    putEEPROM(1983, gyroZCalibration);
+    writeEEPROM(36, 3);  // Remember that we have saved a calibration.
 }
 
 
@@ -277,7 +277,7 @@ void sendIMU() {
         //Serial.println(pitchOutput);
 
         if (prevRollCC != rollOutput) {
-            sendMIDI(CC, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
+            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
             prevRollCC = rollOutput;
         }
     }
@@ -303,7 +303,7 @@ void sendIMU() {
         //Serial.println(pitchOutput);
 
         if (prevPitchCC != pitchOutput) {
-            sendMIDI(CC, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
+            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
             prevPitchCC = pitchOutput;
         }
     }
@@ -329,7 +329,7 @@ void sendIMU() {
         //Serial.println(yawOutput);
 
         if (prevYawCC != yawOutput) {
-            sendMIDI(CC, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
+            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
             prevYawCC = yawOutput;
         }
     }
@@ -346,103 +346,113 @@ void sendIMU() {
 
 void shakeForVibrato() {
 
-    if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+    //if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) { //Do this all the time, for shake gesture detection.
 
-        static float accelFilteredOld;
-        const float timeConstant = 0.1f;
+    static float accelFilteredOld;
+    const float timeConstant = 0.1f;
 
-        float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
-        accelFilteredOld = accelFiltered;
-        float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
-
-
-        // A second low pass filter to minimize spikes from tapping the tone holes.
-        static float accelFilteredBOld;
-
-        const float timeConstant2 = 0.5f;
-        float accelFilteredB = timeConstant2 * highPassY + (1.0f - timeConstant2) * accelFilteredBOld;
-        float lastFilteredB = accelFilteredBOld;
-        accelFilteredBOld = accelFilteredB;
-
-        //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
-
-        const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
-
-        const float kShakeStartThresh = 0.5f;
-        const float kShakeFinishThresh = 0.35f;
-        const long kShakeFinishTimeMs = 400;
-        const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
-
-        static bool shakeActive = false;
-        static bool tapFilterActive = false;
-        static long lastThreshExceedTime = 0;
-        static long tapFilterStartTime = 0;
-        static bool preTrigger = false;
-
-        shakeVibrato = 0;
+    float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
+    accelFilteredOld = accelFiltered;
+    float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
 
 
-        if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
-            tapFilterActive = true;
-            tapFilterStartTime = nowtime;
-            // Serial.println("Shake Tap Filt");
-        }
+    // A second low pass filter to minimize spikes from tapping the tone holes.
+    static float accelFilteredBOld;
+
+    const float timeConstant2 = 0.5f;
+    float accelFilteredB = timeConstant2 * highPassY + (1.0f - timeConstant2) * accelFilteredBOld;
+    float lastFilteredB = accelFilteredBOld;
+    accelFilteredBOld = accelFilteredB;
+
+    //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
+
+    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
+
+    const float kShakeStartThresh = 0.5f;
+    const float kShakeFinishThresh = 0.35f;
+    const long kShakeFinishTimeMs = 400;
+    const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
+
+    static bool shakeActive = false;
+    static bool tapFilterActive = false;
+    static long lastThreshExceedTime = 0;
+    static long tapFilterStartTime = 0;
+    static bool preTrigger = false;
+
+    const float kShakeGestureThresh = 20.0f;  //Theshold for shake gesture
 
 
-        if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
-            return;
-        }
-
-
-        if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
-            preTrigger = true;
-            // Serial.println("Pre Shake Trigger");
-        }
-
-        // start shake vib only when doing a zero crossing after threshold has been triggered
-        if (!shakeActive && preTrigger
-            // comment out next line to test without the zero crossing requirement
-            //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
-        ) {
-            shakeActive = true;
-            lastThreshExceedTime = nowtime;
-            // Serial.println("Start ShakeVib");
-        } else if (abs(accelFilteredB) > kShakeFinishThresh) {
-            lastThreshExceedTime = nowtime;
-        }
-
-        if ((shakeActive || tapFilterActive) && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
-            // Stop shake vibrato.
-            shakeActive = false;
-            tapFilterActive = false;
-            preTrigger = false;
-            // Serial.println("Cancel ShakeVib");
-        }
-
-        if (shakeActive) {
-            // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
-            float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
-            if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
-                normshake *= -1.0f;  // reverse phase
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
-                normshake = constrain(normshake, -1.0f, 0.0f);
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
-                normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
-            }
-
-            shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
-
-            //Serial.print(1.0f);
-            //Serial.print(",");
-            //Serial.print(normshake);
-            //Serial.print(",");
-            //Serial.println(-1.0f);
-        }
-
-        if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
-            sendPitchbend();
-        }
+    if (abs(accelFilteredB) > kShakeGestureThresh) {
+        shakeDetected = true;
+    } else {
+        shakeDetected = false;
     }
+
+
+    shakeVibrato = 0;
+
+
+    if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
+        tapFilterActive = true;
+        tapFilterStartTime = nowtime;
+        // Serial.println("Shake Tap Filt");
+    }
+
+
+    if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
+        return;
+    }
+
+
+    if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
+        preTrigger = true;
+        // Serial.println("Pre Shake Trigger");
+    }
+
+    // start shake vib only when doing a zero crossing after threshold has been triggered
+    if (!shakeActive && preTrigger
+        // comment out next line to test without the zero crossing requirement
+        //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
+    ) {
+        shakeActive = true;
+        lastThreshExceedTime = nowtime;
+        // Serial.println("Start ShakeVib");
+    } else if (abs(accelFilteredB) > kShakeFinishThresh) {
+        lastThreshExceedTime = nowtime;
+    }
+
+    if ((shakeActive || tapFilterActive) && (nowtime - lastThreshExceedTime) > kShakeFinishTimeMs) {
+        // Stop shake vibrato.
+        shakeActive = false;
+        tapFilterActive = false;
+        preTrigger = false;
+        // Serial.println("Cancel ShakeVib");
+    }
+
+    if (shakeActive) {
+        // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
+        float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+        if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+            normshake *= -1.0f;  // reverse phase
+        } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+            normshake = constrain(normshake, -1.0f, 0.0f);
+        } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+            normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
+        }
+
+        shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
+
+        //Serial.print(1.0f);
+        //Serial.print(",");
+        //Serial.print(normshake);
+        //Serial.print(",");
+        //Serial.println(-1.0f);
+    }
+
+    if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
+        sendPitchbend();
+    }
+    //}
 }
 
 
@@ -613,14 +623,14 @@ void sendToConfig(bool newPattern, bool newPressure) {
         }
 
         if (patternChanged && (nowtime - patternSendTimer) > 25) {  //If some time has past, send the new pattern to the Config Tool.
-            sendMIDI(CC, 7, 114, holeCovered >> 7);                 //Because it's MIDI we have to send it in two 7-bit chunks.
-            sendMIDI(CC, 7, 115, lowByte(holeCovered));
+            sendMIDI(CONTROL_CHANGE, 7, 114, holeCovered >> 7);     //Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDI(CONTROL_CHANGE, 7, 115, lowByte(holeCovered));
             patternChanged = false;
         }
 
         if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  //If some time has past, send the new pressure to the Config Tool.
-            sendMIDI(CC, 7, 116, sensorValue & 0x7F);                 //Send LSB of current pressure to Configuration Tool.
-            sendMIDI(CC, 7, 118, sensorValue >> 7);                   //Send MSB of current pressure.
+            sendMIDI(CONTROL_CHANGE, 7, 116, sensorValue & 0x7F);     //Send LSB of current pressure to Configuration Tool.
+            sendMIDI(CONTROL_CHANGE, 7, 118, sensorValue >> 7);       //Send MSB of current pressure.
             pressureChanged = false;
         }
     }
@@ -1743,7 +1753,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if ((value & 1) == 0) {
                         toneholeCovered[(value >> 1) - 1] -= 5;
                         if ((toneholeCovered[(value >> 1) - 1] - 54) < 5) {  //if the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
-                            sendMIDI(CC, 7, 102, (20 + ((value >> 1) - 1)));
+                            sendMIDI(CONTROL_CHANGE, 7, 102, (20 + ((value >> 1) - 1)));
                         }
                     } else {
                         toneholeCovered[((value + 1) >> 1) - 1] += 5;
@@ -1765,7 +1775,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     sendSettings();
                 }
 
-                else if (value == 99) {  //Turn off communication mode.
+                else if (value == 104) {  //Turn off communication mode.
                     communicationMode = 0;
                 }
 
@@ -1808,14 +1818,14 @@ void handleControlChange(byte channel, byte number, byte value) {
                     }
                 }
 
-                for (byte i = 0; i < 8; i++) {  //Update button receive mode (this indicates the row in the button settings for which the next received byte will be).
+                for (byte i = 0; i < kGESTURESnVariables; i++) {  //Update button receive mode (this indicates the row in the button settings for which the next received byte will be).
                     if (value == 90 + i) {
                         buttonReceiveMode = i;
                         blinkNumber = 0;
                     }
                 }
 
-                for (byte i = 0; i < 8; i++) {  //update button configuration
+                for (byte i = 0; i < kGESTURESnVariables; i++) {  //update button configuration
                     if (buttonReceiveMode == i) {
 
                         for (byte k = 0; k < 5; k++) {  //update column 1 (MIDI action).
@@ -1960,10 +1970,10 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (WARBL2CustomChartReceiveByte == 256) {
                         WARBL2CustomChartReceiveByte = 0;  //Reset for next time;
                         for (int i = 0; i < 256; i++) {    //Write the chart to EEPROM.
-                            writeEEPROM((3000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
+                            writeEEPROM((4000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
                         }
                         blinkNumber = 3;
-                        sendMIDI(CC, 7, 109, 100);  //Indicate success.
+                        sendMIDI(CONTROL_CHANGE, 7, 109, 100);  //Indicate success.
                         loadPrefs();
                     }
                 }
@@ -2004,10 +2014,10 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 else if (value == 41) {
                     learnedPressureSelector[mode] = sensorValue;
-                    sendMIDI(CC, 7, 104, 34);                                    //indicate that LSB of learned pressure is about to be sent
-                    sendMIDI(CC, 7, 105, learnedPressureSelector[mode] & 0x7F);  //send LSB of learned pressure
-                    sendMIDI(CC, 7, 104, 35);                                    //indicate that MSB of learned pressure is about to be sent
-                    sendMIDI(CC, 7, 105, learnedPressureSelector[mode] >> 7);    //send MSB of learned pressure
+                    sendMIDI(CONTROL_CHANGE, 7, 104, 34);                                    //indicate that LSB of learned pressure is about to be sent
+                    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressureSelector[mode] & 0x7F);  //send LSB of learned pressure
+                    sendMIDI(CONTROL_CHANGE, 7, 104, 35);                                    //indicate that MSB of learned pressure is about to be sent
+                    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressureSelector[mode] >> 7);    //send MSB of learned pressure
                     loadPrefs();
                 }
 
@@ -2021,22 +2031,22 @@ void handleControlChange(byte channel, byte number, byte value) {
                     int tempPressure = sensorValue;
                     ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
                     ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
-                    sendMIDI(CC, 7, 104, 32);                                   //indicate that LSB of learned drones pressure is about to be sent
-                    sendMIDI(CC, 7, 105, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   //send LSB of learned drones pressure
-                    sendMIDI(CC, 7, 104, 33);                                   //indicate that MSB of learned drones pressure is about to be sent
-                    sendMIDI(CC, 7, 105, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  //send MSB of learned drones pressure
+                    sendMIDI(CONTROL_CHANGE, 7, 104, 32);                                   //indicate that LSB of learned drones pressure is about to be sent
+                    sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   //send LSB of learned drones pressure
+                    sendMIDI(CONTROL_CHANGE, 7, 104, 33);                                   //indicate that MSB of learned drones pressure is about to be sent
+                    sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  //send MSB of learned drones pressure
                 }
 
 
                 else if (value == 45) {  //save current sensor calibration as factory calibration
                     for (byte i = 18; i < 38; i++) {
-                        writeEEPROM(i + 1500, readEEPROM(i));
+                        writeEEPROM(i + 2000, readEEPROM(i));
                     }
                     for (int i = 1; i < 10; i++) {  //save baseline calibration as factory baseline
-                        writeEEPROM(i + 1500, readEEPROM(i));
+                        writeEEPROM(i + 2000, readEEPROM(i));
                     }
-                    for (int i = 985; i < 997; i++) {  //save gyroscope calibration as factory calibration
-                        writeEEPROM(i + 1500, readEEPROM(i));
+                    for (int i = 1975; i < 1987; i++) {  //save gyroscope calibration as factory calibration
+                        writeEEPROM(i + 2000, readEEPROM(i));
                     }
                 }
 
@@ -2053,7 +2063,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 else if (value > 99) {
-                    for (byte i = 0; i < 8; i++) {  //update button configuration
+                    for (byte i = 0; i < kGESTURESnVariables; i++) {  //update button configuration
                         if (buttonReceiveMode == i) {
 
                             for (byte j = 0; j < 27; j++) {  //update column 0 (action).
@@ -2102,7 +2112,74 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
 
-//interpret button presses. If the button is being used for momentary MIDI messages we ignore other actions with that button (except "secret" actions involving the toneholes).
+// Mouthpiece sip detection for triggering user-defined actions (same as button actions).
+void detectSip() {
+
+    const byte sipThreshold = 60;  // Pressure value must be this much below the ambient pressure to trigger a sip. The max negative pressure is around 75, so the threshold must be less than that to work. There's not much to work with.
+    const byte hysteresis = 5;
+
+    static bool sip = false;
+    static byte integrator = 0;  // Keeps track of number of high pressure readings
+    static byte debounce = 20;   // Number of high pressure readings required to turn sip off
+
+    if (sensorValue < (sensorCalibration - sipThreshold) && !sip) {  //Immediately trigger sip if we've crossed the threshold.
+        performAction(8);
+        sip = true;
+    }
+
+    if ((sensorValue >= (sensorCalibration - sipThreshold + hysteresis)) && sip) {  // Debounce turning off sip.
+        integrator++;
+    }
+
+    if (integrator >= debounce) {
+        integrator = 0;
+        sip = false;
+    }
+}
+
+
+
+
+
+
+
+
+
+// IMU shake detection for triggering user-defined actions.
+// Note that shake duration and threshold can be changed in setuo().
+void detectShake() {
+
+    static bool shake = false;
+    static byte integrator = 0;  // Keeps track of number of non-shake events
+    static byte debounce = 50;   // Number of non-shake events required to turn shake off
+
+    if (shakeDetected) {  //Immediately trigger shake if detected by the IMU
+        if (!shake) {
+            performAction(9);
+            shake = true;
+        }
+    }
+
+    else if (shake) {  // Debounce turning off shake.
+        integrator++;
+    }
+
+    if (integrator >= debounce) {
+        integrator = 0;
+        shake = false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+//Interpret button presses. If the button is being used for momentary MIDI messages we ignore other actions with that button (except "secret" actions involving the toneholes).
 void handleButtons() {
     //first, some housekeeping
 
@@ -2145,7 +2222,7 @@ void handleButtons() {
     }
 
 
-    //now the button actions that can be changed with the configuration tool.
+    //Now the button actions that can be changed with the Configuration Tool.
     //_______________________________________________________________________________
 
 
@@ -2204,8 +2281,10 @@ void handleButtons() {
 
 //perform desired action in response to buttons
 void performAction(byte action) {
-
     //Serial.println((buttonPrefs[mode][action][0]));
+
+    sendMIDI(CONTROL_CHANGE, 7, 109, 127);
+    sendMIDI(CONTROL_CHANGE, 7, 105, action);
 
     switch (buttonPrefs[mode][action][0]) {
 
@@ -2225,7 +2304,7 @@ void performAction(byte action) {
             }
 
             if (buttonPrefs[mode][action][1] == 1) {
-                sendMIDI(CC, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+                sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
             }
 
             if (buttonPrefs[mode][action][1] == 2) {
@@ -2286,7 +2365,7 @@ void performAction(byte action) {
 
         case 7:
             for (byte i = 1; i < 17; i++) {  //send MIDI panic
-                sendMIDI(CC, i, 123, 0);
+                sendMIDI(CONTROL_CHANGE, i, 123, 0);
                 dronesOn = 0;  //remember that drones are off, because MIDI panic will have most likely turned them off in all apps.
             }
             break;
@@ -2300,7 +2379,7 @@ void performAction(byte action) {
             play = 0;
             blinkNumber = abs(breathMode) + 1;
             if (communicationMode) {
-                sendMIDI(CC, 7, 102, 80 + breathMode);  //send current breathMode
+                sendMIDI(CONTROL_CHANGE, 7, 102, 80 + breathMode);  //send current breathMode
             }
             break;
 
@@ -2391,7 +2470,7 @@ void changePitchBend() {
     loadPrefs();
     blinkNumber = abs(pitchBendMode) + 1;
     if (communicationMode) {
-        sendMIDI(CC, 7, 102, 70 + pitchBendMode);  //send current pitchbend mode to configuration tool.
+        sendMIDI(CONTROL_CHANGE, 7, 102, 70 + pitchBendMode);  //send current pitchbend mode to configuration tool.
     }
 }
 
@@ -2462,7 +2541,7 @@ void startDrones() {
             sendMIDI(NOTE_OFF, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
             break;
         case 2:
-            sendMIDI(CC, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
+            sendMIDI(CONTROL_CHANGE, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
             break;
     }
 }
@@ -2484,7 +2563,7 @@ void stopDrones() {
             sendMIDI(NOTE_OFF, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
             break;
         case 2:
-            sendMIDI(CC, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
+            sendMIDI(CONTROL_CHANGE, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
             break;
     }
 }
@@ -2521,27 +2600,27 @@ byte findleftmostunsetbit(uint16_t n) {
 
 //This is used the first time the software is run, to copy all the default settings to EEPROM.
 void saveFactorySettings() {
-    for (byte i = 0; i < 3; i++) {  //save all the current settings for all three instruments.
+    for (byte i = 0; i < 3; i++) {  // Save all the current settings for all three instruments.
         mode = i;
         saveSettings(i);
     }
 
-    writeEEPROM(48, defaultMode);  //save default mode
+    writeEEPROM(48, defaultMode);  // Save default mode
 
-    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //save the WARBL2settings array
+    for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array
         writeEEPROM(600 + r, WARBL2settings[r]);
     }
 
-    writeEEPROM(1009, highByte(fullRunTime));  //The initial estimate of the total run time available on a full charge (minutes)
-    writeEEPROM(1010, lowByte(fullRunTime));
+    writeEEPROM(1989, highByte(fullRunTime));  // The initial estimate of the total run time available on a full charge (minutes)
+    writeEEPROM(1990, lowByte(fullRunTime));
 
-    writeEEPROM(1013, highByte(prevRunTime));  //The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an arbitrary number of minutes because the battery charge state is unknown.
-    writeEEPROM(1014, lowByte(prevRunTime));
+    writeEEPROM(1993, highByte(prevRunTime));  // The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an estimated number of minutes because the battery charge state is unknown.
+    writeEEPROM(1994, lowByte(prevRunTime));
 
-    writeEEPROM(44, 3);  //indicates settings have been saved
+    writeEEPROM(44, 3);  // Indicates settings have been saved.
 
-    for (int i = 39; i < 980; i++) {           //then we read every byte in EEPROM from 39 to 999 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations)
-        writeEEPROM(1500 + i, readEEPROM(i));  //and rewrite them from 1501 to 2499. Then they'll be available to restore later if necessary.
+    for (int i = 39; i < 1975; i++) {          // Then we read every byte in EEPROM from 39 to 1974 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations).
+        writeEEPROM(2000 + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
     }
 
     blinkNumber = 3;
@@ -2556,8 +2635,8 @@ void saveFactorySettings() {
 
 //restore original settings from EEPROM
 void restoreFactorySettings() {
-    for (int i = 1; i < 1000; i++) {  //Read factory settings and rewrite to the normal settings locations.
-        writeEEPROM(i, readEEPROM(1500 + i));
+    for (int i = 1; i < 1987; i++) {  //Read factory settings and rewrite to the normal settings locations.
+        writeEEPROM(i, readEEPROM(2000 + i));
     }
 
     //load the newly restored settings
@@ -2576,6 +2655,143 @@ void restoreFactorySettings() {
 
 
 
+//Send all settings for current instrument to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
+void sendSettings() {
+    sendMIDI(CONTROL_CHANGE, 7, 110, VERSION);  //Send the firmware version.
+
+    for (byte i = 0; i < 3; i++) {
+        sendMIDI(CONTROL_CHANGE, 7, 102, 30 + i);                //Indicate that we'll be sending the fingering pattern for instrument i.
+        sendMIDI(CONTROL_CHANGE, 7, 102, 33 + modeSelector[i]);  //Send
+
+        if (noteShiftSelector[i] >= 0) {
+            sendMIDI(CONTROL_CHANGE, 7, 111 + i, noteShiftSelector[i]);
+        }  //Send noteShift, with a transformation for sending negative values over MIDI.
+        else {
+            sendMIDI(CONTROL_CHANGE, 7, 111 + i, noteShiftSelector[i] + 127);
+        }
+    }
+
+    sendMIDI(CONTROL_CHANGE, 7, 102, 60 + mode);         //Send current instrument.
+    sendMIDI(CONTROL_CHANGE, 7, 102, 85 + defaultMode);  //Send default instrument.
+
+    sendMIDI(CONTROL_CHANGE, 7, 103, senseDistance);  //Send sense distance
+
+    sendMIDI(CONTROL_CHANGE, 7, 117, vibratoDepth * 100UL / 8191);  //Send vibrato depth, scaled down to cents.
+    sendMIDI(CONTROL_CHANGE, 7, 102, 70 + pitchBendMode);           //Send current pitchBend mode.
+    sendMIDI(CONTROL_CHANGE, 7, 102, 80 + breathMode);              //Send current breathMode.
+    sendMIDI(CONTROL_CHANGE, 7, 102, 120 + bellSensor);             //Send bell sensor state.
+    sendMIDI(CONTROL_CHANGE, 7, 106, 39 + useLearnedPressure);      //Send calibration option.
+    sendMIDI(CONTROL_CHANGE, 7, 104, 34);                           //Indicate that LSB of learned pressure is about to be sent.
+    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressure & 0x7F);       //Send LSB of learned pressure.
+    sendMIDI(CONTROL_CHANGE, 7, 104, 35);                           //Indicate that MSB of learned pressure is about to be sent.
+    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressure >> 7);         //Send MSB of learned pressure.
+
+    sendMIDI(CONTROL_CHANGE, 7, 104, 61);             // Indicate MIDI bend range is about to be sent.
+    sendMIDI(CONTROL_CHANGE, 7, 105, midiBendRange);  //MIDI bend range
+
+    sendMIDI(CONTROL_CHANGE, 7, 104, 62);               // Indicate MIDI channel is about to be sent.
+    sendMIDI(CONTROL_CHANGE, 7, 105, mainMidiChannel);  //Midi bend range
+
+
+
+    for (byte i = 0; i < 9; i++) {
+        sendMIDI(CONTROL_CHANGE, 7, 106, 20 + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  //Send enabled vibrato holes.
+    }
+
+    for (byte i = 0; i < kGESTURESnVariables; i++) {
+        sendMIDI(CONTROL_CHANGE, 7, 102, 90 + i);                         //Indicate that we'll be sending data for button commands row i (click 1, click 2, etc.).
+        sendMIDI(CONTROL_CHANGE, 7, 106, 100 + buttonPrefs[mode][i][0]);  //Send action (i.e. none, send MIDI message, etc.).
+        if (buttonPrefs[mode][i][0] == 1) {                               //If the action is a MIDI command, send the rest of the MIDI info for that row.
+            sendMIDI(CONTROL_CHANGE, 7, 102, 112 + buttonPrefs[mode][i][1]);
+            sendMIDI(CONTROL_CHANGE, 7, 106, buttonPrefs[mode][i][2]);
+            sendMIDI(CONTROL_CHANGE, 7, 107, buttonPrefs[mode][i][3]);
+            sendMIDI(CONTROL_CHANGE, 7, 108, buttonPrefs[mode][i][4]);
+        }
+    }
+
+    for (byte i = 0; i < kSWITCHESnVariables; i++) {  //Send settings for switches in the slide/vibrato and register control panels.
+        sendMIDI(CONTROL_CHANGE, 7, 104, i + 40);
+        sendMIDI(CONTROL_CHANGE, 7, 105, switches[mode][i]);
+    }
+
+    for (byte i = 0; i < 21; i++) {  //Send settings for expression and drones control panels.
+        sendMIDI(CONTROL_CHANGE, 7, 104, i + 13);
+        sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][i]);
+    }
+
+    for (byte i = 21; i < 49; i++) {  //More settings for expression and drones control panels.
+        sendMIDI(CONTROL_CHANGE, 7, 104, i + 49);
+        sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][i]);
+    }
+
+    for (byte i = 0; i < 3; i++) {
+        sendMIDI(CONTROL_CHANGE, 7, 102, 90 + i);  //Indicate that we'll be sending data for momentary.
+        sendMIDI(CONTROL_CHANGE, 7, 102, 117 + momentary[mode][i]);
+    }
+
+    for (byte i = 0; i < 12; i++) {
+        sendMIDI(CONTROL_CHANGE, 7, 104, i + 1);                      //Indicate which pressure variable we'll be sending.
+        sendMIDI(CONTROL_CHANGE, 7, 105, pressureSelector[mode][i]);  //Send the data.
+    }
+
+    sendMIDI(CONTROL_CHANGE, 7, 102, 121);  //Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
+
+    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  //Send the WARBL2settings array.
+        sendMIDI(CONTROL_CHANGE, 7, 106, i);
+        sendMIDI(CONTROL_CHANGE, 7, 119, WARBL2settings[i - 55]);
+    }
+
+    manageBattery(true);  //Do this to send voltage and charging status to Config Tool.
+
+    sendMIDI(CONTROL_CHANGE, 7, 106, 72);
+    sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) & 0x7F);  //Send low byte of the connection interval.
+    sendMIDI(CONTROL_CHANGE, 7, 106, 73);
+    sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  //Send high byte of the connection interval.
+
+    for (byte i = 0; i < kIMUnVariables; i++) {  //IMU settings
+        sendMIDI(CONTROL_CHANGE, 7, 109, i);
+        sendMIDI(CONTROL_CHANGE, 7, 105, IMUsettings[mode][i]);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+//load saved fingering patterns
+void loadFingering() {
+    for (byte i = 0; i < 3; i++) {
+        modeSelector[i] = readEEPROM(40 + i);
+        noteShiftSelector[i] = (int8_t)readEEPROM(53 + i);
+
+        if (communicationMode) {
+            sendMIDI(CONTROL_CHANGE, 7, 102, 30 + i);                //indicate that we'll be sending the fingering pattern for instrument i
+            sendMIDI(CONTROL_CHANGE, 7, 102, 33 + modeSelector[i]);  //send
+
+            if (noteShiftSelector[i] >= 0) {
+                sendMIDI(CONTROL_CHANGE, 7, (111 + i), noteShiftSelector[i]);
+            }  //send noteShift, with a transformation for sending negative values over MIDI.
+            else {
+                sendMIDI(CONTROL_CHANGE, 7, (111 + i), noteShiftSelector[i] + 127);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
 //Save settings for current instrument as defaults for given instrument (i).
 void saveSettings(byte i) {
     writeEEPROM(40 + i, modeSelector[mode]);
@@ -2583,7 +2799,7 @@ void saveSettings(byte i) {
     writeEEPROM(50 + i, senseDistanceSelector[mode]);
 
     for (byte n = 0; n < kSWITCHESnVariables; n++) {  //Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
-        writeEEPROM((56 + n + (i * kSWITCHESnVariables)), switches[mode][n]);
+        writeEEPROM((56 + i + (n * 3)), switches[mode][n]);
     }
 
     writeEEPROM(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
@@ -2593,8 +2809,8 @@ void saveSettings(byte i) {
     writeEEPROM(345 + i, useLearnedPressureSelector[mode]);
 
     for (byte j = 0; j < 5; j++) {  //save button configuration for current mode
-        for (byte k = 0; k < 8; k++) {
-            writeEEPROM(100 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
+        for (byte k = 0; k < kGESTURESnVariables; k++) {
+            writeEEPROM(1000 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
         }
     }
 
@@ -2615,150 +2831,17 @@ void saveSettings(byte i) {
     writeEEPROM(322 + i, midiChannelSelector[mode]);
 
     for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-        writeEEPROM((351 + n + (i * kEXPRESSIONnVariables)), ED[mode][n]);
+        writeEEPROM((351 + i + (n * 3)), ED[mode][n]);
     }
 
     for (byte n = 0; n < kIMUnVariables; n++) {
-        writeEEPROM((625 + n + (i * kIMUnVariables)), IMUsettings[mode][n]);
+        writeEEPROM((625 + i + (n * 3)), IMUsettings[mode][n]);
     }
 }
 
 
 
 
-
-
-
-
-
-//Send all settings for current instrument to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
-void sendSettings() {
-
-    sendMIDI(CC, 7, 110, VERSION);  //Send the firmware version.
-
-    for (byte i = 0; i < 3; i++) {
-        sendMIDI(CC, 7, 102, 30 + i);                //Indicate that we'll be sending the fingering pattern for instrument i.
-        sendMIDI(CC, 7, 102, 33 + modeSelector[i]);  //Send
-
-        if (noteShiftSelector[i] >= 0) {
-            sendMIDI(CC, 7, 111 + i, noteShiftSelector[i]);
-        }  //Send noteShift, with a transformation for sending negative values over MIDI.
-        else {
-            sendMIDI(CC, 7, 111 + i, noteShiftSelector[i] + 127);
-        }
-    }
-
-    sendMIDI(CC, 7, 102, 60 + mode);         //Send current instrument.
-    sendMIDI(CC, 7, 102, 85 + defaultMode);  //Send default instrument.
-
-    sendMIDI(CC, 7, 103, senseDistance);  //Send sense distance
-
-    sendMIDI(CC, 7, 117, vibratoDepth * 100UL / 8191);  //Send vibrato depth, scaled down to cents.
-    sendMIDI(CC, 7, 102, 70 + pitchBendMode);           //Send current pitchBend mode.
-    sendMIDI(CC, 7, 102, 80 + breathMode);              //Send current breathMode.
-    sendMIDI(CC, 7, 102, 120 + bellSensor);             //Send bell sensor state.
-    sendMIDI(CC, 7, 106, 39 + useLearnedPressure);      //Send calibration option.
-    sendMIDI(CC, 7, 104, 34);                           //Indicate that LSB of learned pressure is about to be sent.
-    sendMIDI(CC, 7, 105, learnedPressure & 0x7F);       //Send LSB of learned pressure.
-    sendMIDI(CC, 7, 104, 35);                           //Indicate that MSB of learned pressure is about to be sent.
-    sendMIDI(CC, 7, 105, learnedPressure >> 7);         //Send MSB of learned pressure.
-
-    sendMIDI(CC, 7, 104, 61);             // Indicate midi bend range is about to be sent.
-    sendMIDI(CC, 7, 105, midiBendRange);  //MIDI bend range
-
-    sendMIDI(CC, 7, 104, 62);               // Indicate MIDI channel is about to be sent.
-    sendMIDI(CC, 7, 105, mainMidiChannel);  //Midi bend range
-
-
-
-    for (byte i = 0; i < 9; i++) {
-        sendMIDI(CC, 7, 106, 20 + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  //Send enabled vibrato holes.
-    }
-
-    for (byte i = 0; i < 8; i++) {
-        sendMIDI(CC, 7, 102, 90 + i);                         //Indicate that we'll be sending data for button commands row i (click 1, click 2, etc.).
-        sendMIDI(CC, 7, 106, 100 + buttonPrefs[mode][i][0]);  //Send action (i.e. none, send MIDI message, etc.).
-        if (buttonPrefs[mode][i][0] == 1) {                   //If the action is a MIDI command, send the rest of the MIDI info for that row.
-            sendMIDI(CC, 7, 102, 112 + buttonPrefs[mode][i][1]);
-            sendMIDI(CC, 7, 106, buttonPrefs[mode][i][2]);
-            sendMIDI(CC, 7, 107, buttonPrefs[mode][i][3]);
-            sendMIDI(CC, 7, 108, buttonPrefs[mode][i][4]);
-        }
-    }
-
-    for (byte i = 0; i < kSWITCHESnVariables; i++) {  //Send settings for switches in the slide/vibrato and register control panels.
-        sendMIDI(CC, 7, 104, i + 40);
-        sendMIDI(CC, 7, 105, switches[mode][i]);
-    }
-
-    for (byte i = 0; i < 21; i++) {  //Send settings for expression and drones control panels.
-        sendMIDI(CC, 7, 104, i + 13);
-        sendMIDI(CC, 7, 105, ED[mode][i]);
-    }
-
-    for (byte i = 21; i < 49; i++) {  //More settings for expression and drones control panels.
-        sendMIDI(CC, 7, 104, i + 49);
-        sendMIDI(CC, 7, 105, ED[mode][i]);
-    }
-
-    for (byte i = 0; i < 3; i++) {
-        sendMIDI(CC, 7, 102, 90 + i);  //Indicate that we'll be sending data for momentary.
-        sendMIDI(CC, 7, 102, 117 + momentary[mode][i]);
-    }
-
-    for (byte i = 0; i < 12; i++) {
-        sendMIDI(CC, 7, 104, i + 1);                      //Indicate which pressure variable we'll be sending.
-        sendMIDI(CC, 7, 105, pressureSelector[mode][i]);  //Send the data.
-    }
-
-    sendMIDI(CC, 7, 102, 121);  //Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
-
-    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  //Send the WARBL2settings array.
-        sendMIDI(CC, 7, 106, i);
-        sendMIDI(CC, 7, 119, WARBL2settings[i - 55]);
-    }
-
-    manageBattery(true);  //Do this to send voltage and charging status to Config Tool.
-
-    sendMIDI(CC, 7, 106, 72);
-    sendMIDI(CC, 7, 119, (connIntvl * 100) & 0x7F);  //Send low byte of the connection interval.
-    sendMIDI(CC, 7, 106, 73);
-    sendMIDI(CC, 7, 119, (connIntvl * 100) >> 7);  //Send high byte of the connection interval.
-
-    for (byte i = 0; i < kIMUnVariables; i++) {  //IMU settings
-        sendMIDI(CC, 7, 109, i);
-        sendMIDI(CC, 7, 105, IMUsettings[mode][i]);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-//load saved fingering patterns
-void loadFingering() {
-    for (byte i = 0; i < 3; i++) {
-        modeSelector[i] = readEEPROM(40 + i);
-        noteShiftSelector[i] = (int8_t)readEEPROM(53 + i);
-
-        if (communicationMode) {
-            sendMIDI(CC, 7, 102, 30 + i);                //indicate that we'll be sending the fingering pattern for instrument i
-            sendMIDI(CC, 7, 102, 33 + modeSelector[i]);  //send
-
-            if (noteShiftSelector[i] >= 0) {
-                sendMIDI(CC, 7, (111 + i), noteShiftSelector[i]);
-            }  //send noteShift, with a transformation for sending negative values over MIDI.
-            else {
-                sendMIDI(CC, 7, (111 + i), noteShiftSelector[i] + 127);
-            }
-        }
-    }
-}
 
 
 
@@ -2768,7 +2851,6 @@ void loadFingering() {
 
 //load settings for all three instruments from EEPROM
 void loadSettingsForAllModes() {
-
     //Some things that are independent of mode.
     defaultMode = readEEPROM(48);  //load default mode
 
@@ -2776,20 +2858,21 @@ void loadSettingsForAllModes() {
         WARBL2settings[r] = readEEPROM(600 + r);
     }
 
-    fullRunTime = (word(readEEPROM(1009), readEEPROM(1010)));  //The total run time available on a full charge (minutes)
-    prevRunTime = (word(readEEPROM(1013), readEEPROM(1014)));  //The total run time since the last full charge (minutes)
+    fullRunTime = (word(readEEPROM(1989), readEEPROM(1990)));  //The total run time available on a full charge (minutes)
+    prevRunTime = (word(readEEPROM(1993), readEEPROM(1994)));  //The total run time since the last full charge (minutes)
 
-    getEEPROM(985, gyroXCalibration);
-    getEEPROM(989, gyroYCalibration);
-    getEEPROM(993, gyroZCalibration);
-
+    if (readEEPROM(36) == 3) {  // If there has been a gyro calibration saved
+        getEEPROM(1975, gyroXCalibration);
+        getEEPROM(1979, gyroYCalibration);
+        getEEPROM(1983, gyroZCalibration);
+    }
 
     //Do all this for each mode.
     for (byte i = 0; i < 3; i++) {
         senseDistanceSelector[i] = readEEPROM(50 + i);
 
         for (byte n = 0; n < kSWITCHESnVariables; n++) {
-            switches[i][n] = readEEPROM(56 + n + (i * kSWITCHESnVariables));
+            switches[i][n] = readEEPROM(56 + i + (n * 3));
         }
 
         vibratoHolesSelector[i] = word(readEEPROM(334 + (i * 2)), readEEPROM(333 + (i * 2)));
@@ -2797,8 +2880,8 @@ void loadSettingsForAllModes() {
         useLearnedPressureSelector[i] = readEEPROM(345 + i);
 
         for (byte j = 0; j < 5; j++) {
-            for (byte k = 0; k < 8; k++) {
-                buttonPrefs[i][k][j] = readEEPROM(100 + (i * 50) + (j * 10) + k);
+            for (byte k = 0; k < kGESTURESnVariables; k++) {
+                buttonPrefs[i][k][j] = readEEPROM(1000 + (i * 50) + (j * 10) + k);
             }
         }
 
@@ -2824,11 +2907,11 @@ void loadSettingsForAllModes() {
 
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-            ED[i][n] = readEEPROM(351 + n + (i * kEXPRESSIONnVariables));
+            ED[i][n] = readEEPROM(351 + i + (n * 3));
         }
 
         for (byte p = 0; p < kIMUnVariables; p++) {
-            IMUsettings[i][p] = readEEPROM(625 + p + (i * kIMUnVariables));
+            IMUsettings[i][p] = readEEPROM(625 + i + (p * 3));
         }
     }
 }
@@ -2864,7 +2947,7 @@ void loadPrefs() {
     //Read a custom chart from EEPROM if we're using one.
     if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
         for (int i = 0; i < 256; i++) {
-            WARBL2CustomChart[i] = readEEPROM((3000 + (256 * (modeSelector[mode] - 67))) + i);
+            WARBL2CustomChart[i] = readEEPROM((4000 + (256 * (modeSelector[mode] - 67))) + i);
         }
     }
 
@@ -3041,12 +3124,10 @@ void loadCalibration() {
 
 
 
+
 //Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
 //Note that the time constant in the smoothing algorithm in get_sensors can be tweaked if there's too much pressure lag.
 void calculatePressure(byte pressureOption) {
-
-
-
     long scaledPressure;
 
     if (pressureOption == 1) {
@@ -3112,7 +3193,7 @@ void calculatePressure(byte pressureOption) {
 //send pressure data
 void sendPressure(bool force) {
     if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
-        sendMIDI(CC, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  //send MSB of pressure mapped to the output range
+        sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  //send MSB of pressure mapped to the output range
         prevCCPressure = inputPressureBounds[0][3];
     }
 
@@ -3325,10 +3406,10 @@ void connect_callback(uint16_t conn_handle) {
     connIntvl = connIntvl * 0.625;  //convert to ms
 
     if (communicationMode) {
-        sendMIDI(CC, 7, 106, 72);
-        sendMIDI(CC, 7, 119, (connIntvl * 100) & 0x7F);  //Send LSB of the connection interval to Config Tool.
-        sendMIDI(CC, 7, 106, 73);
-        sendMIDI(CC, 7, 119, (connIntvl * 100) >> 7);  //Send MSB of the connection interval to Conf Tool.
+        sendMIDI(CONTROL_CHANGE, 7, 106, 72);
+        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) & 0x7F);  //Send LSB of the connection interval to Config Tool.
+        sendMIDI(CONTROL_CHANGE, 7, 106, 73);
+        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  //Send MSB of the connection interval to Conf Tool.
     }
 }
 
@@ -3347,10 +3428,10 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
     connIntvl = 0;
 
     if (communicationMode) {
-        sendMIDI(CC, 7, 106, 72);
-        sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
-        sendMIDI(CC, 7, 106, 73);
-        sendMIDI(CC, 7, 119, 0);  //Send 0 to Config Tool.
+        sendMIDI(CONTROL_CHANGE, 7, 106, 72);
+        sendMIDI(CONTROL_CHANGE, 7, 119, 0);  //Send 0 to Config Tool.
+        sendMIDI(CONTROL_CHANGE, 7, 106, 73);
+        sendMIDI(CONTROL_CHANGE, 7, 119, 0);  //Send 0 to Config Tool.
     }
 }
 
@@ -3405,7 +3486,6 @@ void watchdog_reset() {
 
 // Write to EEPROOM
 void writeEEPROM(int address, byte val) {
-
     if (address < 16384) {                 //Make sure we're not trying to write beyond the highest address in the M24128 EEPROM.
         if (val != readEEPROM(address)) {  //Don't write if the value is already there.
             Wire.beginTransmission(EEPROM_I2C_ADDRESS);
@@ -3421,9 +3501,9 @@ void writeEEPROM(int address, byte val) {
 }
 
 
+
 // Read from EEPROM
 byte readEEPROM(int address) {
-
     byte rcvData = 0xFF;
     Wire.beginTransmission(EEPROM_I2C_ADDRESS);
     Wire.write((int)(address >> 8));    //writes the MSB
@@ -3438,9 +3518,9 @@ byte readEEPROM(int address) {
 }
 
 
+
 // ACK polling to see if previous EEPROM transaction has finished
 bool EEPROMbusy(void) {
-
     Wire.beginTransmission(EEPROM_I2C_ADDRESS);
     if (Wire.endTransmission() == 0) {
         return (false);
@@ -3449,9 +3529,9 @@ bool EEPROMbusy(void) {
 }
 
 
+
 // Put an int to EEPROM
 void putEEPROM(int address, int val) {
-
     byte byte1 = val >> 8;
     byte byte2 = val & 0xFF;
     writeEEPROM(address, byte1);
@@ -3459,27 +3539,28 @@ void putEEPROM(int address, int val) {
 }
 
 
+
 // Get an int from EEPROM
 void getEEPROM(int address, int& var) {
-
     byte byte1 = readEEPROM(address);
     byte byte2 = readEEPROM(address + 1);
     var = (byte1 << 8) + byte2;
 }
 
 
+
 // Put a float to EEPROM
 void putEEPROM(int address, float value) {
-
     byte* p = (byte*)(void*)&value;
     for (int i = 0; i < sizeof(value); i++)
         writeEEPROM(address++, *p++);
 }
 
 
+
+
 // Get a float from EEPROM
 void getEEPROM(int address, float& var) {
-
     float value = 0.0f;
     byte* p = (byte*)(void*)&value;
     for (int i = 0; i < sizeof(value); i++)
@@ -3488,10 +3569,13 @@ void getEEPROM(int address, float& var) {
 }
 
 
+
 // For testing purposes
 void eraseEEPROM(void) {
-
     for (int i = 0; i < 16384; i++) {
         writeEEPROM(i, 255);
     }
+    digitalWrite(LEDpins[GREEN_LED], HIGH);  // Success
+    delay(500);
+    digitalWrite(LEDpins[GREEN_LED], LOW);
 }
