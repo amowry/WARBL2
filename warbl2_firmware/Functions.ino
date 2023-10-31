@@ -34,7 +34,7 @@ void printStuff(void) {
     //Serial.println(scalePosition);
     //Serial.println(prevRunTime);
     //Serial.println(fullRunTime);
-    //Serial.println(CPUtemp, 2);
+    //Serial.println(readEEPROM(1991));
     //Serial.println(IMUtemp);
     // Serial.println(USBstatus);
     //Serial.println(battPower);
