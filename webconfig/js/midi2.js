@@ -19,6 +19,8 @@ var consoleEntries = 0; //number of lines in MIDI console
 var customFingeringFills = [[null, null, null, null, null, null, null, null, null, null, null], [0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61], [0, 74, 72, 72, 70, 68, 67, 65, 64, 62, 61], [0, 74, 74, 72, 72, 69, 68, 67, 65, 62, 60]];
 var communicationMode = false; //if we're communicating with WARBL
 
+var numberOfGestures = 10; //Number of button gestures
+
 var midiNotes = [];
 
 var currentVersion = 40;
@@ -187,8 +189,11 @@ function connect() {
     //console.log("connect function");
 
     if (communicationMode && version > 2.0) {
-        //sendToAll(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"		
+        //sendToAll(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"	
+		if (version < 4.1){	
         var cc = buildMessage(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
+		}
+		else {var cc = buildMessage(102, 104);}
         var iter = midiAccess.outputs.values();
         for (var o = iter.next(); !o.done; o = iter.next()) {
             o.value.send(cc); //send CC message
@@ -505,8 +510,7 @@ function WARBL_Receive(event) {
 
     //console.log("WARBL_Receive");
     //console.log(communicationMode);
-    //yconsole.log("WARBL_Receive target = "+event.target.name);
-    //console.log("WARBL_Receive: "+data0+" "+data1+" "+data2);
+    //console.log("WARBL_Receive target = "+event.target.name);
 
     // If we haven't established the WARBL output port and we get a received message on channel 7
     // find the port by name by walking the output ports and matching the input port name
@@ -714,8 +718,15 @@ function WARBL_Receive(event) {
                             fingeringWrite = i;
                         }
 
-                        if ((data2 > 32 && data2 < 60) || (data2 > 99 && data2 < 104)) {
+                        if ((data2 > 32 && data2 < 60)) {
                             if (fingeringWrite == i) {
+                                document.getElementById("fingeringSelect" + i).value = data2 - 33;
+                            }
+                            updateCells(); //update any dependant fields	
+                        }
+						
+						if((data2 > 99 && data2 < 104) && version > 3.9){
+							if (fingeringWrite == i) {
                                 document.getElementById("fingeringSelect" + i).value = data2 - 33;
                             }
                             updateCells(); //update any dependant fields	
@@ -854,13 +865,14 @@ function WARBL_Receive(event) {
                         document.getElementById("v1").classList.remove("sensorValueEnabled");
                     }
 
-                    for (var i = 0; i < 8; i++) { //update button configuration	   
+                    for (var i = 0; i < numberOfGestures; i++) { //update button configuration	   
                         if (data2 == 90 + i) {
                             buttonRowWrite = i;
+							//console.log(buttonRowWrite);
                         }
                     }
 
-                    for (var j = 0; j < 8; j++) { //update button configuration	
+                    for (var j = 0; j < numberOfGestures; j++) { //update button configuration	
                         if (buttonRowWrite == j) {
 
                             if (data2 == 119) { //special case for initiating autocalibration
@@ -873,7 +885,7 @@ function WARBL_Receive(event) {
                                     document.getElementById("row" + (buttonRowWrite)).value = k;
                                 }
 
-                                if (k < 5 && data2 == 112 + k) {
+                                if (k < 7 && data2 == 112 + k) {
                                     document.getElementById("MIDIrow" + (buttonRowWrite)).value = k;
                                     updateCells();
                                 }
@@ -1150,15 +1162,23 @@ function WARBL_Receive(event) {
                         }
                         else if (jumpFactorWrite == 205) { //input (-90 to 90)
                             inputSliderMin[4] = (data2 * 5) - 90;
+							//console.log("roll in min= "); 
+							//console.log(data2); 
                         }
                         else if (jumpFactorWrite == 206) { //input (-90 to 90)
                             inputSliderMax[4] = (data2 * 5) - 90;
+							//console.log("roll in max= "); 
+							//console.log(data2); 
                         }
                         else if (jumpFactorWrite == 207) {
                             outputSliderMin[4] = data2;
+							//console.log("roll out min= "); 
+							//console.log(data2); 
                         }
                         else if (jumpFactorWrite == 208) {
                             outputSliderMax[4] = data2;
+							//console.log("roll out max = "); 
+							//console.log(data2);
                         }
                         else if (jumpFactorWrite == 209) { //input (-90 to 90)
                             inputSliderMin[5] = (data2 * 5) - 90;
@@ -1238,6 +1258,16 @@ function WARBL_Receive(event) {
                         else if (jumpFactorWrite == 231) {
                             document.getElementById("shakeVibModeCommand").value = data2;
                         }
+						
+						//End of WARBL2 IMU settings
+						
+						else if (jumpFactorWrite == 327) { // Receive button/gesture action
+						var gesture = document.getElementById("gestureLabel" + (data2));
+						gesture.style.color = "#f7c839";
+						gesture.style.scale="1.1"					
+						setTimeout(function() {contract(gesture);}, 150);						
+						}
+						
                     } //End of WARBL2 IMU settings
 
                 } //end of CC105
@@ -1298,14 +1328,24 @@ function WARBL_Receive(event) {
 
 
 
+
+
                     //Lots of UI changes based on the current firmware version of the connected WARBL
 
 
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
+					
+					
+					
+					
+
+					
 
 
                     if (version < 3.9) {
 
+						numberOfGestures = 8;
+						for (let element of document.getElementsByClassName("WARBL2Elements")){element.style.display="none";}
                         document.getElementById("box9").style.display = "none";
                         document.getElementById("box6").style.display = "block";
                         document.getElementById("backPressureButton").style.display = "none";
@@ -1564,7 +1604,7 @@ function WARBL_Receive(event) {
                     }
                 }
 
-                for (var i = 0; i < 8; i++) {
+                for (var i = 0; i < numberOfGestures; i++) {
                     if (buttonRowWrite == i) {
                         if (data1 == 106 && data2 < 16) {
                             document.getElementById("channel" + (buttonRowWrite)).value = data2;
@@ -1635,10 +1675,11 @@ function WARBL_Receive(event) {
 
 
                     if (data2 > 99 && version > 3.9) {
+						
+						//console.log(buttonRowWrite); 
 
-                        for (var j = 0; j < 8; j++) { //update button configuration	
+                        for (var j = 0; j < numberOfGestures; j++) { //update button configuration	
                             if (buttonRowWrite == j) {
-
                                 for (var k = 0; k < 27; k++) {
                                     if (data2 == 100 + k) {
                                         document.getElementById("row" + (buttonRowWrite)).value = k;
@@ -1766,6 +1807,12 @@ function bit_test(num, bit) {
 }
 
 
+
+
+function contract(gesture) {
+	gesture.style.scale="1"
+	gesture.style.color = "#c3c0c0";
+}
 
 
 
@@ -2217,6 +2264,8 @@ slider5.noUiSlider.on('change', function (values, handle) {
 
     inputSliderMin[IMUmapSelection + 3] = parseInt(handles[0]);
     inputSliderMax[IMUmapSelection + 3] = parseInt(handles[1]);
+	
+	//console.log(inputSliderMin[IMUmapSelection + 3]); 
 
     sendToWARBL(109, ((IMUmapSelection) * 4 + 1));
     if (IMUmapSelection == 3) {
@@ -2240,8 +2289,8 @@ slider5.noUiSlider.on('change', function (values, handle) {
 
 slider4.noUiSlider.on('change', function (values, handle) {
 
-    inputSliderMin[IMUmapSelection + 3] = parseInt(values[0]);
-    inputSliderMax[IMUmapSelection + 3] = parseInt(values[1]);
+    outputSliderMin[IMUmapSelection + 3] = parseInt(values[0]);
+    outputSliderMax[IMUmapSelection + 3] = parseInt(values[1]);
 
     sendToWARBL(109, ((IMUmapSelection) * 4 + 3));
     sendToWARBL(105, parseInt(values[0]));
@@ -2725,7 +2774,7 @@ function configureCustomFingering() {
         document.getElementById("box7").style.top = "1200px";
         document.getElementById("box8").style.top = "1200px";
         document.getElementById("buttonBox").style.top = "1690px";
-        document.getElementById("topcontrolbox").style.height = "2085px";
+        document.getElementById("topcontrolbox").style.height = "2155px";
     }
 
 
@@ -2753,7 +2802,7 @@ function customFingeringOkay() {
     document.getElementById("box7").style.top = "900px";
     document.getElementById("box8").style.top = "900px";
     document.getElementById("buttonBox").style.top = "1390px";
-    document.getElementById("topcontrolbox").style.height = "1785px";
+    document.getElementById("topcontrolbox").style.height = "1855px";
     document.getElementById("customFingeringFill").value = "12";
 }
 
@@ -3631,8 +3680,10 @@ function updateCells() {
     } else {
         document.getElementById("row4").disabled = false;
     }
+	
 
-    for (var i = 0; i < 8; i++) {
+
+    for (var i = 0; i < numberOfGestures; i++) {
         var x = document.getElementById("row" + i).value;
         var t = document.getElementById("row" + i).disabled;
 
@@ -3717,14 +3768,14 @@ function updateCells() {
 }
 
 function MIDIvalueChange() {
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < numberOfGestures; i++) {
         var x = document.getElementById("channel" + i).value;
         if (((x < 0 || x > 16 || isNaN(x)) && !document.getElementById("channel" + i).disabled)) {
             alert("Value must be 1-16.");
             document.getElementById("channel" + i).value = null;
         }
     }
-    for (var j = 0; j < 8; j++) {
+    for (var j = 0; j < numberOfGestures; j++) {
         var y = document.getElementById("channel" + j).value;
         var x = document.getElementById("byte2_" + j).value;
         if (x < 0 || x > 127 || isNaN(x)) {
@@ -3738,7 +3789,7 @@ function MIDIvalueChange() {
         }
     }
 
-    for (var k = 0; k < 8; k++) {
+    for (var k = 0; k < numberOfGestures; k++) {
         var x = document.getElementById("byte3_" + k).value;
         if (x < 0 || x > 127 || isNaN(x)) {
             alert("Value must be 0-127.");

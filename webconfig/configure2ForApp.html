@@ -27,8 +27,6 @@
 
     <meta name="author" content="Andrew Mowry" />
 
-    <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' />
-
     <link href="css/nouislider.css" rel="stylesheet" type="text/css" />
 
     <link href="css/config2.css" rel="stylesheet" type="text/css" />
@@ -2080,21 +2078,29 @@
 
                     <div class="selectLabelContainer">
 
-                        <div class="selectLabel noTouch">Click 1</div>
+                        <div id = "gestureLabel0" class="selectLabel noTouch">Click 1</div>
 
-                        <div class="selectLabel noTouch">Click 2</div>
+                        <div id = "gestureLabel1" class="selectLabel noTouch">Click 2</div>
 
-                        <div class="selectLabel noTouch">Click 3</div>
+                        <div id = "gestureLabel2" class="selectLabel noTouch">Click 3</div>
 
-                        <div class="selectLabel noTouch">Hold 2, click 1</div>
+                        <div id = "gestureLabel3" class="selectLabel noTouch">Hold 2, click 1</div>
 
-                        <div class="selectLabel noTouch">Hold 2, click 3</div>
+                        <div id = "gestureLabel4" class="selectLabel noTouch">Hold 2, click 3</div>
 
-                        <div class="selectLabel noTouch">Long-press 1</div>
+                        <div id = "gestureLabel5" class="selectLabel noTouch">Long-press 1</div>
 
-                        <div class="selectLabel noTouch">Long-press 2</div>
+                        <div id = "gestureLabel6" class="selectLabel noTouch">Long-press 2</div>
 
-                        <div class="selectLabel noTouch">Long-press 3</div>
+                        <div id = "gestureLabel7" class="selectLabel noTouch">Long-press 3</div>
+                        
+                        <div class="WARBL2Elements">
+                        
+                        	<div id = "gestureLabel8" class="selectLabel noTouch">Sip mouthpiece</div>
+
+                        	<div id = "gestureLabel9" class="selectLabel noTouch">Shake</div>
+                            
+                        </div>
 
                     </div>
 
@@ -2275,6 +2281,54 @@
                             </select>
 
                         </div>
+                        
+                        <div class="WARBL2Elements">
+                        
+                        <div class="styled-select blue semi-square">
+
+                            <select id="row8" onChange="sendRow(8)">
+                                <option value="0">none</option>
+                                <option value="1">Send MIDI message:</option>
+                                <option value="2">Change slide/vibrato mode</option>
+                                <option value="3">Change instrument</option>
+                                <option value="4">Play/stop (bagless mode)</option>
+                                <option value="5">Octave shift up</option>
+                                <option value="6">Octave shift down</option>
+                                <option value="10">Semitone shift up</option>
+                                <option value="11">Semitone shift down</option>
+                                <option value="7">MIDI Panic</option>
+                                <option value="8">Change register control mode</option>
+                                <option value="9">Turn drones on/off</option>
+                                <option value="12" id="autoCal7">Begin autocalibration</option>
+                                <option value="13">Power down</option>
+                                <option value="14">Recenter yaw</option>
+                            </select>
+
+                        </div>
+                        
+                        <div class="styled-select blue semi-square">
+
+                            <select id="row9" onChange="sendRow(9)">
+                                <option value="0">none</option>
+                                <option value="1">Send MIDI message:</option>
+                                <option value="2">Change slide/vibrato mode</option>
+                                <option value="3">Change instrument</option>
+                                <option value="4">Play/stop (bagless mode)</option>
+                                <option value="5">Octave shift up</option>
+                                <option value="6">Octave shift down</option>
+                                <option value="10">Semitone shift up</option>
+                                <option value="11">Semitone shift down</option>
+                                <option value="7">MIDI Panic</option>
+                                <option value="8">Change register control mode</option>
+                                <option value="9">Turn drones on/off</option>
+                                <option value="12" id="autoCal7">Begin autocalibration</option>
+                                <option value="13">Power down</option>
+                                <option value="14">Recenter yaw</option>
+                            </select>
+                            
+                         </div>
+
+                        </div>
 
                     </div>
 
@@ -2375,6 +2429,32 @@
                             </select>
 
                         </div>
+                        
+                        <div class="WARBL2Elements">
+                        
+                        <div class="styled-select2 blue semi-square">
+
+                            <select id="MIDIrow8" onChange="sendMIDIrow(8)">
+                                <option value="0">Note on/note off</option>
+                                <option value="1">CC</option>
+                                <option value="2">Send PC</option>
+                                <option value="3">Increase PC</option>
+                                <option value="4">Decrease PC</option>
+                            </select>
+
+                        </div>
+
+                        <div class="styled-select2 blue semi-square">
+
+                            <select id="MIDIrow9" onChange="sendMIDIrow(9)">
+                                <option value="0">Note on/note off</option>
+                                <option value="1">CC</option>
+                                <option value="2">Send PC</option>
+                                <option value="3">Increase PC</option>
+                                <option value="4">Decrease PC</option>
+                            </select>
+						</div>
+                        </div>
 
                     </div>
 
@@ -2401,7 +2481,14 @@
                         <input class="channelInput" type="text" onChange="sendChannel(6)" id="channel6" value="" />
 
                         <input class="channelInput" type="text" onChange="sendChannel(7)" id="channel7" value="" />
+                        
+                        <div class="WARBL2Elements">
+                        
+                         	<input class="channelInput" type="text" onChange="sendChannel(8)" id="channel8" value="" />
 
+                        	<input class="channelInput" type="text" onChange="sendChannel(9)" id="channel9" value="" />
+
+ 						</div>
                     </div>
 
                     <div class="byte2inputContainer">
@@ -2421,7 +2508,14 @@
                         <input class="channelInput" type="text" onChange="sendByte2(6)" id="byte2_6" value="" />
 
                         <input class="channelInput" type="text" onChange="sendByte2(7)" id="byte2_7" value="" />
+                        
+                        <div class="WARBL2Elements">
+                         
+                         	<input class="channelInput" type="text" onChange="sendByte2(6)" id="byte2_8" value="" />
 
+                        	<input class="channelInput" type="text" onChange="sendByte2(7)" id="byte2_9" value="" />
+					
+                    	</div>
                     </div>
 
                     <div class="byte3inputContainer">
@@ -2441,7 +2535,14 @@
                         <input class="channelInput" type="text" onChange="sendByte3(6)" id="byte3_6" value="" />
 
                         <input class="channelInput" type="text" onChange="sendByte3(7)" id="byte3_7" value="" />
+                        
+                        <div class="WARBL2Elements">
+                        
+                         	<input class="channelInput" type="text" onChange="sendByte3(6)" id="byte3_8" value="" />
 
+                        	<input class="channelInput" type="text" onChange="sendByte3(7)" id="byte3_9" value="" />
+                        
+						</div>
                     </div>
 
                 </div>

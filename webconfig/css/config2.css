@@ -1205,7 +1205,7 @@ fieldset {
 	margin-bottom: 30px;
 	display: block;
 	clear: both;
-	height: 1785px;
+	height: 1855px;
 	border-radius: 5px;
 }
 
@@ -1237,7 +1237,8 @@ fieldset {
 	margin-bottom: 50px;
 	display: block;
 	left: 30px;
-	height: 360px;
+	//height: 360px;
+	height: 430px;
 	width: 960px;
 	border: solid 2px var(--box-border-color);
 	border-radius: 5px;
@@ -1245,6 +1246,10 @@ fieldset {
 	-webkit-box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
 	-moz-box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
 	box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
+}
+
+.WARBL2Elements {
+	//display: none;
 }
 
 .middleControlBox {
@@ -4075,6 +4080,7 @@ select option {
 	vertical-align: middle;
 	margin-bottom: 10px;
 	text-align: right;
+	transition: scale 30ms ease-in-out;
 }
 
 .messageContainer {
