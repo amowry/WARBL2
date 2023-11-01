@@ -79,6 +79,7 @@ unsigned long fullRunTime = 720;  //The available run time on a full charge, in 
 unsigned long prevRunTime = 120;  //The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
 unsigned long powerDownTimer;     //For powering down after a period of no activity
 byte USBstatus = 0;               //Battery power (0), dumb charger (1), or connected USB host (2).
+unsigned long chargeStartTime = 0;  // When we started charging.
 
 
 // BLE

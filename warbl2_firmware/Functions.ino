@@ -26,7 +26,6 @@ void printStuff(void) {
     //Serial.println(IMUsettings[mode][PITCH_REGISTER]);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER_NUMBER]);
     //Serial.println(IMUsettings[2][PITCH_REGISTER_INPUT_MIN]);
-    Serial.println(IMUsettings[mode][Y_SHAKE_PITCHBEND]);
 
     //Serial.println(buttonPrefs[mode][8][1]);
     //Serial.println(sensorValue);
@@ -382,7 +381,7 @@ void shakeForVibrato() {
     const float kShakeGestureThresh = 20.0f;  //Theshold for shake gesture
 
 
-    if (abs(accelFilteredB) > kShakeGestureThresh) { 
+    if (abs(accelFilteredB) > kShakeGestureThresh) {
         shakeDetected = true;
     } else {
         shakeDetected = false;
@@ -2284,8 +2283,10 @@ void handleButtons() {
 void performAction(byte action) {
     //Serial.println((buttonPrefs[mode][action][0]));
 
-    sendMIDI(CONTROL_CHANGE, 7, 109, 127);
-    sendMIDI(CONTROL_CHANGE, 7, 105, action);
+    if (communicationMode) {
+        sendMIDI(CONTROL_CHANGE, 7, 109, 127);
+        sendMIDI(CONTROL_CHANGE, 7, 105, action);
+    }
 
     switch (buttonPrefs[mode][action][0]) {
 

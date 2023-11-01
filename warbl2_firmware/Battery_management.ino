@@ -1,5 +1,5 @@
 /*
--ToDo: indicate charging by pulsing or slowly flashing red or purple LED that times out if WARBL is playing notes (so as not to be annoying).
+-ToDo: Turning "charge from hosts" on and off can trigger a battery fault detection.
 */
 
 
@@ -17,46 +17,52 @@ The charger will report a fault (missing battery, out of temperature range) by b
 void manageBattery(bool send) {
 
 
-    static byte chargingStatus = 0;            //0 is not charging, 1 is charging, 2 is fault
-    static byte prevChargingStatus = 0;        //Keep track of when it has changed.
-    static byte tempChargingStatus;            //The assumed charging status before it has been finalized by waiting to detect a fault
-    static byte prevTempChargingStatus;        //Keep track of when it has changed.
-    static bool chargeEnabled = false;         //Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
-    static float voltageQueue[21];             //FIFO queue for finding the slope of the voltage curve while charging.
-    static float voltageSlope;                 //Change in smoothed voltage over the previous 10 minutes
-    static unsigned long chargeStartTime = 0;  //Resets every minute while charging to recalculate battery percentage.
-    static bool chargeTerminated = false;      //Tells us that a charge cycle has been terminated because the cell is full.
-    static byte battLevel;                     //Estimated battery percentage remaining
-    static bool statusChanged;                 //Flag when the charging status has changed.
+    static byte chargingStatus = 0;          // 0 is not charging, 1 is charging, 2 is fault
+    static byte prevChargingStatus = 0;      // Keep track of when it has changed.
+    static byte tempChargingStatus;          // The assumed charging status before it has been finalized by waiting to detect a fault
+    static byte prevTempChargingStatus = 0;  // Keep track of when it has changed.
+    static bool chargeEnabled = false;       // Whether the charger is currently powered (by enabling the buck converter). The charger will then decide whether to charge, and report status on the STAT pin.
+    static float voltageQueue[21];           // FIFO queue for finding the slope of the voltage curve while charging.
+    static float voltageSlope;               // Change in smoothed voltage over the previous 10 minutes
+    static unsigned long minuteTimer = 0;    // Resets every minute while charging to recalculate battery percentage.
+    static bool chargeTerminated = false;    // Tells us that a charge cycle has been terminated because the cell is full.
+    static byte flatSlopeCounts = 0;         // Tally of zero-slope readings (two are required to termiante charging).
+    static byte battLevel;                   // Estimated battery percentage remaining
+    static bool statusChanged;               // Flag when the charging status has changed.
 
 
-    USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  //A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
+    USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  // A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
     static byte prevUSBstatus;
     static unsigned long USBstatusChangeTimer;
 
-    if (USBstatus != prevUSBstatus) {  //Keep track of when USB status changed, because we need to wait a bit for doing some things like enabling charging. USB power may be detected slightly before a USB host, causing us to briefly think there's a dumb charger.
+    if (USBstatus != prevUSBstatus) {  // Keep track of when USB status changed, because we need to wait a bit for doing some things like enabling charging. USB power may be detected slightly before a USB host, causing us to briefly think there's a dumb charger.
         USBstatusChangeTimer = nowtime;
         prevUSBstatus = USBstatus;
     }
 
-
-    //Monitor the STAT pin to tell if we're charging.
-    if (digitalRead(STAT) == 0) {  //Charging
-        pulseLED[RED_LED] = true;
-        tempChargingStatus = 1;  //Provisionally change the status.
-    } else {                     //Not charging
-        pulseLED[RED_LED] = false;
-        tempChargingStatus = 0;  //Provisionally change the status.
+    // Check if we've been plugged in to power.
+    if (battPower && USBstatus != BATTERY_POWER) {
+        digitalWrite(powerEnable, LOW);  // Disable the boost converter if there is USB power. The device will then power down if USB is unplugged again.
+        battPower = false;
+        recordRuntime(false);  // Record how long we were under battery power.
     }
 
+    if (!battPower) {  // Don't bother with any of this if we're not plugged in.
+
+        // Monitor the STAT pin to tell if we're charging.
+        if (digitalRead(STAT) == 0) {  // Charging
+            pulseLED[RED_LED] = true;
+            tempChargingStatus = 1;  // Provisionally change the status.
+        } else {                     // Not charging
+            pulseLED[RED_LED] = false;
+            tempChargingStatus = 0;  // Provisionally change the status.
+        }
 
 
-    if (!battPower) {  //Don't bother with any of this if we're not plugged in.
-
-        //Detect change in charging status
+        // Detect change in charging status
         if (prevTempChargingStatus != tempChargingStatus) {
             statusChanged = 1;
-            if (communicationMode) {  //Send the status to the Config Tool if it has changed.
+            if (communicationMode) {  // Send the status to the Config Tool if it has changed.
                 sendMIDI(CONTROL_CHANGE, 7, 106, 71);
                 sendMIDI(CONTROL_CHANGE, 7, 119, tempChargingStatus);
             }
@@ -64,26 +70,33 @@ void manageBattery(bool send) {
         }
 
 
-        byte finalizeStatus = faultDetect(statusChanged);  //Watch for a blinking charger STAT pin, indicating a fault
+        byte finalizeStatus = faultDetect(statusChanged);  // Watch for a blinking charger STAT pin, indicating a fault
         statusChanged = 0;
 
-        //Do nothing if finalizeStatus == 0 because there hasn't been a change or we haven't waited long enough to detect a fault.
+        // Do nothing if finalizeStatus == 0 because there hasn't been a change or we haven't waited long enough to detect a fault.
 
-        if (finalizeStatus == 1) {  //It's okay to aCONTROL_CHANGEept the change in status.
+        if (finalizeStatus == 1) {  // It's okay to accept the change in status.
             chargingStatus = tempChargingStatus;
-        } else if (finalizeStatus == 2) {  //Fault
+        } else if (finalizeStatus == 2) {  // Fault
             chargingStatus = 2;
         }
 
         if (prevChargingStatus != chargingStatus) {
             if (chargingStatus == 1) {
-                chargeStartTime = millis();                                                                   //Start a timer if we just started charging.
-            } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger.
-                chargeTerminated = 1;                                                                         //If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
-                digitalWrite(LEDpins[GREEN_LED], HIGH);                                                       //Indicate end of charge. ToDo: improve indication
-                writeEEPROM(1993, 0);                                                                         //Reset the total run time because we are now fully charged (high byte).
-                writeEEPROM(1994, 0);                                                                         //Low byte
-                writeEEPROM(1988, 3);                                                                         //Remember that there has been a termination.
+                chargeStartTime = nowtime;  // Start a timer if we just started charging.
+                minuteTimer = nowtime;
+                for (byte i = 0; i < 21; i++) {  //  Reset the readings in the voltage buffer to 0 in case there are readings in it from a previous charge cycle.
+                    voltageQueue[i] = 0;
+                }
+                flatSlopeCounts = 0;  // Reset the number of zero-slope readings.
+
+            } else if (chargingStatus == 0 && ((millis() - chargeStartTime) > 20000) && chargeEnabled && prevChargingStatus != 2) {  // Charging was just stopped by the charger. Wait for sevceral seconds after starting charge because when the voltage is near 1.35 V the charger may start charging and then stop again right away.
+                chargeTerminated = 1;                                                                                                // If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
+                digitalWrite(LEDpins[GREEN_LED], HIGH);                                                                              // Indicate end of charge.
+                //Serial.println("charge terminated by charger");
+                writeEEPROM(1993, 0);  // Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1994, 0);  // Low byte
+                writeEEPROM(1988, 3);  // Remember that there has been a termination.
                 prevRunTime = 0;
             }
             prevChargingStatus = chargingStatus;
@@ -91,27 +104,27 @@ void manageBattery(bool send) {
     }
 
 
-    //Read the battery
+    // Read the battery
     float battVoltage = getBattVoltage();
-    const float alpha = 0.05f;  //Time constant can be tweaked.
+    const float alpha = 0.05f;  // Time constant can be tweaked.
     static float smoothed_voltage = battVoltage;
-    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  //Exponential moving average
+    smoothed_voltage = (1.0 - alpha) * smoothed_voltage + alpha * battVoltage;  // Exponential moving average
 
 
 
-    //Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more aCONTROL_CHANGEurate after the first full discharge.
+    // Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
 
-    //If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery precentage as we're charging)
-    if (chargingStatus == 1 && (nowtime - chargeStartTime) > 60000) {
-        prevRunTime = prevRunTime - (fullRunTime * 0.0055);  //Subtract the estimated run time added per one minute of charging
+    // If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery precentage as we're charging)
+    if (chargingStatus == 1 && (nowtime - minuteTimer) > 60000) {
+        prevRunTime = prevRunTime - (fullRunTime * 0.0055);  // Subtract the estimated run time added per one minute of charging
         if (prevRunTime < 1) {
-            prevRunTime = 1;  //Never go below 1.
+            prevRunTime = 1;  // Never go below 1.
         }
 
-        chargeStartTime = nowtime;
+        minuteTimer = nowtime;
         static byte computeCycles = 0;
         computeCycles++;
-        if (computeCycles == 5) {  //Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 ms.
+        if (computeCycles == 5) {  // Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 ms.
             writeEEPROM(1993, highByte(prevRunTime));
             writeEEPROM(1994, lowByte(prevRunTime));
             computeCycles = 0;
@@ -121,119 +134,119 @@ void manageBattery(bool send) {
 
 
 
-    //Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
-    unsigned long currentRun = (nowtime - runTimer) / 60000;  //Minutes we've been running since powerup
+    // Calculate the current battery percentage based on the run time and the run time available from a full charge. Don't let it drop below 1% because if it's truly 0 it will shut down.
+    unsigned long currentRun = (nowtime - runTimer) / 60000;  // Minutes we've been running since powerup
 
-    if (!battPower) {  //Ignore time since powerup if we're plugged in.
+    if (!battPower) {  // Ignore time since powerup if we're plugged in.
         currentRun = 0;
     }
 
-    battLevel = constrain(((fullRunTime - (prevRunTime + currentRun)) / float(fullRunTime)) * 100, 1, 100);  //Calculate percentage remaining.
-    if ((prevRunTime + currentRun) > fullRunTime) {                                                          //If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
+    battLevel = constrain(((fullRunTime - (prevRunTime + currentRun)) / float(fullRunTime)) * 100, 1, 100);  // Calculate percentage remaining.
+    if ((prevRunTime + currentRun) > fullRunTime) {                                                          // If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
         battLevel = 1;
     }
 
-    if (chargingStatus == 1 && battLevel > 98) {  //Don't let the percentage reach 100% while charging until there is a termination.
+    if (chargingStatus == 1 && battLevel > 98) {  // Don't let the percentage reach 100% while charging until there is a termination.
         battLevel = 98;
     }
 
 
 
 
-    static byte cycles = 40;  //40 cycles is 30 seconds.
+    static byte cycles = 40;  // 40 cycles is 30 seconds.
 
-    //Send voltage and charging status to Config Tool.
+    // Send voltage and charging status to Config Tool.
     if (cycles == 40 || send) {
         if (communicationMode) {
             sendMIDI(CONTROL_CHANGE, 7, 106, 70);
-            sendMIDI(CONTROL_CHANGE, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  //Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
+            sendMIDI(CONTROL_CHANGE, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
 
             sendMIDI(CONTROL_CHANGE, 7, 106, 71);
-            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  //Send charging status
+            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  // Send charging status
 
             sendMIDI(CONTROL_CHANGE, 7, 106, 74);
-            sendMIDI(CONTROL_CHANGE, 7, 119, battLevel);  //Send battery level
+            sendMIDI(CONTROL_CHANGE, 7, 119, battLevel);  // Send battery level
         }
     }
 
 
-    //If we're charging, try to detect a full cell earlier than the charger timeout by monitoring dV/dt.
-    if (cycles == 40) {  //Every 30 seconds, record a new smoothed voltage reading, add it to the queue, and find the difference between the first and last reading in the queue.
+    // If we're charging, try to detect a full cell earlier than the charger timeout by monitoring dV/dt.
+    if (cycles == 40) {  // Every 30 seconds, record a new smoothed voltage reading, add it to the queue, and find the difference between the first and last reading in the queue.
         cycles = 0;
 
         if (chargingStatus == 1) {
-            for (byte i = 0; i < 20; i++) {  //Shift a new smoothed voltage reading into the queue.
+            for (byte i = 0; i < 20; i++) {  // Shift a new smoothed voltage reading into the queue.
                 voltageQueue[20 - i] = voltageQueue[(20 - i) - 1];
             }
             voltageQueue[0] = smoothed_voltage;
 
-            //On oCONTROL_CHANGEasion the battery voltage will suddenly jump up or down while charging. Currently undiagnosed-- it may be the charger or a change in battery load. The block below detects a sudden drop in voltage and adjusts previous measurements aCONTROL_CHANGEordingly to prevent false termination.
+            // On occasion the battery voltage will suddenly jump up or down while charging. Currently undiagnosed-- it may be the charger or a change in battery load. The block below detects a sudden drop in voltage and adjusts previous measurements accordingly to prevent false termination.
             float voltageDrop = voltageQueue[1] - voltageQueue[0];
             if (voltageDrop > 0.002) {
-                for (byte i = 1; i < 21; i++) {  //Adjust all previous measurements.
+                for (byte i = 1; i < 21; i++) {  // Adjust all previous measurements.
                     voltageQueue[i] = voltageQueue[i] - voltageDrop;
                 }
-                writeEEPROM(1987, readEEPROM(1987) + 1);  //testing--record if there's been an adjustment
+                writeEEPROM(1987, readEEPROM(1987) + 1);  // testing--record if there's been an adjustment
             }
 
 
-            voltageSlope = voltageQueue[0] - voltageQueue[20];  //Find the difference in voltage over the past ten minutes (this number will be large and meaningless meaningless until 10 minutes has past and the queue has been populated--that's okay because we don't need to terminate in the first 10 minutes anyway).
-            if (voltageSlope < 0.001) {                         //If the curve has been flat for the previous 10 minutes, terminate charging. ToDo: it may be best to wait for a few of these flat readings, to avoid the risk of early termination in the middle of the charge curve.
-                digitalWrite(chargeEnable, LOW);                //Disable charging.
+            voltageSlope = voltageQueue[0] - voltageQueue[20];  // Find the difference in voltage over the past ten minutes (this number will be large and meaningless meaningless until 10 minutes has past and the queue has been populated--that's okay because we don't need to terminate in the first 10 minutes anyway).
+            if (voltageSlope < 0.001) {                         // If the curve has been flat for the previous 10 minutes, increment the number of zero-slope readings.
+                flatSlopeCounts++;
+            }
+            if (flatSlopeCounts >= 2) {           // If we've had two readings where the slope has been flat for the previous ten minutes, terminate charging.
+                digitalWrite(chargeEnable, LOW);  // Disable charging.
                 chargeEnabled = 0;
-                chargeTerminated = 1;                    //This tells us not to enable charging again until the power is cycled.
-                digitalWrite(LEDpins[GREEN_LED], HIGH);  //Indicate end of charge. ToDo: improve indication
-                writeEEPROM(1993, 0);                    //Reset the total run time because we are now fully charged (high byte).
-                writeEEPROM(1994, 0);                    //Low byte
-                writeEEPROM(1988, 3);                    //Remember that there has been a termination.
+                chargeTerminated = 1;  // This tells us not to enable charging again until the power is cycled.
+                //Serial.println("charge terminated by 0DV");
+                digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate end of charge. ToDo: improve indication
+                writeEEPROM(1993, 0);                    // Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1994, 0);                    // Low byte
+                writeEEPROM(1988, 3);                    // Remember that there has been a termination.
                 prevRunTime = 0;
+                flatSlopeCounts = 0;
             }
+
 
             /*
-            Serial.print(smoothed_voltage, 3);  //For plotting votage while charging
+            Serial.print(smoothed_voltage, 3);  // For plotting votage while charging
             Serial.print(",");
             Serial.print(voltageSlope, 3);
             Serial.print(",");
             Serial.println(readEEPROM(1987));
-            */
+         */
         }
     }
     cycles++;
 
-    //Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
-    //It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
+    // Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
+    // It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
-        digitalWrite(chargeEnable, HIGH);  //Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
+        digitalWrite(chargeEnable, HIGH);  // Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;
+        chargeStartTime = millis();
         writeEEPROM(1987, 0);
-        if (prevRunTime > fullRunTime) {  //If we've run longer than expected on battery, make the run time the same as the expected run time when we start charging. This will allow the battery percentage to start increasing right away rather than being stuck at 1% for a while.
+        if (prevRunTime > fullRunTime) {  // If we've run longer than expected on battery, make the run time the same as the expected run time when we start charging. This will allow the battery percentage to start increasing right away rather than being stuck at 1% for a while.
             prevRunTime = fullRunTime;
         }
-    } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  //Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
-        digitalWrite(chargeEnable, LOW);                                                                                //Disable charging.
+    } else if (chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] == 0 && USBstatus != DUMB_CHARGER) || battPower)) {  // Disable charging if we're on battery power or connected to a host and host charging isn't allowed.
+        digitalWrite(chargeEnable, LOW);                                                                                // Disable charging.
         chargeEnabled = 0;
     }
 
 
-    //Check if we've been plugged in to power.
-    if (battPower && USBstatus != BATTERY_POWER) {
-        digitalWrite(powerEnable, LOW);  //Disable the boost converter if there is USB power. The device will then power down if USB is unplugged again.
-        battPower = false;
-        recordRuntime(false);  //Record how long we were under battery power.
-    }
 
-
-    //Check to see if we've been idle long enough to power down.
+    // Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        powerDown(false);  //This line can be commented out to disable auto power off, for testing the battery.
+        powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
     }
 
 
-    //Shut down when the battery is low.
-    if (nowtime > 2000 && battPower && battVoltage <= 1.0) {  //Give some time to make sure we detect USB power if it's present.
-        digitalWrite(LEDpins[RED_LED], HIGH);                 //Indicate power down.
-        delay(5000);                                          //Long red LED to indicate shutdown because of low battery
-        powerDown(true);                                      //Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less aCONTROL_CHANGEurate if there have been partial charges since the last termination.
+    // Shut down when the battery is low.
+    if (nowtime > 2000 && battPower && battVoltage <= 1.0) {  // Give some time to make sure we detect USB power if it's present.
+        digitalWrite(LEDpins[RED_LED], HIGH);                 // Long red LED to indicate shutdown because of low battery
+        delay(5000);
+        powerDown(true);  // Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
     }
 }
 
@@ -243,7 +256,7 @@ void manageBattery(bool send) {
 
 
 
-//Use a timer to delay response to changes in charging status while we try detect a charger fault (blinking STAT pin).
+// Use a timer to delay response to changes in charging status while we try detect a charger fault (blinking STAT pin).
 byte faultDetect(bool statusChanged) {
 
     static unsigned long faultTimer;
@@ -252,24 +265,26 @@ byte faultDetect(bool statusChanged) {
     byte ret;
 
     if (statusChanged) {
-        change++;                  //Count the number of times the charging status has changed.
-        if (timing == false) {     //If this is the first time the function has been called
-            faultTimer = nowtime;  //Start a timer
+        change++;                  // Count the number of times the charging status has changed.
+        if (timing == false) {     // If this is the first time the function has been called
+            faultTimer = nowtime;  // Start a timer
             timing = true;
         }
     }
 
-    //ToDo: could probably use shorter than 5 seconds, maybe 4.
-    if ((nowtime - faultTimer) > 5000) {  //If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
+    // ToDo: could probably use shorter than 5 seconds, maybe 4.
+    if ((nowtime - faultTimer) > 5000) {  // If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
         faultTimer = nowtime;
         timing = false;
-        if (change < 2) {  //If the status has only changed once or not at all,
-            ret = 1;       //finalize the current status.
-        } else {           //If the status has changed more than once in 5 seconds, the pin is blinking and it's a fault.
+        if (change < 2) {  // If the status has only changed once or not at all,
+            ret = 1;       // finalize the current status.
+
+            // If the status has changed more than once in 5 seconds, the pin is blinking and it's a fault.
+        } else if ((millis() - chargeStartTime) > 10000) {  //Don't allow a fault for several seconds after the start of charging. Otherwise rapid toggling of the "Charge from USB Hosts" might trigger a fault.
             ret = 2;
         }
         change = 0;
-    } else ret = 0;  //Keep waiting to finalize the current status.
+    } else ret = 0;  // Keep waiting to finalize the current status.
     return ret;
 }
 
@@ -283,9 +298,9 @@ void powerDown(bool resetTotalRuntime) {
 
     if (battPower) {
         recordRuntime(resetTotalRuntime);
-        digitalWrite(LEDpins[RED_LED], HIGH);  //Indicate power down.
+        digitalWrite(LEDpins[RED_LED], HIGH);  // Indicate power down.
         delay(500);
-        digitalWrite(powerEnable, LOW);  //Disable the boost converter to cut power to the entire device.
+        digitalWrite(powerEnable, LOW);  // Disable the boost converter to cut power to the entire device.
     }
 }
 
@@ -295,22 +310,22 @@ void powerDown(bool resetTotalRuntime) {
 
 
 
-//Record how long we've been running on battery power.
+// Record how long we've been running on battery power.
 void recordRuntime(bool resetTotalRuntime) {
 
-    runTimer = (nowtime - runTimer) / 60000;  //Calculate how many minutes we have been powered by the battery.
+    runTimer = (nowtime - runTimer) / 60000;  // Calculate how many minutes we have been powered by the battery.
 
-    runTimer = runTimer + prevRunTime;  //Rebuild stored run time.
+    runTimer = runTimer + prevRunTime;  // Rebuild stored run time.
 
-    if (resetTotalRuntime) {          //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
-        if (readEEPROM(1988) == 3) {  //If we haven't already recorded the total run time
+    if (resetTotalRuntime) {          // Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
+        if (readEEPROM(1988) == 3) {  // If we haven't already recorded the total run time
             writeEEPROM(1989, highByte(runTimer));
             writeEEPROM(1990, lowByte(runTimer));
-            writeEEPROM(1988, 1);  //Record that we've done this so we won't do it again until there has been another full charge.
+            writeEEPROM(1988, 1);  // Record that we've done this so we won't do it again until there has been another full charge.
         }
     }
 
-    writeEEPROM(1993, highByte(runTimer));  //Update the recorded run time in EEPROM.
+    writeEEPROM(1993, highByte(runTimer));  // Update the recorded run time in EEPROM.
     writeEEPROM(1994, lowByte(runTimer));
 }
 
@@ -323,17 +338,17 @@ void recordRuntime(bool resetTotalRuntime) {
 
 float getBattVoltage() {
 
-    //Read battery voltage
-    analogReference(AR_INTERNAL_1_8);    //Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
-    analogOversampling(64);              //Increase oversampling for precise 12-bit reading. 290 uS.
-    digitalWrite(battReadEnable, HIGH);  //We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
+    // Read battery voltage
+    analogReference(AR_INTERNAL_1_8);    // Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
+    analogOversampling(64);              // Increase oversampling for precise 12-bit reading. 290 uS.
+    digitalWrite(battReadEnable, HIGH);  // We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     float battReading = analogRead(battRead);
     digitalWrite(battReadEnable, LOW);
-    analogReference(AR_VDD4);  //Switch back to VDD reference for reading pressure sensor.
-    analogOversampling(8);     //Change back to 8X oversampling for reading pressure sensor.
+    analogReference(AR_VDD4);  // Switch back to VDD reference for reading pressure sensor.
+    analogOversampling(8);     // Change back to 8X oversampling for reading pressure sensor.
 
-    //Calculate voltage. Assumes 12-bit ADC and 1.8V ref
-    battReading = (battReading * 0.439453125f) / 1000;  //mV
+    // Calculate voltage. Assumes 12-bit ADC and 1.8V ref
+    battReading = (battReading * 0.439453125f) / 1000;  // mV
 
     return battReading;
 }
