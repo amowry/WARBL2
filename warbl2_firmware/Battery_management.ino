@@ -81,9 +81,9 @@ void manageBattery(bool send) {
             } else if (chargingStatus == 0 && millis() > 2000 && chargeEnabled && prevChargingStatus != 2) {  //Charging was just stopped by the charger.
                 chargeTerminated = 1;                                                                         //If charging was just stopped by the charger (rather than because we disabled it), mark it as terminated so we don't start again until power is cycled.
                 digitalWrite(LEDpins[GREEN_LED], HIGH);                                                       //Indicate end of charge. ToDo: improve indication
-                writeEEPROM(1993, 0);                                                                        //Reset the total run time because we are now fully charged (high byte).
-                writeEEPROM(1994, 0);                                                                        //Low byte
-                writeEEPROM(1988, 3);                                                                        //Remember that there has been a termination.
+                writeEEPROM(1993, 0);                                                                         //Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1994, 0);                                                                         //Low byte
+                writeEEPROM(1988, 3);                                                                         //Remember that there has been a termination.
                 prevRunTime = 0;
             }
             prevChargingStatus = chargingStatus;
@@ -183,9 +183,9 @@ void manageBattery(bool send) {
                 chargeEnabled = 0;
                 chargeTerminated = 1;                    //This tells us not to enable charging again until the power is cycled.
                 digitalWrite(LEDpins[GREEN_LED], HIGH);  //Indicate end of charge. ToDo: improve indication
-                writeEEPROM(1993, 0);                   //Reset the total run time because we are now fully charged (high byte).
-                writeEEPROM(1994, 0);                   //Low byte
-                writeEEPROM(1988, 3);                   //Remember that there has been a termination.
+                writeEEPROM(1993, 0);                    //Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(1994, 0);                    //Low byte
+                writeEEPROM(1988, 3);                    //Remember that there has been a termination.
                 prevRunTime = 0;
             }
 
@@ -302,7 +302,7 @@ void recordRuntime(bool resetTotalRuntime) {
 
     runTimer = runTimer + prevRunTime;  //Rebuild stored run time.
 
-    if (resetTotalRuntime) {           //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
+    if (resetTotalRuntime) {          //Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
         if (readEEPROM(1988) == 3) {  //If we haven't already recorded the total run time
             writeEEPROM(1989, highByte(runTimer));
             writeEEPROM(1990, lowByte(runTimer));

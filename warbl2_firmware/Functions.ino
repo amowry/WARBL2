@@ -1697,29 +1697,28 @@ void blink()  //blink LED given number of times
 
 
 
+// Pulse LED with 10-bit sine wave.
+void pulse() {
 
-void pulse()  //pulse LED
-{
-    static int writeValue[] = { 0, 0, 0 };
     static bool prevPulseState[] = { false, false, false };
-    static int increment[] = { 1, 1, 1 };  //1 if currently increasing analog value, -1 if decreasing
+    static float in[] = { 4.712f, 4.712f, 4.712f };
+    float out[3];
+    const float rate = 0.005f;  // Smaller constant makes pulse speed slower.
+
 
     for (byte i = 0; i < 3; i++) {
         if (pulseLED[i] == true) {
             prevPulseState[i] = true;
-            writeValue[i] += increment[i];  //Increment the analogWrite value.
-            if (writeValue[i] == 1023) {
-                increment[i] = -1;
-            }
-            if (writeValue[i] == 0) {
-                increment[i] = 1;
-            }
-            analogWrite(LEDpins[i], writeValue[i]);
-
+            in[i] = in[i] + rate;
+            if (in[i] > 10.995f)
+                in[i] = 4.712f;
+            out[i] = sin(in[i]) * 511.5f + 511.5f;
+            analogWrite(LEDpins[i], out[i]);
+            in[i] = in[i] + rate * out[i] / 1023;  // Modify sine wave to spend less time at higher brightness (human eye can't detect higher values as well).
         } else if (prevPulseState[i] == true) {
             prevPulseState[i] = false;
-            analogWrite(LEDpins[i], 0);  //If pulsing was just turned off, write 0.
-            writeValue[i] = 0;           // //Reset so we'll start from 0 bext time pulse is turned on.
+            analogWrite(LEDpins[i], 0);  // If pulsing was just turned off, write 0.
+            in[i] = 4.712f;              // Reset so we'll start from 0 bext time pulse is turned on.
         }
     }
 }
@@ -1733,7 +1732,7 @@ void pulse()  //pulse LED
 
 
 
-//check for and handle incoming MIDI messages from the WARBL Configuration Tool.
+// Check for and handle incoming MIDI messages from the WARBL Configuration Tool.
 void handleControlChange(byte channel, byte number, byte value) {
     //Serial.println(channel);
     //Serial.println(number);
