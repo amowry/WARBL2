@@ -1,7 +1,3 @@
-/*
--ToDo: Turning "charge from hosts" on and off can trigger a battery fault detection.
-*/
-
 
 /*
 Notes:
@@ -13,6 +9,8 @@ Charging is set by resistors to ~110 mA (0.275 C) with a 4-hr safety timer. The 
 Total device consumption is < 100 mA @ 5V, so any USB host (including iOS) will be able to charge.
 The charger will report a fault (missing battery, out of temperature range) by blinking the STAT pin at 1 Hz.
 */
+
+//#define PRINT_CHARGING_DATA  // For plotting votage while charging
 
 void manageBattery(bool send) {
 
@@ -26,7 +24,7 @@ void manageBattery(bool send) {
     static float voltageSlope;               // Change in smoothed voltage over the previous 10 minutes
     static unsigned long minuteTimer = 0;    // Resets every minute while charging to recalculate battery percentage.
     static bool chargeTerminated = false;    // Tells us that a charge cycle has been terminated because the cell is full.
-    static byte flatSlopeCounts = 0;         // Tally of zero-slope readings (two are required to termiante charging).
+    static byte flatSlopeCounts = 0;         // Tally of zero-slope readings (two are required to terminate charging).
     static byte battLevel;                   // Estimated battery percentage remaining
     static bool statusChanged;               // Flag when the charging status has changed.
 
@@ -137,12 +135,10 @@ void manageBattery(bool send) {
     if (!battPower) {  // Ignore time since powerup if we're plugged in.
         currentRun = 0;
     }
-
     battLevel = constrain(((fullRunTime - (prevRunTime + currentRun)) / float(fullRunTime)) * 100, 1, 100);  // Calculate percentage remaining.
     if ((prevRunTime + currentRun) > fullRunTime) {                                                          // If we've run longer than the expected total run time, just set the battery level to 1% until the voltage drops low enough to power down.
         battLevel = 1;
     }
-
     if (chargingStatus == 1 && battLevel > 98) {  // Don't let the percentage reach 100% while charging until there is a termination.
         battLevel = 98;
     }
@@ -150,9 +146,8 @@ void manageBattery(bool send) {
 
 
 
-    static byte cycles = 40;  // 40 cycles is 30 seconds.
-
     // Send voltage and charging status to Config Tool.
+    static byte cycles = 40;  // 40 cycles is 30 seconds.
     if (cycles == 40 || send) {
         if (communicationMode) {
             sendMIDI(CONTROL_CHANGE, 7, 106, 70);
@@ -196,7 +191,7 @@ void manageBattery(bool send) {
                 digitalWrite(chargeEnable, LOW);  // Disable charging.
                 chargeEnabled = 0;
                 chargeTerminated = 1;  // This tells us not to enable charging again until the power is cycled.
-                //Serial.println("charge terminated by 0DV");
+                //Serial.println("charge terminated by 0 dV");
                 digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate end of charge. ToDo: improve indication
                 writeEEPROM(1993, 0);                    // Reset the total run time because we are now fully charged (high byte).
                 writeEEPROM(1994, 0);                    // Low byte
@@ -206,16 +201,18 @@ void manageBattery(bool send) {
             }
 
 
-            /*
-            Serial.print(smoothed_voltage, 3);  // For plotting votage while charging
+#if defined(PRINT_CHARGING_DATA)
+            Serial.print(smoothed_voltage, 3);
             Serial.print(",");
             Serial.print(voltageSlope, 3);
             Serial.print(",");
             Serial.println(readEEPROM(1987));
-         */
+#endif
         }
     }
     cycles++;
+
+
 
     // Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
     // It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
