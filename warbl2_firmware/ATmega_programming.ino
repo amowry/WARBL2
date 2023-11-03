@@ -16,7 +16,7 @@ Adafruit_AVRProg avrprog = Adafruit_AVRProg();
 extern const image_t *images[];
 
 const image_t PROGMEM image_32u4_boot = {
-    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0xCB }, { 0x2F, 0xFF, 0xD9, 0xCB }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
+    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
 
     // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and
     // )"} in place.
@@ -377,12 +377,9 @@ bool programATmega(void) {
         delay(200);
     }
 
-    return true;  // Added to skip fuse verification.
-
-    //need to fix this-- the fuse verification process fails on the extended fuse. AM 10/26/23 Could be the fuse verification mask setting?
     if (!avrprog.verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
-    } else {
-        return true;  // Success
     }
+
+    return true;  // Success
 }

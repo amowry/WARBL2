@@ -73,12 +73,12 @@ const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
 
 
 // Battery variables
-unsigned long runTimer;           //The time when WARBL started running on battery power
-bool battPower = false;           //Keeps track of when we're on battery power, for above timer
-unsigned long fullRunTime = 720;  //The available run time on a full charge, in minutes. This is initialized with an estimate of 12 hours and then adjusted each time the battery is discharged.
-unsigned long prevRunTime = 120;  //The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
-unsigned long powerDownTimer;     //For powering down after a period of no activity
-byte USBstatus = 0;               //Battery power (0), dumb charger (1), or connected USB host (2).
+unsigned long runTimer;             //The time when WARBL started running on battery power
+bool battPower = false;             //Keeps track of when we're on battery power, for above timer
+unsigned long fullRunTime = 720;    //The available run time on a full charge, in minutes. This is initialized with an estimate of 12 hours and then adjusted each time the battery is discharged.
+unsigned long prevRunTime = 120;    //The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
+unsigned long powerDownTimer;       //For powering down after a period of no activity
+byte USBstatus = 0;                 //Battery power (0), dumb charger (1), or connected USB host (2).
 unsigned long chargeStartTime = 0;  // When we started charging.
 
 
@@ -503,7 +503,9 @@ void setup() {
 
     //eraseEEPROM(); //testing
 
-    //bool ATmega_success = programATmega();  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
+    //if (programATmega()) {  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
+        //Serial.println("Success");
+    //}
 
     //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
 }
