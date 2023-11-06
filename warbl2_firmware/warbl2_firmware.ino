@@ -354,7 +354,10 @@ void setup() {
 
 #if defined(RELEASE)
     Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device
+#else
+    // while (!Serial) {}  // Otherwise wait for serial.
 #endif
+
     dwt_enable();  // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
 
     sd_clock_hfclk_request();  // Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
@@ -446,12 +449,12 @@ void setup() {
     SPI.begin();
 
     // IMU
-    sox.begin_SPI(12, &SPI, 0, 10000000);      // Start IMU (CS pin is D12) at 10 Mhz.
-                                               // sox.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);  //Shut down for now to save power, and we'll turn accel and/or gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
-                                               // sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
-    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  // Turn on the accel.
+    sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz.
+                                                //sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro.
+    sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down for now to save power, and we'll turn gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+    sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
     //sox.setAccelDataRate(LSM6DS_RATE_416_HZ);  // Turn on the accel, higher data rate.
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro.
+
 
 
     // Experimental--enable accelerometer highpass filter/slope filter in hardware.
@@ -471,7 +474,6 @@ void setup() {
     }
 
 
-
     if (readEEPROM(1991) != VERSION) {  // Temporary, for upgrading to v4.1 with different EEPROM locations so battery data is saved.
         byte tempSettings[9];
         for (byte i = 0; i < 9; i++) {
@@ -487,7 +489,6 @@ void setup() {
     }
 
 
-
     loadFingering();
     loadSettingsForAllModes();
     mode = defaultMode;  //Set the startup instrument.
@@ -501,10 +502,11 @@ void setup() {
 
     powerDownTimer = millis();  //Reset the powerDown timer.
 
+
     //eraseEEPROM(); //testing
 
     //if (programATmega()) {  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
-        //Serial.println("Success");
+    //Serial.println("Success");
     //}
 
     //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
@@ -519,12 +521,7 @@ void setup() {
 
 void loop() {
 
-
     /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
-
-
-    // delay() puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
-
 
     byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
                                                   // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
@@ -533,37 +530,25 @@ void loop() {
 
     byte delayTime = 3;
 
-    if (!battPower) {  // Use a 2 ms sleep instead if we have USB power
+    if (connIntvl == 0) {  // Use a 2 ms sleep instead if we are only using USB MIDI.
         delayTime = 2;
     }
 
     if (delayCorrection < delayTime) {  // If we haven't used up too much time since the last time through the loop, we can sleep for a bit.
         delayTime = delayTime - delayCorrection;
-        delay(delayTime);
+        delay(delayTime);  // Puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
     }
 
-    getSensors();  // 180 us, 55 of which is reading the pressure sensor.
-
+    getSensors();        // 180 us, 55 of which is reading the pressure sensor.
     nowtime = millis();  // Get the current time for the timers used below and in various functions.
-
-    get_state();  // Get the breath state. 3 us.
-
-    MIDI.read();  // Read any new USBMIDI messages.
+    get_state();         // Get the breath state. 3 us.
+    MIDI.read();         // Read any new USBMIDI messages.
 
     if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
         if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
             BLEMIDI.read();             // Read new BLEMIDI messages.
         }
     }
-
-    blink();  // Blink green LED if necessary.
-    pulse();  // Pulse any LED if necessary.
-
-
-    if (calibration > 0) {
-        calibrate();  // Calibrate/continue calibrating if the command has been received.
-    }
-
 
     get_fingers();  // Find which holes are covered. 4 us.
 
@@ -654,22 +639,16 @@ void loop() {
     if ((nowtime - timerE) > 5) {
         timerE = nowtime;
         // timerD = micros(); // testing--micros requres turning on DWT in setup()
-
-        // Read the IMU all the time for now (for development)
-        //if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
-        readIMU();  // Takes about 145 us using SensorFusion's Mahony
         // Serial.println(micros() - timerD);
-        //}
+        readIMU();    // Takes about 145 us using SensorFusion's Mahony
+        blink();      // Blink green LED if necessary.
+        pulse();      // Pulse any LED if necessary.
+        calibrate();  // Calibrate/continue calibrating if the command has been received.
         checkButtons();
-        if (buttonUsed) {
-            handleButtons();  // If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
-        }
         detectSip();
         detectShake();
-
         sendToConfig(false, false);  // Occasionally send the fingering pattern and pressure to the Configuration Tool if they have changed.
     }
-
 
 
 
@@ -687,14 +666,12 @@ void loop() {
 
 
 
-
     /////////// Things here happen ~ every 0.75 S
 
     if ((nowtime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = nowtime;
-
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage. Could read the voltage a little less frequently.
-
+                               //watchdog_reset();  // Feed the watchdog.
         //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
 
@@ -702,7 +679,6 @@ void loop() {
 
 
     ////////////
+    //ToDOO: moving this up after getShift() seems to cause crashes when connected to BLE. I'd like to figure out why.
     sendNote();  // Send a new MIDI note if there is one. Takes up to 325 us if there is a new note.
-
-    //watchdog_reset();  // Feed the watchdog.
 }

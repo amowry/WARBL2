@@ -4,8 +4,8 @@
 //debug
 void printStuff(void) {
 
-
-    //Serial.println(nowtime - autoCenterYawTimer);
+    //Serial.println(sox.getGyroDataRate());
+    //Serial.println(sizeof(images));
     //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
@@ -118,6 +118,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
+    //Note: gyro is turned off by default to save power unless using roll/pitch/yaw (see loadPrefs())
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -545,6 +546,10 @@ void checkButtons() {
     if (nowtime < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
         pressed[2] = 0;
         released[2] = 0;
+    }
+
+    if (buttonUsed) {
+        handleButtons();  // If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
     }
 }
 
@@ -1134,6 +1139,13 @@ void get_state() {
 
     currentState = newState;
     sensorValue = sensorValue2;  //We'll use the current reading as the baseline next time around, so we can monitor the rate of change.
+
+    if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
+        if (prevState == SILENCE && newState != SILENCE) {
+            velocityDelayTimer = nowtime;  // reset the delay timer used for calculating velocity when a note is turned on after silence.
+        }
+        prevState = newState;
+    }
 }
 
 
@@ -1614,7 +1626,6 @@ void sendNote() {
         if (switches[mode][IMMEDIATE_PB]) {
             calculateAndSendPitchbend();
         }
-
 
         sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  //send the new note
 
@@ -3015,16 +3026,9 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    //Roll this back for now for development
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
-        // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on the accel if we need it.
-        // sox.setGyroDataRate(LSM6DS_RATE_208_HZ);   //Turn on the gyro if we need it.
+        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Turn on the gyro if we need it.
     }
-
-    else if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
-        // sox.setAccelDataRate(LSM6DS_RATE_208_HZ);  //Turn on only the accel for shake pitchbend (most of the IMU power is consumed by the gyro).
-    }
-
 
     //Calculate upper and lower bounds for IMU pitch register mapping
     byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  //Number of degrees per register
@@ -3042,48 +3046,50 @@ void loadPrefs() {
 //Calibrate the sensors and store them in EEPROM
 //mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
 void calibrate() {
-    if (!LEDon) {
-        digitalWrite(LEDpins[GREEN_LED], HIGH);
-        LEDon = 1;
-        calibrationTimer = millis();
+    if (calibration > 0) {
+        if (!LEDon) {
+            digitalWrite(LEDpins[GREEN_LED], HIGH);
+            LEDon = 1;
+            calibrationTimer = millis();
 
-        if (calibration == 1) {  //calibrate all sensors if we're in calibration "mode" 1
-            for (byte i = 1; i < 9; i++) {
-                toneholeCovered[i] = 0;     //first set the calibration to 0 for all of the sensors so it can only be increassed by calibrating
-                toneholeBaseline[i] = 255;  //and set baseline high so it can only be reduced
-            }
-        }
-        if (bellSensor) {
-            toneholeCovered[0] = 0;  //also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
-            toneholeBaseline[0] = 255;
-        }
-        return;  //we return once to make sure we've gotten some new sensor readings.
-    }
-
-    if ((calibration == 1 && ((millis() - calibrationTimer) <= 10000)) || (calibration == 2 && ((millis() - calibrationTimer) <= 5000))) {  //then set the calibration to the highest reading during the next ten seconds(or five seconds if we're only calibrating the bell sensor).
-        if (calibration == 1) {
-            for (byte i = 1; i < 9; i++) {
-                if (toneholeCovered[i] < toneholeRead[i]) {  //covered calibration
-                    toneholeCovered[i] = toneholeRead[i];
-                }
-
-                if (toneholeBaseline[i] > toneholeRead[i]) {  //baseline calibration
-                    toneholeBaseline[i] = toneholeRead[i];
+            if (calibration == 1) {  //calibrate all sensors if we're in calibration "mode" 1
+                for (byte i = 1; i < 9; i++) {
+                    toneholeCovered[i] = 0;     //first set the calibration to 0 for all of the sensors so it can only be increassed by calibrating
+                    toneholeBaseline[i] = 255;  //and set baseline high so it can only be reduced
                 }
             }
+            if (bellSensor) {
+                toneholeCovered[0] = 0;  //also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
+                toneholeBaseline[0] = 255;
+            }
+            return;  //we return once to make sure we've gotten some new sensor readings.
         }
 
-        if (bellSensor && toneholeCovered[0] < toneholeRead[0]) {
-            toneholeCovered[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
-        }
-        if (bellSensor && toneholeBaseline[0] > toneholeRead[0]) {
-            toneholeBaseline[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
-        }
-    }
+        if ((calibration == 1 && ((millis() - calibrationTimer) <= 10000)) || (calibration == 2 && ((millis() - calibrationTimer) <= 5000))) {  //then set the calibration to the highest reading during the next ten seconds(or five seconds if we're only calibrating the bell sensor).
+            if (calibration == 1) {
+                for (byte i = 1; i < 9; i++) {
+                    if (toneholeCovered[i] < toneholeRead[i]) {  //covered calibration
+                        toneholeCovered[i] = toneholeRead[i];
+                    }
 
-    if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
-        saveCalibration();
-        loadPrefs();  //do this so pitchbend scaling will be recalculated.
+                    if (toneholeBaseline[i] > toneholeRead[i]) {  //baseline calibration
+                        toneholeBaseline[i] = toneholeRead[i];
+                    }
+                }
+            }
+
+            if (bellSensor && toneholeCovered[0] < toneholeRead[0]) {
+                toneholeCovered[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
+            }
+            if (bellSensor && toneholeBaseline[0] > toneholeRead[0]) {
+                toneholeBaseline[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
+            }
+        }
+
+        if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
+            saveCalibration();
+            loadPrefs();  //do this so pitchbend scaling will be recalculated.
+        }
     }
 }
 

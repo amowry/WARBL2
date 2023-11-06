@@ -10,7 +10,7 @@
 
 #define EEPROM_I2C_ADDRESS 0x50
 
-#define DEBOUNCE_TIME 0.02                          // button debounce time, in seconds---Integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
+#define DEBOUNCE_TIME 0.02                          // button debounce time, in seconds
 #define SAMPLE_FREQUENCY 200                        // button sample frequency, in Hz
 #define MAXIMUM (DEBOUNCE_TIME * SAMPLE_FREQUENCY)  // the integrator value required to register a button press
 

@@ -1,6 +1,6 @@
 //Reprogram the ATmega32u4 if neccessary.
 //Modofied from Adafruit_AVRProg library examples.
-//Notes: It is currently necessary to alter the library to add the NRF52840 to the list of architectures that support a larger buffer for the hex code (line 34 in Adafruit_AVRProg.h). Hopefully this will be added to the library.
+//Notes: It is currently necessary to alter the library to increase the buffer size for the hex code (line 39 in Adafruit_AVRProg.h): byte image_hexcode[20000]; ///< Max buffer for intel hex format image (text)
 //LED_BUILTIN will blink 3 times to indicate success.
 
 Adafruit_AVRProg avrprog = Adafruit_AVRProg();
