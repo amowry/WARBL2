@@ -66,6 +66,7 @@ void getSensors(void) {
     tempSensorValue = twelveBitPressure >> 2;  //Reduce the reading to stable 10 bits for state machine.
 
     //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
+    byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);   //SS -- wake up ATmega
     delayMicroseconds(10);  //Give it time to wake up.
@@ -381,6 +382,8 @@ void shakeForVibrato() {
 
     const float kShakeGestureThresh = 20.0f;  //Theshold for shake gesture
 
+    unsigned long nowtime = millis();
+
 
     if (abs(accelFilteredB) > kShakeGestureThresh) {
         shakeDetected = true;
@@ -486,6 +489,9 @@ int pitchRegister() {
 //Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
 void checkButtons() {
 
+    static byte integrator[] = { 0, 0, 0 };  // When this reaches MAXIMUM, a button press is registered. When it reaches 0, a release is registered.
+    static bool prevOutput[] = { 0, 0, 0 };         // Previous state of button.
+    
 
     for (byte j = 0; j < 3; j++) {
 
@@ -543,7 +549,7 @@ void checkButtons() {
         prevOutput[j] = pressed[j];  //keep track of state for next time around.
     }
 
-    if (nowtime < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
+    if (millis() < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
         pressed[2] = 0;
         released[2] = 0;
     }
@@ -616,6 +622,8 @@ void sendToConfig(bool newPattern, bool newPressure) {
     static bool pressureChanged = false;
     static unsigned long patternSendTimer;
     static unsigned long pressureSendTimer;
+
+    unsigned long nowtime = millis();
 
     if (communicationMode) {
         if (newPattern && patternChanged == false) {  //If the fingering pattern has changed, start a timer.
@@ -1142,7 +1150,7 @@ void get_state() {
 
     if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
         if (prevState == SILENCE && newState != SILENCE) {
-            velocityDelayTimer = nowtime;  // reset the delay timer used for calculating velocity when a note is turned on after silence.
+            velocityDelayTimer = millis();  // reset the delay timer used for calculating velocity when a note is turned on after silence.
         }
         prevState = newState;
     }
@@ -1599,7 +1607,7 @@ void sendNote() {
                 calculatePressure(3);
             }
 
-            if (IMUsettings[mode][AUTOCENTER_YAW] == true && (nowtime - autoCenterYawTimer) > (IMUsettings[mode][AUTOCENTER_YAW_INTERVAL] * 250)) {  //Recenter yaw when we send a new note if there has been enough silence.
+            if (IMUsettings[mode][AUTOCENTER_YAW] == true && (millis() - autoCenterYawTimer) > (IMUsettings[mode][AUTOCENTER_YAW_INTERVAL] * 250)) {  //Recenter yaw when we send a new note if there has been enough silence.
                 centerIMU();
             }
         }
@@ -1656,7 +1664,7 @@ void sendNote() {
                                                                                                   //keep track
 
             if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  //Reset the autocenter yaw timer.
-                autoCenterYawTimer = nowtime;
+                autoCenterYawTimer = millis();
             }
 
             //Not sure if this is necessary here because it won't have an effect if there's no note playing(?) (AM)
@@ -1753,9 +1761,9 @@ void handleControlChange(byte channel, byte number, byte value) {
 
     if (number < 120) {  //Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == 7) {   //If we're on channel 7, we may be receiving messages from the configuration tool.
-            powerDownTimer = nowtime;  //Reset the powerDown timer because we've heard from the Config Tool.
-            blinkNumber = 1;           //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+        if ((channel & 0x0f) == 7) {    //If we're on channel 7, we may be receiving messages from the configuration tool.
+            powerDownTimer = millis();  //Reset the powerDown timer because we've heard from the Config Tool.
+            blinkNumber = 1;            //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
 
             ///////CC 102

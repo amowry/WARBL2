@@ -27,8 +27,7 @@ void manageBattery(bool send) {
     static byte flatSlopeCounts = 0;         // Tally of zero-slope readings (two are required to terminate charging).
     static byte battLevel;                   // Estimated battery percentage remaining
     static bool statusChanged;               // Flag when the charging status has changed.
-
-
+    unsigned long nowtime = millis();
 
     USBstatus = nrf_power_usbregstatus_vbusdet_get(NRF_POWER) + tud_ready();  // A combination of usbregstatus and tud_ready() can be used to detect battery power (0), dumb charger (1), or connected USB host (2).
     static byte prevUSBstatus;
@@ -233,7 +232,8 @@ void manageBattery(bool send) {
 
     // Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
+        //powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
+        //digitalWrite(LEDpins[RED_LED], HIGH);
     }
 
 
@@ -258,6 +258,7 @@ byte faultDetect(bool statusChanged) {
     static bool timing = false;
     static byte change = 0;
     byte ret;
+    unsigned long nowtime = millis();
 
     if (statusChanged) {
         change++;                  // Count the number of times the charging status has changed.
@@ -308,7 +309,7 @@ void powerDown(bool resetTotalRuntime) {
 // Record how long we've been running on battery power.
 void recordRuntime(bool resetTotalRuntime) {
 
-    runTimer = (nowtime - runTimer) / 60000;  // Calculate how many minutes we have been powered by the battery.
+    runTimer = (millis() - runTimer) / 60000;  // Calculate how many minutes we have been powered by the battery.
 
     runTimer = runTimer + prevRunTime;  // Rebuild stored run time.
 

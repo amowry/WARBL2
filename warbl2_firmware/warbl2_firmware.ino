@@ -18,7 +18,7 @@
     along with this program.  If not, see http://www.gnu.org/licenses/
 
 
-Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total (at 3.0 V), for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
+Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
 
 
 */
@@ -26,9 +26,9 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include "Defines.h"
 
 // Installed with board package
-#include "nrfx_power.h"  // For detecting VBUS
+#include <nrfx_power.h>  // For detecting VBUS
 #include <nrf_nvic.h>
-#include "nrf_wdt.h"  // Watchdog timer
+#include <nrf_wdt.h>  // Watchdog timer
 #include <bluefruit.h>
 #include <Arduino.h>
 #include <Wire.h>  // I2C communication with EEPROM
@@ -38,7 +38,7 @@ Approximate WARBL2 power budget: ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3
 #include <MIDI.h>
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
-#include "ResponsiveAnalogRead.h"  // Fast smoothing of 12-bit pressure sensor readings
+#include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
 #include "Adafruit_AVRProg.h"      //For using the NRF52840 to reprogram the ATmega32U4
 
 
@@ -60,38 +60,29 @@ MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
 MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 
-
 // GPIO constants
-const uint8_t LEDpins[] = { 8, 10, 3 };  //RGB. Green is also LED_BUILTIN.
-//const uint8_t LEDpins[] = { 27, 10, 3 };  //TESTING programming ATmega with NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to rest Atmega.
-const uint8_t powerEnable = 19;           //Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
-const uint8_t chargeEnable = 7;           //Enables charging @ 120 mA current  (~0.33 C, should take around 3 hours to charge)
-const uint8_t STAT = 15;                  //STAT pin  -- input with pullup
-const uint8_t battReadEnable = 6;         //Driving this high connects the battery to NRF for reading voltage
-const uint8_t battRead = 16;              //Analog pin for reading battery voltage
-const uint8_t buttons[] = { 4, 17, 18 };  //buttons 1, 2, 3
+const uint8_t LEDpins[] = { 8, 10, 3 };  // RGB. Green is also LED_BUILTIN.
+//const uint8_t LEDpins[] = { 27, 10, 3 };  // TESTING programming ATmega with NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to reset Atmega.
+const uint8_t powerEnable = 19;           // Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
+const uint8_t chargeEnable = 7;           // Enables charging.
+const uint8_t STAT = 15;                  // Battery charger STAT pin
+const uint8_t battReadEnable = 6;         // Driving this high connects the battery to NRF ADC for reading voltage.
+const uint8_t battRead = 16;              // Analog pin for reading battery voltage
+const uint8_t buttons[] = { 4, 17, 18 };  // Buttons 1, 2, 3
 
 
 // Battery variables
-unsigned long runTimer;             //The time when WARBL started running on battery power
-bool battPower = false;             //Keeps track of when we're on battery power, for above timer
-unsigned long fullRunTime = 720;    //The available run time on a full charge, in minutes. This is initialized with an estimate of 12 hours and then adjusted each time the battery is discharged.
-unsigned long prevRunTime = 120;    //The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
-unsigned long powerDownTimer;       //For powering down after a period of no activity
-byte USBstatus = 0;                 //Battery power (0), dumb charger (1), or connected USB host (2).
+unsigned long runTimer;             // The time when WARBL started running on battery power
+bool battPower = false;             // Keeps track of when we're on battery power, for above timer
+unsigned long fullRunTime = 720;    // The available run time on a full charge, in minutes. This is initialized with an estimate of 12 hours and then adjusted each time the battery is discharged.
+unsigned long prevRunTime = 120;    // The total run time since the last full charge (minutes). Initialized at around 80% full (typical of new PKCell battery). It is zeroed after each full charge.
+unsigned long powerDownTimer;       // For powering down after a period of no activity
+byte USBstatus = 0;                 // Battery power (0), dumb charger (1), or connected USB host (2).
 unsigned long chargeStartTime = 0;  // When we started charging.
 
 
 // BLE
 uint16_t connIntvl = 0;  // The negotiated connection interval
-
-
-// Misc. timers
-unsigned long timerC = 0;
-unsigned long timerD = 0;
-unsigned long timerE = 0;
-unsigned long timerF = 0;
-unsigned long nowtime;
 
 
 // IMU data
@@ -126,33 +117,33 @@ byte defaultMode = 0;  // The default mode, from 0-2.
 
 
 // WARBL2 variables that are independent of instrument
-byte WARBL2settings[] = { 2, 1, 5 };   //see defines above
-uint8_t WARBL2CustomChart[256];        //The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
-int WARBL2CustomChartReceiveByte = 0;  //The byte in the custom chart currently being received from the Config Tool
+byte WARBL2settings[] = { 2, 1, 5 };   // See defines above
+uint8_t WARBL2CustomChart[256];        // The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
+int WARBL2CustomChartReceiveByte = 0;  // The byte in the custom chart currently being received from the Config Tool
 
 
 // Variables that can change according to instrument.
-int8_t octaveShift = 0;                       //octave transposition
-int8_t noteShift = 0;                         //note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
-byte pitchBendMode = kPitchBendSlideVibrato;  //0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
-byte senseDistance = 10;                      //the sensor value above which the finger is sensed for bending notes. Needs to be higher than the baseline sensor readings, otherwise vibrato will be turned on erroneously.
-byte breathMode = kPressureBreath;            //the desired presure sensor behavior: single register, overblow, thumb register control, bell register control.
-unsigned int vibratoDepth = 1024;             //vibrato depth from 0 (no vibrato) to 8191 (one semitone)
-bool useLearnedPressure = 0;                  //whether we use learned pressure for note on threshold, or we use calibration pressure from startup
+int8_t octaveShift = 0;                       // Octave transposition
+int8_t noteShift = 0;                         // Note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
+byte pitchBendMode = kPitchBendSlideVibrato;  // 0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
+byte senseDistance = 10;                      // The sensor value above which the finger is sensed for bending notes. Needs to be higher than the baseline sensor readings, otherwise vibrato will be turned on erroneously.
+byte breathMode = kPressureBreath;            // The desired presure sensor behavior: single register, overblow, thumb register control, bell register control.
+unsigned int vibratoDepth = 1024;             // Vibrato depth from 0 (no vibrato) to 8191 (one semitone)
+bool useLearnedPressure = 0;                  // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
 byte midiBendRange = 2;                       // +/- semitones that the midi bend range represents
-byte mainMidiChannel = 1;                     // current MIDI channel to send notes on
+byte mainMidiChannel = 1;                     // Current MIDI channel to send notes on
 
 
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
-byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  //the fingering patterns chosen in the configuration tool, for the three instruments.
+byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three instruments.
 int8_t octaveShiftSelector[] = { 0, 0, 0 };
 int8_t noteShiftSelector[] = { 0, 0, 8 };
 byte pitchBendModeSelector[] = { 1, 1, 1 };
 byte senseDistanceSelector[] = { 10, 10, 10 };
 byte breathModeSelector[] = { 1, 1, 0 };
-byte useLearnedPressureSelector[] = { 0, 1, 1 };  // default to using learned pressure for isntruments 2 and 3
-int learnedPressureSelector[] = { 0, 280, 475 };  // some reasonable default bag pressure setting for uilleann and GHB
-byte LSBlearnedPressure;                          // used to reconstruct learned pressure from two MIDI bytes.
+byte useLearnedPressureSelector[] = { 0, 1, 1 };  // Default to using learned pressure for isntruments 2 and 3
+int learnedPressureSelector[] = { 0, 280, 475 };  // Some reasonable default bag pressure setting for uilleann and GHB
+byte LSBlearnedPressure;                          // Used to reconstruct learned pressure from two MIDI bytes.
 unsigned int vibratoHolesSelector[] = { 0b011111111, 0b011111111, 0b011111111 };
 unsigned int vibratoDepthSelector[] = { 1024, 1024, 1024 };
 byte midiBendRangeSelector[] = { 2, 2, 2 };
@@ -163,32 +154,32 @@ bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether mo
 byte switches[3][kSWITCHESnVariables] =  // Settings for the switches in various Config Tool panels (see defines)
 
   {
-      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  //instrument 0
-      { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  //same for instrument 1
-      { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   //same for instrument 2
+      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Instrument 0
+      { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Same for instrument 1
+      { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   // Same for instrument 2
   };
 
 byte IMUsettings[3][kIMUnVariables] =  // Settings for mapping and sending IMU readings (see defines above)
 
   {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  //Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  //Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  //Same for instrument 2
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Instrument 0
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Same for instrument 1
+      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Same for instrument 2
   };
 
 byte ED[3][kEXPRESSIONnVariables] =  // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
 
   {
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  //instrument 0
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  //same for instrument 1
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   //same for instrument 2
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Instrument 0
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Same for instrument 1
+      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   // Same for instrument 2
   };
 
 byte pressureSelector[3][12] =  // A selector array for all the register control variables that can be changed in the Configuration Tool
 
-  {                              // instrument 0
-      { 50, 20, 20, 15, 50, 75,  // bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
-        3, 7, 20, 0, 3, 10 },    // breath/mouthpiece: offset, multiplier, transientFilter, jump time, drop time
+  {                              // Instrument 0
+      { 50, 20, 20, 15, 50, 75,  // Bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
+        3, 7, 20, 0, 3, 10 },    // Breath/mouthpiece: offset, multiplier, transientFilter, jump time, drop time
 
       { //instrument 1
         50, 20, 20, 15, 50, 75,
@@ -268,80 +259,76 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 
 
 // Variables for reading tonehole sensors
-volatile byte lastRead = 0;                                      //the transistor that was last read, so we know which to read the next time around the loop.
-unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //covered hole tonehole sensor readings for calibration
-int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          //baseline (uncovered) hole tonehole sensor readings
-byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Used for receiving tone hole readings from the ATmega32U4
-int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              //tonehole sensor readings after being reassembled from above bytes
-unsigned int holeCovered = 0;                                    //whether each hole is covered-- each bit corresponds to a tonehole.
-uint8_t tempCovered = 0;                                         //used when masking holeCovered to ignore certain holes depending on the fingering pattern.
-bool fingersChanged = 1;                                         //keeps track of when the fingering pattern has changed.
-unsigned int prevHoleCovered = 1;                                //so we can track changes.
+volatile byte lastRead = 0;                                      // The transistor that was last read, so we know which to read the next time around the loop.
+unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Covered hole tonehole sensor readings for calibration
+int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          // Baseline (uncovered) hole tonehole sensor readings
+int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              // Tonehole sensor readings after being reassembled from above bytes
+unsigned int holeCovered = 0;                                    // Whether each hole is covered-- each bit corresponds to a tonehole.
+uint8_t tempCovered = 0;                                         // Used when masking holeCovered to ignore certain holes depending on the fingering pattern.
+bool fingersChanged = 1;                                         // Keeps track of when the fingering pattern has changed.
+unsigned int prevHoleCovered = 1;                                // So we can track changes.
 volatile int tempNewNote = 0;
 byte prevNote;
-byte newNote = -1;         //the next note to be played, based on the fingering chart (does not include transposition).
-byte notePlaying;          //the actual MIDI note being played, which we remember so we can turn it off again.
-byte transientFilter = 0;  // small delay for filtering out transient notes
+byte newNote = -1;         // The next note to be played, based on the fingering chart (does not include transposition).
+byte notePlaying;          // The actual MIDI note being played, which we remember so we can turn it off again.
+byte transientFilter = 0;  // Small delay for filtering out transient notes
 
 
 // Pitchbend variables
-unsigned long pitchBendTimer = 0;                                             //to keep track of the last time we sent a pitchbend message
-byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           //whether pitchbend is currently turned for for a specific hole
-int pitchBend = 8192;                                                         //total current pitchbend value
-int prevPitchBend = 8192;                                                     //a record of the previous pitchBend value, so we don't send the same one twice
-int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  //current pitchbend value for each tonehole
+unsigned long pitchBendTimer = 0;                                             // To keep track of the last time we sent a pitchbend message
+byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
+int pitchBend = 8192;                                                         // Total current pitchbend value
+int prevPitchBend = 8192;                                                     // A record of the previous pitchBend value, so we don't send the same one twice
+int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 int pitchBendPerSemi = 4096;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
-unsigned long pressureTimer = 0;                               //to keep track of the last time we sent a pressure message
-unsigned long noteOnTimestamp = 0;                             // ms timestamp the note was activated
-byte slideHole;                                                //the hole above the current highest uncovered hole. Used for detecting slides between notes.
-byte stepsDown = 1;                                            //the number of half steps down from the slideHole to the next lowest note on the scale, used for calculating pitchbend values.
-byte vibratoEnable = 0;                                        // if non-zero, send vibrato pitch bend
-unsigned int holeLatched = 0b000000000;                        //holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
-unsigned int vibratoHoles = 0b111111111;                       //holes to be used for vibrato, left thumb on left, bell sensor far right.
-unsigned int toneholeScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //a scale for normalizing the range of each sensor, for sliding
-unsigned int vibratoScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };   //same as above but for vibrato
-int expression = 0;                                            //pitchbend up or down from current note based on pressure
-bool customEnabled = 0;                                        //Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
-int adjvibdepth;                                               //vibrato depth scaled to MIDI bend range.
+unsigned long pressureTimer = 0;                               // To keep track of the last time we sent a pressure message
+unsigned long noteOnTimestamp = 0;                             // When the note was activated
+byte slideHole;                                                // The hole above the current highest uncovered hole. Used for detecting slides between notes.
+byte stepsDown = 1;                                            // The number of half steps down from the slideHole to the next lowest note on the scale, used for calculating pitchbend values.
+byte vibratoEnable = 0;                                        // If non-zero, send vibrato pitch bend
+unsigned int holeLatched = 0b000000000;                        // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
+unsigned int vibratoHoles = 0b111111111;                       // Holes to be used for vibrato, left thumb on left, bell sensor far right.
+unsigned int toneholeScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // A scale for normalizing the range of each sensor, for sliding
+unsigned int vibratoScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };   // Same as above but for vibrato
+int expression = 0;                                            // Pitchbend up or down from current note based on pressure
+bool customEnabled = 0;                                        // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
+int adjvibdepth;                                               // Vibrato depth scaled to MIDI bend range.
 
 
 // Variables for managing MIDI note output
-bool noteon = 0;      //whether a note is currently turned on
-bool shiftState = 0;  //whether the octave is shifted (could be combined with octaveShift)
-int8_t shift = 0;     //the total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
-byte velocity = 127;  //default MIDI note velocity
+bool noteon = 0;      // Whether a note is currently turned on
+bool shiftState = 0;  // Whether the octave is shifted (could be combined with octaveShift)
+int8_t shift = 0;     // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
+byte velocity = 127;  // Default MIDI note velocity
 
 
 // Tonehole calibration variables
-byte calibration = 0;  //whether we're currently calibrating. 1 is for calibrating all sensors, 2 is for calibrating bell sensor only, 3 is for calibrating all sensors plus baseline calibration (normally only done once, in the "factory").
+byte calibration = 0;  // Whether we're currently calibrating. 1 is for calibrating all sensors, 2 is for calibrating bell sensor only, 3 is for calibrating all sensors plus baseline calibration (normally only done once, in the "factory").
 unsigned long calibrationTimer = 0;
 
 
 // Variables for reading buttons
-unsigned long buttonReadTimer = 0;              //for telling when it's time to read the buttons
-byte integrator[] = { 0, 0, 0 };                //stores integration of button readings. When this reaches MAXIMUM, a button press is registered. When it reaches 0, a release is registered.
-bool pressed[] = { 0, 0, 0 };                   //whether a button is currently presed (this it the output from the integrator)
-bool released[] = { 0, 0, 0 };                  //if a button has just been released
-bool justPressed[] = { 0, 0, 0 };               //if a button has just been pressed
-bool prevOutput[] = { 0, 0, 0 };                //previous state of button, to track state through time
-bool longPress[] = { 0, 0, 0 };                 //long button press
-unsigned int longPressCounter[] = { 0, 0, 0 };  //for counting how many readings each button has been held, to indicate a long button press
-bool noteOnOffToggle[] = { 0, 0, 0 };           //if using a button to toggle a noteOn/noteOff command, keep track of state.
-bool longPressUsed[] = { 0, 0, 0 };             //if we used a long button press, we set a flag so we don't use it again unless the button has been released first.
-bool buttonUsed = 0;                            //flags any button activity, so we know to handle it.
+bool pressed[] = { 0, 0, 0 };                   // Whether a button is currently presed (this it the output from the integrator)
+bool released[] = { 0, 0, 0 };                  // If a button has just been released
+bool justPressed[] = { 0, 0, 0 };               // If a button has just been pressed
+bool longPress[] = { 0, 0, 0 };                 // Long button press
+unsigned int longPressCounter[] = { 0, 0, 0 };  // For counting how many readings each button has been held, to indicate a long button press
+bool noteOnOffToggle[] = { 0, 0, 0 };           // If using a button to toggle a noteOn/noteOff command, keep track of state.
+bool longPressUsed[] = { 0, 0, 0 };             // If we used a long button press, we set a flag so we don't use it again unless the button has been released first.
+bool buttonUsed = 0;                            // Flags any button activity, so we know to handle it.
 bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;  //used to monitor drones on/off.
 
 
 // Variables for communication with the WARBL Configuration Tool
-bool communicationMode = 0;          //whether we are currently communicating with the tool.
-byte buttonReceiveMode = 100;        //which row in the button configuration matrix for which we're currently receiving data.
-int pressureReceiveMode = 100;       //indicates the variable for which we're currently receiving data
-byte fingeringReceiveMode = 0;       // indicates the mode (instrument) for  which a fingering pattern is going to be sent
-byte WARBL2settingsReceiveMode = 0;  // indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
+bool communicationMode = 0;          // Whether we are currently communicating with the tool.
+byte buttonReceiveMode = 100;        // Which row in the button configuration matrix for which we're currently receiving data.
+int pressureReceiveMode = 100;       // Indicates the variable for which we're currently receiving data
+byte fingeringReceiveMode = 0;       // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;  // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
 
 
@@ -354,8 +341,6 @@ void setup() {
 
 #if defined(RELEASE)
     Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device
-#else
-    // while (!Serial) {}  // Otherwise wait for serial.
 #endif
 
     dwt_enable();  // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
@@ -398,7 +383,7 @@ void setup() {
     analogReference(AR_VDD4);       // Use VDD for analog reference.
     analogReadResolution(adcBits);  // 12 bit
 
-    // Set up responsive analog read for adaptive filtering of pressure
+    // Set up responsive analog read for adaptive filtering of pressure.
     const float snapmult = 0.01f;
     const float actthresh = 2.0f;
     analogPressure.setSnapMultiplier(snapmult);
@@ -444,8 +429,8 @@ void setup() {
     Wire.setClock(400000);  // High speed
 
     // SPI
-    pinMode(2, OUTPUT);     //SS for Atmega
-    digitalWrite(2, HIGH);  //Ensure SS stays high for now.
+    pinMode(2, OUTPUT);     // SS for Atmega
+    digitalWrite(2, HIGH);  // Ensure SS stays high for now.
     SPI.begin();
 
     // IMU
@@ -463,14 +448,14 @@ void setup() {
     //sox.highPassFilter(true, LSM6DS_HPF_ODR_DIV_100);
 
 
-    //writeEEPROM(44, 255);  //This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
+    //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
     if (readEEPROM(44) != 3) {
-        saveFactorySettings();  //If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
+        saveFactorySettings();  // If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
     }
 
     if (readEEPROM(37) == 3) {
-        loadCalibration();  //If there has been a calibration saved, reload it at startup.
+        loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
 
@@ -491,25 +476,25 @@ void setup() {
 
     loadFingering();
     loadSettingsForAllModes();
-    mode = defaultMode;  //Set the startup instrument.
+    mode = defaultMode;  // Set the startup instrument.
 
-    analogRead(A0);  //The first analog readings are sometimes nonsense, so we read a few times and throw them away.
+    analogRead(A0);  // The first analog readings are sometimes nonsense, so we read a few times and throw them away.
     analogRead(A0);
     sensorCalibration = analogRead(A0) >> 2;
-    sensorValue = sensorCalibration;  //An initial reading
+    sensorValue = sensorCalibration;  // An initial reading
 
-    loadPrefs();  //Load the correct user settings based on current instrument.
+    loadPrefs();  // Load the correct user settings based on current instrument.
 
-    powerDownTimer = millis();  //Reset the powerDown timer.
+    powerDownTimer = millis();  // Reset the powerDown timer.
 
 
-    //eraseEEPROM(); //testing
+    //eraseEEPROM(); // Testing
 
-    //if (programATmega()) {  //Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
+    //if (programATmega()) {  // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
     //Serial.println("Success");
     //}
 
-    //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  //Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
+    //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
 }
 
 
@@ -521,11 +506,18 @@ void setup() {
 
 void loop() {
 
+    // Misc. timers
+    static unsigned long timerC = 0;
+    static unsigned long timerD = 0;
+    static unsigned long timerE = 0;
+    static unsigned long timerF = 0;
+    static unsigned long wakeTime = 0;
+
     /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
 
-    byte delayCorrection = (millis() - nowtime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
-                                                  // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
-                                                  // With USB MIDI only there is virtually no jitter with a loop period of 2 ms.
+    byte delayCorrection = (millis() - wakeTime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
+                                                   // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
+                                                   // With USB MIDI only there is virtually no jitter with a loop period of 2 ms.
     //if (delayCorrection > 3) { Serial.println(delayCorrection); }  // Print the amount of time that other things have consumed.
 
     byte delayTime = 3;
@@ -539,17 +531,10 @@ void loop() {
         delay(delayTime);  // Puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
     }
 
-    getSensors();        // 180 us, 55 of which is reading the pressure sensor.
-    nowtime = millis();  // Get the current time for the timers used below and in various functions.
-    get_state();         // Get the breath state. 3 us.
-    MIDI.read();         // Read any new USBMIDI messages.
+    wakeTime = millis();
 
-    if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
-        if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
-            BLEMIDI.read();             // Read new BLEMIDI messages.
-        }
-    }
-
+    getSensors();   // 180 us, 55 of which is reading the pressure sensor.
+    get_state();    // Get the breath state. 3 us.
     get_fingers();  // Find which holes are covered. 4 us.
 
 
@@ -564,7 +549,7 @@ void loop() {
 
         if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
             if (pitchBendMode != kPitchBendNone) {
-                holeLatched = holeCovered;  // remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;
@@ -575,26 +560,25 @@ void loop() {
 
         newNote = tempNewNote;
         tempNewNote = -1;
-        fingeringChangeTimer = nowtime;  // Start timing after the fingering pattern has changed.
+        fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
 
         get_state();  // Recalculate state if the fingering has changed because state depends on both pressure and fingering.
     }
 
 
-
-    if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
-        if (prevState == SILENCE && newState != SILENCE) {
-            velocityDelayTimer = nowtime;  // reset the delay timer used for calculating velocity when a note is turned on after silence.
-        }
-        prevState = newState;
-    }
-
     get_shift();  // Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
+    sendNote();   // Send the note as soon as we know the fingering pattern, state, and shift.
+    MIDI.read();  // Read any new USBMIDI messages.
 
+    if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
+        if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
+            BLEMIDI.read();             // Read new BLEMIDI messages.
+        }
+    }
 
 
     byte pressureInterval;  // Determine how frequently to send MIDI messages based on pressure.
-    if ((nowtime - noteOnTimestamp) < 20) {
+    if ((millis() - noteOnTimestamp) < 20) {
         pressureInterval = 2;
     } else pressureInterval = 5;
     if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  // Use a longer interval if sending BLE.
@@ -602,9 +586,13 @@ void loop() {
     }
 
 
-    if ((nowtime - pressureTimer) >= pressureInterval) {
 
-        pressureTimer = nowtime;
+
+    /////////// Things here happen ~ every 2 to 18 ms.
+
+    if ((millis() - pressureTimer) >= pressureInterval) {
+
+        pressureTimer = millis();
         if (abs(prevSensorValue - smoothed_pressure) > 1) {  // If pressure has changed more than a little, send it.
             if (ED[mode][SEND_PRESSURE]) {
                 calculatePressure(0);
@@ -634,10 +622,10 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 5 ms --these things should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
+    /////////// Things here happen ~ every 5 ms. These are things that should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
 
-    if ((nowtime - timerE) > 5) {
-        timerE = nowtime;
+    if ((millis() - timerE) > 5) {
+        timerE = millis();
         // timerD = micros(); // testing--micros requres turning on DWT in setup()
         // Serial.println(micros() - timerD);
         readIMU();    // Takes about 145 us using SensorFusion's Mahony
@@ -647,7 +635,7 @@ void loop() {
         checkButtons();
         detectSip();
         detectShake();
-        sendToConfig(false, false);  // Occasionally send the fingering pattern and pressure to the Configuration Tool if they have changed.
+        sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
     }
 
 
@@ -655,12 +643,12 @@ void loop() {
 
     /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
-    if ((nowtime - timerC) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+    if ((millis() - timerC) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+        timerC = millis();
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();
         sendIMU();          // ~ 130 us
         shakeForVibrato();  // ~ 200 uS
-        timerC = nowtime;
     }
 
 
@@ -668,17 +656,10 @@ void loop() {
 
     /////////// Things here happen ~ every 0.75 S
 
-    if ((nowtime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
-        timerF = nowtime;
+    if ((millis() - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
+        timerF = millis();
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage. Could read the voltage a little less frequently.
-                               //watchdog_reset();  // Feed the watchdog.
+        //watchdog_reset();  // Feed the watchdog.
         //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
-
-
-
-
-    ////////////
-    //ToDOO: moving this up after getShift() seems to cause crashes when connected to BLE. I'd like to figure out why.
-    sendNote();  // Send a new MIDI note if there is one. Takes up to 325 us if there is a new note.
 }
