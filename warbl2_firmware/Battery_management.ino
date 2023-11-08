@@ -10,7 +10,7 @@ Total device consumption is < 100 mA @ 5V, so any USB host (including iOS) will 
 The charger will report a fault (missing battery, out of temperature range) by blinking the STAT pin at 1 Hz.
 */
 
-//#define PRINT_CHARGING_DATA  // For plotting votage while charging
+//#define PRINT_CHARGING_DATA  // For plotting voltage while charging
 
 void manageBattery(bool send) {
 
@@ -232,8 +232,9 @@ void manageBattery(bool send) {
 
     // Check to see if we've been idle long enough to power down.
     if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
-        //powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
-        //digitalWrite(LEDpins[RED_LED], HIGH);
+        digitalWrite(LEDpins[RED_LED], HIGH);  // Long red LED to indicate shutdown because of low battery
+        delay(5000);
+        powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
     }
 
 

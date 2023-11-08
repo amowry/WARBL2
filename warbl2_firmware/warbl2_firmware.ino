@@ -654,7 +654,7 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 0.75 S
+    /////////// Things here happen ~ every 0.75 s.
 
     if ((millis() - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = millis();
