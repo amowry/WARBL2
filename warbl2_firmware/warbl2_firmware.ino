@@ -209,6 +209,12 @@ byte program = 0;               //current MIDI program change value. This always
 bool dronesState = 0;           //keeps track of whether we're above or below the pressure threshold for turning drones on.
 bool pulseLED[] = { 0, 0, 0 };  //Whether currently pulsing LEDs
 
+// Misc. timers used in loop()
+unsigned long pitchBendTimer = 0;
+unsigned long timerD = 0;
+unsigned long timerE = 0;
+unsigned long timerF = 0;
+unsigned long pressureTimer = 0;
 
 // Variables for reading pressure sensor
 volatile unsigned int tempSensorValue = 0;  //for holding the pressure sensor value inside the ISR
@@ -275,16 +281,13 @@ byte transientFilter = 0;  // Small delay for filtering out transient notes
 
 
 // Pitchbend variables
-unsigned long pitchBendTimer = 0;                                             // To keep track of the last time we sent a pitchbend message
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
 int pitchBend = 8192;                                                         // Total current pitchbend value
-int prevPitchBend = 8192;                                                     // A record of the previous pitchBend value, so we don't send the same one twice
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 int pitchBendPerSemi = 4096;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
-unsigned long pressureTimer = 0;                               // To keep track of the last time we sent a pressure message
 unsigned long noteOnTimestamp = 0;                             // When the note was activated
 byte slideHole;                                                // The hole above the current highest uncovered hole. Used for detecting slides between notes.
 byte stepsDown = 1;                                            // The number of half steps down from the slideHole to the next lowest note on the scale, used for calculating pitchbend values.
@@ -302,23 +305,20 @@ int adjvibdepth;                                               // Vibrato depth 
 bool noteon = 0;      // Whether a note is currently turned on
 bool shiftState = 0;  // Whether the octave is shifted (could be combined with octaveShift)
 int8_t shift = 0;     // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
-byte velocity = 127;  // Default MIDI note velocity
+byte velocity = 127;  // MIDI note velocity
 
 
 // Tonehole calibration variables
 byte calibration = 0;  // Whether we're currently calibrating. 1 is for calibrating all sensors, 2 is for calibrating bell sensor only, 3 is for calibrating all sensors plus baseline calibration (normally only done once, in the "factory").
-unsigned long calibrationTimer = 0;
 
 
 // Variables for reading buttons
-bool pressed[] = { 0, 0, 0 };                   // Whether a button is currently presed (this it the output from the integrator)
-bool released[] = { 0, 0, 0 };                  // If a button has just been released
-bool justPressed[] = { 0, 0, 0 };               // If a button has just been pressed
-bool longPress[] = { 0, 0, 0 };                 // Long button press
-unsigned int longPressCounter[] = { 0, 0, 0 };  // For counting how many readings each button has been held, to indicate a long button press
-bool noteOnOffToggle[] = { 0, 0, 0 };           // If using a button to toggle a noteOn/noteOff command, keep track of state.
-bool longPressUsed[] = { 0, 0, 0 };             // If we used a long button press, we set a flag so we don't use it again unless the button has been released first.
-bool buttonUsed = 0;                            // Flags any button activity, so we know to handle it.
+bool pressed[] = { 0, 0, 0 };          // Whether a button is currently presed
+bool released[] = { 0, 0, 0 };         // If a button has just been released
+bool justPressed[] = { 0, 0, 0 };      // If a button has just been pressed
+bool longPress[] = { 0, 0, 0 };        // Long button press
+bool noteOnOffToggle[] = { 0, 0, 0 };  // If using a button to toggle a noteOn/noteOff command, keep track of state.
+bool longPressUsed[] = { 0, 0, 0 };    // If we used a long button press, we set a flag so we don't use it again unless the button has been released first.
 bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;  //used to monitor drones on/off.
 
@@ -345,9 +345,9 @@ void setup() {
 
     // NRF stuff
     dwt_enable();                 // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
-    sd_clock_hfclk_request();     // Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    sd_clock_hfclk_request();     // Enable the high-frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
     NRF_POWER->DCDCEN = 1;        // ENABLE DC/DC CONVERTER, cuts power consumption.
-    NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average
+    NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average.
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
@@ -496,12 +496,6 @@ void setup() {
 
 void loop() {
 
-    // Misc. timers
-    static unsigned long timerC = 0;
-    static unsigned long timerD = 0;
-    static unsigned long timerE = 0;
-    static unsigned long timerF = 0;
-    
 
 
     /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
@@ -550,12 +544,12 @@ void loop() {
 
     /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
-    if ((millis() - timerC) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
-        timerC = millis();
+    if ((millis() - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+        pitchBendTimer = millis();    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
-        printStuff();
-        sendIMU();          // ~ 130 us
-        shakeForVibrato();  // ~ 200 uS
+        printStuff();                 // Debug
+        sendIMU();                    // ~ 130 us
+        shakeForVibrato();            // ~ 200 uS
     }
 
 

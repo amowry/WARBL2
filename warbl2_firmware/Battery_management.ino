@@ -182,7 +182,7 @@ void manageBattery(bool send) {
             }
 
 
-            voltageSlope = voltageQueue[0] - voltageQueue[20];  // Find the difference in voltage over the past ten minutes (this number will be large and meaningless meaningless until 10 minutes has past and the queue has been populated--that's okay because we don't need to terminate in the first 10 minutes anyway).
+            voltageSlope = voltageQueue[0] - voltageQueue[20];  // Find the difference in voltage over the past ten minutes (this number will be large and meaningless until 10 minutes has past and the queue has been populated--that's okay because we don't need to terminate in the first 10 minutes anyway).
             if (voltageSlope < 0.001) {                         // If the curve has been flat for the previous 10 minutes, increment the number of zero-slope readings.
                 flatSlopeCounts++;
             }
@@ -191,7 +191,7 @@ void manageBattery(bool send) {
                 chargeEnabled = 0;
                 chargeTerminated = 1;  // This tells us not to enable charging again until the power is cycled.
                 //Serial.println("charge terminated by 0 dV");
-                digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate end of charge. ToDo: improve indication
+                digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate end of charge.
                 writeEEPROM(1993, 0);                    // Reset the total run time because we are now fully charged (high byte).
                 writeEEPROM(1994, 0);                    // Low byte
                 writeEEPROM(1988, 3);                    // Remember that there has been a termination.
@@ -334,12 +334,12 @@ void recordRuntime(bool resetTotalRuntime) {
 float getBattVoltage() {
 
     // Read battery voltage
-    analogReference(AR_INTERNAL_1_8);    // Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
-    analogOversampling(64);              // Increase oversampling for precise 12-bit reading. 290 uS.
-    digitalWrite(battReadEnable, HIGH);  // We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
-    float battReading = analogRead(battRead);
+    analogReference(AR_INTERNAL_1_8);          // Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
+    analogOversampling(64);                    // Increase oversampling for precise 12-bit reading.
+    digitalWrite(battReadEnable, HIGH);        // We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
+    float battReading = analogRead(battRead);  // 290 uS.
     digitalWrite(battReadEnable, LOW);
-    analogReference(AR_VDD4);  // Switch back to VDD reference for reading pressure sensor.
+    analogReference(AR_VDD4);  // Change back to VDD reference for reading pressure sensor.
     analogOversampling(8);     // Change back to 8X oversampling for reading pressure sensor.
 
     // Calculate voltage. Assumes 12-bit ADC and 1.8V ref

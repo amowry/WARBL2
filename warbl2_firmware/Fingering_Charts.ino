@@ -1,5 +1,5 @@
-//Fingering Charts
-//As constants, these are automatically stored in program memory with the ARM architecture.
+// Fingering Charts
+// As constants, these are automatically stored in program memory with the ARM architecture.
 
 
 
@@ -7,11 +7,11 @@
 //Tin whistle/Irish flute
 struct tinwhistle_explicit_entry {
     uint8_t midi_note;
-    uint8_t vibrato;  //send pitch bend down
+    uint8_t vibrato;  // Send pitch bend down.
 };
 
 const struct tinwhistle_explicit_entry tinwhistle_explicit[64] = {
-    //explicit fingering patterns that aren't covered by the general patterns below. Sensor numbers from left to right are L1,L2,L3,R1,R2,R3,R4. The Lthumb, R4 (pinky) and bell sensors are ignored for now.
+    // Explicit fingering patterns. Sensor numbers from left to right are L1,L2,L3,R1,R2,R3,R4. The Lthumb, R4 (pinky) and bell sensors are ignored for now.
     { 73, 0 },         //0000000 C#
     { 73, 0 },         //0000001 C#
     { 73, 0 },         //0000010 C#
@@ -89,7 +89,7 @@ struct uilleann_explicit_entry {
 };
 
 const struct uilleann_explicit_entry uilleann_explicit[128] = {
-    //explicit fingering patterns that aren't covered by the general patterns below. Sensor numbers from left to right are L1,L2,L3,R1,R2,R3,R4. The bell sensor is ignored for now.
+    // The bell sensor is ignored for now.
     { 73, 0 },         //0000000 C#
     { 73, 0b000010 },  //0000001 C#
     { 73, 0 },         //0000010 C#
@@ -230,7 +230,7 @@ struct GHB_explicit_entry {
 
 
 const struct GHB_explicit_entry GHB_explicit[128] = {
-    //explicit fingering patterns. Sensor numbers from left to right are L1,L2,L3,R1,R2,R3,R4. The bell sensor is ignored.
+    // The bell sensor is ignored.
 
     { 72 },  //0000000 G (as written, actual note sounded is Bb, like on real GHB) Noteshift variable is used to transpose from key of D (all fingerings are based on D) to Bb. Uses equal temperament, but temperament can be set in app (e.g. Universal Piper).
     { 72 },  //0000001 G
@@ -371,8 +371,8 @@ struct northumbrian_general_entry {
 };
 
 const struct northumbrian_general_entry northumbrian_general[8] = {
-    //general fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
-    { 127, 60 },  //This will be interpreted as slient (closed pipe). The findleftmostunsetbit function returns 127 if all holes are covered.
+    // General fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
+    { 127, 60 },  // This will be interpreted as slient (closed pipe). The findleftmostunsetbit function returns 127 if all holes are covered.
     { 0, 62 },    //G --- noteshift variable is set by default to lower the key to F, which is most common for Northumbrian.
     { 1, 64 },    //A
     { 2, 66 },    //B
@@ -393,7 +393,7 @@ struct gaita_extended_explicit_entry {
 
 
 const struct gaita_extended_explicit_entry gaita_extended_explicit[256] = {
-    //general fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
+
     { 75 },  //00000000 C  MIDI notes in the GAITA chart are shifted 1 note upward to bring the base note to a similar range as other instruments, because this base note is used in octave-shifting calculations. The notes are shifted back down again later to bring them in tune.
     { 75 },  //00000001
     { 75 },  //00000010 C
@@ -661,7 +661,7 @@ struct gaita_explicit_entry {
 
 
 const struct gaita_explicit_entry gaita_explicit[256] = {
-    //general fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
+
     { 75 },  //00000000 C
     { 75 },  //00000001
     { 75 },  //00000010 C
@@ -929,7 +929,7 @@ struct naf_explicit_entry {
 };
 
 const struct naf_explicit_entry naf_explicit[128] = {
-    //general fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
+
     { 75 },  //0000000 D#5
     { 74 },  //0000001 D5
     { 74 },  //0000010 D5
@@ -1067,7 +1067,6 @@ const struct naf_explicit_entry naf_explicit[128] = {
 struct evi_explicit_entry {
     uint8_t midi_note;
 };
-
 
 const struct evi_explicit_entry evi_explicit[128] = {
     { 94 },  //0000000 Bb
@@ -1207,7 +1206,6 @@ struct shakuhachi_explicit_entry {
     uint8_t midi_note;
 };
 
-
 const struct shakuhachi_explicit_entry shakuhachi_explicit[32] = {
     { 74 },  //00000 D
     { 74 },  //00001
@@ -1242,7 +1240,6 @@ const struct shakuhachi_explicit_entry shakuhachi_explicit[32] = {
     { 65 },  //11110 F
     { 62 }   //11111 C
 
-
 };
 
 
@@ -1252,7 +1249,6 @@ struct kaval_explicit_entry {
 };
 
 const struct kaval_explicit_entry kaval_explicit[128] = {
-    //general fingering pattern for each MIDI note. In this case, the index (position from right) of the leftmost uncovered hole is used to determine the MIDI note. This way all other holes below that one are ignored.
 
     { 70 },  //0000000 Bb
     { 70 },  //0000001
@@ -1387,15 +1383,13 @@ const struct kaval_explicit_entry kaval_explicit[128] = {
 
 
 
-
-
 //Recorder
 struct recorder_explicit_entry {
     uint8_t midi_note;
 };
 
 const struct recorder_explicit_entry recorder_explicit[128] = {
-    //thumb and left index finger aren't shown, they are accounted for in getNote().
+    // Thumb and left index finger aren't shown, they are accounted for in getNote().
     { 75 },  //0000000 C#
     { 74 },  //0000001 C
     { 74 },  //0000010 C
@@ -1525,11 +1519,7 @@ const struct recorder_explicit_entry recorder_explicit[128] = {
     { 64 },  //1111110 D
     { 62 }   //1111111 C
 
-
 };
-
-
-
 
 
 
@@ -1539,7 +1529,6 @@ struct xiao_explicit_entry {
 };
 
 const struct xiao_explicit_entry xiao_explicit[128] = {
-
 
     { 68 },  //000000 Ab
     { 68 },  //000001 Ab
@@ -1606,7 +1595,6 @@ const struct xiao_explicit_entry xiao_explicit[128] = {
     { 62 },  //111110 D
     { 60 }   //111111 C
 };
-
 
 
 
@@ -1825,15 +1813,13 @@ const struct saxbasic_explicit_entry saxbasic_explicit[128] = {
 
 
 
-
-
 //Sackpipa
 struct sackpipa_explicit_entry {
     uint8_t midi_note;
 };
 
 const struct sackpipa_explicit_entry sackpipa_explicit[64] = {
-    //explicit fingering patterns that aren't covered by the general patterns below. Sensor numbers from left to right are L1,L2,L3,R1,R2,R3,R4. The Lthumb, R4 (pinky) and bell sensors are ignored for now.
+    // The Lthumb, R4 (pinky) and bell sensors are ignored for now.
 
     //2 will be added to the MIDI numbers below during get_shift() to bring to the standard key.
     { 72 },  //000000 D
@@ -1901,11 +1887,7 @@ const struct sackpipa_explicit_entry sackpipa_explicit[64] = {
     { 64 },  //111110 F#
     { 62 }   //111111 E
 
-
 };
-
-
-
 
 
 
@@ -2044,7 +2026,6 @@ const struct medievalPipes_explicit_entry medievalPipes_explicit[128] = {
     { 64 },  //1111110 A
     { 62 }   //1111111 G
 
-
 };
 
 
@@ -2121,8 +2102,5 @@ const struct bansuri_explicit_entry bansuri_explicit[64] = {
     { 66 },  //111101
     { 64 },  //111110 A
     { 62 },  //111111 G
-
-
-
 
 };

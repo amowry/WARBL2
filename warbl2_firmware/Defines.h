@@ -6,17 +6,17 @@
 #define HARDWARE_REVISION 46        // Hardware
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATMEAGA firmware version we have installed (without decimal point) so we kow when to update it.
 
-#define WATCHDOG_TIMEOUT_SECS 15  // To recover from hangups. The timeout needs to be set longer than any task that might interrupt the loop().
+#define WATCHDOG_TIMEOUT_SECS 15  // To recover from hangs. The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define EEPROM_I2C_ADDRESS 0x50
 
-#define DEBOUNCE_TIME 0.02                          // button debounce time, in seconds
-#define SAMPLE_FREQUENCY 200                        // button sample frequency, in Hz
-#define MAXIMUM (DEBOUNCE_TIME * SAMPLE_FREQUENCY)  // the integrator value required to register a button press
+#define DEBOUNCE_TIME 0.02                          // Button debounce time, in seconds
+#define SAMPLE_FREQUENCY 200                        // Button sample frequency, in Hz
+#define MAXIMUM (DEBOUNCE_TIME * SAMPLE_FREQUENCY)  // The integrator value required to register a button press
 
-#define BATTERY_POWER 0  // no USB connected (running on battery power)
-#define DUMB_CHARGER 1   // powered by a dumb USB charger
-#define USB_HOST 2       // connected to a USB host
+#define BATTERY_POWER 0  // No USB connected (running on battery power)
+#define DUMB_CHARGER 1   // Powered by a dumb USB charger
+#define USB_HOST 2       // Connected to a USB host
 
 //MIDI commands
 #define NOTE_OFF 0x80          // 127
@@ -37,8 +37,8 @@
 #define kModeNAF 6
 #define kModeKaval 7
 #define kModeRecorder 8
-#define kModeBansuriWARBL 9       //only used for a custom regulators implementation, not the "official" software, or BansuriWARBL
-#define kModeUilleannStandard 10  //contains no accidentals
+#define kModeBansuriWARBL 9       // Only used for a custom regulators implementation, not the "official" software, or BansuriWARBL
+#define kModeUilleannStandard 10  // Contains no accidentals
 #define kModeXiao 11
 #define kModeSax 12
 #define kModeGaitaExtended 13

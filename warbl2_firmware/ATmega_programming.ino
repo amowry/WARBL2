@@ -1,4 +1,4 @@
-//Reprogram the ATmega32u4 if neccessary.
+//Reprogram the ATmega32u4 if necessary.
 //Modified from the Adafruit_AVRProg library.
 //LED_BUILTIN will blink 3 times to indicate success.
 //To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE it set large enough (otherwise it won't compile), set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
@@ -11,10 +11,10 @@
 #define FUSE_EXT 3                // Extended fuse
 #define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly
 #define FLASH_CLOCKSPEED 1000000  // Once fused you can flash fast!
-#define AVRPROG_RESET 8           // This will be 27 in final WARBL version
+#define AVRPROG_RESET 8           // This will be 27 in final WARBL version. This pin is left in default state (highZ) when not programming (it has a pullup resistor).
 #define debug(string)             // Serial.println(string);
 
-/**! Struct for holding program fuses & code */
+/* Struct for holding program fuses & code */
 typedef struct image {
     char image_name[30];
     char image_chipname[12];
@@ -27,22 +27,16 @@ typedef struct image {
     byte image_hexcode[HEX_SIZE];  // Max buffer for intel hex format image (text)
 } image_t;
 
-int8_t _reset = -1, _mosi = -1, _miso = -1, _sck = -1;
-uint16_t spiBitDelay;
-int8_t progLED, errLED;
+int8_t _reset = AVRPROG_RESET;
 SPIClass *spi = NULL;
 bool programmode;
-HardwareSerial *uart = NULL;
-int8_t _power = -1;
-bool _invertpower = false;
-uint32_t _baudrate;
 
-static byte pageBuffer[8 * 1024];  // we can megabuff
+static byte pageBuffer[8 * 1024];  // Megabuff
 
 extern const image_t *images[];
 
 const image_t PROGMEM image_32u4_boot = {
-    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
+    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  // Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
 
     // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and )"} in place.
     { R"(
@@ -349,9 +343,6 @@ uint8_t NUMIMAGES = sizeof(images) / sizeof(images[0]);
 
 bool programATmega(void) {
 
-    progLED = LED_BUILTIN;
-    errLED = LED_BUILTIN;
-    _reset = AVRPROG_RESET;
     spi = &SPI;
 
     if (!targetPower(true)) {
@@ -411,7 +402,7 @@ bool programATmega(void) {
 
 void endProgramMode(void) {
     spi->endTransaction();
-    spi->end();
+    //spi->end();
     digitalWrite(_reset, LOW);
     pinMode(_reset, INPUT);
     programmode = false;
@@ -420,10 +411,7 @@ void endProgramMode(void) {
 
 bool targetPower(bool poweron) {
     if (poweron) {
-        if (progLED >= 0) {
-            pinMode(progLED, OUTPUT);
-            digitalWrite(progLED, HIGH);
-        }
+        digitalWrite(LED_BUILTIN, HIGH);
         Serial.print(F("Starting Program Mode..."));
         if (startProgramMode(100000)) {
             Serial.println(F(" [OK]"));
@@ -434,9 +422,7 @@ bool targetPower(bool poweron) {
         }
     } else {
         endProgramMode();
-        if (progLED >= 0) {
-            digitalWrite(progLED, LOW);
-        }
+        digitalWrite(LED_BUILTIN, LOW);
         return true;
     }
 }
@@ -448,7 +434,7 @@ bool startProgramMode(uint32_t clockspeed) {
     digitalWrite(_reset, HIGH);
     delay(5);
 
-    spi->begin();
+    //spi->begin(); // We've already begun in setup().
     spi->beginTransaction(SPISettings(clockspeed, MSBFIRST, SPI_MODE0));
 
     debug("...spi_init done");
@@ -665,7 +651,7 @@ const byte *readImagePage(const byte *hextext,
         b = hexToByte(pgm_read_byte(hextext++));  // record type
         b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
         cksum += b;
-        // Serial.print("Record type "); Serial.println(b, HEX);
+
         if (b == 0x1) {
             // end record, return nullptr to indicate we're done
             hextext = nullptr;
@@ -744,7 +730,6 @@ bool verifyImage(const byte *hextext) {
         b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
         cksum += b;
 
-        // Serial.print("Record type "); Serial.println(b, HEX);
         if (b == 0x1) {
             // end record!
             break;
@@ -880,10 +865,7 @@ byte hexToByte(byte h) {
 
 void error(const char *string) {
     Serial.println(string);
-    if (errLED > 0) {
-        pinMode(errLED, OUTPUT);
-        digitalWrite(errLED, HIGH);
-    }
+    digitalWrite(LED_BUILTIN, HIGH);
     while (1) {
     }
 }
@@ -891,10 +873,7 @@ void error(const char *string) {
 
 void error(const __FlashStringHelper *string) {
     Serial.println(string);
-    if (errLED > 0) {
-        pinMode(errLED, OUTPUT);
-        digitalWrite(errLED, HIGH);
-    }
+    digitalWrite(LED_BUILTIN, HIGH);
     while (1) {
     }
 }

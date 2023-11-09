@@ -53,6 +53,8 @@ void printStuff(void) {
 
 
 
+
+
 // Determine how long to sleep each time through the loop.
 byte calculateDelayTime(void) {
 
@@ -147,7 +149,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //Note: gyro is turned off by default to save power unless using roll/pitch/yaw (see loadPrefs())
+    //Note: Gyro is turned off by default to save power unless using roll/pitch/yaw or elevation register (see loadPrefs()).
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -162,19 +164,13 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
-
-
     //calibrate gyro
     gyroX = rawGyroX - gyroXCalibration;
     gyroY = rawGyroY - gyroYCalibration;
     gyroZ = rawGyroZ - gyroZCalibration;
 
-
-
-
     float deltat = sfusion.deltatUpdate();
-    deltat = constrain(deltat, 0.001f, 0.01f);  // just to keep it from freaking out, consider just giving it a fixed deltat in future
-    //AM 9/16/23 Enabled DWT to make micros() higher resolution for this calculation. Not sure that it matters.
+    deltat = constrain(deltat, 0.001f, 0.01f);  // AM 9/16/23 Enabled DWT to make micros() higher resolution for this calculation. Not sure that it matters.
 
     //Serial.println(deltat, 4);
 
@@ -187,8 +183,6 @@ void readIMU(void) {
     yaw = sfusion.getYawRadians();
 
 
-
-
 #if 0
     float * quat = sfusion.getQuat();
     for (int i=0; i < 4; ++i) {
@@ -198,14 +192,11 @@ void readIMU(void) {
     Serial.println(" 1.1, -1.1");
 #endif
 
-
     currYaw = yaw;  // needs to be the unadjusted value
 
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
     else if (yaw < -PI) yaw += TWO_PI;
-
-
 
     // adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
@@ -247,7 +238,7 @@ void readIMU(void) {
 void calibrateIMU() {
 
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Make sure the gyro is on.
-    delay(5);                                 //Give it a bit of time.
+    delay(6);                                 //Give it a bit of time.
     readIMU();                                //Get a reading in case we haven't been reading it.
 
     gyroXCalibration = rawGyroX;
@@ -374,8 +365,6 @@ void sendIMU() {
 
 
 void shakeForVibrato() {
-
-
 
     static float accelFilteredOld;
     const float timeConstant = 0.1f;
@@ -535,15 +524,16 @@ void readMIDI(void) {
 
 
 
-//Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
+// Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
+// NOTE: Button array is zero-indexed, so "button 1" in all documentation is button 0 here.
 void checkButtons() {
 
-    static byte integrator[] = { 0, 0, 0 };  // When this reaches MAXIMUM, a button press is registered. When it reaches 0, a release is registered.
-    static bool prevOutput[] = { 0, 0, 0 };  // Previous state of button.
-
+    static byte integrator[] = { 0, 0, 0 };                // When this reaches MAXIMUM, a button press is registered. When it reaches 0, a release is registered.
+    static bool prevOutput[] = { 0, 0, 0 };                // Previous state of button.
+    bool buttonUsed = 0;                                   // Flag any button activity, so we know to handle it.
+    static unsigned int longPressCounter[] = { 0, 0, 0 };  // For counting how many readings each button has been held, to indicate a long button press
 
     for (byte j = 0; j < 3; j++) {
-
 
         if (digitalRead(buttons[j]) == 0) {  //if the button reads low, reduce the integrator by 1
             if (integrator[j] > 0) {
@@ -556,7 +546,7 @@ void checkButtons() {
 
         if (integrator[j] == 0) {  //the button is pressed.
             pressed[j] = 1;        //we make the output the inverse of the input so that a pressed button reads as a "1".
-            //buttonUsed = 1;        //flag that there's been button activity, so we know to handle it.
+            //buttonUsed = 1;        //we don't currently used pressed by itself for anything so we don't need to handle it.
 
             if (prevOutput[j] == 0 && !longPressUsed[j]) {
                 justPressed[j] = 1;  //the button has just been pressed
@@ -570,7 +560,6 @@ void checkButtons() {
                 longPressCounter[j]++;
             }
         }
-
 
 
         else if (integrator[j] >= MAXIMUM) {  //the button is not pressed
@@ -588,17 +577,16 @@ void checkButtons() {
         }
 
 
-
         if (longPressCounter[j] > 300 && !longPressUsed[j]) {  //if the counter gets to a certain level, it's a long press
             longPress[j] = 1;
+            longPressCounter[j] = 0;
             buttonUsed = 1;
         }
-
 
         prevOutput[j] = pressed[j];  //keep track of state for next time around.
     }
 
-    if (millis() < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device.
+    if (millis() < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device. ToDo?: Make it so the first release after startup isn't registered because if you hold 3 longer than 1 second it will still register.
         pressed[2] = 0;
         released[2] = 0;
     }
@@ -606,6 +594,8 @@ void checkButtons() {
     if (buttonUsed) {
         handleButtons();  // If a button had been used, process the command. We only do this when we need to, so we're not wasting time.
     }
+
+    buttonUsed = 0;  // Now that we've handled any important button activity, clear the flag until there's been new activity.
 }
 
 
@@ -1579,6 +1569,9 @@ void getSlide() {
 
 
 void sendPitchbend() {
+
+    static int prevPitchBend = 8192;  // A record of the previous pitchBend value, so we don't send the same one twice
+
     pitchBend = 0;  //reset the overall pitchbend in preparation for adding up the contributions from all the toneholes.
     for (byte i = 0; i < 9; i++) {
         pitchBend = pitchBend + iPitchBend[i];
@@ -1705,7 +1698,7 @@ void sendNote() {
         }
 
         pitchBendTimer = millis();  //for some reason it sounds best if we don't send pitchbend right away after starting a new note.
-        noteOnTimestamp = pitchBendTimer;
+        noteOnTimestamp = millis();
         powerDownTimer = pitchBendTimer;  //reset the powerDown timer because we're actively sending notes
 
         prevNote = newNote;
@@ -2265,7 +2258,7 @@ void handleButtons() {
 
     if (shiftState == 1 && released[1] == 1) {  //if button 1 was only being used along with another button, we clear the just-released flag for button 1 so it doesn't trigger another control change.
         released[1] = 0;
-        buttonUsed = 0;  //clear the button activity flag, so we won't handle them again until there's been new button activity.
+        //buttonUsed = 0;  //clear the button activity flag, so we won't handle them again until there's been new button activity.
         shiftState = 0;
     }
 
@@ -2323,7 +2316,7 @@ void handleButtons() {
             performAction(5 + i);
             longPressUsed[i] = 1;
             longPress[i] = 0;
-            longPressCounter[i] = 0;
+            //longPressCounter[i] = 0;
         }
 
 
@@ -2348,9 +2341,6 @@ void handleButtons() {
             performAction(4);
         }
     }
-
-
-    buttonUsed = 0;  // Now that we've caught any important button activity, clear the flag so we won't enter this function again until there's been new activity.
 }
 
 
@@ -3095,7 +3085,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW]) {
+    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Turn on the gyro if we need it.
     }
 
@@ -3115,6 +3105,9 @@ void loadPrefs() {
 //Calibrate the sensors and store them in EEPROM
 //mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
 void calibrate() {
+
+    static unsigned long calibrationTimer = 0;
+
     if (calibration > 0) {
         if (!LEDon) {
             digitalWrite(LEDpins[GREEN_LED], HIGH);
