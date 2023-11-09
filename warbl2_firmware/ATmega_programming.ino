@@ -1,25 +1,50 @@
 //Reprogram the ATmega32u4 if neccessary.
-//Modofied from Adafruit_AVRProg library examples.
-//Notes: It is currently necessary to alter the library to increase the buffer size for the hex code (line 39 in Adafruit_AVRProg.h): byte image_hexcode[20000]; ///< Max buffer for intel hex format image (text)
+//Modified from the Adafruit_AVRProg library.
 //LED_BUILTIN will blink 3 times to indicate success.
+//To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE it set large enough (otherwise it won't compile), set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
 
-Adafruit_AVRProg avrprog = Adafruit_AVRProg();
+#define HEX_SIZE 20000  // This needs to be set larger than the size of the hex file in bytes. If it is larger than necessary the buffer will take up unneeded space in flash.
 
-#define AVRPROG_SCK 25
-#define AVRPROG_MISO 23
-#define AVRPROG_MOSI 24
-#define AVRPROG_RESET 8  //This will be 27 in final WARBL version
+#define FUSE_PROT 0               // Memory protection
+#define FUSE_LOW 1                // Low fuse
+#define FUSE_HIGH 2               // High fuse
+#define FUSE_EXT 3                // Extended fuse
+#define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly
+#define FLASH_CLOCKSPEED 1000000  // Once fused you can flash fast!
+#define AVRPROG_RESET 8           // This will be 27 in final WARBL version
+#define debug(string)             // Serial.println(string);
 
-#define LED_PROGMODE LED_BUILTIN
-#define LED_ERR LED_BUILTIN
+/**! Struct for holding program fuses & code */
+typedef struct image {
+    char image_name[30];
+    char image_chipname[12];
+    uint16_t image_chipsig;        // Low two bytes of signature
+    byte image_progfuses[10];      // fuses to set during programming (e.g unlock)
+    byte image_normfuses[10];      // fuses to set after programming (e.g lock)
+    byte fusemask[10];             // Not all bits are used in the fuses, mask the ones we do use
+    uint16_t chipsize;             // Total size for flash programming, in bytes.
+    byte image_pagesize;           // Page size for flash programming, in bytes.
+    byte image_hexcode[HEX_SIZE];  // Max buffer for intel hex format image (text)
+} image_t;
+
+int8_t _reset = -1, _mosi = -1, _miso = -1, _sck = -1;
+uint16_t spiBitDelay;
+int8_t progLED, errLED;
+SPIClass *spi = NULL;
+bool programmode;
+HardwareSerial *uart = NULL;
+int8_t _power = -1;
+bool _invertpower = false;
+uint32_t _baudrate;
+
+static byte pageBuffer[8 * 1024];  // we can megabuff
 
 extern const image_t *images[];
 
 const image_t PROGMEM image_32u4_boot = {
     { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  //Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
 
-    // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and
-    // )"} in place.
+    // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and )"} in place.
     { R"(
 :100000000C94BB000C94C6040C949F040C947804CC
 :100010000C9451040C94D8000C94D8000C942A042D
@@ -322,21 +347,18 @@ uint8_t NUMIMAGES = sizeof(images) / sizeof(images[0]);
 
 
 
-
-
-
 bool programATmega(void) {
 
-    avrprog.setProgramLED(LED_PROGMODE);
-    avrprog.setErrorLED(LED_ERR);
-    avrprog.setSPI(AVRPROG_RESET, AVRPROG_SCK, AVRPROG_MOSI, AVRPROG_MISO);
+    progLED = LED_BUILTIN;
+    errLED = LED_BUILTIN;
+    _reset = AVRPROG_RESET;
+    spi = &SPI;
 
-
-    if (!avrprog.targetPower(true)) {
+    if (!targetPower(true)) {
         return false;
     }
 
-    uint16_t signature = avrprog.readSignature();
+    uint16_t signature = readSignature();
     if (signature == 0 || signature == 0xFFFF) {
         return false;
     }
@@ -346,27 +368,31 @@ bool programATmega(void) {
         return false;
     }
 
-    avrprog.eraseChip();
+    eraseChip();
 
-    if (!avrprog.programFuses(targetimage->image_progfuses)) {  // Get fuses ready to program.
+    if (!programFuses(targetimage->image_progfuses, 5)) {  // Get fuses ready to program.
         return false;
     }
 
-    avrprog.targetPower(false);  // We should disconnect/reconnect after fusing.
+    targetPower(false);  // Disconnect/reconnect after fusing.
     delay(100);
-    if (!avrprog.targetPower(true)) {
+    if (!targetPower(true)) {
         return false;
     }
 
-    if (!avrprog.writeImage(targetimage->image_hexcode, pgm_read_byte(&targetimage->image_pagesize), pgm_read_word(&targetimage->chipsize))) {
+    if (!writeImage(targetimage->image_hexcode, pgm_read_byte(&targetimage->image_pagesize), pgm_read_word(&targetimage->chipsize))) {
         return false;
     }
 
-    if (!avrprog.verifyImage(targetimage->image_hexcode)) {  // Verify flash.
+    if (!verifyImage(targetimage->image_hexcode)) {  // Verify flash.
         return false;
     }
 
-    if (!avrprog.programFuses(targetimage->image_normfuses)) {  // Set fuses to 'final' state.
+    if (!programFuses(targetimage->image_normfuses, 5)) {  // Set fuses to 'final' state.
+        return false;
+    }
+
+    if (!verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
     }
 
@@ -377,9 +403,498 @@ bool programATmega(void) {
         delay(200);
     }
 
-    if (!avrprog.verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
-        return false;
+    return true;  // Success
+}
+
+
+
+
+void endProgramMode(void) {
+    spi->endTransaction();
+    spi->end();
+    digitalWrite(_reset, LOW);
+    pinMode(_reset, INPUT);
+    programmode = false;
+}
+
+
+bool targetPower(bool poweron) {
+    if (poweron) {
+        if (progLED >= 0) {
+            pinMode(progLED, OUTPUT);
+            digitalWrite(progLED, HIGH);
+        }
+        Serial.print(F("Starting Program Mode..."));
+        if (startProgramMode(100000)) {
+            Serial.println(F(" [OK]"));
+            return true;
+        } else {
+            Serial.println(F(" [FAIL]"));
+            return false;
+        }
+    } else {
+        endProgramMode();
+        if (progLED >= 0) {
+            digitalWrite(progLED, LOW);
+        }
+        return true;
+    }
+}
+
+
+bool startProgramMode(uint32_t clockspeed) {
+
+    pinMode(_reset, OUTPUT);
+    digitalWrite(_reset, HIGH);
+    delay(5);
+
+    spi->begin();
+    spi->beginTransaction(SPISettings(clockspeed, MSBFIRST, SPI_MODE0));
+
+    debug("...spi_init done");
+
+    digitalWrite(_reset, LOW);
+
+    debug("...isp_transaction");
+    uint16_t reply = isp_transaction(0xAC, 0x53, 0x00, 0x00);
+    if (reply == 0x5300) {
+        debug("...Done");
+        programmode = true;
+        return true;
+    }
+    Serial.print(reply, HEX);
+    return false;
+}
+
+
+uint16_t readSignature(void) {
+
+    startProgramMode(FUSE_CLOCKSPEED);
+
+    uint16_t target_type = 0;
+
+    target_type = isp_transaction(0x30, 0x00, 0x01, 0x00);
+    target_type <<= 8;
+    target_type |= isp_transaction(0x30, 0x00, 0x02, 0x00);
+
+    endProgramMode();
+
+    return target_type;
+}
+
+
+bool eraseChip(void) {
+
+    startProgramMode(FUSE_CLOCKSPEED);
+    if ((isp_transaction(0xAC, 0x80, 0, 0) & 0xFFFF) != 0x8000) {  // chip erase
+        error(F("Error on chip erase command"));
+    }
+    busyWait();
+    endProgramMode();
+    return true;
+}
+
+
+bool programFuses(const byte *fuses, uint8_t num_fuses) {
+    startProgramMode(FUSE_CLOCKSPEED);
+
+    byte f;
+    Serial.println(F("\nSetting fuses"));
+
+    f = pgm_read_byte(&fuses[FUSE_PROT]);
+    if (f) {
+        Serial.print(F("\tSet Lock Fuse to: "));
+        Serial.println(f, HEX);
+        if ((isp_transaction(0xAC, 0xE0, 0x00, f) & 0xFFFF) != 0xE000) {
+            return false;
+        }
+    }
+    busyWait();
+    f = pgm_read_byte(&fuses[FUSE_LOW]);
+    if (f) {
+        Serial.print(F("\tSet Low Fuse to: "));
+        Serial.println(f, HEX);
+        if ((isp_transaction(0xAC, 0xA0, 0x00, f) & 0xFFFF) != 0xA000) {
+            return false;
+        }
+    }
+    busyWait();
+    f = pgm_read_byte(&fuses[FUSE_HIGH]);
+    if (f) {
+        Serial.print(F("\tSet High Fuse to: "));
+        Serial.println(f, HEX);
+        if ((isp_transaction(0xAC, 0xA8, 0x00, f) & 0xFFFF) != 0xA800) {
+            return false;
+        }
+    }
+    busyWait();
+    f = pgm_read_byte(&fuses[FUSE_EXT]);
+    if (f) {
+        Serial.print(F("\tSet Ext Fuse to: "));
+        Serial.println(f, HEX);
+        if ((isp_transaction(0xAC, 0xA4, 0x00, f) & 0xFFFF) != 0xA400) {
+            return false;
+        }
+    }
+    busyWait();
+    Serial.println();
+    endProgramMode();
+    return true;
+}
+
+
+bool verifyFuses(const byte *fuses, const byte *fusemask) {
+    startProgramMode(FUSE_CLOCKSPEED);
+
+    byte f;
+    Serial.println(F("Verifying fuses..."));
+    f = pgm_read_byte(&fuses[FUSE_PROT]);
+    if (f) {
+        uint8_t readfuse = isp_transaction(0x58, 0x00, 0x00, 0x00);  // lock fuse
+        readfuse &= pgm_read_byte(&fusemask[FUSE_PROT]);
+        Serial.print(F("\tLock Fuse = 0x"));
+        Serial.println(readfuse, HEX);
+        if (readfuse != f)
+            return false;
+    }
+    f = pgm_read_byte(&fuses[FUSE_LOW]);
+    if (f) {
+        uint8_t readfuse = isp_transaction(0x50, 0x00, 0x00, 0x00);  // low fuse
+        Serial.print(F("\tLow Fuse = 0x"));
+        Serial.println(readfuse, HEX);
+        readfuse &= pgm_read_byte(&fusemask[FUSE_LOW]);
+        if (readfuse != f)
+            return false;
+    }
+    f = pgm_read_byte(&fuses[FUSE_HIGH]);
+    if (f) {
+        uint8_t readfuse = isp_transaction(0x58, 0x08, 0x00, 0x00);  // high fuse
+        readfuse &= pgm_read_byte(&fusemask[FUSE_HIGH]);
+        Serial.print(F("\tHigh Fuse = 0x"));
+        Serial.println(readfuse, HEX);
+        if (readfuse != f)
+            return false;
+    }
+    f = pgm_read_byte(&fuses[FUSE_EXT]);
+    if (f) {
+        uint8_t readfuse = isp_transaction(0x50, 0x08, 0x00, 0x00);  // ext fuse
+        readfuse &= pgm_read_byte(&fusemask[FUSE_EXT]);
+        Serial.print(F("\tExt Fuse = 0x"));
+        Serial.println(readfuse, HEX);
+        if (readfuse != f)
+            return false;
+    }
+    Serial.println();
+    endProgramMode();
+    return true;
+}
+
+
+bool writeImage(const byte *hextext, uint32_t pagesize, uint32_t chipsize) {
+    uint32_t flash_start = 0;
+    uint32_t pageaddr = 0;
+
+    while (pageaddr < chipsize && hextext) {
+        const byte *hextextpos =
+          readImagePage(hextext, pageaddr, pagesize, pageBuffer);
+
+        bool blankpage = true;
+        for (uint16_t i = 0; i < pagesize; i++) {
+            if (pageBuffer[i] != 0xFF)
+                blankpage = false;
+        }
+        if (!blankpage) {
+            if (!flashPage(pageBuffer, flash_start + pageaddr, pagesize))
+                return false;
+        }
+        hextext = hextextpos;
+        pageaddr += pagesize;
+    }
+    return true;
+}
+
+
+const byte *readImagePage(const byte *hextext,
+                          uint16_t pageaddr,
+                          uint16_t pagesize, byte *page) {
+    uint16_t len;
+    uint16_t page_idx = 0;
+    const byte *beginning = hextext;
+
+    byte b, cksum = 0;
+
+    // 'empty' the page by filling it with 0xFF's
+    for (uint16_t i = 0; i < pagesize; i++)
+        page[i] = 0xFF;
+
+    while (1) {
+        uint16_t lineaddr;
+        char c;
+
+        // read one line!
+        c = pgm_read_byte(hextext++);
+        if (c == '\n' || c == '\r') {
+            continue;
+        }
+        if (c != ':') {
+            error(F(" No colon?"));
+            break;
+        }
+        // Read the byte count into 'len'
+        len = hexToByte(pgm_read_byte(hextext++));
+        len = (len << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum = len;
+        // Serial.print(len);
+
+        // read high address byte
+        b = hexToByte(pgm_read_byte(hextext++));
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        lineaddr = b;
+
+        // read low address byte
+        b = hexToByte(pgm_read_byte(hextext++));
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        lineaddr = (lineaddr << 8) + b;
+
+        if (lineaddr >= (pageaddr + pagesize)) {
+            return beginning;
+        }
+
+        b = hexToByte(pgm_read_byte(hextext++));  // record type
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        // Serial.print("Record type "); Serial.println(b, HEX);
+        if (b == 0x1) {
+            // end record, return nullptr to indicate we're done
+            hextext = nullptr;
+            break;
+        }
+
+        for (byte i = 0; i < len; i++) {
+            // read 'n' bytes
+            b = hexToByte(pgm_read_byte(hextext++));
+            b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+
+            cksum += b;
+
+            page[page_idx] = b;
+            page_idx++;
+
+            if (page_idx > pagesize) {
+                error("Too much code!");
+                break;
+            }
+        }
+        b = hexToByte(pgm_read_byte(hextext++));  // chxsum
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        if (cksum != 0) {
+            error(F("Bad checksum: "));
+            Serial.print(cksum, HEX);
+        }
+        if (pgm_read_byte(hextext++) != '\n') {
+            error(F("No end of line"));
+            break;
+        }
+
+        if (page_idx == pagesize)
+            break;
     }
 
-    return true;  // Success
+    return hextext;
+}
+
+
+bool verifyImage(const byte *hextext) {
+
+    startProgramMode(FLASH_CLOCKSPEED);  // start at 1MHz speed
+
+    uint16_t len;
+    byte b, cksum = 0;
+
+    while (1) {
+        uint16_t lineaddr;
+
+        // read one line!
+        char c = pgm_read_byte(hextext++);
+        if (c == '\n' || c == '\r') {
+            continue;
+        }
+        if (c != ':') {
+            Serial.print(c);
+            error(F(" No colon?"));
+            break;
+        }
+        len = hexToByte(pgm_read_byte(hextext++));
+        len = (len << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum = len;
+
+        b = hexToByte(pgm_read_byte(hextext++));  // record type
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        lineaddr = b;
+        b = hexToByte(pgm_read_byte(hextext++));  // record type
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        lineaddr = (lineaddr << 8) + b;
+
+        b = hexToByte(pgm_read_byte(hextext++));  // record type
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+
+        // Serial.print("Record type "); Serial.println(b, HEX);
+        if (b == 0x1) {
+            // end record!
+            break;
+        }
+
+        for (byte i = 0; i < len; i++) {
+            // read 'n' bytes
+            b = hexToByte(pgm_read_byte(hextext++));
+            b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+            cksum += b;
+
+            // verify this byte!
+            byte reply;
+            if (lineaddr % 2) {  // for 'high' bytes
+                reply = isp_transaction(0x28, lineaddr >> 9, lineaddr / 2, 0) & 0xFF;
+            } else {  // for 'low' bytes
+                reply = isp_transaction(0x20, lineaddr >> 9, lineaddr / 2, 0) & 0xFF;
+            }
+            if (b != reply) {
+                Serial.println();
+                Serial.print(F("Verification error at address 0x"));
+                Serial.print(lineaddr, HEX);
+                Serial.print(F(" Should be 0x"));
+                Serial.print(b, HEX);
+                Serial.print(F(" not 0x"));
+                Serial.println(reply, HEX);
+                return false;
+            }
+            lineaddr++;
+        }
+
+        b = hexToByte(pgm_read_byte(hextext++));  // chxsum
+        b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
+        cksum += b;
+        if (cksum != 0) {
+            Serial.print(cksum, HEX);
+            error(F(" - bad checksum"));
+        }
+        if (pgm_read_byte(hextext++) != '\n') {
+            error(F("No end of line"));
+        }
+    }
+
+    endProgramMode();
+    return true;
+}
+
+
+bool flashWord(uint8_t hilo, uint16_t addr, uint8_t data) {
+
+    if (isp_transaction(0x40 + 8 * hilo, addr >> 8 & 0xFF, addr & 0xFF, data) != addr) {
+        return false;
+    }
+    return true;
+}
+
+
+bool flashPage(byte *pagebuff, uint16_t pageaddr,
+               uint16_t pagesize) {
+    Serial.print(F("Flashing page "));
+    Serial.println(pageaddr, HEX);
+
+    startProgramMode(FLASH_CLOCKSPEED);
+
+    for (uint16_t i = 0; i < pagesize / 2; i++) {
+        if (!flashWord(LOW, i, pagebuff[2 * i]))
+            return false;
+        if (!flashWord(HIGH, i, pagebuff[2 * i + 1]))
+            return false;
+    }
+
+    pageaddr /= 2;
+
+    uint16_t commitreply =
+      isp_transaction(0x4C, (pageaddr >> 8) & 0xFF, pageaddr & 0xFF, 0);
+
+    Serial.print(F("  Commit Page: 0x"));
+    Serial.print(pageaddr, HEX);
+    Serial.print(F(" -> 0x"));
+    Serial.println(commitreply, HEX);
+    if (commitreply != pageaddr)
+        return false;
+
+    busyWait();
+    endProgramMode();
+    return true;
+}
+
+
+void busyWait(void) {
+    byte busybit;
+    do {
+        busybit = isp_transaction(0xF0, 0x0, 0x0, 0x0);
+        // Serial.print(busybit, HEX);
+    } while (busybit & 0x01);
+}
+
+
+uint32_t isp_transaction(uint8_t a, uint8_t b, uint8_t c,
+                         uint8_t d) {
+    uint8_t l, n, m, o;
+    (void)o;  // avoid unused var warning
+    (void)m;  // avoid unused var warning
+    (void)n;  // avoid unused var warning
+    o = transfer(a);
+    n = transfer(b);
+    // if (n != a) error = -1;
+    m = transfer(c);
+    l = transfer(d);
+    return ((m << 8) + l);
+}
+
+
+uint8_t transfer(uint8_t out) {
+    return spi->transfer(out);
+}
+
+
+byte hexToByte(byte h) {
+    if (h >= '0' && h <= '9')
+        return (h - '0');
+    if (h >= 'A' && h <= 'F')
+        return ((h - 'A') + 10);
+    if (h >= 'a' && h <= 'f')
+        return ((h - 'a') + 10);
+    Serial.print("Read odd char 0x");
+    Serial.print(h, HEX);
+    Serial.println();
+    error(F("Bad hex digit!"));
+    return -1;
+}
+
+
+void error(const char *string) {
+    Serial.println(string);
+    if (errLED > 0) {
+        pinMode(errLED, OUTPUT);
+        digitalWrite(errLED, HIGH);
+    }
+    while (1) {
+    }
+}
+
+
+void error(const __FlashStringHelper *string) {
+    Serial.println(string);
+    if (errLED > 0) {
+        pinMode(errLED, OUTPUT);
+        digitalWrite(errLED, HIGH);
+    }
+    while (1) {
+    }
 }

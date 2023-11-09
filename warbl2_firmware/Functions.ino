@@ -4,6 +4,8 @@
 //debug
 void printStuff(void) {
 
+    //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
+
     //Serial.println(sox.getGyroDataRate());
     //Serial.println(sizeof(images));
     //Serial.println(gyroX, 8);
@@ -46,6 +48,32 @@ void printStuff(void) {
     //Serial.println(sensorCalibration);
     //Serial.println("");
 }
+
+
+
+
+
+// Determine how long to sleep each time through the loop.
+byte calculateDelayTime(void) {
+
+    byte delayCorrection = (millis() - wakeTime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
+                                                   // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
+                                                   // With USB MIDI only there is virtually no jitter with a loop period of 2 ms.
+    //if (delayCorrection > 3) { Serial.println(delayCorrection); }  // Print the amount of time that other things have consumed.
+
+    byte delayTime = 3;
+
+    if (connIntvl == 0) {  // Use a 2 ms sleep instead if we are only using USB MIDI.
+        delayTime = 2;
+    }
+
+    if (delayCorrection < delayTime) {  // If we haven't used up too much time since the last time through the loop, we can sleep for a bit.
+        delayTime = delayTime - delayCorrection;
+        return delayTime;
+    }
+    return 0;
+}
+
 
 
 
@@ -486,12 +514,33 @@ int pitchRegister() {
 
 
 
+
+// Read incoming messages
+void readMIDI(void) {
+
+    MIDI.read();  // Read any new USBMIDI messages.
+
+    if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
+        if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
+            BLEMIDI.read();             // Read new BLEMIDI messages.
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
 //Monitor the status of the 3 buttons. The integrating debouncing algorithm is taken from debounce.c, written by Kenneth A. Kuhn:http://www.kennethkuhn.com/electronics/debounce.c
 void checkButtons() {
 
     static byte integrator[] = { 0, 0, 0 };  // When this reaches MAXIMUM, a button press is registered. When it reaches 0, a release is registered.
-    static bool prevOutput[] = { 0, 0, 0 };         // Previous state of button.
-    
+    static bool prevOutput[] = { 0, 0, 0 };  // Previous state of button.
+
 
     for (byte j = 0; j < 3; j++) {
 
@@ -568,7 +617,7 @@ void checkButtons() {
 
 
 //Determine which holes are covered
-void get_fingers() {
+void getFingers() {
 
     for (byte i = 0; i < 9; i++) {
         if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
@@ -587,7 +636,7 @@ void get_fingers() {
 
 
 //Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman
-bool debounceFingerHoles() {
+void debounceFingerHoles() {
 
     static unsigned long debounceTimer;
     unsigned long now = millis();
@@ -599,12 +648,30 @@ bool debounceFingerHoles() {
         timing = 1;
     }
 
-    if (now - debounceTimer >= transientFilter && timing == 1) {
+    if (now - debounceTimer >= transientFilter && timing == 1) {  // The fingering pattern has changed.
         timing = 0;
-        return true;
-    }
 
-    return false;
+        fingersChanged = 1;
+        tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
+        sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+        if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
+            findStepsDown();
+        }
+
+        if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
+            if (pitchBendMode != kPitchBendNone) {
+                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
+                for (byte i = 0; i < 9; i++) {
+                    iPitchBend[i] = 0;  // Reset pitchbend.
+                    pitchBendOn[i] = 0;
+                }
+            }
+        }
+
+        newNote = tempNewNote;
+        tempNewNote = -1;
+        fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
+    }
 }
 
 
@@ -658,7 +725,7 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 //Return a MIDI note number (0-127) based on the current fingering.
-int get_note(unsigned int fingerPattern) {
+int getNote(unsigned int fingerPattern) {
     int ret = -1;  //default for unknown fingering
 
     switch (modeSelector[mode]) {  //determine the note based on the fingering pattern
@@ -1027,7 +1094,7 @@ int get_note(unsigned int fingerPattern) {
 
 
 //Add up any transposition based on key and register.
-void get_shift() {
+void getShift() {
 
     byte pitchShift;
 
@@ -1085,20 +1152,14 @@ void get_shift() {
 
 //State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
 //The current jump/drop behavior is from Louis Barman
-void get_state() {
+void getState() {
     sensorValue2 = tempSensorValue;  //Transfer last reading.
 
     byte scalePosition;  //ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
 
-    if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
-        scalePosition = findleftmostunsetbit(holeCovered) + 62;
-        if (scalePosition > 69) {
-            scalePosition = 70;
-        }
-    }
-
-    else {
-        scalePosition = newNote;
+    scalePosition = findleftmostunsetbit(holeCovered) + 62;  // Use the highest open hole to calculate.
+    if (scalePosition > 69) {
+        scalePosition = 70;
     }
 
     if (ED[mode][DRONES_CONTROL_MODE] == 3) {  //Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
@@ -1323,8 +1384,8 @@ void findStepsDown() {
         //return;
     }
     unsigned int closedSlideholePattern = holeCovered;
-    bitSet(closedSlideholePattern, slideHole);                                    //figure out what the fingering pattern would be if we closed the slide hole
-    stepsDown = constrain(tempNewNote - get_note(closedSlideholePattern), 0, 2);  //and then figure out how many steps down it would be if a new note were triggered with that pattern.
+    bitSet(closedSlideholePattern, slideHole);                                   //figure out what the fingering pattern would be if we closed the slide hole
+    stepsDown = constrain(tempNewNote - getNote(closedSlideholePattern), 0, 2);  //and then figure out how many steps down it would be if a new note were triggered with that pattern.
 }
 
 
@@ -1408,10 +1469,10 @@ void handleCustomPitchBend() {
     else if (modeSelector[mode] == kModeGHB || modeSelector[mode] == kModeNorthumbrian) {  //this one is designed for closed fingering patterns, so raising a finger sharpens the note.
         for (byte i = 2; i < 4; i++) {                                                     //use holes 2 and 3 for vibrato
             if (i != slideHole || (holeCovered & 0b100000000) == 0) {
-                static unsigned int testNote;                         // the hypothetical note that would be played if a finger were lowered all the way
-                if (bitRead(holeCovered, i) != 1) {                   //if the hole is not fully covered
-                    if (fingersChanged) {                             //if the fingering pattern has changed
-                        testNote = get_note(bitSet(holeCovered, i));  //check to see what the new note would be
+                static unsigned int testNote;                        // the hypothetical note that would be played if a finger were lowered all the way
+                if (bitRead(holeCovered, i) != 1) {                  //if the hole is not fully covered
+                    if (fingersChanged) {                            //if the fingering pattern has changed
+                        testNote = getNote(bitSet(holeCovered, i));  //check to see what the new note would be
                         fingersChanged = 0;
                     }
                     if (testNote == newNote) {  //if the hole is uncovered and covering the hole wouldn't change the current note (or the left thumb hole is uncovered, because that case isn't included in the fingering chart)
@@ -3141,6 +3202,43 @@ void loadCalibration() {
 
 
 
+
+
+void calculateAndSendPressure() {
+
+    if (abs(prevSensorValue - smoothed_pressure) > 1) {  // If pressure has changed more than a little, send it.
+        if (ED[mode][SEND_PRESSURE]) {
+            calculatePressure(0);
+        }
+        if (switches[mode][SEND_VELOCITY]) {
+            calculatePressure(1);
+        }
+        if (switches[mode][SEND_AFTERTOUCH] & 1) {
+            calculatePressure(2);
+        }
+        if (switches[mode][SEND_AFTERTOUCH] & 2) {
+            calculatePressure(3);
+        }
+
+        sendPressure(false);
+
+        prevSensorValue = smoothed_pressure;
+    }
+    static int previousTenBitPressure = sensorValue;
+
+    if (abs(previousTenBitPressure - sensorValue) > 2) {  // Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
+        sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+        previousTenBitPressure = sensorValue;
+    }
+}
+
+
+
+
+
+
+
+
 //Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
 void calculatePressure(byte pressureOption) {
 
@@ -3198,9 +3296,32 @@ void calculatePressure(byte pressureOption) {
 
 
 
+// Calculate how often to send pressure data
+byte calculatePressureInterval(void) {
+
+    byte ret = 5;
+
+    if ((millis() - noteOnTimestamp) < 20) {
+        ret = 2;
+    }
+
+    if ((ret < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  // Use a longer interval if sending BLE.
+        ret = connIntvl + 2;
+    }
+    return ret;
+}
+
+
+
+
+
+
+
+
 
 //send pressure data
 void sendPressure(bool force) {
+
     if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
         sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  //send MSB of pressure mapped to the output range
         prevCCPressure = inputPressureBounds[0][3];

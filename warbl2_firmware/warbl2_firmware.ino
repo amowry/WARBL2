@@ -39,7 +39,6 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
-#include "Adafruit_AVRProg.h"      //For using the NRF52840 to reprogram the ATmega32U4
 
 
 // Create instances of library classes.
@@ -200,6 +199,7 @@ uint8_t buttonPrefs[3][kGESTURESnVariables][5] =
 
 
 // Other misc. variables
+unsigned long wakeTime = 0;     // When we woke from sleep
 unsigned long ledTimer = 0;     //for blinking LED
 byte blinkNumber = 0;           //the number of remaining blinks when blinking LED to indicate control changes
 bool LEDon = 0;                 //whether the LED is currently on
@@ -343,17 +343,15 @@ void setup() {
     Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device
 #endif
 
-    dwt_enable();  // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
-
-    sd_clock_hfclk_request();  // Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
-
-    NRF_POWER->DCDCEN = 1;  // ENABLE DC/DC CONVERTER, cuts power consumption.
-
-    // Disable UART-- saves ~0.1 mA average
-    NRF_UART0->TASKS_STOPTX = 1;
+    // NRF stuff
+    dwt_enable();                 // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
+    sd_clock_hfclk_request();     // Enable the high=frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    NRF_POWER->DCDCEN = 1;        // ENABLE DC/DC CONVERTER, cuts power consumption.
+    NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
+    // Configure pins
     digitalWrite(battReadEnable, LOW);  // The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
@@ -367,11 +365,9 @@ void setup() {
     pinMode(LEDpins[RED_LED], OUTPUT);
     pinMode(LEDpins[GREEN_LED], OUTPUT);
     pinMode(LEDpins[BLUE_LED], OUTPUT);
-
     pinMode(buttons[0], INPUT_PULLUP);  // Set buttons as inputs and enable internal pullup.
     pinMode(buttons[1], INPUT_PULLUP);
     pinMode(buttons[2], INPUT_PULLUP);
-
     pinMode(STAT, INPUT_PULLUP);  // STAT from charger
 
     analogWriteResolution(10);  // Increase resolution for pulsing LEDs
@@ -396,16 +392,13 @@ void setup() {
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
 
-
     digitalWrite(powerEnable, HIGH);  // Enable the boost converter at startup at least until we have time to check for USB power.
     runTimer = millis();
     battPower = true;
 
-
     digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate powerup.
     delay(500);
     digitalWrite(LEDpins[GREEN_LED], LOW);
-
 
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
@@ -423,7 +416,6 @@ void setup() {
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
     startAdv();                                                   // Set up and start advertising. Comment this out for testing without BLE on.
 
-
     // I2C
     Wire.begin();           // Join i2c bus for EEPROM.
     Wire.setClock(400000);  // High speed
@@ -439,8 +431,6 @@ void setup() {
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down for now to save power, and we'll turn gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
     //sox.setAccelDataRate(LSM6DS_RATE_416_HZ);  // Turn on the accel, higher data rate.
-
-
 
     // Experimental--enable accelerometer highpass filter/slope filter in hardware.
     // Filtering in hardware with a higher data rate might let us filter out gravity faster for shake vibrato?
@@ -458,7 +448,6 @@ void setup() {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
-
     if (readEEPROM(1991) != VERSION) {  // Temporary, for upgrading to v4.1 with different EEPROM locations so battery data is saved.
         byte tempSettings[9];
         for (byte i = 0; i < 9; i++) {
@@ -472,7 +461,6 @@ void setup() {
             writeEEPROM(1975 + i, tempSettings[i]);
         }
     }
-
 
     loadFingering();
     loadSettingsForAllModes();
@@ -490,11 +478,13 @@ void setup() {
 
     //eraseEEPROM(); // Testing
 
-    //if (programATmega()) {  // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
-    //Serial.println("Success");
-    //}
-
-    //watchdog_enable(HARDWARE_WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
+    /*
+    while(!Serial);
+    if (programATmega()) {  // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
+        //Serial.println("Success");
+    }
+*/
+    //watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
 }
 
 
@@ -511,112 +501,31 @@ void loop() {
     static unsigned long timerD = 0;
     static unsigned long timerE = 0;
     static unsigned long timerF = 0;
-    static unsigned long wakeTime = 0;
+    
+
 
     /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
 
-    byte delayCorrection = (millis() - wakeTime);  // Include a correction factor to reduce jitter if something else in the loop or the radio interrupt has eaten some time.
-                                                   // The main thing that adds jitter to the loop is sending lots of data over BLE, i.e. pitchbend, CC, etc. (though it's typically not noticeable). Being connected to the Config Tool is also a significant source of jitter.
-                                                   // With USB MIDI only there is virtually no jitter with a loop period of 2 ms.
-    //if (delayCorrection > 3) { Serial.println(delayCorrection); }  // Print the amount of time that other things have consumed.
-
-    byte delayTime = 3;
-
-    if (connIntvl == 0) {  // Use a 2 ms sleep instead if we are only using USB MIDI.
-        delayTime = 2;
-    }
-
-    if (delayCorrection < delayTime) {  // If we haven't used up too much time since the last time through the loop, we can sleep for a bit.
-        delayTime = delayTime - delayCorrection;
-        delay(delayTime);  // Puts the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
-    }
-
-    wakeTime = millis();
-
-    getSensors();   // 180 us, 55 of which is reading the pressure sensor.
-    get_state();    // Get the breath state. 3 us.
-    get_fingers();  // Find which holes are covered. 4 us.
-
-
-    if (debounceFingerHoles()) {
-        fingersChanged = 1;
-        tempNewNote = get_note(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
-        sendToConfig(true, false);            // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
-        if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
-            findStepsDown();
-        }
-
-
-        if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
-            if (pitchBendMode != kPitchBendNone) {
-                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
-                for (byte i = 0; i < 9; i++) {
-                    iPitchBend[i] = 0;  // Reset pitchbend.
-                    pitchBendOn[i] = 0;
-                }
-            }
-        }
-
-
-        newNote = tempNewNote;
-        tempNewNote = -1;
-        fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
-
-        get_state();  // Recalculate state if the fingering has changed because state depends on both pressure and fingering.
-    }
-
-
-    get_shift();  // Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
-    sendNote();   // Send the note as soon as we know the fingering pattern, state, and shift.
-    MIDI.read();  // Read any new USBMIDI messages.
-
-    if (Bluefruit.connected()) {        // Don't read if we aren't connected to BLE.
-        if (blemidi.notifyEnabled()) {  // ...and ready to receive messages.
-            BLEMIDI.read();             // Read new BLEMIDI messages.
-        }
-    }
-
-
-    byte pressureInterval;  // Determine how frequently to send MIDI messages based on pressure.
-    if ((millis() - noteOnTimestamp) < 20) {
-        pressureInterval = 2;
-    } else pressureInterval = 5;
-    if ((pressureInterval < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  // Use a longer interval if sending BLE.
-        pressureInterval = connIntvl + 2;
-    }
+    byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
+    delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
+    wakeTime = millis();                    // When we woke from sleep
+    getSensors();                           // 180 us, 55 of which is reading the pressure sensor.
+    getFingers();                           // Find which holes are covered. 4 us.
+    getState();                             // Get the breath state. 3 us.
+    debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
+    getShift();                             // Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
+    sendNote();                             // Send the note as soon as we know the note, state, and shift.
+    readMIDI();                             // Read incoming MIDI messages
 
 
 
 
     /////////// Things here happen ~ every 2 to 18 ms.
 
+    byte pressureInterval = calculatePressureInterval();  // Determine how frequently to send MIDI messages based on pressure.
     if ((millis() - pressureTimer) >= pressureInterval) {
-
         pressureTimer = millis();
-        if (abs(prevSensorValue - smoothed_pressure) > 1) {  // If pressure has changed more than a little, send it.
-            if (ED[mode][SEND_PRESSURE]) {
-                calculatePressure(0);
-            }
-            if (switches[mode][SEND_VELOCITY]) {
-                calculatePressure(1);
-            }
-            if (switches[mode][SEND_AFTERTOUCH] & 1) {
-                calculatePressure(2);
-            }
-            if (switches[mode][SEND_AFTERTOUCH] & 2) {
-                calculatePressure(3);
-            }
-
-            sendPressure(false);
-
-            prevSensorValue = smoothed_pressure;
-        }
-        static int previousTenBitPressure = sensorValue;
-
-        if (abs(previousTenBitPressure - sensorValue) > 2) {  // Only send pressure to the Config Tool if the 10-bit value has changed, because it's less noisy than 12 bit.
-            sendToConfig(false, true);                        // Put the new pressure into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
-            previousTenBitPressure = sensorValue;
-        }
+        calculateAndSendPressure();
     }
 
 
@@ -626,8 +535,6 @@ void loop() {
 
     if ((millis() - timerE) > 5) {
         timerE = millis();
-        // timerD = micros(); // testing--micros requres turning on DWT in setup()
-        // Serial.println(micros() - timerD);
         readIMU();    // Takes about 145 us using SensorFusion's Mahony
         blink();      // Blink green LED if necessary.
         pulse();      // Pulse any LED if necessary.
@@ -660,6 +567,9 @@ void loop() {
         timerF = millis();
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage. Could read the voltage a little less frequently.
         //watchdog_reset();  // Feed the watchdog.
-        //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
     }
+
+
+    // timerD = micros(); // for benchmarking
+    // Serial.println(micros() - timerD);
 }

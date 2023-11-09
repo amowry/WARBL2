@@ -6,7 +6,7 @@
 #define HARDWARE_REVISION 46        // Hardware
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATMEAGA firmware version we have installed (without decimal point) so we kow when to update it.
 
-#define HARDWARE_WATCHDOG_TIMEOUT_SECS 15  // To recover from hangups. The timeout needs to be set longer than any task that might interrupt the loop().
+#define WATCHDOG_TIMEOUT_SECS 15  // To recover from hangups. The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define EEPROM_I2C_ADDRESS 0x50
 
