@@ -481,7 +481,7 @@ void setup() {
     /*
     while(!Serial);
     if (programATmega()) {  // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
-        //Serial.println("Success");
+        Serial.println("Success");
     }
 */
     //watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
@@ -542,7 +542,7 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 ms if not connected to BLE and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
+    /////////// Things here happen ~ every 9 ms if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
     if ((millis() - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
         pitchBendTimer = millis();    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
@@ -559,8 +559,8 @@ void loop() {
 
     if ((millis() - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = millis();
-        manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage. Could read the voltage a little less frequently.
-        //watchdog_reset();  // Feed the watchdog.
+        manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
+        //watchdogReset();  // Feed the watchdog.
     }
 
 

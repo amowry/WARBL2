@@ -1,7 +1,7 @@
-//Reprogram the ATmega32u4 if necessary.
-//Modified from the Adafruit_AVRProg library.
-//LED_BUILTIN will blink 3 times to indicate success.
-//To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE it set large enough (otherwise it won't compile), set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
+// Reprogram the ATmega32u4 if necessary.
+// Modified from the Adafruit_AVRProg library.
+// LED_BUILTIN will blink 3 times to indicate success.
+// To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE it set large enough (otherwise it won't compile), and set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
 
 #define HEX_SIZE 20000  // This needs to be set larger than the size of the hex file in bytes. If it is larger than necessary the buffer will take up unneeded space in flash.
 
@@ -14,10 +14,7 @@
 #define AVRPROG_RESET 8           // This will be 27 in final WARBL version. This pin is left in default state (highZ) when not programming (it has a pullup resistor).
 #define debug(string)             // Serial.println(string);
 
-/* Struct for holding program fuses & code */
-typedef struct image {
-    char image_name[30];
-    char image_chipname[12];
+typedef struct image {             // Struct for holding program fuses & code
     uint16_t image_chipsig;        // Low two bytes of signature
     byte image_progfuses[10];      // fuses to set during programming (e.g unlock)
     byte image_normfuses[10];      // fuses to set after programming (e.g lock)
@@ -28,18 +25,14 @@ typedef struct image {
 } image_t;
 
 int8_t _reset = AVRPROG_RESET;
-SPIClass *spi = NULL;
+SPIClass *spi = &SPI;
 bool programmode;
-
 static byte pageBuffer[8 * 1024];  // Megabuff
-
 extern const image_t *images[];
 
-const image_t PROGMEM image_32u4_boot = {
-    { "ATmega_firmware.hex" }, { "atmega32u4" }, 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  // Hex file name (unused), chip (unused), programming fuses, final fuses, fuse verify mask, flash size, page size
-
-    // The firmware hex file to flash. Make sure to keep the start and end markers {R"( and )"} in place.
-    { R"(
+// The firmware hex file to flash. Paste it in between the start and end markers {R"( and )"}.
+const image_t PROGMEM image_32u4_boot = { 0x9587, { 0x3F, 0xFF, 0xD8, 0x0B }, { 0x2F, 0xFF, 0xD9, 0x0B }, { 0x3F, 0xFF, 0xFF, 0x0F }, 32768, 128,  // Signature, programming fuses, final fuses, fuse verify mask, flash size, page size
+                                          { R"(
 :100000000C94BB000C94C6040C949F040C947804CC
 :100010000C9451040C94D8000C94D8000C942A042D
 :100020000C94D8000C94D8000C94CE010C94370298
@@ -329,8 +322,7 @@ const image_t PROGMEM image_32u4_boot = {
 :1011D8000402012E402880284025802B042B08314A
 :0611E8000131102540005A
 :00000001FF
-    )" }
-};
+    )" } };
 
 const image_t *images[] = {
     &image_32u4_boot,
@@ -342,8 +334,6 @@ uint8_t NUMIMAGES = sizeof(images) / sizeof(images[0]);
 
 
 bool programATmega(void) {
-
-    spi = &SPI;
 
     if (!targetPower(true)) {
         return false;

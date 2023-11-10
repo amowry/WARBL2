@@ -4,9 +4,9 @@
 
 #define VERSION 41                  // Firmware version (without decimal point)
 #define HARDWARE_REVISION 46        // Hardware
-#define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATMEAGA firmware version we have installed (without decimal point) so we kow when to update it.
+#define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATMEAGA firmware version we have installed so we kow when to update it.
 
-#define WATCHDOG_TIMEOUT_SECS 15  // To recover from hangs. The timeout needs to be set longer than any task that might interrupt the loop().
+#define WATCHDOG_TIMEOUT_SECS 15  // The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define EEPROM_I2C_ADDRESS 0x50
 

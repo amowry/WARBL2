@@ -82,7 +82,7 @@ byte calculateDelayTime(void) {
 
 
 
-//Read the pressure sensor and get latest tone hole readings from the ATmega.
+// Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
     analogPressure.update();  // Reads the pressure sensor and applies adaptive filtering
@@ -93,14 +93,14 @@ void getSensors(void) {
 
     //Serial.println(smoothed_pressure);
 
-    tempSensorValue = twelveBitPressure >> 2;  //Reduce the reading to stable 10 bits for state machine.
+    tempSensorValue = twelveBitPressure >> 2;  // Reduce the reading to stable 10 bits for state machine.
 
-    //Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
+    // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(2, LOW);   //SS -- wake up ATmega
-    delayMicroseconds(10);  //Give it time to wake up.
-    SPI.transfer(0);        //We don't receive anything useful back from the first transfer.
+    digitalWrite(2, LOW);   // SS -- wake up ATmega
+    delayMicroseconds(10);  // Give it time to wake up.
+    SPI.transfer(0);        // We don't receive anything useful back from the first transfer.
     for (byte i = 0; i < 12; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
@@ -108,32 +108,32 @@ void getSensors(void) {
     SPI.endTransaction();
 
 
-    //Unpack the readings from bytes to ints.
+    // Unpack the readings from bytes to ints.
     for (byte i = 0; i < 9; i++) {
         toneholeRead[i] = toneholePacked[i];  // Unpack lower 8 bits.
     }
 
-    for (byte i = 0; i < 4; i++) {  //Unpack the upper 2 bits of holes 0-3.
+    for (byte i = 0; i < 4; i++) {  // Unpack the upper 2 bits of holes 0-3.
         toneholePacked[9] = toneholePacked[9] & 0b11111111, BIN;
         toneholeRead[i] = toneholeRead[i] | (toneholePacked[9] << 2) & 0b1100000000;
         toneholePacked[9] = toneholePacked[9] << 2;
     }
 
-    for (byte i = 4; i < 8; i++) {  //Unpack the upper 2 bits of holes 4-7.
+    for (byte i = 4; i < 8; i++) {  // Unpack the upper 2 bits of holes 4-7.
         toneholePacked[10] = toneholePacked[10] & 0b11111111, BIN;
         toneholeRead[i] = toneholeRead[i] | (toneholePacked[10] << 2) & 0b1100000000;
         toneholePacked[10] = toneholePacked[10] << 2;
     }
 
-    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  //Unpack the upper 2 bits of hole 8.
+    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  // Unpack the upper 2 bits of hole 8.
 
 
 
     for (byte i = 0; i < 9; i++) {
-        if (calibration == 0) {  //If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
+        if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
             toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
         }
-        if (toneholeRead[i] < 0) {  //In rare cases the adjusted readings might end up being negative.
+        if (toneholeRead[i] < 0) {  // In rare cases the adjusted readings might end up being negative.
             toneholeRead[i] = 0;
         }
     }
@@ -149,7 +149,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    //Note: Gyro is turned off by default to save power unless using roll/pitch/yaw or elevation register (see loadPrefs()).
+    // Note: Gyro is turned off by default to save power unless using roll/pitch/yaw or elevation register (see loadPrefs()).
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -172,12 +172,12 @@ void readIMU(void) {
     float deltat = sfusion.deltatUpdate();
     deltat = constrain(deltat, 0.001f, 0.01f);  // AM 9/16/23 Enabled DWT to make micros() higher resolution for this calculation. Not sure that it matters.
 
-    //Serial.println(deltat, 4);
+    // Serial.println(deltat, 4);
 
     //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
-    // pitch and roll are swapped due to PCB sensor orientation
+    // Pitch and roll are swapped due to PCB sensor orientation.
     pitch = sfusion.getRollRadians();
     roll = sfusion.getPitchRadians();
     yaw = sfusion.getYawRadians();
@@ -192,17 +192,17 @@ void readIMU(void) {
     Serial.println(" 1.1, -1.1");
 #endif
 
-    currYaw = yaw;  // needs to be the unadjusted value
+    currYaw = yaw;  // Needs to be the unadjusted value
 
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
     else if (yaw < -PI) yaw += TWO_PI;
 
-    // adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
+    // Adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
     if (pitch > PI) pitch -= TWO_PI;
 
-    // invert all three
+    // Invert all three.
     roll = -roll;
     pitch = -pitch;
     yaw = -yaw;
@@ -214,11 +214,11 @@ void readIMU(void) {
 
 
     /*
-    //Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
+    // Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
     static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
     rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
-    if (abs(roll) < 0.5 && abs(pitch) < 60) {                           //If roll in the global frame is close to zero, zero the local roll as well. Doing this at high pitch can cause artifacts, so limit to low pitch.
-        rollLocal = 0;                                                  //It would be better to use a correction factor to "nudge" the zero point to the correct location rather than doing it abruptly, unless perhaps it's far out of range (like after powerup).
+    if (abs(roll) < 0.5 && abs(pitch) < 60) {                           // If roll in the global frame is close to zero, zero the local roll as well. Doing this at high pitch can cause artifacts, so limit to low pitch.
+        rollLocal = 0;                                                  // It would be better to use a correction factor to "nudge" the zero point to the correct location rather than doing it abruptly, unless perhaps it's far out of range (like after powerup).
     }
 
     //Serial.println(rollLocal, 0);
@@ -234,18 +234,18 @@ void readIMU(void) {
 
 
 
-//Calibrate the IMU when the command is received from the Config Tool.
+// Calibrate the IMU when the command is received from the Config Tool.
 void calibrateIMU() {
 
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Make sure the gyro is on.
-    delay(6);                                 //Give it a bit of time.
-    readIMU();                                //Get a reading in case we haven't been reading it.
+    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
+    delay(6);                                 // Give it a bit of time.
+    readIMU();                                // Get a reading in case we haven't been reading it.
 
     gyroXCalibration = rawGyroX;
     gyroYCalibration = rawGyroY;
     gyroZCalibration = rawGyroZ;
 
-    putEEPROM(1975, gyroXCalibration);  //Put the current readings into EEPROM.
+    putEEPROM(1975, gyroXCalibration);  // Put the current readings into EEPROM.
     putEEPROM(1979, gyroYCalibration);
     putEEPROM(1983, gyroZCalibration);
     writeEEPROM(36, 3);  // Remember that we have saved a calibration.
@@ -258,7 +258,7 @@ void calibrateIMU() {
 
 
 
-// reset heading 0 to current heading
+// Reset heading 0 to current heading
 void centerIMU() {
     yawOffset = -currYaw;
 }
@@ -269,21 +269,21 @@ void centerIMU() {
 
 
 
-//Map IMU to CC and send
+// Map IMU to CC and send
 void sendIMU() {
 
     static byte prevRollCC = 0;
     static byte prevPitchCC = 0;
     static byte prevYawCC = 0;
 
-    //The min and max settings from the Config Tool range from 0-36 and are scaled up to the maximum range of angles for each DOF.
+    // The min and max settings from the Config Tool range from 0-36 and are scaled up to the maximum range of angles for each DOF.
 
     if (IMUsettings[mode][SEND_ROLL]) {
 
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][ROLL_OUTPUT_MIN] > IMUsettings[mode][ROLL_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+        if (IMUsettings[mode][ROLL_OUTPUT_MIN] > IMUsettings[mode][ROLL_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
             lowerConstraint = IMUsettings[mode][ROLL_OUTPUT_MAX];
             upperConstraint = IMUsettings[mode][ROLL_OUTPUT_MIN];
         }
@@ -309,7 +309,7 @@ void sendIMU() {
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][PITCH_OUTPUT_MIN] > IMUsettings[mode][PITCH_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+        if (IMUsettings[mode][PITCH_OUTPUT_MIN] > IMUsettings[mode][PITCH_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
             lowerConstraint = IMUsettings[mode][PITCH_OUTPUT_MAX];
             upperConstraint = IMUsettings[mode][PITCH_OUTPUT_MIN];
         }
@@ -335,7 +335,7 @@ void sendIMU() {
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][YAW_OUTPUT_MIN] > IMUsettings[mode][YAW_OUTPUT_MAX]) {  //Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+        if (IMUsettings[mode][YAW_OUTPUT_MIN] > IMUsettings[mode][YAW_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
             lowerConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
             upperConstraint = IMUsettings[mode][YAW_OUTPUT_MIN];
         }
@@ -363,7 +363,7 @@ void sendIMU() {
 
 
 
-
+// Use the Y accelerometer axis with gravity removed for vibrato.
 void shakeForVibrato() {
 
     static float accelFilteredOld;
@@ -389,7 +389,7 @@ void shakeForVibrato() {
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
-    const long ktapFilterTimeMs = 12;  //ms window for further filtering out taps on the tone holes
+    const long ktapFilterTimeMs = 12;  // ms window for further filtering out taps on the tone holes
 
     static bool shakeActive = false;
     static bool tapFilterActive = false;
@@ -397,7 +397,7 @@ void shakeForVibrato() {
     static long tapFilterStartTime = 0;
     static bool preTrigger = false;
 
-    const float kShakeGestureThresh = 20.0f;  //Theshold for shake gesture
+    const float kShakeGestureThresh = 20.0f;  // Theshold for shake gesture
 
     unsigned long nowtime = millis();
 
@@ -408,7 +408,7 @@ void shakeForVibrato() {
         shakeDetected = false;
     }
 
-    if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {  //Do this part ony if shake pitchbend is turned on.
+    if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {  // Do this part ony if shake pitchbend is turned on.
 
 
         shakeVibrato = 0;
@@ -421,7 +421,7 @@ void shakeForVibrato() {
         }
 
 
-        if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  //Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
+        if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  // Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
             return;
         }
 
@@ -431,9 +431,9 @@ void shakeForVibrato() {
             // Serial.println("Pre Shake Trigger");
         }
 
-        // start shake vib only when doing a zero crossing after threshold has been triggered
-        if (!shakeActive && preTrigger
-            // comment out next line to test without the zero crossing requirement
+
+        if (!shakeActive && preTrigger  // Start shake vib only when doing a zero crossing after threshold has been triggered.
+            // Comment out next line to test without the zero crossing requirement
             //&& ((lastFilteredB <= 0.0f && accelFilteredB > 0.0f) || (lastFilteredB > 0.0f && accelFilteredB <= 0.0f))
         ) {
             shakeActive = true;
@@ -485,11 +485,11 @@ void shakeForVibrato() {
 
 
 
-//Return number of registers to jump based on IMU pitch.
+// Return number of registers to jump based on IMU pitch (elevation).
 int pitchRegister() {
 
     for (byte i = 1; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
-        if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  //See if IMU pitch is within the bounds for each register.
+        if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  // See if IMU pitch is within the bounds for each register.
             return i - 1;
         }
     }
@@ -535,58 +535,58 @@ void checkButtons() {
 
     for (byte j = 0; j < 3; j++) {
 
-        if (digitalRead(buttons[j]) == 0) {  //if the button reads low, reduce the integrator by 1
+        if (digitalRead(buttons[j]) == 0) {  // If the button reads low, reduce the integrator by 1
             if (integrator[j] > 0) {
                 integrator[j]--;
             }
-        } else if (integrator[j] < MAXIMUM) {  //if the button reads high, increase the integrator by 1
+        } else if (integrator[j] < MAXIMUM) {  // If the button reads high, increase the integrator by 1
             integrator[j]++;
         }
 
 
-        if (integrator[j] == 0) {  //the button is pressed.
-            pressed[j] = 1;        //we make the output the inverse of the input so that a pressed button reads as a "1".
-            //buttonUsed = 1;        //we don't currently used pressed by itself for anything so we don't need to handle it.
+        if (integrator[j] == 0) {  // The button is pressed.
+            pressed[j] = 1;        // We make the output the inverse of the input so that a pressed button reads as a "1".
+            //buttonUsed = 1;        // we don't currently used pressed by itself for anything so we don't need to handle it.
 
             if (prevOutput[j] == 0 && !longPressUsed[j]) {
-                justPressed[j] = 1;  //the button has just been pressed
+                justPressed[j] = 1;  // The button has just been pressed
             }
 
             else {
                 justPressed[j] = 0;
             }
 
-            if (prevOutput[j] == 1) {  //increase a counter so we know when a button has been held for a long press
+            if (prevOutput[j] == 1) {  // Increase a counter so we know when a button has been held for a long press.
                 longPressCounter[j]++;
             }
         }
 
 
-        else if (integrator[j] >= MAXIMUM) {  //the button is not pressed
+        else if (integrator[j] >= MAXIMUM) {  // The button is not pressed.
             pressed[j] = 0;
-            integrator[j] = MAXIMUM;  // defensive code if integrator got corrupted
+            integrator[j] = MAXIMUM;  // Defensive code if integrator got corrupted
 
             if (prevOutput[j] == 1 && !longPressUsed[j]) {
-                released[j] = 1;  //the button has just been released
+                released[j] = 1;  // The button has just been released.
                 buttonUsed = 1;
             }
 
             longPress[j] = 0;
-            longPressUsed[j] = 0;  //if a button is not pressed, reset the flag that tells us it's been used for a long press.
+            longPressUsed[j] = 0;  // If a button is not pressed, reset the flag that tells us it's been used for a long press.
             longPressCounter[j] = 0;
         }
 
 
-        if (longPressCounter[j] > 300 && !longPressUsed[j]) {  //if the counter gets to a certain level, it's a long press
+        if (longPressCounter[j] > 300 && !longPressUsed[j]) {  // If the counter gets to a certain level, it's a long press.
             longPress[j] = 1;
             longPressCounter[j] = 0;
             buttonUsed = 1;
         }
 
-        prevOutput[j] = pressed[j];  //keep track of state for next time around.
+        prevOutput[j] = pressed[j];  // Keep track of state for next time around.
     }
 
-    if (millis() < 1000) {  //ignore button 3 for the first bit after powerup in case it was only being used to power on the device. ToDo?: Make it so the first release after startup isn't registered because if you hold 3 longer than 1 second it will still register.
+    if (millis() < 1000) {  // Ignore button 3 for the first bit after powerup in case it was only being used to power on the device. ToDo?: Make it so the first release after startup isn't registered because if you hold 3 longer than 1 second it will still register.
         pressed[2] = 0;
         released[2] = 0;
     }
@@ -606,14 +606,14 @@ void checkButtons() {
 
 
 
-//Determine which holes are covered
+// Determine which holes are covered.
 void getFingers() {
 
     for (byte i = 0; i < 9; i++) {
         if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
-            bitWrite(holeCovered, i, 1);  //use the tonehole readings to decide which holes are covered
+            bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
         } else if ((toneholeRead[i]) <= (toneholeCovered[i] - 54)) {
-            bitWrite(holeCovered, i, 0);  //decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
+            bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
         }
     }
 }
@@ -625,7 +625,7 @@ void getFingers() {
 
 
 
-//Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman
+// Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman
 void debounceFingerHoles() {
 
     static unsigned long debounceTimer;
@@ -672,7 +672,7 @@ void debounceFingerHoles() {
 
 
 
-//Send the finger pattern and pressure to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
+// Send the finger pattern and pressure to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
 void sendToConfig(bool newPattern, bool newPressure) {
 
     static bool patternChanged = false;
@@ -683,25 +683,25 @@ void sendToConfig(bool newPattern, bool newPressure) {
     unsigned long nowtime = millis();
 
     if (communicationMode) {
-        if (newPattern && patternChanged == false) {  //If the fingering pattern has changed, start a timer.
+        if (newPattern && patternChanged == false) {  // If the fingering pattern has changed, start a timer.
             patternChanged = true;
             patternSendTimer = nowtime;
         }
 
-        if (newPressure && pressureChanged == false) {  //If the pressure has changed, start a timer.
+        if (newPressure && pressureChanged == false) {  // If the pressure has changed, start a timer.
             pressureChanged = true;
             pressureSendTimer = nowtime;
         }
 
-        if (patternChanged && (nowtime - patternSendTimer) > 25) {  //If some time has past, send the new pattern to the Config Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 114, holeCovered >> 7);     //Because it's MIDI we have to send it in two 7-bit chunks.
+        if (patternChanged && (nowtime - patternSendTimer) > 25) {  // If some time has past, send the new pattern to the Config Tool.
+            sendMIDI(CONTROL_CHANGE, 7, 114, holeCovered >> 7);     // Because it's MIDI we have to send it in two 7-bit chunks.
             sendMIDI(CONTROL_CHANGE, 7, 115, lowByte(holeCovered));
             patternChanged = false;
         }
 
-        if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  //If some time has past, send the new pressure to the Config Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 116, sensorValue & 0x7F);     //Send LSB of current pressure to Configuration Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 118, sensorValue >> 7);       //Send MSB of current pressure.
+        if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  // If some time has past, send the new pressure to the Config Tool.
+            sendMIDI(CONTROL_CHANGE, 7, 116, sensorValue & 0x7F);     // Send LSB of current pressure to Configuration Tool.
+            sendMIDI(CONTROL_CHANGE, 7, 118, sensorValue >> 7);       // Send MSB of current pressure.
             pressureChanged = false;
         }
     }
@@ -714,16 +714,16 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 
-//Return a MIDI note number (0-127) based on the current fingering.
+// Return a MIDI note number (0-127) based on the current fingering.
 int getNote(unsigned int fingerPattern) {
     int ret = -1;  //default for unknown fingering
 
-    switch (modeSelector[mode]) {  //determine the note based on the fingering pattern
+    switch (modeSelector[mode]) {  // Determine the note based on the fingering pattern
 
 
         case kModeWhistle:
             {
-            }  //these first two are the same
+            }  // These first two are the same
 
         case kModeChromatic:
             {
@@ -731,15 +731,15 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeBombarde:
             {
-            }  //this one is very similar-- a modification will be made below.
+            }  // This one is very similar-- a modification will be made below.
 
         case kModeBaroqueFlute:
-            {  //this one is very similar-- a modification will be made below.
+            {  // This one is very similar-- a modification will be made below.
 
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  //use bitmask and bitshift to ignore thumb sensor, R4 sensor, and bell sensor when using tinwhistle fingering. The R4 value will be checked later to see if a note needs to be flattened.
+                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Use bitmask and bitshift to ignore thumb sensor, R4 sensor, and bell sensor when using tinwhistle fingering. The R4 value will be checked later to see if a note needs to be flattened.
                 ret = tinwhistle_explicit[tempCovered].midi_note;
                 if (modeSelector[mode] == kModeChromatic && bitRead(fingerPattern, 1) == 1) {
-                    ret--;  //lower a semitone if R4 hole is covered and we're using the chromatic pattern
+                    ret--;  // Lower a semitone if R4 hole is covered and we're using the chromatic pattern
                 }
                 if (modeSelector[mode] == kModeBaroqueFlute) {
                     if ((0b011111110 & fingerPattern) >> 2 == 0b010011) {
@@ -749,7 +749,7 @@ int getNote(unsigned int fingerPattern) {
                         ret = 76;
                     }
                     if (bitRead(fingerPattern, 1) == 1) {
-                        ret++;  //raise a semitone if R4 hole is covered and we're using the baroque pattern, imitating a D# key
+                        ret++;  // Raise a semitone if R4 hole is covered and we're using the baroque pattern, imitating a D# key
                     }
                 }
 
@@ -770,25 +770,25 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeUilleann:
             {
-            }  //these two are the same, with the exception of cancelling accidentals.
+            }  // These two are the same, with the exception of cancelling accidentals.
 
         case kModeUilleannStandard:
-            {  //the same as the previous one, but we cancel the accidentals Bb and F#
+            {  // The same as the previous one, but we cancel the accidentals Bb and F#
 
 
-                //If back D open, always play the D and allow finger vibrato
+                // If back D open, always play the D and allow finger vibrato
                 if ((fingerPattern & 0b100000000) == 0) {
                     if (fingerPattern == holeCovered) {
                         vibratoEnable = 0b000010;
                     }
                     return 74;
                 }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = uilleann_explicit[tempCovered].midi_note;
                 if (fingerPattern == holeCovered) {
                     vibratoEnable = uilleann_explicit[tempCovered].vibrato;
                 }
-                if (modeSelector[mode] == kModeUilleannStandard) {  //cancel accidentals if we're in standard uilleann mode
+                if (modeSelector[mode] == kModeUilleannStandard) {  // Cancel accidentals if we're in standard uilleann mode
                     if (tempCovered == 0b1001000 || tempCovered == 0b1001010) {
                         return 71;
                     }
@@ -804,32 +804,32 @@ int getNote(unsigned int fingerPattern) {
         case kModeGHB:
             {
 
-                //If back A open, always play the A
+                // If back A open, always play the A
                 if ((fingerPattern & 0b100000000) == 0) {
                     return 74;
                 }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = GHB_explicit[tempCovered].midi_note;
                 return ret;
             }
 
 
         case kModeRecorder:
-            {  //this is especially messy, should be cleaned up
+            {  // This is especially messy, should be cleaned up
 
-                //If back thumb and L1 are open
+                // If back thumb and L1 are open
                 if ((((fingerPattern & 0b110000000) == 0) && (fingerPattern & 0b011111111) != 0) && (fingerPattern >> 1) != 0b00101100) {
-                    if (fingerPattern >> 1 == 0b00110000) {  //special fingering for D#
+                    if (fingerPattern >> 1 == 0b00110000) {  // Special fingering for D#
                         return 77;
                     } else {
-                        return 76  //play D
+                        return 76  // Play D
                           ;
                     }
                 }
-                if (fingerPattern >> 1 == 0b01011010) return 88;  //special fingering for high D
-                if (fingerPattern >> 1 == 0b01001100) return 86;  //special fingering for high C
+                if (fingerPattern >> 1 == 0b01011010) return 88;  // Special fingering for high D
+                if (fingerPattern >> 1 == 0b01001100) return 86;  // Special fingering for high C
                 //otherwise check the chart.
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = recorder_explicit[tempCovered].midi_note;
                 //If back thumb is open
                 if ((fingerPattern & 0b100000000) == 0 && (fingerPattern >> 1) != 0b00101100) {
@@ -842,12 +842,12 @@ int getNote(unsigned int fingerPattern) {
         case kModeNorthumbrian:
             {
 
-                //If back A open, always play the A
+                // If back A open, always play the A
                 if ((fingerPattern & 0b100000000) == 0) {
                     return 74;
                 }
-                tempCovered = fingerPattern >> 1;                 //bitshift once to ignore bell sensor reading
-                tempCovered = findleftmostunsetbit(tempCovered);  //here we find the index of the leftmost uncovered hole, which will be used to determine the note from the general chart.
+                tempCovered = fingerPattern >> 1;                 // Bitshift once to ignore bell sensor reading.
+                tempCovered = findleftmostunsetbit(tempCovered);  // Here we find the index of the leftmost uncovered hole, which will be used to determine the note from the general chart.
                 for (uint8_t i = 0; i < 9; i++) {
                     if (tempCovered == northumbrian_general[i].keys) {
                         ret = northumbrian_general[i].midi_note;
@@ -860,7 +860,7 @@ int getNote(unsigned int fingerPattern) {
         case kModeGaita:
             {
 
-                tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
+                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
                 ret = gaita_explicit[tempCovered].midi_note;
                 if (ret == 0) {
                     ret = -1;
@@ -872,7 +872,7 @@ int getNote(unsigned int fingerPattern) {
         case kModeGaitaExtended:
             {
 
-                tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
+                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
                 ret = gaita_extended_explicit[tempCovered].midi_note;
                 if (ret == 0) {
                     ret = -1;
@@ -884,7 +884,7 @@ int getNote(unsigned int fingerPattern) {
         case kModeNAF:
             {
 
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = naf_explicit[tempCovered].midi_note;
                 return ret;
             }
@@ -893,9 +893,9 @@ int getNote(unsigned int fingerPattern) {
         case kModeEVI:
             {
 
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = evi_explicit[tempCovered].midi_note;
-                ret = ret + 4;  //transpose up to D so that key selection in the Configuration Tool works properly
+                ret = ret + 4;  // Transpose up to D so that key selection in the Configuration Tool works properly
                 return ret;
             }
 
@@ -907,7 +907,7 @@ int getNote(unsigned int fingerPattern) {
                 if ((fingerPattern & 0b100000000) == 0) {
                     return 71;
                 }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = kaval_explicit[tempCovered].midi_note;
                 return ret;
             }
@@ -916,20 +916,20 @@ int getNote(unsigned int fingerPattern) {
         case kModeXiao:
             {
 
-                //Catch a few specific patterns with the thumb hole open:
+                // Catch a few specific patterns with the thumb hole open:
                 if ((fingerPattern & 0b100000000) == 0) {
-                    if ((fingerPattern >> 4) == 0b01110) {  //if the top 5 holes are as shown
-                        return 70;                          //play Bb
+                    if ((fingerPattern >> 4) == 0b01110) {  // If the top 5 holes are as shown
+                        return 70;                          // Blay Bb
                     }
-                    if ((fingerPattern & 0b010000000) == 0) {  //if hole L1 is also open
-                        return 71;                             //play B
+                    if ((fingerPattern & 0b010000000) == 0) {  // If hole L1 is also open
+                        return 71;                             // Play B
                     }
                     return 72;  //otherwise play a C
                 } else if ((fingerPattern & 0b010000000) == 0) {
-                    return 69;  //if thumb is closed but L1 is open play an A
+                    return 69;  // If thumb is closed but L1 is open play an A
                 }
-                //otherwise check the chart.
-                tempCovered = (0b001111110 & fingerPattern) >> 1;  //ignore thumb hole, L1 hole, and bell sensor
+                // Otherwise check the chart.
+                tempCovered = (0b001111110 & fingerPattern) >> 1;  // Ignore thumb hole, L1 hole, and bell sensor
                 ret = xiao_explicit[tempCovered].midi_note;
                 return ret;
             }
@@ -938,13 +938,13 @@ int getNote(unsigned int fingerPattern) {
         case kModeSax:
             {
 
-                //check the chart.
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  //ignore thumb hole, R4 hole, and bell sensor
+                // Check the chart.
+                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
                 ret = sax_explicit[tempCovered].midi_note;
-                if (((fingerPattern & 0b000000010) != 0) && ret != 47 && ret != 52 && ret != 53 && ret != 54 && ret != 59 && ret != 60 && ret != 61) {  //sharpen the note if R4 is covered and the note isn't one of the ones that can't be sharpened (a little wonky but works and keep sthe chart shorter ;)
+                if (((fingerPattern & 0b000000010) != 0) && ret != 47 && ret != 52 && ret != 53 && ret != 54 && ret != 59 && ret != 60 && ret != 61) {  // Sharpen the note if R4 is covered and the note isn't one of the ones that can't be sharpened (a little wonky but works and keep sthe chart shorter ;)
                     ret++;
                 }
-                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  //if the thumb hole is covered, raise the octave
+                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  // If the thumb hole is covered, raise the octave
                     ret = ret + 12;
                 }
                 return ret;
@@ -955,9 +955,9 @@ int getNote(unsigned int fingerPattern) {
             {
 
                 //check the chart.
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = saxbasic_explicit[tempCovered].midi_note;
-                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  //if the thumb hole is covered, raise the octave
+                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  // If the thumb hole is covered, raise the octave
                     ret = ret + 12;
                 }
                 return ret;
@@ -967,9 +967,9 @@ int getNote(unsigned int fingerPattern) {
         case kModeShakuhachi:
             {
 
-                //ignore all unused holes by extracting bits and then logical OR
+                // Ignore all unused holes by extracting bits and then logical OR
                 {
-                    //braces necessary for scope
+                    // Braces necessary for scope
                     byte high = (fingerPattern >> 4) & 0b11000;
                     byte middle = (fingerPattern >> 4) & 0b00011;
                     middle = middle << 1;
@@ -987,20 +987,20 @@ int getNote(unsigned int fingerPattern) {
             }
 
         case kModeSackpipaMinor:
-            {  //the same except we'll change C# to C
+            {  // The same except we'll change C# to C
 
-                //check the chart.
-                tempCovered = (0b011111100 & fingerPattern) >> 2;        //ignore thumb hole, R4 hole, and bell sensor
-                if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  //play D if all holes are covered
-                    return 60;                                           //play D
+                // Check the chart.
+                tempCovered = (0b011111100 & fingerPattern) >> 2;        // Ignore thumb hole, R4 hole, and bell sensor
+                if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play D if all holes are covered
+                    return 60;                                           // Play D
                 }
-                if ((fingerPattern & 0b100000000) == 0) {  //if the thumb hole is open, play high E
-                    return 74;                             //play E
+                if ((fingerPattern & 0b100000000) == 0) {  // If the thumb hole is open, play high E
+                    return 74;                             // Play E
                 }
                 ret = sackpipa_explicit[tempCovered].midi_note;
-                if (modeSelector[mode] == kModeSackpipaMinor) {  //flatten the C# if we're in "minor" mode
+                if (modeSelector[mode] == kModeSackpipaMinor) {  // Flatten the C# if we're in "minor" mode
                     if (ret == 71) {
-                        return 70;  //play C natural instead
+                        return 70;  // Play C natural instead
                     }
                 }
                 return ret;
@@ -1010,14 +1010,14 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeMedievalPipes:
             {
-                //If back A open, always play the A
+                // If back A open, always play the A
                 if ((fingerPattern & 0b100000000) == 0) {
                     if ((fingerPattern & 0b010000000) == 0) {
-                        return 76;  //A if thumb and L1 are open
+                        return 76;  // A if thumb and L1 are open
                     }
-                    return 78;  //Bb if only thumb is open
+                    return 78;  // Bb if only thumb is open
                 }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
                 ret = medievalPipes_explicit[tempCovered].midi_note;
                 return ret;
             }
@@ -1028,21 +1028,21 @@ int getNote(unsigned int fingerPattern) {
             {
             }
 
-        case kModeBansuri:  //ToDO: Make sure this matches the old firmware (2.2)
+        case kModeBansuri:  // ToDO: Make sure this matches the old firmware (2.2)
             {
 
                 //check the chart.
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  //ignore thumb hole, R4 hole, and bell sensor
+                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
                 ret = bansuri_explicit[tempCovered].midi_note;
-                if ((fingerPattern & 0b100000000) == 0) {  //if the thumb hole is open, play G
+                if ((fingerPattern & 0b100000000) == 0) {  // If the thumb hole is open, play G
                     ret = 74;
-                } else if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  //play F# if all holes are covered
+                } else if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play F# if all holes are covered
                     ret = 61;
                 }
 
 
                 if (modeSelector[mode] == kModeBansuriWARBL) {
-                    if (fingerPattern >> 1 != 0b11111111 && (bitRead(fingerPattern, 1) == 1)) {  //if R4 is covered and we're not playing an F#, raise the note one semitone
+                    if (fingerPattern >> 1 != 0b11111111 && (bitRead(fingerPattern, 1) == 1)) {  // If R4 is covered and we're not playing an F#, raise the note one semitone
                         ret--;
                     }
                 }
@@ -1051,7 +1051,7 @@ int getNote(unsigned int fingerPattern) {
 
 
 
-        case kWARBL2Custom1:  //If we're using a custom chart we've already loaded the currently selected one from EEPROM into the array, so these can all fall through here.
+        case kWARBL2Custom1:  // If we're using a custom chart we've already loaded the currently selected one from EEPROM into the array, so these can all fall through here.
             {
             }
         case kWARBL2Custom2:
@@ -1062,7 +1062,7 @@ int getNote(unsigned int fingerPattern) {
             }
         case kWARBL2Custom4:
             {
-                tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
+                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
                 ret = WARBL2CustomChart[tempCovered];
                 return ret;
             }
@@ -1083,7 +1083,7 @@ int getNote(unsigned int fingerPattern) {
 
 
 
-//Add up any transposition based on key and register.
+// Add up any transposition based on key and register.
 void getShift() {
 
     byte pitchShift;
@@ -1093,32 +1093,32 @@ void getShift() {
     }
 
 
-    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  //adjust for key and octave shift.
+    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
 
-    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  //if overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + 12;                                                                                                                                                                                                                                                                                                                      //add a register jump to the transposition if overblowing.
-        if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  //Kaval only plays a fifth higher in the second register.
+    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
+        shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
+        if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
     }
 
-    if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {  //if we're using the bell sensor to control register
+    if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {  // If we're using the bell sensor to control register
         if (bitRead(holeCovered, 0) == switches[mode][INVERT]) {
-            shift = shift + 12;  //add a register jump to the transposition if necessary.
+            shift = shift + 12;  // Add a register jump to the transposition if necessary.
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
             }
         }
     }
 
-    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  //if we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
+    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
 
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
-            shift = shift + 12;  //add an octave jump to the transposition if necessary.
+            shift = shift + 12;  // Add an octave jump to the transposition if necessary.
         }
     }
 
-    //Some charts require another transposition to bring them to the correct key
+    // Some charts require another transposition to bring them to the correct key
     if (modeSelector[mode] == kModeGaita || modeSelector[mode] == kModeGaitaExtended) {
         shift = shift - 1;
     }
@@ -1140,19 +1140,19 @@ void getShift() {
 
 
 
-//State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
-//The current jump/drop behavior is from Louis Barman
+// State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
+// The current jump/drop behavior is from Louis Barman
 void getState() {
-    sensorValue2 = tempSensorValue;  //Transfer last reading.
+    sensorValue2 = tempSensorValue;  // Transfer last reading.
 
-    byte scalePosition;  //ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
+    byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
 
     scalePosition = findleftmostunsetbit(holeCovered) + 62;  // Use the highest open hole to calculate.
     if (scalePosition > 69) {
         scalePosition = 70;
     }
 
-    if (ED[mode][DRONES_CONTROL_MODE] == 3) {  //Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
+    if (ED[mode][DRONES_CONTROL_MODE] == 3) {  // Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
 
         if (!dronesOn && sensorValue2 > 5 + (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
             startDrones();
@@ -1163,21 +1163,21 @@ void getState() {
         }
     }
 
-    upperBound = (sensorThreshold[1] + ((scalePosition - 60) * multiplier));  //Calculate the threshold between state 2 (bottom register) and state 3 (top register). This will also be used to calculate expression.
+    upperBound = (sensorThreshold[1] + ((scalePosition - 60) * multiplier));  // Calculate the threshold between state 2 (bottom register) and state 3 (top register). This will also be used to calculate expression.
 
 
     newState = currentState;
 
     if (sensorValue2 <= sensorThreshold[0]) {
         newState = SILENCE;
-        holdoffActive = false;  //No need to wait for jump/drop if we've already crossed the threshold for silence
+        holdoffActive = false;  // No need to wait for jump/drop if we've already crossed the threshold for silence
     } else if (sensorValue2 > sensorThreshold[0] + SILENCE_HYSTERESIS) {
         if (currentState == SILENCE) {
             newState = BOTTOM_REGISTER;
         }
 
 
-        if (breathMode == kPressureBreath) {  //If overblowing is enabled
+        if (breathMode == kPressureBreath) {  // If overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
             if (sensorValue2 > upperBoundHigh) {
@@ -1187,17 +1187,17 @@ void getState() {
                 newState = BOTTOM_REGISTER;
             }
 
-            //Wait to decide about jump or drop if necessary.
+            // Wait to decide about jump or drop if necessary.
             if (currentState == SILENCE && newState == BOTTOM_REGISTER) {
                 newState = delayStateChange(JUMP, sensorValue2, upperBoundHigh);
-            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20) {  //Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
+            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
                 newState = delayStateChange(DROP, sensorValue2, upperBoundLow);
             }
         }
     }
 
     currentState = newState;
-    sensorValue = sensorValue2;  //We'll use the current reading as the baseline next time around, so we can monitor the rate of change.
+    sensorValue = sensorValue2;  // We'll use the current reading as the baseline next time around, so we can monitor the rate of change.
 
     if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
         if (prevState == SILENCE && newState != SILENCE) {
@@ -1215,26 +1215,26 @@ void getState() {
 
 
 
-//Delay the overblow state until either it has timed out or the pressure has leveled off.
+// Delay the overblow state until either it has timed out or the pressure has leveled off.
 byte delayStateChange(byte jumpDrop, int pressure, int upper) {
     static unsigned long holdOffTimer;
     unsigned long now = millis();
     bool exitEarly = false;
     int rateChange;
 
-    if (!holdoffActive) {  //Start our timer if we haven't already.
+    if (!holdoffActive) {  // Start our timer if we haven't already.
         holdoffActive = true;
         holdOffTimer = now;
         rateChangeIdx = 0;
         previousPressure = 0;
     }
 
-    if ((jumpDrop == JUMP && (now - holdOffTimer) < jumpTime) || (jumpDrop == DROP && (now - holdOffTimer) < dropTime)) {  //Ff we haven't paused long enough, check the pressure rate change to see if it has leveled off.
+    if ((jumpDrop == JUMP && (now - holdOffTimer) < jumpTime) || (jumpDrop == DROP && (now - holdOffTimer) < dropTime)) {  // If we haven't paused long enough, check the pressure rate change to see if it has leveled off.
 
 
         rateChange = pressureRateChange(pressure);
 
-        if (rateChange != 2000) {  //make sure it's valid
+        if (rateChange != 2000) {  // Make sure it's valid
             if (jumpDrop == JUMP && rateChange <= 0) {
                 exitEarly = true;
             } else if (jumpDrop == DROP && rateChange >= 0) {
@@ -1243,7 +1243,7 @@ byte delayStateChange(byte jumpDrop, int pressure, int upper) {
         }
     }
 
-    //if we've paused long enough or the pressure has stabilized, go to the bottom register
+    // If we've paused long enough or the pressure has stabilized, go to the bottom register
     else {
         holdoffActive = false;
         return BOTTOM_REGISTER;
@@ -1255,7 +1255,7 @@ byte delayStateChange(byte jumpDrop, int pressure, int upper) {
     }
 
 
-    return currentState;  //stay in the current state if we haven't waited the total time and the pressure hasn't yet leveled off.
+    return currentState;  // Stay in the current state if we haven't waited the total time and the pressure hasn't yet leveled off.
 }
 
 
@@ -1265,9 +1265,9 @@ byte delayStateChange(byte jumpDrop, int pressure, int upper) {
 
 
 
-//Calculate the rate of pressure change to see if the slope has reversed
+// Calculate the rate of pressure change to see if the slope has reversed
 int pressureRateChange(int pressure) {
-    int rateChange = 2000;  //if not valid
+    int rateChange = 2000;  // If not valid
     if (rateChangeIdx == 0) {
         rateChangeIdx = 1;
         previousPressure = pressure;
@@ -1289,7 +1289,7 @@ int pressureRateChange(int pressure) {
 
 
 
-//calculate the upper boundary for the register when hysteresis is applied, from Louis Barman
+// Calculate the upper boundary for the register when hysteresis is applied, from Louis Barman.
 int calcHysteresis(int currentUpperBound, bool high) {
     if (hysteresis == 0) {
         return currentUpperBound;
@@ -1312,10 +1312,10 @@ int calcHysteresis(int currentUpperBound, bool high) {
 
 
 
-//calculate pitchbend expression based on pressure
+// Calculate pitchbend expression based on pressure
 void getExpression() {
-    //calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead
 
+    // Calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead.
 
     int lowerBound;
     int useUpperBound;
@@ -1326,13 +1326,13 @@ void getExpression() {
     } else {
         lowerBound = sensorThreshold[0];
         if (newState == 3) {
-            useUpperBound = upperBoundLow;  //get the register boundary taking hysteresis into consideration
+            useUpperBound = upperBoundLow;  // Get the register boundary taking hysteresis into consideration
         } else {
             useUpperBound = upperBoundHigh;
         }
     }
 
-    unsigned int halfway = ((useUpperBound - lowerBound) >> 1) + lowerBound;  //calculate the midpoint of the curent register, where the note should play in tune.
+    unsigned int halfway = ((useUpperBound - lowerBound) >> 1) + lowerBound;  // Calculate the midpoint of the curent register, where the note should play in tune.
 
     if (newState == 3) {
         halfway = useUpperBound + halfway;
@@ -1340,7 +1340,7 @@ void getExpression() {
     }
 
     if (sensorValue < halfway) {
-        byte scale = (((halfway - sensorValue) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));  //should maybe figure out how to do this without dividing.
+        byte scale = (((halfway - sensorValue) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));  // Should maybe figure out how to do this without dividing.
         expression = -((scale * scale) >> 3);
     } else {
         expression = (sensorValue - halfway) * ED[mode][EXPRESSION_DEPTH];
@@ -1348,11 +1348,11 @@ void getExpression() {
 
 
     if (expression > ED[mode][EXPRESSION_DEPTH] * 200) {
-        expression = ED[mode][EXPRESSION_DEPTH] * 200;  //put a cap on it, because in the upper register or in single-register mode, there's no upper limit
+        expression = ED[mode][EXPRESSION_DEPTH] * 200;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
     }
 
 
-    if (pitchBendMode == kPitchBendNone) {  //if we're not using vibrato, send the pitchbend now instead of adding it in later.
+    if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
         pitchBend = 0;
         sendPitchbend();
     }
@@ -1365,17 +1365,16 @@ void getExpression() {
 
 
 
-//find how many steps down to the next lower note on the scale.
+// Find how many steps down to the next lower note on the scale.
 void findStepsDown() {
-    slideHole = findleftmostunsetbit(holeCovered);  //determine the highest uncovered hole, to use for sliding
-    if (slideHole == 127) {                         //this means no holes are covered.
-        // this could mean the highest hole is starting to be uncovered, so use that as the slideHole
+    slideHole = findleftmostunsetbit(holeCovered);  // Determine the highest uncovered hole, to use for sliding
+    if (slideHole == 127) {                         // This means no holes are covered.
+        // This could mean the highest hole is starting to be uncovered, so use that as the slideHole
         slideHole = 7;
-        //return;
     }
     unsigned int closedSlideholePattern = holeCovered;
-    bitSet(closedSlideholePattern, slideHole);                                   //figure out what the fingering pattern would be if we closed the slide hole
-    stepsDown = constrain(tempNewNote - getNote(closedSlideholePattern), 0, 2);  //and then figure out how many steps down it would be if a new note were triggered with that pattern.
+    bitSet(closedSlideholePattern, slideHole);                                   // Figure out what the fingering pattern would be if we closed the slide hole
+    stepsDown = constrain(tempNewNote - getNote(closedSlideholePattern), 0, 2);  // And then figure out how many steps down it would be if a new note were triggered with that pattern.
 }
 
 
@@ -1385,7 +1384,7 @@ void findStepsDown() {
 
 
 
-//Custom pitchbend algorithms, tin whistle and uilleann by Michael Eskin
+// Custom pitchbend algorithms, tin whistle and uilleann by Michael Eskin
 void handleCustomPitchBend() {
     iPitchBend[2] = 0;  //reset pitchbend for the holes that are being used ToDo: may need to do this for all holes because others might be being used for slide.
     iPitchBend[3] = 0;
@@ -1493,7 +1492,7 @@ void handleCustomPitchBend() {
 
 
 
-//Andrew's version of vibrato
+// Andrew's version of vibrato
 void handlePitchBend() {
     for (byte i = 0; i < 9; i++) {  //reset
         iPitchBend[i] = 0;
@@ -1542,7 +1541,7 @@ void handlePitchBend() {
 
 
 
-//calculate slide pitchBend, to be added with vibrato.
+// Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
         if (toneholeRead[i] > senseDistance
@@ -1608,6 +1607,7 @@ void sendPitchbend() {
 
 
 
+
 void calculateAndSendPitchbend() {
     if (ED[mode][EXPRESSION_ON] && !switches[mode][BAGLESS]) {
         getExpression();  //IF using pitchbend expression, calculate pitchbend based on pressure reading.
@@ -1627,7 +1627,7 @@ void calculateAndSendPitchbend() {
 
 
 
-//send MIDI NoteOn/NoteOff events when necessary
+// Send MIDI NoteOn/NoteOff events when necessary.
 void sendNote() {
     const int velDelayMs = switches[mode][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
 
@@ -1741,9 +1741,8 @@ void sendNote() {
 
 
 
-
-void blink()  //blink LED given number of times
-{
+// Blink LED given number of times.
+void blink() {
     if (blinkNumber > 0) {
         if ((millis() - ledTimer) >= 200) {
             ledTimer = millis();
@@ -1788,7 +1787,7 @@ void pulse() {
                 in[i] = 4.712f;
             out[i] = sin(in[i]) * 511.5f + 511.5f;
             analogWrite(LEDpins[i], out[i]);
-            in[i] = in[i] + rate * out[i] / 1023;  // Modify sine wave to spend less time at higher brightness (human eye can't detect higher values as well).
+            in[i] = in[i] + rate * out[i] / 1023;  // Modify sine wave to spend less time at higher brightness (human eye can't detect changes in higher values as well).
         } else if (prevPulseState[i] == true) {
             prevPulseState[i] = false;
             analogWrite(LEDpins[i], 0);  // If pulsing was just turned off, write 0.
@@ -2921,17 +2920,17 @@ void saveSettings(byte i) {
 
 
 
-//load settings for all three instruments from EEPROM
+// Load settings for all three instruments from EEPROM.
 void loadSettingsForAllModes() {
-    //Some things that are independent of mode.
-    defaultMode = readEEPROM(48);  //load default mode
+    // Some things that are independent of mode.
+    defaultMode = readEEPROM(48);  // Load default mode.
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
         WARBL2settings[r] = readEEPROM(600 + r);
     }
 
-    fullRunTime = (word(readEEPROM(1989), readEEPROM(1990)));  //The total run time available on a full charge (minutes)
-    prevRunTime = (word(readEEPROM(1993), readEEPROM(1994)));  //The total run time since the last full charge (minutes)
+    fullRunTime = (word(readEEPROM(1989), readEEPROM(1990)));  // The total run time available on a full charge (minutes)
+    prevRunTime = (word(readEEPROM(1993), readEEPROM(1994)));  // The total run time since the last full charge (minutes)
 
     if (readEEPROM(36) == 3) {  // If there has been a gyro calibration saved
         getEEPROM(1975, gyroXCalibration);
@@ -2939,7 +2938,7 @@ void loadSettingsForAllModes() {
         getEEPROM(1983, gyroZCalibration);
     }
 
-    //Do all this for each mode.
+    // Do all this for each mode.
     for (byte i = 0; i < 3; i++) {
         senseDistanceSelector[i] = readEEPROM(50 + i);
 
@@ -2972,10 +2971,10 @@ void loadSettingsForAllModes() {
         breathModeSelector[i] = readEEPROM(316 + i);
 
         midiBendRangeSelector[i] = readEEPROM(319 + i);
-        midiBendRangeSelector[i] = midiBendRangeSelector[i] > 96 ? 2 : midiBendRangeSelector[i];  // sanity check in case uninitialized
+        midiBendRangeSelector[i] = midiBendRangeSelector[i] > 96 ? 2 : midiBendRangeSelector[i];  // Sanity check in case uninitialized
 
         midiChannelSelector[i] = readEEPROM(322 + i);
-        midiChannelSelector[i] = midiChannelSelector[i] > 16 ? 1 : midiChannelSelector[i];  // sanity check in case uninitialized
+        midiChannelSelector[i] = midiChannelSelector[i] > 16 ? 1 : midiChannelSelector[i];  // Sanity check in case uninitialized
 
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
@@ -2994,7 +2993,7 @@ void loadSettingsForAllModes() {
 
 
 
-//load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
+// Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
     vibratoHoles = vibratoHolesSelector[mode];
     octaveShift = octaveShiftSelector[mode];
@@ -3007,16 +3006,16 @@ void loadPrefs() {
     breathMode = breathModeSelector[mode];
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
-    transientFilter = (pressureSelector[mode][9] + 1) / 1.25;  //this variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    transientFilter = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
-    //set these variables depending on whether "vented" is selected
+    // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
     multiplier = pressureSelector[mode][(switches[mode][VENTED] * 6) + 1];
     hysteresis = pressureSelector[mode][(switches[mode][VENTED] * 6) + 2];
-    jumpTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 4]) + 1) / 1.25;  //Includes a correction for milliseconds
-    dropTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 5]) + 1) / 1.25;  //Includes a correction for milliseconds
+    jumpTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 4]) + 1) / 1.25;  // Includes a correction for milliseconds
+    dropTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 5]) + 1) / 1.25;  // Includes a correction for milliseconds
 
-    //Read a custom chart from EEPROM if we're using one.
+    // Read a custom chart from EEPROM if we're using one.
     if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
         for (int i = 0; i < 256; i++) {
             WARBL2CustomChart[i] = readEEPROM((4000 + (256 * (modeSelector[mode] - 67))) + i);
@@ -3030,48 +3029,48 @@ void loadPrefs() {
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
 
     for (byte i = 0; i < 9; i++) {
-        iPitchBend[i] = 0;  //turn off pitchbend
+        iPitchBend[i] = 0;  // Turn off pitchbend.
         pitchBendOn[i] = 0;
     }
 
     if (switches[mode][CUSTOM] && pitchBendMode != kPitchBendNone) {
         customEnabled = 1;
-    } else (customEnabled = 0);  //decide here whether custom vibrato can currently be used, so we don't have to do it every time we need to check pitchBend.
+    } else (customEnabled = 0);  // Decide here whether custom vibrato can currently be used, so we don't have to do it every time we need to check pitchBend.
 
     if (switches[mode][FORCE_MAX_VELOCITY]) {
-        velocity = 127;  //set velocity
+        velocity = 127;  // Set velocity
     } else {
         velocity = 64;
     }
 
     if (!useLearnedPressure) {
-        sensorThreshold[0] = (sensorCalibration + soundTriggerOffset);  //pressure sensor calibration at startup. We set the on/off threshhold just a bit higher than the reading at startup.
+        sensorThreshold[0] = (sensorCalibration + soundTriggerOffset);  // Pressure sensor calibration at startup. We set the on/off threshhold just a bit higher than the reading at startup.
     }
 
     else {
         sensorThreshold[0] = (learnedPressure + soundTriggerOffset);
     }
 
-    sensorThreshold[1] = sensorThreshold[0] + (offset << 2);  //threshold for move to second octave
+    sensorThreshold[1] = sensorThreshold[0] + (offset << 2);  // Threshold for move to second octave
 
     for (byte i = 0; i < 9; i++) {
         toneholeScale[i] = ((8 * (16383 / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);            // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
-        vibratoScale[i] = ((8 * 2 * (vibratoDepth / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);  //This one is for vibrato
+        vibratoScale[i] = ((8 * 2 * (vibratoDepth / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);  // This one is for vibrato.
     }
 
-    adjvibdepth = vibratoDepth / midiBendRange;  //precalculations for pitchbend range
+    adjvibdepth = vibratoDepth / midiBendRange;  // Precalculations for pitchbend range
     pitchBendPerSemi = 8192 / midiBendRange;
 
-    inputPressureBounds[0][0] = (ED[mode][INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as CC
+    inputPressureBounds[0][0] = (ED[mode][INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as CC.
     inputPressureBounds[0][1] = (ED[mode][INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[1][0] = (ED[mode][VELOCITY_INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as velocity
+    inputPressureBounds[1][0] = (ED[mode][VELOCITY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as velocity.
     inputPressureBounds[1][1] = (ED[mode][VELOCITY_INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[2][0] = (ED[mode][AFTERTOUCH_INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as aftertouch
+    inputPressureBounds[2][0] = (ED[mode][AFTERTOUCH_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as aftertouch.
     inputPressureBounds[2][1] = (ED[mode][AFTERTOUCH_INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[3][0] = (ED[mode][POLY_INPUT_PRESSURE_MIN] * 9);  //precalculate input and output pressure ranges for sending pressure as poly
+    inputPressureBounds[3][0] = (ED[mode][POLY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as poly.
     inputPressureBounds[3][1] = (ED[mode][POLY_INPUT_PRESSURE_MAX] * 9);
 
-    outputBounds[0][0] = ED[mode][OUTPUT_PRESSURE_MIN];  //move all these variables to a more logical order so they can be accessed in FOR loops
+    outputBounds[0][0] = ED[mode][OUTPUT_PRESSURE_MIN];  // Move all these variables to a more logical order so they can be accessed in FOR loops.
     outputBounds[0][1] = ED[mode][OUTPUT_PRESSURE_MAX];
     outputBounds[1][0] = ED[mode][VELOCITY_OUTPUT_PRESSURE_MIN];
     outputBounds[1][1] = ED[mode][VELOCITY_OUTPUT_PRESSURE_MAX];
@@ -3089,11 +3088,11 @@ void loadPrefs() {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  //Turn on the gyro if we need it.
     }
 
-    //Calculate upper and lower bounds for IMU pitch register mapping
-    byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  //Number of degrees per register
-    IMUsettings[mode][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[mode][PITCH_REGISTER_NUMBER], 2, 5);                                                                //Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
+    // Calculate upper and lower bounds for IMU pitch register mapping.
+    byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  // Number of degrees per register
+    IMUsettings[mode][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[mode][PITCH_REGISTER_NUMBER], 2, 5);                                                                // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
     for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
-        pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  //Upper/lower bounds for each register
+        pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
     }
 }
 
@@ -3102,8 +3101,8 @@ void loadPrefs() {
 
 
 
-//Calibrate the sensors and store them in EEPROM
-//mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
+// Calibrate the sensors and store them in EEPROM.
+// Mode 1 calibrates all sensors, mode 2 calibrates bell sensor only.
 void calibrate() {
 
     static unsigned long calibrationTimer = 0;
@@ -3114,43 +3113,43 @@ void calibrate() {
             LEDon = 1;
             calibrationTimer = millis();
 
-            if (calibration == 1) {  //calibrate all sensors if we're in calibration "mode" 1
+            if (calibration == 1) {  // Calibrate all sensors if we're in calibration "mode" 1.
                 for (byte i = 1; i < 9; i++) {
-                    toneholeCovered[i] = 0;     //first set the calibration to 0 for all of the sensors so it can only be increassed by calibrating
-                    toneholeBaseline[i] = 255;  //and set baseline high so it can only be reduced
+                    toneholeCovered[i] = 0;     // First set the calibration to 0 for all of the sensors so it can only be increassed by calibrating.
+                    toneholeBaseline[i] = 255;  // And set baseline high so it can only be reduced.
                 }
             }
             if (bellSensor) {
-                toneholeCovered[0] = 0;  //also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
+                toneholeCovered[0] = 0;  // Also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
                 toneholeBaseline[0] = 255;
             }
-            return;  //we return once to make sure we've gotten some new sensor readings.
+            return;  // We return once to make sure we've gotten some new sensor readings.
         }
 
-        if ((calibration == 1 && ((millis() - calibrationTimer) <= 10000)) || (calibration == 2 && ((millis() - calibrationTimer) <= 5000))) {  //then set the calibration to the highest reading during the next ten seconds(or five seconds if we're only calibrating the bell sensor).
+        if ((calibration == 1 && ((millis() - calibrationTimer) <= 10000)) || (calibration == 2 && ((millis() - calibrationTimer) <= 5000))) {  // Then set the calibration to the highest reading during the next ten seconds(or five seconds if we're only calibrating the bell sensor).
             if (calibration == 1) {
                 for (byte i = 1; i < 9; i++) {
-                    if (toneholeCovered[i] < toneholeRead[i]) {  //covered calibration
+                    if (toneholeCovered[i] < toneholeRead[i]) {  // Covered calibration
                         toneholeCovered[i] = toneholeRead[i];
                     }
 
-                    if (toneholeBaseline[i] > toneholeRead[i]) {  //baseline calibration
+                    if (toneholeBaseline[i] > toneholeRead[i]) {  // Baseline calibration
                         toneholeBaseline[i] = toneholeRead[i];
                     }
                 }
             }
 
             if (bellSensor && toneholeCovered[0] < toneholeRead[0]) {
-                toneholeCovered[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
+                toneholeCovered[0] = toneholeRead[0];  // Calibrate the bell sensor too if it's plugged in.
             }
             if (bellSensor && toneholeBaseline[0] > toneholeRead[0]) {
-                toneholeBaseline[0] = toneholeRead[0];  //calibrate the bell sensor too if it's plugged in.
+                toneholeBaseline[0] = toneholeRead[0];  // Calibrate the bell sensor too if it's plugged in.
             }
         }
 
         if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
             saveCalibration();
-            loadPrefs();  //do this so pitchbend scaling will be recalculated.
+            loadPrefs();  // Do this so pitchbend scaling will be recalculated.
         }
     }
 }
@@ -3161,7 +3160,7 @@ void calibrate() {
 
 
 
-//save sensor calibration (EEPROM bytes up to 34 are used (plus byte 37 to indicate a saved calibration)
+// Save sensor calibration (EEPROM bytes up to 34 are used (plus byte 37 to indicate a saved calibration).
 void saveCalibration() {
     for (byte i = 0; i < 9; i++) {
         writeEEPROM((i + 9) * 2, highByte(toneholeCovered[i]));
@@ -3180,7 +3179,7 @@ void saveCalibration() {
 
 
 
-//Load the stored sensor calibrations from EEPROM
+// Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
     for (byte i = 0; i < 9; i++) {
         byte high = readEEPROM((i + 9) * 2);
@@ -3232,18 +3231,18 @@ void calculateAndSendPressure() {
 
 
 
-//Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
+// Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
 void calculatePressure(byte pressureOption) {
 
     long scaledPressure;
 
-    scaledPressure = smoothed_pressure - (sensorThreshold[0] << 2);  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600
+    scaledPressure = smoothed_pressure - (sensorThreshold[0] << 2);  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600.
 
     if (scaledPressure < 0) {
         scaledPressure = 0;
     }
-    scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     //Constrain the pressure to the input range
-    scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  //Scale pressure to a range of 0-1024
+    scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     // Constrain the pressure to the input range.
+    scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  // Scale pressure to a range of 0-1024.
 
 
     if (curve[pressureOption] == 1) {  //for this curve, cube the input and scale back down.
@@ -3270,14 +3269,14 @@ void calculatePressure(byte pressureOption) {
         }
     }
 
-    //else curve 0 is linear, so no transformation
+    // Else curve 0 is linear, so no transformation.
 
-    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  //map to output pressure range
+    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range
 
 
-    if (pressureOption == 1) {  //set velocity to mapped pressure if desired
+    if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
         velocity = inputPressureBounds[pressureOption][3];
-        if (velocity == 0) {  //use a minumum of 1 for velocity so a note is still turned on (changed in v. 2.1)
+        if (velocity == 0) {  // Use a minumum of 1 for velocity so a note is still turned on (changed in v. 2.1).
             velocity = 1;
         }
     }
@@ -3595,7 +3594,7 @@ void watchdog_enable(int maxPeriodMS) {
 
 
 //Watchdog reset
-void watchdog_reset() {
+void watchdogReset() {
     nrf_wdt_reload_request_set(NRF_WDT, NRF_WDT_RR0);
 }
 
