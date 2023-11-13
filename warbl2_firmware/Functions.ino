@@ -192,6 +192,7 @@ void readIMU(void) {
     Serial.println(" 1.1, -1.1");
 #endif
 
+
     currYaw = yaw;  // Needs to be the unadjusted value
 
     yaw += yawOffset;
@@ -207,26 +208,41 @@ void readIMU(void) {
     pitch = -pitch;
     yaw = -yaw;
 
-
     roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
 
-    /*
-    // Failed experiment integrating gyroY without accelerometer for roll in the local frame. 
-    static float rollLocal = roll; //Initialize using global frame (not sure this is any better than initializing to zero).
-    rollLocal += ((gyroY * RAD_TO_DEG) * deltat);  //Integrate
-    if (abs(roll) < 0.5 && abs(pitch) < 60) {                           // If roll in the global frame is close to zero, zero the local roll as well. Doing this at high pitch can cause artifacts, so limit to low pitch.
-        rollLocal = 0;                                                  // It would be better to use a correction factor to "nudge" the zero point to the correct location rather than doing it abruptly, unless perhaps it's far out of range (like after powerup).
+#if 1
+    // Experiment integrating gyroY without accelerometer for roll in the local frame. This seems more useful/intuitive than the "roll" Euler angle.
+    static float rollLocal = roll;  // Initialize using global frame.
+    static float correctionFactor;
+    const byte correctionRate = 40;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
+    static float prevYaw;
+    static float prevRoll;
+
+    if (signbit(yaw - prevYaw) == signbit(roll - prevRoll) || abs(pitch) >= 80) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
+        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                              // Integrate gyro Y axis.
+    }
+    prevYaw = yaw;
+    prevRoll = roll;
+
+    if (signbit(rollLocal) != signbit(roll)) {  // If roll and rollLocal have opposite signs, nudge rollLocal towards zero, aligning the zero crossing point with gravity.
+        correctionFactor = rollLocal / correctionRate;
     }
 
-    //Serial.println(rollLocal, 0);
+    else {  // No correction if they have the same sign.
+        correctionFactor = 0;
+    }
+    if (abs(pitch) >= 80) {  // Correcting for gravity gets sketchy if pitch is near vertical, so don't apply a correction factor then.
+        correctionFactor = 0;
+    }
 
-    //comment out this line to switch back to global frame for roll.
+    rollLocal -= correctionFactor;
     roll = rollLocal;
-   */
+#endif
 }
+
 
 
 
@@ -258,10 +274,12 @@ void calibrateIMU() {
 
 
 
+
 // Reset heading 0 to current heading
 void centerIMU() {
     yawOffset = -currYaw;
 }
+
 
 
 

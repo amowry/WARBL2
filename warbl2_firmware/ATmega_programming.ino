@@ -9,24 +9,21 @@
 #define FUSE_LOW 1                // Low fuse
 #define FUSE_HIGH 2               // High fuse
 #define FUSE_EXT 3                // Extended fuse
-#define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly
+#define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly.
 #define FLASH_CLOCKSPEED 1000000  // Once fused you can flash fast!
 #define AVRPROG_RESET 8           // This will be 27 in final WARBL version. This pin is left in default state (highZ) when not programming (it has a pullup resistor).
 #define debug(string)             // Serial.println(string);
 
 typedef struct image {             // Struct for holding program fuses & code
     uint16_t image_chipsig;        // Low two bytes of signature
-    byte image_progfuses[10];      // fuses to set during programming (e.g unlock)
-    byte image_normfuses[10];      // fuses to set after programming (e.g lock)
-    byte fusemask[10];             // Not all bits are used in the fuses, mask the ones we do use
+    byte image_progfuses[10];      // Fuses to set during programming (e.g unlock)
+    byte image_normfuses[10];      // Fuses to set after programming (e.g lock)
+    byte fusemask[10];             // Not all bits are used in the fuses, mask the ones we do use.
     uint16_t chipsize;             // Total size for flash programming, in bytes.
     byte image_pagesize;           // Page size for flash programming, in bytes.
     byte image_hexcode[HEX_SIZE];  // Max buffer for intel hex format image (text)
 } image_t;
 
-int8_t _reset = AVRPROG_RESET;
-SPIClass *spi = &SPI;
-bool programmode;
 static byte pageBuffer[8 * 1024];  // Megabuff
 extern const image_t *images[];
 
@@ -328,8 +325,6 @@ const image_t *images[] = {
     &image_32u4_boot,
 };
 
-uint8_t NUMIMAGES = sizeof(images) / sizeof(images[0]);
-
 
 
 
@@ -391,11 +386,9 @@ bool programATmega(void) {
 
 
 void endProgramMode(void) {
-    spi->endTransaction();
-    //spi->end();
-    digitalWrite(_reset, LOW);
-    pinMode(_reset, INPUT);
-    programmode = false;
+    SPI.endTransaction();
+    digitalWrite(AVRPROG_RESET, LOW);
+    pinMode(AVRPROG_RESET, INPUT);
 }
 
 
@@ -419,23 +412,16 @@ bool targetPower(bool poweron) {
 
 
 bool startProgramMode(uint32_t clockspeed) {
-
-    pinMode(_reset, OUTPUT);
-    digitalWrite(_reset, HIGH);
+    pinMode(AVRPROG_RESET, OUTPUT);
+    digitalWrite(AVRPROG_RESET, HIGH);
     delay(5);
-
-    //spi->begin(); // We've already begun in setup().
-    spi->beginTransaction(SPISettings(clockspeed, MSBFIRST, SPI_MODE0));
-
+    SPI.beginTransaction(SPISettings(clockspeed, MSBFIRST, SPI_MODE0));
     debug("...spi_init done");
-
-    digitalWrite(_reset, LOW);
-
+    digitalWrite(AVRPROG_RESET, LOW);
     debug("...isp_transaction");
     uint16_t reply = isp_transaction(0xAC, 0x53, 0x00, 0x00);
     if (reply == 0x5300) {
         debug("...Done");
-        programmode = true;
         return true;
     }
     Serial.print(reply, HEX);
@@ -444,23 +430,17 @@ bool startProgramMode(uint32_t clockspeed) {
 
 
 uint16_t readSignature(void) {
-
     startProgramMode(FUSE_CLOCKSPEED);
-
     uint16_t target_type = 0;
-
     target_type = isp_transaction(0x30, 0x00, 0x01, 0x00);
     target_type <<= 8;
     target_type |= isp_transaction(0x30, 0x00, 0x02, 0x00);
-
     endProgramMode();
-
     return target_type;
 }
 
 
 bool eraseChip(void) {
-
     startProgramMode(FUSE_CLOCKSPEED);
     if ((isp_transaction(0xAC, 0x80, 0, 0) & 0xFFFF) != 0x8000) {  // chip erase
         error(F("Error on chip erase command"));
@@ -473,7 +453,6 @@ bool eraseChip(void) {
 
 bool programFuses(const byte *fuses, uint8_t num_fuses) {
     startProgramMode(FUSE_CLOCKSPEED);
-
     byte f;
     Serial.println(F("\nSetting fuses"));
 
@@ -521,7 +500,6 @@ bool programFuses(const byte *fuses, uint8_t num_fuses) {
 
 bool verifyFuses(const byte *fuses, const byte *fusemask) {
     startProgramMode(FUSE_CLOCKSPEED);
-
     byte f;
     Serial.println(F("Verifying fuses..."));
     f = pgm_read_byte(&fuses[FUSE_PROT]);
@@ -652,9 +630,7 @@ const byte *readImagePage(const byte *hextext,
             // read 'n' bytes
             b = hexToByte(pgm_read_byte(hextext++));
             b = (b << 4) + hexToByte(pgm_read_byte(hextext++));
-
             cksum += b;
-
             page[page_idx] = b;
             page_idx++;
 
@@ -684,15 +660,12 @@ const byte *readImagePage(const byte *hextext,
 
 
 bool verifyImage(const byte *hextext) {
-
     startProgramMode(FLASH_CLOCKSPEED);  // start at 1MHz speed
-
     uint16_t len;
     byte b, cksum = 0;
 
     while (1) {
         uint16_t lineaddr;
-
         // read one line!
         char c = pgm_read_byte(hextext++);
         if (c == '\n' || c == '\r') {
@@ -769,7 +742,6 @@ bool verifyImage(const byte *hextext) {
 
 
 bool flashWord(uint8_t hilo, uint16_t addr, uint8_t data) {
-
     if (isp_transaction(0x40 + 8 * hilo, addr >> 8 & 0xFF, addr & 0xFF, data) != addr) {
         return false;
     }
@@ -813,7 +785,6 @@ void busyWait(void) {
     byte busybit;
     do {
         busybit = isp_transaction(0xF0, 0x0, 0x0, 0x0);
-        // Serial.print(busybit, HEX);
     } while (busybit & 0x01);
 }
 
@@ -834,7 +805,7 @@ uint32_t isp_transaction(uint8_t a, uint8_t b, uint8_t c,
 
 
 uint8_t transfer(uint8_t out) {
-    return spi->transfer(out);
+    return SPI.transfer(out);
 }
 
 

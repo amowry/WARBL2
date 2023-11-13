@@ -1,4 +1,6 @@
 
+
+
 /*
     Copyright (C) 2018-2023 Andrew Mowry warbl.xyz
 
@@ -39,6 +41,7 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
+
 
 
 // Create instances of library classes.
@@ -174,7 +177,7 @@ byte ED[3][kEXPRESSIONnVariables] =  // Settings for the Expression and Drones C
       { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   // Same for instrument 2
   };
 
-byte pressureSelector[3][12] =  // A selector array for all the register control variables that can be changed in the Configuration Tool
+byte pressureSelector[3][12] =  // Register control variables that can be changed in the Configuration Tool
 
   {                              // Instrument 0
       { 50, 20, 20, 15, 50, 75,  // Bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
@@ -217,34 +220,34 @@ unsigned long timerF = 0;
 unsigned long pressureTimer = 0;
 
 // Variables for reading pressure sensor
-volatile unsigned int tempSensorValue = 0;  //for holding the pressure sensor value inside the ISR
-int sensorValue = 0;                        // first value read from the pressure sensor
-int sensorValue2 = 0;                       // second value read from the pressure sensor, for measuring rate of change in pressure
-int prevSensorValue = 0;                    // previous sensor reading, used to tell if the pressure has changed and should be sent.
-int twelveBitPressure;                      //Raw 12-bit reading
-int smoothed_pressure;                      // smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
-int sensorCalibration = 0;                  //the sensor reading at startup, used as a base value
-byte offset = 15;                           //called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
-byte multiplier = 15;                       //controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes. Increasing this makes playing with a bag more forgiving but requires more force to reach highest second-octave notes. Can be set according to fingering mode and breath mode (i.e. a higher jump factor may be used for playing with a bag). Array indices 1-3 are for breath mode jump factor, indices 4-6 are for bag mode jump factor.
-byte customScalePosition;                   //used to indicate the position of the current note on the custom chart scale (needed for state calculation)
-int sensorThreshold[] = { 260, 0 };         //the pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
-int upperBound = 255;                       //this represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
-byte newState;                              //the note/octave state based on the sensor readings (1=not enough force to sound note, 2=enough force to sound first octave, 3 = enough force to sound second octave)
-byte prevState = 1;                         //the previous state, used to monitor change necessary for adding a small delay when a note is turned on from silence and we're sending not on velocity based on pressure.
-unsigned long velocityDelayTimer = 0;       //a timer to wait for calculating velocity.
-int jumpTime = 15;                          //the amount of time to wait before dropping back down from an octave jump to first octave because of insufficient pressure
-int dropTime = 15;                          //the amount of time to wait (ms) before turning a note back on after dropping directly from second octave to note off
-byte hysteresis = 15;                       //register hysteresis
-byte soundTriggerOffset = 3;                //the number of sensor values above the calibration setting at which a note on will be triggered (first octave)
-int learnedPressure = 0;                    //the learned pressure reading, used as a base value
-int currentState;                           //these several are used by the new state machine
+volatile unsigned int tempSensorValue = 0;  // For holding the pressure sensor value inside the ISR
+int sensorValue = 0;                        // First value read from the pressure sensor
+int sensorValue2 = 0;                       // Second value read from the pressure sensor, for measuring rate of change in pressure
+int prevSensorValue = 0;                    // Previous sensor reading, used to tell if the pressure has changed and should be sent.
+int twelveBitPressure;                      // Raw 12-bit reading
+int smoothed_pressure;                      // Smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
+int sensorCalibration = 0;                  // The sensor reading at startup, used as a base value
+byte offset = 15;                           // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
+byte multiplier = 15;                       // Controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes.
+byte customScalePosition;                   // Used to indicate the position of the current note on the custom chart scale (needed for state calculation)
+int sensorThreshold[] = { 260, 0 };         // The pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
+int upperBound = 255;                       // This represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
+byte newState;                              // The note/octave state based on the sensor readings (1=not enough force to sound note, 2=enough force to sound first octave, 3 = enough force to sound second octave)
+byte prevState = 1;                         // The previous state, used to monitor change necessary for adding a small delay when a note is turned on from silence and we're sending not on velocity based on pressure.
+unsigned long velocityDelayTimer = 0;       // A timer to wait for calculating velocity.
+int jumpTime = 15;                          // The amount of time to wait before dropping back down from an octave jump to first octave because of insufficient pressure
+int dropTime = 15;                          // The amount of time to wait (ms) before turning a note back on after dropping directly from second octave to note off
+byte hysteresis = 15;                       // Register hysteresis
+byte soundTriggerOffset = 3;                // The number of sensor values above the calibration setting at which a note on will be triggered (first octave)
+int learnedPressure = 0;                    // The learned pressure reading, used as a base value
+int currentState;                           // These several are used by the new state machine
 int rateChangeIdx = 0;
 int previousPressure = 0;
 bool holdoffActive = false;
 int holdoffCounter = 0;
-int upperBoundHigh;                  //register boundary for moving up
-int upperBoundLow;                   //register boudary for moving down (with hysteresis)
-unsigned long fingeringChangeTimer;  //times how long it's been since the most recent fingering change. Used to hold off the register drop feature until we've "settled" in to a fingering pattern
+int upperBoundHigh;                  // Register boundary for moving up
+int upperBoundLow;                   // Register boudary for moving down (with hysteresis)
+unsigned long fingeringChangeTimer;  // Times how long it's been since the most recent fingering change. Used to hold off the register drop feature until we've "settled" in to a fingering pattern
 
 unsigned int inputPressureBounds[4][4] = {
     // For mapping pressure input range to output range. Dimension 1 is CC, velocity, aftertouch, poly. Dimension 2 is minIn, maxIn, scaledMinIn, mappedPressure
