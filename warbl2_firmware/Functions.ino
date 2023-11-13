@@ -213,7 +213,7 @@ void readIMU(void) {
 
 
 #if 1
-    // Experiment integrating gyroY without accelerometer for roll in the local frame. This seems more useful/intuitive than the "roll" Euler angle.
+    // Integrating gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
     static float rollLocal = roll;  // Initialize using global frame.
     static float correctionFactor;
     const byte correctionRate = 40;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
@@ -668,7 +668,7 @@ void debounceFingerHoles() {
 
         if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
             if (pitchBendMode != kPitchBendNone) {
-                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = holeCovered;  // remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;

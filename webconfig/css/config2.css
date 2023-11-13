@@ -858,8 +858,8 @@ input {
 .chargingLabel {
 	display: none;
 	position: absolute;
-	left: 112px;
-	top: 150px;
+	left: 90px;
+	top: 170px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2042,7 +2042,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 60px;
-	top: 365px;
+	top: 335px;
 	left: 80px;
 }
 
@@ -3215,7 +3215,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 227px;
-	top: 350px;
+	top: 320px;
 	z-index: 99;
 	font-size: 14px;
 
@@ -3225,7 +3225,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 330px;
-	top: 350px;
+	top: 320px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3247,14 +3247,14 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 240px;
-	top: 372px;
+	top: 342px;
 }
 
 .expressionHighByteInputContainer {
 	display: block;
 	position: absolute;
 	left: 340px;
-	top: 372px;
+	top: 342px;
 }
 
 
@@ -3823,6 +3823,54 @@ h3 {
 }
 
 #CClevel{
+	display: block;
+	width: 0%;
+	height: 20px;
+	left: 240px;
+	top: 402px;
+	background: var(--primary-color);
+	z-index: 99;
+}
+
+
+.receivedCCpressureLabel {
+	display: block;
+	position: absolute;
+	left: 50px;
+	top: 403px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.receivedpressureCC {
+	display: block;
+	position: absolute;
+	margin: auto;
+	text-align: center;
+	width: 60px;
+	height: 21px;
+	left: 160px;
+	top: 400px;
+	color: var(--text-color);
+	z-index: 99;
+	font-size: 14px;
+	line-height: 21px;
+	border: solid 2px var(--console-border-color);
+	background-color: var(--console-bg-color);
+	border-radius: 5px;
+}
+
+#CCpressurelevelContainer{
+	display: block;
+	position: absolute;
+	width: 170px;
+	height: 20px;
+	left: 240px;
+	top: 402px;
+	background: var(--secondary-color);
+}
+
+#CCpressurelevel{
 	display: block;
 	width: 0%;
 	height: 20px;

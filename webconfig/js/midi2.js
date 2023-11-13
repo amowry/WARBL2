@@ -634,6 +634,44 @@ function WARBL_Receive(event) {
         var barWidth = data2 / 1.27;
         document.getElementById("CClevel").style.width = barWidth + "%";
     }
+	
+	
+	//If we receive a message currently assigned in the pressure mapping panel, display the value
+	if(mapSelection == 0){
+    var IMUchan = document.getElementById('pressureChannel').value;
+    var IMUCC = document.getElementById('pressureCC').value;
+    if (e == "CC" && (parseFloat(data0 & 0x0f) + 1 == IMUchan) && data1 == IMUCC) {
+        document.getElementById('receivedpressureCC').innerHTML = data2;
+        var barWidth = data2 / 1.27;
+        document.getElementById("CCpressurelevel").style.width = barWidth + "%";
+	}
+	}
+	
+	if(mapSelection == 1){
+    if (e == "On") {
+        document.getElementById('receivedpressureCC').innerHTML = data2;
+        var barWidth = data2 / 1.27;
+        document.getElementById("CCpressurelevel").style.width = barWidth + "%";
+	}
+	}
+	
+	if(mapSelection == 2){
+		//console.log(2);
+    if (e == "CP") {
+        document.getElementById('receivedpressureCC').innerHTML = data1;
+        var barWidth = data1 / 1.27;
+        document.getElementById("CCpressurelevel").style.width = barWidth + "%";
+	}
+	}
+	
+	if(mapSelection == 3){
+    if (e == "KP") {
+        document.getElementById('receivedpressureCC').innerHTML = data2;
+        var barWidth = data2 / 1.27;
+        document.getElementById("CCpressurelevel").style.width = barWidth + "%";
+	}
+	}
+	
 
 
 
@@ -1715,19 +1753,14 @@ function WARBL_Receive(event) {
                     else if (WARBL2SettingsReceive == 16) {
                         if (data2 == 0) {
                             document.getElementById("charging").style.display = "none";
-                            document.getElementById("chargingLabel").style.display = "none";
-                            //document.getElementById("chargingLabel").style.left = "112px";
                         }
                         if (data2 == 1) {
                             document.getElementById("charging").style.display = "block";
-                            document.getElementById("chargingLabel").style.display = "none";
-                            //document.getElementById("chargingLabel").style.left = "125px";
                         }
                         if (data2 == 2) {
-                            //document.getElementById("charging").style.display = "none";
                             document.getElementById("chargingLabel").innerHTML = "Battery fault detected";
                             document.getElementById("chargingLabel").style.display = "block";
-                            //document.getElementById("chargingLabel").style.left = "117px";
+							setTimeout(turnOffFault, 20000);
                         }
                     }
                     else if (WARBL2SettingsReceive == 17) { //low byte of BLE connection interval
@@ -1796,7 +1829,7 @@ function WARBL_Receive(event) {
             }
     }
 
-    updateCells(); //keep enabled/disabled cells updated.
+updateCells(); //keep enabled/disabled cells updated.
 
 }
 
@@ -1812,6 +1845,12 @@ function bit_test(num, bit) {
 function contract(gesture) {
 	gesture.style.scale="1"
 	gesture.style.color = "#c3c0c0";
+}
+
+
+
+function turnOffFault(){
+	document.getElementById("chargingLabel").style.display = "none";
 }
 
 
@@ -2809,6 +2848,8 @@ function customFingeringOkay() {
 
 function mapCC() {
     mapSelection = 0;
+	document.getElementById('receivedpressureCC').innerHTML = null;
+    document.getElementById("CCpressurelevel").style.width = 0 + "%";
     slider.noUiSlider.set([inputSliderMin[0], inputSliderMax[0]]);
     slider2.noUiSlider.set([outputSliderMin[0], outputSliderMax[0]]);
     document.getElementById("pressureChannel").style.visibility = "visible";
@@ -2825,6 +2866,8 @@ function mapCC() {
 
 function mapVelocity() {
     mapSelection = 1;
+	document.getElementById('receivedpressureCC').innerHTML = null;
+    document.getElementById("CCpressurelevel").style.width = 0 + "%";
     slider.noUiSlider.set([inputSliderMin[1], inputSliderMax[1]]);
     slider2.noUiSlider.set([outputSliderMin[1], outputSliderMax[1]]);
     if (curve[1] < 3) {
@@ -2838,6 +2881,8 @@ function mapVelocity() {
 
 function mapAftertouch() {
     mapSelection = 2;
+	document.getElementById('receivedpressureCC').innerHTML = null;
+    document.getElementById("CCpressurelevel").style.width = 0 + "%";
     slider.noUiSlider.set([inputSliderMin[2], inputSliderMax[2]]);
     slider2.noUiSlider.set([outputSliderMin[2], outputSliderMax[2]]);
     if (curve[2] < 3) {
@@ -2850,6 +2895,8 @@ function mapAftertouch() {
 
 function mapPoly() {
     mapSelection = 3;
+	document.getElementById('receivedpressureCC').innerHTML = null;
+    document.getElementById("CCpressurelevel").style.width = 0 + "%";
     slider.noUiSlider.set([inputSliderMin[3], inputSliderMax[3]]);
     slider2.noUiSlider.set([outputSliderMin[3], outputSliderMax[3]]);
     if (curve[3] < 3) {
