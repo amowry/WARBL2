@@ -164,7 +164,7 @@ void readIMU(void) {
     accelZ = accel.acceleration.z;
     IMUtemp = temp.temperature;
 
-    //calibrate gyro
+    // Calibrate gyro
     gyroX = rawGyroX - gyroXCalibration;
     gyroY = rawGyroY - gyroYCalibration;
     gyroZ = rawGyroZ - gyroZCalibration;
@@ -174,7 +174,6 @@ void readIMU(void) {
 
     // Serial.println(deltat, 4);
 
-    //sfusion.MadgwickUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
     // Pitch and roll are swapped due to PCB sensor orientation.
@@ -212,7 +211,6 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-    //Serial.println(abs(pitch));
 
 #if 1
     // Experiment integrating gyroY without accelerometer for roll in the local frame. This seems more useful/intuitive than the "roll" Euler angle.
@@ -680,6 +678,7 @@ void debounceFingerHoles() {
 
         newNote = tempNewNote;
         tempNewNote = -1;
+        getState();                       // Get state again if the note has changed.
         fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
     }
 }
