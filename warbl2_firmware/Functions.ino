@@ -212,6 +212,7 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
+    //Serial.println(abs(pitch));
 
 #if 1
     // Experiment integrating gyroY without accelerometer for roll in the local frame. This seems more useful/intuitive than the "roll" Euler angle.
@@ -221,14 +222,15 @@ void readIMU(void) {
     static float prevYaw;
     static float prevRoll;
 
-    if (signbit(yaw - prevYaw) == signbit(roll - prevRoll) || abs(pitch) >= 80) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
-        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                              // Integrate gyro Y axis.
+    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || abs(pitch) >= 80) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
+        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                   // Integrate gyro Y axis.
     }
     prevYaw = yaw;
     prevRoll = roll;
 
     if (signbit(rollLocal) != signbit(roll)) {  // If roll and rollLocal have opposite signs, nudge rollLocal towards zero, aligning the zero crossing point with gravity.
         correctionFactor = rollLocal / correctionRate;
+
     }
 
     else {  // No correction if they have the same sign.
