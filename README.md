@@ -8,7 +8,7 @@ To power the WARBL on, plug into USB or hold down button 3 until the LED turns g
 
 To manually power off the WARBL while under battery power, you can click the reset button (or use a button action assigned in  the Configuration Tool).
 
-For updating the firmware, typical users would just hold down button 1 while plugging the WARBL in to USB and then drag/drop the supplied .uf2 file to the drive named ITSY840BOOT. If the WARBL is already plugged in, you can also double-click the reset button to enter the bootloader mode.
+For updating the firmware, typical users would just hold down button 1 while plugging the WARBL in to USB and then drag/drop the supplied .uf2 file to the drive named WARBLBOOT. If the WARBL is already plugged in, you can also double-click the reset button to enter the bootloader mode.
  
 Advanced users can use the Arduino IDE to modify and upload the code. Modify the code at your own risk and note that while modifying the battery management code won't have dangerous results it could result in reducing the lifespan of the battery.
 
