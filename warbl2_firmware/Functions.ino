@@ -212,6 +212,7 @@ void readIMU(void) {
     yaw = yaw * RAD_TO_DEG;
 
 
+
 #if 1
     // Integrating gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
     static float rollLocal = roll;  // Initialize using global frame.
@@ -220,8 +221,8 @@ void readIMU(void) {
     static float prevYaw;
     static float prevRoll;
 
-    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || abs(pitch) >= 80) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
-        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                   // Integrate gyro Y axis.
+    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || (abs(pitch) >= 80)) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at a steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
+        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                     // Integrate gyro Y axis.
     }
     prevYaw = yaw;
     prevRoll = roll;
@@ -390,7 +391,6 @@ void shakeForVibrato() {
     float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
     accelFilteredOld = accelFiltered;
     float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
-
 
     // A second low pass filter to minimize spikes from tapping the tone holes.
     static float accelFilteredBOld;
