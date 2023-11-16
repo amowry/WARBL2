@@ -35,13 +35,13 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 #include <Arduino.h>
 #include <Wire.h>  // I2C communication with EEPROM
 #include <SPI.h>   // Communication with ATmega32U4 and IMU
+#include <math.h>
 
 // Libraries below may need to be installed.
 #include <MIDI.h>
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
-
 
 
 // Create instances of library classes.
@@ -154,7 +154,6 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
 byte switches[3][kSWITCHESnVariables] =  // Settings for the switches in various Config Tool panels (see defines)
-
   {
       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Instrument 0
       { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Same for instrument 1
@@ -162,7 +161,6 @@ byte switches[3][kSWITCHESnVariables] =  // Settings for the switches in various
   };
 
 byte IMUsettings[3][kIMUnVariables] =  // Settings for mapping and sending IMU readings (see defines above)
-
   {
       { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Instrument 0
       { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Same for instrument 1
@@ -170,32 +168,20 @@ byte IMUsettings[3][kIMUnVariables] =  // Settings for mapping and sending IMU r
   };
 
 byte ED[3][kEXPRESSIONnVariables] =  // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-
   {
       { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Instrument 0
       { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Same for instrument 1
       { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   // Same for instrument 2
   };
 
-byte pressureSelector[3][12] =  // Register control variables that can be changed in the Configuration Tool
-
-  {                              // Instrument 0
-      { 50, 20, 20, 15, 50, 75,  // Bag: offset, multiplier, hysteresis, drop (now unused), jump time, drop time
-        3, 7, 20, 0, 3, 10 },    // Breath/mouthpiece: offset, multiplier, transientFilter, jump time, drop time
-
-      { //instrument 1
-        50, 20, 20, 15, 50, 75,
-        3, 7, 20, 0, 3, 10 },
-
-      { //instrument 2
-        50, 20, 20, 15, 50, 75,
-        3, 7, 20, 0, 3, 10 }
+byte pressureSelector[3][12] =  // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
+  {
+      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },  // Instrument 0
+      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },  // Instrument 1
+      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 }   // Instrument 2
   };
 
-uint8_t buttonPrefs[3][kGESTURESnVariables][5] =
-  // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines)
-  // Dimension 3 is the desired action: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
-  // The actions are: 0 none, 1 send MIDI message, 2 change pitchbend mode, 3 instrument, 4 play/stop (bagless mode), 5 octave shift up, 6 octave shift down, 7 MIDI panic, 8 change register control mode, 9 drones on/off, 10 semitone shift up, 11 semitone shift down, 12 begin autocalibration, 13 power down, 14 recenter yaw.
+uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                         // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
   { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    //instrument 0
     { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    //same for instrument 1
     { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  //same for instrument 2
@@ -228,7 +214,6 @@ int smoothed_pressure;                      // Smoothed 12-bit pressure for mapp
 int sensorCalibration = 0;                  // The sensor reading at startup, used as a base value
 byte offset = 15;                           // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
 byte multiplier = 15;                       // Controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes.
-byte customScalePosition;                   // Used to indicate the position of the current note on the custom chart scale (needed for state calculation)
 int sensorThreshold[] = { 260, 0 };         // The pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
 int upperBound = 255;                       // This represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
 byte newState;                              // The note/octave state based on the sensor readings (1=not enough force to sound note, 2=enough force to sound first octave, 3 = enough force to sound second octave)
@@ -248,20 +233,21 @@ int upperBoundHigh;                  // Register boundary for moving up
 int upperBoundLow;                   // Register boudary for moving down (with hysteresis)
 unsigned long fingeringChangeTimer;  // Times how long it's been since the most recent fingering change. Used to hold off the register drop feature until we've "settled" in to a fingering pattern
 
-unsigned int inputPressureBounds[4][4] = {
-    // For mapping pressure input range to output range. Dimension 1 is CC, velocity, aftertouch, poly. Dimension 2 is minIn, maxIn, scaledMinIn, mappedPressure
-    { 100, 800, 0, 0 },
-    { 100, 800, 0, 0 },
-    { 100, 800, 0, 0 },
-    { 100, 800, 0, 0 },
-};
+unsigned int inputPressureBounds[4][4] =  // For mapping pressure input range to output range. Dimension 1 is CC, velocity, aftertouch, poly. Dimension 2 is minIn, maxIn, scaledMinIn, mappedPressure.
+  {
+      { 100, 800, 0, 0 },
+      { 100, 800, 0, 0 },
+      { 100, 800, 0, 0 },
+      { 100, 800, 0, 0 },
+  };
 
-byte outputBounds[4][2] = {  // Container for ED output pressure range variables (CC, velocity, aftertouch, poly)-- the ED variables will be copied here so they're in a more logical order. This is a fix for variables that were added later.
-    { 0, 127 },
-    { 0, 127 },
-    { 0, 127 },
-    { 0, 127 }
-};
+byte outputBounds[4][2] =  // Container for ED output pressure range variables (CC, velocity, aftertouch, poly)-- the ED variables will be copied here so they're in a more logical order. This is a fix for variables that were added later.
+  {
+      { 0, 127 },
+      { 0, 127 },
+      { 0, 127 },
+      { 0, 127 }
+  };
 
 byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
 

@@ -1,6 +1,6 @@
 
 
-//#define RELEASE //Uncomment for release version (turns off CDC)
+// #define RELEASE //Uncomment for release version (turns off CDC)
 
 #define VERSION 41                  // Firmware version (without decimal point)
 #define HARDWARE_REVISION 46        // Hardware
@@ -18,7 +18,7 @@
 #define DUMB_CHARGER 1   // Powered by a dumb USB charger
 #define USB_HOST 2       // Connected to a USB host
 
-//MIDI commands
+// MIDI commands
 #define NOTE_OFF 0x80          // 127
 #define NOTE_ON 0x90           // 144
 #define KEY_PRESSURE 0xA0      // 160
@@ -27,7 +27,7 @@
 #define CHANNEL_PRESSURE 0xD0  // 208
 #define PITCH_BEND 0xE0        // 224
 
-//Fingering Patterns
+// Fingering Patterns
 #define kModeWhistle 0
 #define kModeUilleann 1
 #define kModeGHB 2
@@ -58,28 +58,28 @@
 #define kWARBL2Custom4 70
 #define kModeNModes 28
 
-//Pitch bend modes
+// Pitch bend modes
 #define kPitchBendSlideVibrato 0
 #define kPitchBendVibrato 1
 #define kPitchBendNone 2
 #define kPitchBendLegatoSlideVibrato 3
 #define kPitchBendNModes 4
 
-//Register control modes
+// Register control modes
 #define kPressureSingle 0
 #define kPressureBreath 1
 #define kPressureThumb 2
 #define kPressureBell 3
 #define kPressureNModes 4
 
-//Drones control mode
+// Drones control mode
 #define kNoDroneControl 0
 #define kSecretDroneControl 1
 #define kBaglessDroneControl 2
 #define kPressureDroneControl 3
 #define kDroneNModes 4
 
-//Used in register state machine
+// Used in register state machine
 #define SILENCE 1
 #define BOTTOM_REGISTER 2
 #define TOP_REGISTER 3
@@ -87,7 +87,7 @@
 #define JUMP 0
 #define DROP 1
 
-//Variables in the switches array (settings for the swiches in the slide/vibrato and register control panels)
+// Variables in the switches array (settings for the swiches in the slide/vibrato and register control panels)
 #define VENTED 0
 #define BAGLESS 1
 #define SECRET 2
@@ -103,7 +103,7 @@
 #define R4_FLATTEN 12
 #define kSWITCHESnVariables 13
 
-//Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
+// Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
 #define EXPRESSION_DEPTH 1
 #define SEND_PRESSURE 2
@@ -155,7 +155,7 @@
 #define CUSTOM_FINGERING_11 48
 #define kEXPRESSIONnVariables 49
 
-//Button combinations/gestures
+// Button combinations/gestures
 #define CLICK_1 0
 #define CLICK_2 1
 #define CLICK_3 2
@@ -168,13 +168,31 @@
 #define SHAKE 9
 #define kGESTURESnVariables 10
 
-//Variables in the WARBL2settings array (independent of mode)
+// Button/gesture actions
+#define NO_ACTION 0
+#define SEND_MIDI_MESSAGE 1
+#define CHANGE_PITCHBEND_MODE 2
+#define CHANGE_INSTRUMENT 3
+#define PLAY_STOP 4
+#define OCTAVE_SHIFT_UP 5
+#define OCTAVE_SHIFT_DOWN 6
+#define MIDI_PANIC 7
+#define CHANGE_REGISTER_CONTROL_MODE 8
+#define DRONES_ON_OFF 9
+#define SEMI_SHIFT_UP 10
+#define SEMI_SHIFT_DOWN 11
+#define AUTOCALIBRATE 12
+#define POWER_DOWN 13
+#define RECENTER_YAW 14
+#define kACTIONSnVariables 15
+
+// Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
 #define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
 
-//Variables in the IMUsettings array
+// Variables in the IMUsettings array
 #define SEND_ROLL 0       //On/off
 #define SEND_PITCH 1      //On/Off
 #define SEND_YAW 2        //On/Off
