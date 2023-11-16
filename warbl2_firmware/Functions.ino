@@ -5,16 +5,12 @@ void printStuff(void) {
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
-    //Serial.println(sox.getGyroDataRate());
-    //Serial.println(sizeof(images));
-    //Serial.println(gyroX, 8);
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
     }
 
 
-    //Experimenting with highpass filter in hardware
     /*
     Serial.print(4.0f);
     Serial.print(",");
@@ -22,7 +18,7 @@ void printStuff(void) {
     Serial.print(",");
     Serial.println(-4.0f);
     */
-    //Serial.println(gyroY, 3);
+    //Serial.println(sensorCalibration);
     //Serial.println(gyroZ, 3);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER]);
     //Serial.println(IMUsettings[mode][PITCH_REGISTER_NUMBER]);
@@ -3273,37 +3269,22 @@ void calculatePressure(byte pressureOption) {
     if (scaledPressure < 0) {
         scaledPressure = 0;
     }
+
     scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     // Constrain the pressure to the input range.
     scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  // Scale pressure to a range of 0-1024.
-
 
     if (curve[pressureOption] == 1) {  // For this curve, cube the input and scale back down.
         scaledPressure = ((scaledPressure * scaledPressure * scaledPressure) >> 20);
     }
 
-    else if (curve[pressureOption] == 2) {  // Approximates a log curve with a piecewise linear function, avoiding division.
-        switch (scaledPressure >> 6) {
-            case 0:
-                scaledPressure = scaledPressure << 3;
-                break;
-            case 1 ... 2:
-                scaledPressure = (scaledPressure << 1) + 376;
-                break;
-            case 3 ... 5:
-                scaledPressure = scaledPressure + 566;
-                break;
-            default:
-                scaledPressure = (scaledPressure >> 3) + 901;
-                break;
-        }
-        if (scaledPressure > 1024) {
-            scaledPressure = 1024;
-        }
+    else if (curve[pressureOption] == 2 && scaledPressure != 0) {  // Log curve.
+        float pressureLog2 = log(scaledPressure) / log(2);
+        scaledPressure = pressureLog2 * pressureLog2 * 10.24f;
     }
 
     // Else curve 0 is linear, so no transformation.
-    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
 
+    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
         velocity = inputPressureBounds[pressureOption][3];
@@ -3312,6 +3293,7 @@ void calculatePressure(byte pressureOption) {
         }
     }
 }
+
 
 
 
@@ -3328,7 +3310,7 @@ byte calculatePressureInterval(void) {
         ret = 2;
     }
 
-    if ((ret < connIntvl + 2) && WARBL2settings[MIDI_DESTINATION] != 0) {  // Use a longer interval if sending BLE.
+    if (WARBL2settings[MIDI_DESTINATION] != 0) {  // Use a longer interval if sending BLE.
         ret = connIntvl + 2;
     }
     return ret;

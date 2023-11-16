@@ -29,8 +29,7 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 
 // Installed with board package
 #include <nrfx_power.h>  // For detecting VBUS
-#include <nrf_nvic.h>
-#include <nrf_wdt.h>  // Watchdog timer
+#include <nrf_wdt.h>     // Watchdog timer
 #include <bluefruit.h>
 #include <Arduino.h>
 #include <Wire.h>  // I2C communication with EEPROM
@@ -153,38 +152,30 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
-byte switches[3][kSWITCHESnVariables] =  // Settings for the switches in various Config Tool panels (see defines)
-  {
-      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Instrument 0
-      { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },  // Same for instrument 1
-      { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 }   // Same for instrument 2
-  };
+byte switches[3][kSWITCHESnVariables] =           // Settings for the switches in various Config Tool panels (see defines)
+  { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },    // Instrument 0
+    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },    // Instrument 1
+    { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 } };  // Instrument 2
 
-byte IMUsettings[3][kIMUnVariables] =  // Settings for mapping and sending IMU readings (see defines above)
-  {
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Instrument 0
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Same for instrument 1
-      { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },  // Same for instrument 2
-  };
+byte IMUsettings[3][kIMUnVariables] =                                                                                   // Settings for mapping and sending IMU readings (see defines above)
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },    // Instrument 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },    // Instrument 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =  // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  {
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Instrument 0
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },  // Same for instrument 1
-      { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 }   // Same for instrument 2
-  };
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                           // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 } };  // Instrument 2
 
-byte pressureSelector[3][12] =  // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
-  {
-      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },  // Instrument 0
-      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },  // Instrument 1
-      { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 }   // Instrument 2
-  };
+byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
+  { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
+    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 1
+    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 } };  // Instrument 2
 
 uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                         // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
-  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    //instrument 0
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    //same for instrument 1
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  //same for instrument 2
+  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 0
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 1
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  // Instrument 2
 
 
 // Other misc. variables
@@ -234,20 +225,16 @@ int upperBoundLow;                   // Register boudary for moving down (with h
 unsigned long fingeringChangeTimer;  // Times how long it's been since the most recent fingering change. Used to hold off the register drop feature until we've "settled" in to a fingering pattern
 
 unsigned int inputPressureBounds[4][4] =  // For mapping pressure input range to output range. Dimension 1 is CC, velocity, aftertouch, poly. Dimension 2 is minIn, maxIn, scaledMinIn, mappedPressure.
-  {
-      { 100, 800, 0, 0 },
-      { 100, 800, 0, 0 },
-      { 100, 800, 0, 0 },
-      { 100, 800, 0, 0 },
-  };
+  { { 100, 800, 0, 0 },
+    { 100, 800, 0, 0 },
+    { 100, 800, 0, 0 },
+    { 100, 800, 0, 0 } };
 
 byte outputBounds[4][2] =  // Container for ED output pressure range variables (CC, velocity, aftertouch, poly)-- the ED variables will be copied here so they're in a more logical order. This is a fix for variables that were added later.
-  {
-      { 0, 127 },
-      { 0, 127 },
-      { 0, 127 },
-      { 0, 127 }
-  };
+  { { 0, 127 },
+    { 0, 127 },
+    { 0, 127 },
+    { 0, 127 } };
 
 byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
 
@@ -415,16 +402,8 @@ void setup() {
 
     // IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz.
-                                                //sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro.
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down for now to save power, and we'll turn gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
-    //sox.setAccelDataRate(LSM6DS_RATE_416_HZ);  // Turn on the accel, higher data rate.
-
-    // Experimental--enable accelerometer highpass filter/slope filter in hardware.
-    // Filtering in hardware with a higher data rate might let us filter out gravity faster for shake vibrato?
-    // Unfortunately I'm not sure if it's possible to use this and also get raw readings for 6D orientation.
-    //sox.highPassFilter(true, LSM6DS_HPF_ODR_DIV_100);
-
 
     //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -454,15 +433,13 @@ void setup() {
     loadSettingsForAllModes();
     mode = defaultMode;  // Set the startup instrument.
 
-    analogRead(A0);  // The first analog readings are sometimes nonsense, so we read a few times and throw them away.
-    analogRead(A0);
-    sensorCalibration = analogRead(A0) >> 2;
-    sensorValue = sensorCalibration;  // An initial reading
+    sensorCalibration = analogRead(A0) >> 2;  // Calibrate the pressure sensor to ambient pressure.
 
     loadPrefs();  // Load the correct user settings based on current instrument.
 
     powerDownTimer = millis();  // Reset the powerDown timer.
 
+    delay(500);  // Make sure there's been time for the peripherals to power up.
 
     //eraseEEPROM(); // Testing
 
@@ -497,7 +474,7 @@ void loop() {
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
     getShift();                             // Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
     sendNote();                             // Send the note as soon as we know the note, state, and shift.
-    readMIDI();                             // Read incoming MIDI messages
+    readMIDI();                             // Read incoming MIDI messages.
 
 
 
