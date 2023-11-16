@@ -177,8 +177,8 @@ void readIMU(void) {
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
     // Pitch and roll are swapped due to PCB sensor orientation.
-    pitch = sfusion.getRollRadians();
     roll = sfusion.getPitchRadians();
+    pitch = sfusion.getRollRadians();
     yaw = sfusion.getYawRadians();
 
 
@@ -211,6 +211,17 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
+    /*
+    Serial.print(-180);
+    Serial.print(" , ");
+    Serial.print(roll);
+    Serial.print(" , ");
+    Serial.print(pitch);
+    Serial.print(" , ");
+    Serial.print(yaw);
+    Serial.print(" , ");
+    Serial.println(180);
+*/
 
 
 #if 1
@@ -221,7 +232,7 @@ void readIMU(void) {
     static float prevYaw;
     static float prevRoll;
 
-    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || (abs(pitch) >= 80)) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at a steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
+    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || (abs(pitch) >= 85)) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at a steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
         rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                     // Integrate gyro Y axis.
     }
     prevYaw = yaw;
@@ -235,7 +246,7 @@ void readIMU(void) {
     else {  // No correction if they have the same sign.
         correctionFactor = 0;
     }
-    if (abs(pitch) >= 80) {  // Correcting for gravity gets sketchy if pitch is near vertical, so don't apply a correction factor then.
+    if (abs(pitch) >= 85) {  // Correcting for gravity gets sketchy if pitch is near vertical, so don't apply a correction factor then.
         correctionFactor = 0;
     }
 
@@ -1760,26 +1771,33 @@ void sendNote() {
 
 
 
-// Blink LED given number of times.
+
+
 void blink() {
-    if (blinkNumber > 0) {
-        if ((millis() - ledTimer) >= 200) {
-            ledTimer = millis();
 
-            if (LEDon) {
-                digitalWrite(LEDpins[GREEN_LED], LOW);
-                blinkNumber--;
-                LEDon = 0;
-                return;
-            }
+    static unsigned long ledTimer[3];
 
-            else {
-                digitalWrite(LEDpins[GREEN_LED], HIGH);
-                LEDon = 1;
+    for (byte i = 0; i < 3; i++) {
+        if (blinkNumber[i] > 0) {
+            if ((millis() - ledTimer[i]) >= 200) {
+                ledTimer[i] = millis();
+
+                if (LEDon[i]) {
+                    digitalWrite(LEDpins[i], LOW);
+                    blinkNumber[i]--;
+                    LEDon[i] = 0;
+                    return;
+                }
+
+                else {
+                    digitalWrite(LEDpins[i], HIGH);
+                    LEDon[i] = 1;
+                }
             }
         }
     }
 }
+
 
 
 
@@ -1833,9 +1851,9 @@ void handleControlChange(byte channel, byte number, byte value) {
 
     if (number < 120) {  //Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == 7) {    //If we're on channel 7, we may be receiving messages from the configuration tool.
-            powerDownTimer = millis();  //Reset the powerDown timer because we've heard from the Config Tool.
-            blinkNumber = 1;            //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+        if ((channel & 0x0f) == 7) {     //If we're on channel 7, we may be receiving messages from the configuration tool.
+            powerDownTimer = millis();   //Reset the powerDown timer because we've heard from the Config Tool.
+            blinkNumber[GREEN_LED] = 1;  //Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
 
             ///////CC 102
@@ -1853,11 +1871,11 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 if (value == 19) {  //Save calibration if directed.
                     saveCalibration();
-                    blinkNumber = 3;
+                    blinkNumber[GREEN_LED] = 3;
                 }
 
                 else if (value == 127) {  //Begin auto-calibration if directed.
-                    blinkNumber = 0;
+                    blinkNumber[GREEN_LED] = 0;
                     calibration = 1;
                 }
 
@@ -1889,7 +1907,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                         play = 0;
                         loadPrefs();     //Load the correct user settings based on current instrument.
                         sendSettings();  //Send settings for new mode to tool.
-                        blinkNumber = abs(mode) + 1;
+                        blinkNumber[GREEN_LED] = abs(mode) + 1;
                     }
                 }
 
@@ -1897,7 +1915,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (value == 70 + i) {
                         pitchBendModeSelector[mode] = i;
                         loadPrefs();
-                        blinkNumber = abs(pitchBendMode) + 1;
+                        blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
                     }
                 }
 
@@ -1905,14 +1923,14 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (value == 80 + i) {
                         breathModeSelector[mode] = i;
                         loadPrefs();  //Load the correct user settings based on current instrument.
-                        blinkNumber = abs(breathMode) + 1;
+                        blinkNumber[GREEN_LED] = abs(breathMode) + 1;
                     }
                 }
 
                 for (byte i = 0; i < kGESTURESnVariables; i++) {  //Update button receive mode (this indicates the row in the button settings for which the next received byte will be).
                     if (value == 90 + i) {
                         buttonReceiveMode = i;
-                        blinkNumber = 0;
+                        blinkNumber[GREEN_LED] = 0;
                     }
                 }
 
@@ -1947,7 +1965,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 if (value == 123) {  //save settings as the defaults for the current instrument
                     saveSettings(mode);
-                    blinkNumber = 3;
+                    blinkNumber[GREEN_LED] = 3;
                 }
 
 
@@ -1958,13 +1976,13 @@ void handleControlChange(byte channel, byte number, byte value) {
                     loadFingering();
                     loadSettingsForAllModes();
                     loadPrefs();
-                    blinkNumber = 3;
+                    blinkNumber[GREEN_LED] = 3;
 
                 }
 
                 else if (value == 125) {  //restore all factory settings
                     restoreFactorySettings();
-                    blinkNumber = 3;
+                    blinkNumber[GREEN_LED] = 3;
                 }
             }
 
@@ -2054,7 +2072,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode >= 300 && pressureReceiveMode < 304) {  //WARBL2 Custom fingering charts
-                    blinkNumber = 0;
+                    blinkNumber[GREEN_LED] = 0;
                     WARBL2CustomChart[WARBL2CustomChartReceiveByte] = value;  //Put the value in the custom chart.
                     WARBL2CustomChartReceiveByte++;                           //Increment the location
 
@@ -2063,7 +2081,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                         for (int i = 0; i < 256; i++) {    //Write the chart to EEPROM.
                             writeEEPROM((4000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
                         }
-                        blinkNumber = 3;
+                        blinkNumber[GREEN_LED] = 3;
                         sendMIDI(CONTROL_CHANGE, 7, 109, 100);  //Indicate success.
                         loadPrefs();
                     }
@@ -2075,7 +2093,7 @@ void handleControlChange(byte channel, byte number, byte value) {
             ///////CC 109
             if ((number == 109 && value < kIMUnVariables) || (number == 109 && value > 99 && value < 104)) {  //Indicates that value for IMUsettings variable will be sent on CC 105.
                 pressureReceiveMode = value + 200;                                                            //Add to the value because lower pressureReceiveModes are used for other variables.
-                blinkNumber = 0;
+                blinkNumber[GREEN_LED] = 0;
             }
 
 
@@ -2114,7 +2132,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 else if (value == 42) {  //autocalibrate bell sensor only
                     calibration = 2;
-                    blinkNumber = 0;
+                    blinkNumber[GREEN_LED] = 0;
                 }
 
 
@@ -2408,7 +2426,7 @@ void performAction(byte action) {
                     program = 0;
                 }
                 sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], program);
-                blinkNumber = 1;
+                blinkNumber[GREEN_LED] = 1;
             }
 
             if (buttonPrefs[mode][action][1] == 4) {  //decrease program change
@@ -2418,7 +2436,7 @@ void performAction(byte action) {
                     program = 127;
                 }
                 sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], program);
-                blinkNumber = 1;
+                blinkNumber[GREEN_LED] = 1;
             }
 
             break;
@@ -2438,7 +2456,7 @@ void performAction(byte action) {
         case 5:
             if (!momentary[mode][action]) {  //shift up unless we're in momentary mode, otherwise shift down
                 octaveShiftUp();
-                blinkNumber = abs(octaveShift);
+                blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
                 octaveShiftDown();
             }
@@ -2447,7 +2465,7 @@ void performAction(byte action) {
         case 6:
             if (!momentary[mode][action]) {  //shift down unless we're in momentary mode, otherwise shift up
                 octaveShiftDown();
-                blinkNumber = abs(octaveShift);
+                blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
                 octaveShiftUp();
             }
@@ -2467,7 +2485,7 @@ void performAction(byte action) {
             }
             loadPrefs();
             play = 0;
-            blinkNumber = abs(breathMode) + 1;
+            blinkNumber[GREEN_LED] = abs(breathMode) + 1;
             if (communicationMode) {
                 sendMIDI(CONTROL_CHANGE, 7, 102, 80 + breathMode);  //send current breathMode
             }
@@ -2475,7 +2493,7 @@ void performAction(byte action) {
 
 
         case 9:  //toggle drones
-            blinkNumber = 1;
+            blinkNumber[GREEN_LED] = 1;
             if (!dronesOn) {
                 startDrones();
             } else {
@@ -2558,7 +2576,7 @@ void changePitchBend() {
         pitchBendModeSelector[mode] = kPitchBendSlideVibrato;
     }
     loadPrefs();
-    blinkNumber = abs(pitchBendMode) + 1;
+    blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
     if (communicationMode) {
         sendMIDI(CONTROL_CHANGE, 7, 102, 70 + pitchBendMode);  //send current pitchbend mode to configuration tool.
     }
@@ -2577,7 +2595,7 @@ void changeInstrument() {
     }
     play = 0;
     loadPrefs();  //load the correct user settings based on current instrument.
-    blinkNumber = abs(mode) + 1;
+    blinkNumber[GREEN_LED] = abs(mode) + 1;
     if (communicationMode) {
         sendSettings();  //tell communications tool to switch mode and send all settings for current instrument.
     }
@@ -2713,7 +2731,7 @@ void saveFactorySettings() {
         writeEEPROM(2000 + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
     }
 
-    blinkNumber = 3;
+    blinkNumber[GREEN_LED] = 3;
 }
 
 
@@ -3127,9 +3145,9 @@ void calibrate() {
     static unsigned long calibrationTimer = 0;
 
     if (calibration > 0) {
-        if (!LEDon) {
+        if (!LEDon[GREEN_LED]) {
             digitalWrite(LEDpins[GREEN_LED], HIGH);
-            LEDon = 1;
+            LEDon[GREEN_LED] = 1;
             calibrationTimer = millis();
 
             if (calibration == 1) {  // Calibrate all sensors if we're in calibration "mode" 1.
@@ -3189,7 +3207,7 @@ void saveCalibration() {
     calibration = 0;
     writeEEPROM(37, 3);  //we write a 3 to address 37 to indicate that we have stored a set of calibrations.
     digitalWrite(LEDpins[GREEN_LED], LOW);
-    LEDon = 0;
+    LEDon[GREEN_LED] = 0;
 }
 
 
@@ -3264,11 +3282,11 @@ void calculatePressure(byte pressureOption) {
     scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  // Scale pressure to a range of 0-1024.
 
 
-    if (curve[pressureOption] == 1) {  //for this curve, cube the input and scale back down.
+    if (curve[pressureOption] == 1) {  // For this curve, cube the input and scale back down.
         scaledPressure = ((scaledPressure * scaledPressure * scaledPressure) >> 20);
     }
 
-    else if (curve[pressureOption] == 2) {  //approximates a log curve with a piecewise linear function, avoiding division
+    else if (curve[pressureOption] == 2) {  // Approximates a log curve with a piecewise linear function, avoiding division.
         switch (scaledPressure >> 6) {
             case 0:
                 scaledPressure = scaledPressure << 3;
@@ -3289,8 +3307,7 @@ void calculatePressure(byte pressureOption) {
     }
 
     // Else curve 0 is linear, so no transformation.
-
-    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range
+    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
 
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
@@ -3307,7 +3324,7 @@ void calculatePressure(byte pressureOption) {
 
 
 
-// Calculate how often to send pressure data
+// Calculate how often to send pressure data.
 byte calculatePressureInterval(void) {
 
     byte ret = 5;
@@ -3330,11 +3347,11 @@ byte calculatePressureInterval(void) {
 
 
 
-//send pressure data
+// Send pressure data
 void sendPressure(bool force) {
 
     if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
-        sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  //send MSB of pressure mapped to the output range
+        sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  // Send MSB of pressure mapped to the output range.
         prevCCPressure = inputPressureBounds[0][3];
     }
 
@@ -3342,17 +3359,17 @@ void sendPressure(bool force) {
         // hack
         int sendm = (!noteon && sensorValue <= 100) ? 0 : inputPressureBounds[2][3];
         if (sendm != prevChanPressure || force) {
-            sendMIDI(CHANNEL_PRESSURE, mainMidiChannel, sendm);  //send MSB of pressure mapped to the output range
+            sendMIDI(CHANNEL_PRESSURE, mainMidiChannel, sendm);  // Send MSB of pressure mapped to the output range.
             prevChanPressure = sendm;
         }
     }
 
-    // poly aftertouch uses 2nd lowest bit of ED flag
+    // Poly aftertouch uses 2nd lowest bit of ED flag.
     if ((switches[mode][SEND_AFTERTOUCH] & 2) && noteon) {
-        // hack
+        // Hack
         int sendm = (!noteon && sensorValue <= 100) ? 0 : inputPressureBounds[3][3];
         if (sendm != prevPolyPressure || force) {
-            sendMIDI(KEY_PRESSURE, mainMidiChannel, notePlaying, sendm);  //send MSB of pressure mapped to the output range
+            sendMIDI(KEY_PRESSURE, mainMidiChannel, notePlaying, sendm);  // Send MSB of pressure mapped to the output range.
             prevPolyPressure = sendm;
         }
     }
@@ -3368,32 +3385,19 @@ void sendPressure(bool force) {
 
 //Starting advertising BLE
 void startAdv(void) {
-    // Set General Discoverable Mode flag
-    Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
 
-    // Advertise TX Power
-    Bluefruit.Advertising.addTxPower();
+    Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);  // Set General Discoverable Mode flag
+    Bluefruit.Advertising.addTxPower();                                           // Advertise TX Power
+    Bluefruit.Advertising.addService(blemidi);                                    // Advertise BLE MIDI Service
+    Bluefruit.ScanResponse.addName();                                             // Secondary Scan Response packet (optional)
 
-    // Advertise BLE MIDI Service
-    Bluefruit.Advertising.addService(blemidi);
+    //For recommended advertising interval
+    //https://developer.apple.com/library/content/qa/qa1931/_index.html
 
-    // Secondary Scan Response packet (optional)
-    // Since there is no room for 'Name' in Advertising packet
-    Bluefruit.ScanResponse.addName();
-
-    /* Start Advertising
-   * - Enable auto advertising if disconnected
-   * - Interval:  fast mode = 20 ms, slow mode = 152.5 ms
-   * - Timeout for fast mode is 30 seconds
-   * - Start(timeout) with timeout = 0 will advertise forever (until connected)
-   *
-   * For recommended advertising interval
-   * https://developer.apple.com/library/content/qa/qa1931/_index.html   
-   */
     Bluefruit.Advertising.restartOnDisconnect(true);
-    Bluefruit.Advertising.setInterval(32, 244);  // in unit of 0.625 ms -- these are the settings recommended by Apple (20 ms and 152.5 ms)
-    Bluefruit.Advertising.setFastTimeout(30);    // number of seconds in fast mode
-    Bluefruit.Advertising.start(0);              // 0 = Don't stop advertising after n seconds
+    Bluefruit.Advertising.setInterval(32, 244);  // In units of 0.625 ms -- these are the settings recommended by Apple (20 ms and 152.5 ms).
+    Bluefruit.Advertising.setFastTimeout(30);    // Number of seconds in fast mode
+    Bluefruit.Advertising.start(0);              // 0 = Don't stop advertising after n seconds.
 }
 
 
@@ -3552,6 +3556,8 @@ void connect_callback(uint16_t conn_handle) {
         sendMIDI(CONTROL_CHANGE, 7, 106, 73);
         sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  //Send MSB of the connection interval to Conf Tool.
     }
+
+    blinkNumber[BLUE_LED] = 3;  // Indicate connection.
 }
 
 

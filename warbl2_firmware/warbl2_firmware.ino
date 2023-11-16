@@ -202,15 +202,14 @@ uint8_t buttonPrefs[3][kGESTURESnVariables][5] =
 
 
 // Other misc. variables
-unsigned long wakeTime = 0;     // When we woke from sleep
-unsigned long ledTimer = 0;     //for blinking LED
-byte blinkNumber = 0;           //the number of remaining blinks when blinking LED to indicate control changes
-bool LEDon = 0;                 //whether the LED is currently on
-bool play = 0;                  //turns sound off and on (with the use of a button action) when in bagless mode
-bool bellSensor = 1;            //whether the bell sensor is plugged in
-byte program = 0;               //current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
-bool dronesState = 0;           //keeps track of whether we're above or below the pressure threshold for turning drones on.
-bool pulseLED[] = { 0, 0, 0 };  //Whether currently pulsing LEDs
+unsigned long wakeTime = 0;        // When we woke from sleep
+byte blinkNumber[] = { 0, 0, 0 };  // The number of time to blink LEDs R, G, B.
+bool LEDon[] = { 0, 0, 0 };        // Whether each LED is currently on
+bool play = 0;                     // Turns sound off and on (with the use of a button action) when in bagless mode.
+bool bellSensor = 1;               // Whether the bell sensor is plugged in
+byte program = 0;                  // Current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
+bool dronesState = 0;              // Keeps track of whether we're above or below the pressure threshold for turning drones on.
+bool pulseLED[] = { 0, 0, 0 };     // Whether currently pulsing LEDs
 
 // Misc. timers used in loop()
 unsigned long pitchBendTimer = 0;
