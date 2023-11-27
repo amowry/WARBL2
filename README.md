@@ -51,7 +51,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 `Waiting for upload port...`
 
 
-*	Now, use a toothpick to double-click the WARBL reset button. The LED should illuminate blue and the code should upload. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right.
+*	IF the WARBL currently has a "Release" version of the firmware (see below), you'll then have to use a toothpick to double-click the reset button to enter programming mode. The LED should illuminate blue and the code should upload. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right. If you've loaded a non-release version then the serial CDC port will be active and the firmware upload should proceed without having to first double-click the reset button.
 
 
 
