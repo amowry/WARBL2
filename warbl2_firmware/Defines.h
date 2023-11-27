@@ -6,7 +6,7 @@
 #define HARDWARE_REVISION 46        // Hardware
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATMEAGA firmware version we have installed so we kow when to update it.
 
-#define WATCHDOG_TIMEOUT_SECS 15  // The timeout needs to be set longer than any task that might interrupt the loop().
+#define WATCHDOG_TIMEOUT_SECS 10  // The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -38,7 +38,7 @@
 #define kModeKaval 7
 #define kModeRecorder 8
 #define kModeBansuriWARBL 9       // Only used for a custom regulators implementation, not the "official" software, or BansuriWARBL
-#define kModeUilleannStandard 10  // Contains no accidentals
+#define kModeUilleannStandard 10 
 #define kModeXiao 11
 #define kModeSax 12
 #define kModeGaitaExtended 13

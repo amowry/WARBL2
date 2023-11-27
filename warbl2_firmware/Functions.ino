@@ -80,28 +80,22 @@ byte calculateDelayTime(void) {
 // Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    analogPressure.update();  // Reads the pressure sensor and applies adaptive filtering
+    analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
     twelveBitPressure = analogPressure.getRawValue();
+    smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+    sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
 
-    // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
-    smoothed_pressure = analogPressure.getValue();
-
-    //Serial.println(smoothed_pressure);
-
-    tempSensorValue = twelveBitPressure >> 2;  // Reduce the reading to stable 10 bits for state machine.
-
-    // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 uS
+    // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 us.
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(2, LOW);   // SS -- wake up ATmega
+    digitalWrite(2, LOW);   // CS -- wake up ATmega.
     delayMicroseconds(10);  // Give it time to wake up.
     SPI.transfer(0);        // We don't receive anything useful back from the first transfer.
     for (byte i = 0; i < 12; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
-    digitalWrite(2, HIGH);  //SS
+    digitalWrite(2, HIGH);  //CS
     SPI.endTransaction();
-
 
     // Unpack the readings from bytes to ints.
     for (byte i = 0; i < 9; i++) {
@@ -220,7 +214,7 @@ void readIMU(void) {
 
 
 #if 1
-    // Integrating gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
+    // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
     static float rollLocal = roll;  // Initialize using global frame.
     static float correctionFactor;
     const byte correctionRate = 40;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
@@ -393,36 +387,29 @@ void shakeForVibrato() {
 
     static float accelFilteredOld;
     const float timeConstant = 0.1f;
-
     float accelFiltered = timeConstant * accelY + (1.0f - timeConstant) * accelFilteredOld;  // Low-pass filter to isolate gravity from the Y accelerometer axis.
     accelFilteredOld = accelFiltered;
     float highPassY = accelY - accelFiltered;  // Subtract gravity to high-pass Y.
 
-    // A second low pass filter to minimize spikes from tapping the tone holes.
     static float accelFilteredBOld;
-
     const float timeConstant2 = 0.5f;
-    float accelFilteredB = timeConstant2 * highPassY + (1.0f - timeConstant2) * accelFilteredBOld;
+    float accelFilteredB = timeConstant2 * highPassY + (1.0f - timeConstant2) * accelFilteredBOld;  // A second low pass filter to minimize spikes from tapping the tone holes.
     float lastFilteredB = accelFilteredBOld;
     accelFilteredBOld = accelFilteredB;
 
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
     const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
-
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
     const long ktapFilterTimeMs = 12;  // ms window for further filtering out taps on the tone holes
-
     static bool shakeActive = false;
     static bool tapFilterActive = false;
     static long lastThreshExceedTime = 0;
     static long tapFilterStartTime = 0;
     static bool preTrigger = false;
-
     const float kShakeGestureThresh = 20.0f;  // Theshold for shake gesture
-
     unsigned long nowtime = millis();
 
 
@@ -434,9 +421,7 @@ void shakeForVibrato() {
 
     if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {  // Do this part ony if shake pitchbend is turned on.
 
-
         shakeVibrato = 0;
-
 
         if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
             tapFilterActive = true;
@@ -444,17 +429,14 @@ void shakeForVibrato() {
             // Serial.println("Shake Tap Filt");
         }
 
-
         if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  // Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
             return;
         }
-
 
         if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
             preTrigger = true;
             // Serial.println("Pre Shake Trigger");
         }
-
 
         if (!shakeActive && preTrigger  // Start shake vib only when doing a zero crossing after threshold has been triggered.
             // Comment out next line to test without the zero crossing requirement
@@ -472,11 +454,10 @@ void shakeForVibrato() {
             shakeActive = false;
             tapFilterActive = false;
             preTrigger = false;
-            // Serial.println("Cancel ShakeVib");
         }
 
-        if (shakeActive) {
-            // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
+
+        if (shakeActive) {  // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
             float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
             if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                 normshake *= -1.0f;  // reverse phase
@@ -487,12 +468,6 @@ void shakeForVibrato() {
             }
 
             shakeVibrato = normshake * shakeBendDepth * pitchBendPerSemi;
-
-            //Serial.print(1.0f);
-            //Serial.print(",");
-            //Serial.print(normshake);
-            //Serial.print(",");
-            //Serial.println(-1.0f);
         }
 
         if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
@@ -966,7 +941,7 @@ int getNote(unsigned int fingerPattern) {
                 // Check the chart.
                 tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
                 ret = sax_explicit[tempCovered].midi_note;
-                if (((fingerPattern & 0b000000010) != 0) && ret != 47 && ret != 52 && ret != 53 && ret != 54 && ret != 59 && ret != 60 && ret != 61) {  // Sharpen the note if R4 is covered and the note isn't one of the ones that can't be sharpened (a little wonky but works and keep sthe chart shorter ;)
+                if (((fingerPattern & 0b000000010) != 0) && ret != 47 && ret != 52 && ret != 53 && ret != 54 && ret != 59 && ret != 60 && ret != 61) {  // Sharpen the note if R4 is covered and the note isn't one of the ones that can't be sharpened (a little wonky but works and keeps the chart shorter ;)
                     ret++;
                 }
                 if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  // If the thumb hole is covered, raise the octave
@@ -993,8 +968,7 @@ int getNote(unsigned int fingerPattern) {
             {
 
                 // Ignore all unused holes by extracting bits and then logical OR
-                {
-                    // Braces necessary for scope
+                {  // Braces necessary for scope
                     byte high = (fingerPattern >> 4) & 0b11000;
                     byte middle = (fingerPattern >> 4) & 0b00011;
                     middle = middle << 1;
@@ -1013,7 +987,6 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeSackpipaMinor:
             {  // The same except we'll change C# to C
-
                 // Check the chart.
                 tempCovered = (0b011111100 & fingerPattern) >> 2;        // Ignore thumb hole, R4 hole, and bell sensor
                 if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play D if all holes are covered
@@ -1168,7 +1141,6 @@ void getShift() {
 // State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
 // The current jump/drop behavior is from Louis Barman
 void getState() {
-    sensorValue2 = tempSensorValue;  // Transfer last reading.
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
 
@@ -1179,11 +1151,11 @@ void getState() {
 
     if (ED[mode][DRONES_CONTROL_MODE] == 3) {  // Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
 
-        if (!dronesOn && sensorValue2 > 5 + (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
+        if (!dronesOn && sensorValue > 5 + (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
             startDrones();
         }
 
-        else if (dronesOn && sensorValue2 < (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
+        else if (dronesOn && sensorValue < (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
             stopDrones();
         }
     }
@@ -1193,10 +1165,10 @@ void getState() {
 
     newState = currentState;
 
-    if (sensorValue2 <= sensorThreshold[0]) {
+    if (sensorValue <= sensorThreshold[0]) {
         newState = SILENCE;
         holdoffActive = false;  // No need to wait for jump/drop if we've already crossed the threshold for silence
-    } else if (sensorValue2 > sensorThreshold[0] + SILENCE_HYSTERESIS) {
+    } else if (sensorValue > sensorThreshold[0] + SILENCE_HYSTERESIS) {
         if (currentState == SILENCE) {
             newState = BOTTOM_REGISTER;
         }
@@ -1205,24 +1177,23 @@ void getState() {
         if (breathMode == kPressureBreath) {  // If overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
-            if (sensorValue2 > upperBoundHigh) {
+            if (sensorValue > upperBoundHigh) {
                 newState = TOP_REGISTER;
                 holdoffActive = false;
-            } else if (sensorValue2 <= upperBoundLow) {
+            } else if (sensorValue <= upperBoundLow) {
                 newState = BOTTOM_REGISTER;
             }
 
             // Wait to decide about jump or drop if necessary.
             if (currentState == SILENCE && newState == BOTTOM_REGISTER) {
-                newState = delayStateChange(JUMP, sensorValue2, upperBoundHigh);
+                newState = delayStateChange(JUMP, sensorValue, upperBoundHigh);
             } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
-                newState = delayStateChange(DROP, sensorValue2, upperBoundLow);
+                newState = delayStateChange(DROP, sensorValue, upperBoundLow);
             }
         }
     }
 
     currentState = newState;
-    sensorValue = sensorValue2;  // We'll use the current reading as the baseline next time around, so we can monitor the rate of change.
 
     if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
         if (prevState == SILENCE && newState != SILENCE) {
@@ -1279,7 +1250,6 @@ byte delayStateChange(byte jumpDrop, int pressure, int upper) {
         return BOTTOM_REGISTER;
     }
 
-
     return currentState;  // Stay in the current state if we haven't waited the total time and the pressure hasn't yet leveled off.
 }
 
@@ -1300,7 +1270,6 @@ int pressureRateChange(int pressure) {
         rateChange = pressure - previousPressure;
         previousPressure = pressure;
     }
-
 
     return rateChange;
 }
@@ -1371,11 +1340,9 @@ void getExpression() {
         expression = (sensorValue - halfway) * ED[mode][EXPRESSION_DEPTH];
     }
 
-
     if (expression > ED[mode][EXPRESSION_DEPTH] * 200) {
         expression = ED[mode][EXPRESSION_DEPTH] * 200;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
     }
-
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
         pitchBend = 0;
@@ -1417,7 +1384,6 @@ void handleCustomPitchBend() {
     if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {  // Calculate slide if necessary.
         getSlide();
     }
-
 
     if (modeSelector[mode] != kModeGHB && modeSelector[mode] != kModeNorthumbrian) {  // Only used for whistle and uilleann
         if (vibratoEnable == 1) {                                                     // If it's a vibrato fingering pattern

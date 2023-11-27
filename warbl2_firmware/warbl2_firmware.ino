@@ -196,26 +196,24 @@ unsigned long timerF = 0;
 unsigned long pressureTimer = 0;
 
 // Variables for reading pressure sensor
-volatile unsigned int tempSensorValue = 0;  // For holding the pressure sensor value inside the ISR
-int sensorValue = 0;                        // First value read from the pressure sensor
-int sensorValue2 = 0;                       // Second value read from the pressure sensor, for measuring rate of change in pressure
-int prevSensorValue = 0;                    // Previous sensor reading, used to tell if the pressure has changed and should be sent.
-int twelveBitPressure;                      // Raw 12-bit reading
-int smoothed_pressure;                      // Smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
-int sensorCalibration = 0;                  // The sensor reading at startup, used as a base value
-byte offset = 15;                           // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
-byte multiplier = 15;                       // Controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes.
-int sensorThreshold[] = { 260, 0 };         // The pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
-int upperBound = 255;                       // This represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
-byte newState;                              // The note/octave state based on the sensor readings (1=not enough force to sound note, 2=enough force to sound first octave, 3 = enough force to sound second octave)
-byte prevState = 1;                         // The previous state, used to monitor change necessary for adding a small delay when a note is turned on from silence and we're sending not on velocity based on pressure.
-unsigned long velocityDelayTimer = 0;       // A timer to wait for calculating velocity.
-int jumpTime = 15;                          // The amount of time to wait before dropping back down from an octave jump to first octave because of insufficient pressure
-int dropTime = 15;                          // The amount of time to wait (ms) before turning a note back on after dropping directly from second octave to note off
-byte hysteresis = 15;                       // Register hysteresis
-byte soundTriggerOffset = 3;                // The number of sensor values above the calibration setting at which a note on will be triggered (first octave)
-int learnedPressure = 0;                    // The learned pressure reading, used as a base value
-int currentState;                           // These several are used by the new state machine
+int sensorValue = 0;                   // First value read from the pressure sensor
+int prevSensorValue = 0;               // Previous sensor reading, used to tell if the pressure has changed and should be sent.
+int twelveBitPressure;                 // Raw 12-bit reading
+int smoothed_pressure;                 // Smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
+int sensorCalibration = 0;             // The sensor reading at startup, used as a base value
+byte offset = 15;                      // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
+byte multiplier = 15;                  // Controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes.
+int sensorThreshold[] = { 260, 0 };    // The pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
+int upperBound = 255;                  // This represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
+byte newState;                         // The note/octave state based on the sensor readings (1=not enough force to sound note, 2=enough force to sound first octave, 3 = enough force to sound second octave)
+byte prevState = 1;                    // The previous state, used to reset the velocity timer.
+unsigned long velocityDelayTimer = 0;  // A timer to wait for pressure to build for calculating velocity.
+int jumpTime = 15;                     // The amount of time to wait before dropping back down from an octave jump to first octave because of insufficient pressure
+int dropTime = 15;                     // The amount of time to wait (ms) before turning a note back on after dropping directly from second octave to note off
+byte hysteresis = 15;                  // Register hysteresis
+byte soundTriggerOffset = 3;           // The number of 10-bit sensor values above the calibration setting at which a note on will be triggered (first octave)
+int learnedPressure = 0;               // The learned pressure reading, used as a base value
+int currentState;                      // These several are used by the new state machine
 int rateChangeIdx = 0;
 int previousPressure = 0;
 bool holdoffActive = false;
@@ -345,7 +343,7 @@ void setup() {
     pinMode(buttons[2], INPUT_PULLUP);
     pinMode(STAT, INPUT_PULLUP);  // STAT from charger
 
-    analogWriteResolution(10);  // Increase resolution for pulsing LEDs
+    analogWriteResolution(10);  // Increase resolution for pulsing LEDs.
 
     // Set up ADC
     const int adcBits = 12;
@@ -375,19 +373,21 @@ void setup() {
     delay(500);
     digitalWrite(LEDpins[GREEN_LED], LOW);
 
+    delay(1000);  // Make sure there's been time for the peripherals to power up.
+
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
     Bluefruit.begin();
     Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Request the lowest possible connection interval.
-    Bluefruit.setTxPower(8);                               // Supported values: -40dBm, -20dBm, -16dBm, -12dBm, -8dBm, -4dBm, 0dBm, +2dBm, +3dBm, +4dBm, +5dBm, +6dBm, +7dBm and +8dBm.
-    Bluefruit.autoConnLed(false);                          // Don't indicate connection (the blue LED may still flash briefly when connecting).
+    Bluefruit.setTxPower(8);                               // Max power.
+    Bluefruit.autoConnLed(false);                          // Don't indicate connection (we'll do this in the connect callback instead).
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service.
     bledis.setModel("WARBL BLE MIDI");
     bledis.begin();
     BLEMIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
     BLEMIDI.turnThruOff();
     BLEMIDI.setHandleControlChange(handleControlChange);          // Handle received MIDI CC messages.
-    Bluefruit.Periph.setConnectCallback(connect_callback);        // Allows us to get connection information
+    Bluefruit.Periph.setConnectCallback(connect_callback);        // Get connection information and handle indication.
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
     startAdv();                                                   // Set up and start advertising. Comment this out for testing without BLE on.
 
@@ -396,13 +396,13 @@ void setup() {
     Wire.setClock(400000);  // High speed
 
     // SPI
-    pinMode(2, OUTPUT);     // SS for Atmega
-    digitalWrite(2, HIGH);  // Ensure SS stays high for now.
+    pinMode(2, OUTPUT);     // CS for Atmega
+    digitalWrite(2, HIGH);  // Ensure CS stays high for now.
     SPI.begin();
 
     // IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz.
-    sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down for now to save power, and we'll turn gyro on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
+    sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down the gyro for now to save power, and we'll turn it on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
 
     //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
@@ -431,15 +431,10 @@ void setup() {
 
     loadFingering();
     loadSettingsForAllModes();
-    mode = defaultMode;  // Set the startup instrument.
-
+    mode = defaultMode;                       // Set the startup instrument.
     sensorCalibration = analogRead(A0) >> 2;  // Calibrate the pressure sensor to ambient pressure.
-
-    loadPrefs();  // Load the correct user settings based on current instrument.
-
-    powerDownTimer = millis();  // Reset the powerDown timer.
-
-    delay(500);  // Make sure there's been time for the peripherals to power up.
+    loadPrefs();                              // Load the correct user settings based on current instrument.
+    powerDownTimer = millis();                // Reset the powerDown timer.
 
     //eraseEEPROM(); // Testing
 
@@ -449,7 +444,7 @@ void setup() {
         Serial.println("Success");
     }
 */
-    //watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset.
+    watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
 }
 
 
@@ -462,13 +457,12 @@ void setup() {
 void loop() {
 
 
-
-    /////////// Things here happen ~ every 3 ms if on battery power and 2 ms if plugged in.
+    /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
     delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms delay. Total device consumption is 8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
     wakeTime = millis();                    // When we woke from sleep
-    getSensors();                           // 180 us, 55 of which is reading the pressure sensor.
+    getSensors();                           // 200 us, 55 of which is reading the pressure sensor.
     getFingers();                           // Find which holes are covered. 4 us.
     getState();                             // Get the breath state. 3 us.
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
@@ -478,8 +472,7 @@ void loop() {
 
 
 
-
-    /////////// Things here happen ~ every 2 to 18 ms.
+    /////////// Things here happen ~ every 2 to 17 ms.
 
     byte pressureInterval = calculatePressureInterval();  // Determine how frequently to send MIDI messages based on pressure.
     if ((millis() - pressureTimer) >= pressureInterval) {
@@ -489,13 +482,12 @@ void loop() {
 
 
 
-
     /////////// Things here happen ~ every 5 ms. These are things that should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
 
     if ((millis() - timerE) > 5) {
         timerE = millis();
-        readIMU();    // Takes about 145 us using SensorFusion's Mahony
-        blink();      // Blink green LED if necessary.
+        readIMU();    // Takes about 145 us using SensorFusion's Mahony.
+        blink();      // Blink any LED if necessary.
         pulse();      // Pulse any LED if necessary.
         calibrate();  // Calibrate/continue calibrating if the command has been received.
         checkButtons();
@@ -503,7 +495,6 @@ void loop() {
         detectShake();
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
     }
-
 
 
 
@@ -519,16 +510,15 @@ void loop() {
 
 
 
-
     /////////// Things here happen ~ every 0.75 s.
 
     if ((millis() - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = millis();
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
-        //watchdogReset();  // Feed the watchdog.
+        watchdogReset();       // Feed the watchdog.
     }
 
 
-    // timerD = micros(); // for benchmarking
+    // timerD = micros(); // For benchmarking--can paste these lines around any of the function calls above.
     // Serial.println(micros() - timerD);
 }

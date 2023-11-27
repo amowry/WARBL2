@@ -2,7 +2,6 @@
 // As constants, these are automatically stored in program memory with the ARM architecture.
 
 
-
 // MAE FOOFOO 17 Nov 2018 - Added full key map and vibrato flags
 //Tin whistle/Irish flute
 struct tinwhistle_explicit_entry {

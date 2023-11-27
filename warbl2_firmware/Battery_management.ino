@@ -14,7 +14,6 @@ The charger will report a fault (missing battery, out of temperature range) by b
 
 void manageBattery(bool send) {
 
-
     static byte chargingStatus = 0;          // 0 is not charging, 1 is charging, 2 is fault
     static byte prevChargingStatus = 0;      // Keep track of when it has changed.
     static byte tempChargingStatus;          // The assumed charging status before it has been finalized by waiting to detect a fault
@@ -46,8 +45,7 @@ void manageBattery(bool send) {
     }
 
 
-    // Read the battery
-    float smoothed_voltage = getBattVoltage();
+    float smoothed_voltage = getBattVoltage();  // Read the battery
 
 
     // Detect charging status based on the STAT pin from the charger (off if charging, blinking if fault)
@@ -89,7 +87,7 @@ void manageBattery(bool send) {
             if (chargingStatus == 1) {
                 chargeStartTime = nowtime;  // Start a timer if we just started charging.
                 minuteTimer = nowtime;
-                for (byte i = 0; i < 21; i++) {  //  Reset the readings in the voltage buffer to 0 in case there are readings in it from a previous charge cycle.
+                for (byte i = 0; i < 21; i++) {  // Reset the readings in the voltage buffer to 0 in case there are readings in it from a previous charge cycle.
                     voltageQueue[i] = 0;
                 }
                 flatSlopeCounts = 0;  // Reset the number of zero-slope readings.
@@ -227,7 +225,6 @@ void manageBattery(bool send) {
         digitalWrite(chargeEnable, LOW);                                                                                // Disable charging.
         chargeEnabled = 0;
     }
-
 
 
     // Check to see if we've been idle long enough to power down.
