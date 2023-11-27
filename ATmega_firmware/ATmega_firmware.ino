@@ -77,7 +77,7 @@ void setup() {
 
 
 
-void pinFall() {}  // Just used to wake up MCU. Triggered when SS falls.
+void pinFall() {}  // Just used to wake up MCU. Triggered when CS falls.
 
 
 
