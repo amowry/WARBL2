@@ -28,16 +28,15 @@
 #include <avr/power.h>
 #include <SPI.h>
 
-
 // GPIO constants
 const volatile uint8_t holeTrans[] = { 0, 9, 8, 7, 11, 6, 4, 2, 1 };                      // The analog pins used for the tone hole phototransistors, in the following order: Bell,R4,R3,R2,R1,L3,L2,L1,Lthumb
 const volatile GPIO_pin_t pins[] = { DP7, DP13, DP5, DP11, DP0, DP1, DP23, DP21, DP10 };  // The digital pins used for the tone hole leds, in the following order: Bell,R4,R3,R2,R1,L3,L2,L1,Lthumb. Uses a special declaration format for the GPIO library.
-
 
 // Variables for reading tonehole sensors
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                       // Storage for tonehole sensor readings
 int tempToneholeReadA[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                  // Temporary storage for ambient light tonehole sensor readings, written during the timer ISR.
 volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // We pack the 9 10-bit tonehole readings into 12 bytes to send via SPI to the NRF52840.
+
 
 
 
@@ -59,11 +58,9 @@ void setup() {
     DIDR0 = 0xff;  // Disable digital input circuits for analog pins.
     DIDR2 = 0xf3;
 
-
     for (byte i = 0; i < 9; i++) {  // Initialize the tonehole sensor IR LEDs.
         pinMode2f(pins[i], OUTPUT);
     }
-
 
     ADC_init();  // Initialize the ADC. The first set of readings will be all zeros because we won't start reading sensors until the first SPI request is received.
 
@@ -77,12 +74,13 @@ void setup() {
 
 
 
+
 void pinFall() {}  // Just used to wake up MCU. Triggered when CS falls.
 
 
 
-void loop() {
 
+void loop() {
 
     // Sleep after getting and preparing the readings.
     set_sleep_mode(SLEEP_MODE_STANDBY);
@@ -105,6 +103,7 @@ void loop() {
 
 
 
+
 // SPI interrupt routine
 ISR(SPI_STC_vect) {
     byte c = SPDR;             // Read request from NRF52840.
@@ -121,7 +120,6 @@ EMPTY_INTERRUPT(ADC_vect);  // We're not using the ADC complete interrupt.
 
 // 830 us to read all sensors and prepare the data. The total time that IR LEDs are on is 800 us, so power consumed by sensors is: 800 uS/3000 us * 13mA/LED == 3.5 mA when polled every 3 ms.
 void readSensors(void) {
-
 
     digitalWrite2f(pins[0], HIGH);                                    // Turn on LED 0. ToDo: We can add a setting to *not* use the bell sensor, in which case we can skip this step and save ~0.7 mA.
     ADC_read(holeTrans[0]);                                           // Throwaway to give sensor 0 extra time to rise after turning on LED (it's a slower sensor).
@@ -170,39 +168,35 @@ void readSensors(void) {
     digitalWrite2f(pins[8], LOW);
 
 
-
     for (byte i = 0; i < 9; i++) {
         if (toneholeRead[i] < 0) {  // Just in case
             toneholeRead[i] = 0;
         }
     }
 
-
-
     noInterrupts();  // There shouldn't be any interrupts now, but just in case...
-
 
     // Put 9 10-bit tone hole readings into 12 bytes.
 
     for (byte i = 0; i < 9; i++) {
-        toneholePacked[i] = toneholeRead[i];  // Put lower 8 bits of tonehole readings into first 9 bytes of array
+        toneholePacked[i] = toneholeRead[i];  // Put lower 8 bits of tonehole readings into first 9 bytes of array.
     }
 
-    toneholePacked[9] = 0;  // Clear these for next reading
+    toneholePacked[9] = 0;  // Clear these for the next reading.
     toneholePacked[10] = 0;
     toneholePacked[11] = 0;
 
     for (byte i = 0; i < 4; i++) {
-        toneholePacked[9] = toneholePacked[9] | (toneholeRead[i] >> 8);  // Put upper 2 bits of first 4 toneholes into byte 9 of array, left to right
+        toneholePacked[9] = toneholePacked[9] | (toneholeRead[i] >> 8);  // Put upper 2 bits of first 4 toneholes into byte 9 of array, left to right.
         if (i != 3) { toneholePacked[9] = toneholePacked[9] << 2; }
     }
 
     for (byte i = 4; i < 8; i++) {
-        toneholePacked[10] = toneholePacked[10] | (toneholeRead[i] >> 8);  // Put upper 2 bits of next 4 toneholes into byte 10 of array, left to right
+        toneholePacked[10] = toneholePacked[10] | (toneholeRead[i] >> 8);  // Put upper 2 bits of next 4 toneholes into byte 10 of array, left to right.
         if (i != 7) { toneholePacked[10] = toneholePacked[10] << 2; }
     }
 
-    toneholePacked[11] = toneholeRead[8] >> 8;  // Put upper 2 bits of final tone hole into byte 12. There are 8 extra bits here, if we need them for senmding status.
+    toneholePacked[11] = toneholeRead[8] >> 8;  // Put upper 2 bits of final tone hole into byte 12. There are 8 extra bits here, if we need them for sending status.
 
 
     interrupts();
