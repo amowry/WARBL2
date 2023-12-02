@@ -238,8 +238,7 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 
 
 // Variables for reading tonehole sensors
-volatile byte lastRead = 0;                                      // The transistor that was last read, so we know which to read the next time around the loop.
-unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Covered hole tonehole sensor readings for calibration
+unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Value at which each tone hole is considered to be covered
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              // Tonehole sensor readings after being reassembled from above bytes
 unsigned int holeCovered = 0;                                    // Whether each hole is covered-- each bit corresponds to a tonehole.
@@ -370,10 +369,8 @@ void setup() {
     battPower = true;
 
     digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate powerup.
-    delay(500);
+    delay(600);
     digitalWrite(LEDpins[GREEN_LED], LOW);
-
-    delay(1000);  // Make sure there's been time for the peripherals to power up.
 
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
@@ -408,7 +405,7 @@ void setup() {
     //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
     if (readEEPROM(44) != 3) {
-        saveFactorySettings();  // If we're running the software for the first time, if a factory reset has been requested, copy all settings to EEPROM.
+        saveFactorySettings();  // If we're running the software for the first time, or if a factory reset has been requested, copy all settings to EEPROM.
     }
 
     if (readEEPROM(37) == 3) {

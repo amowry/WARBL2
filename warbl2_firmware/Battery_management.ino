@@ -72,7 +72,7 @@ void manageBattery(bool send) {
         }
 
 
-        byte finalizeStatus = faultDetect(statusChanged);  // Watch for a blinking charger STAT pin, indicating a fault
+        byte finalizeStatus = faultDetect(statusChanged);  // Watch for a blinking charger STAT pin, indicating a fault.
         statusChanged = 0;
 
         // Do nothing if finalizeStatus == 0 because there hasn't been a change or we haven't waited long enough to detect a fault.
@@ -106,7 +106,7 @@ void manageBattery(bool send) {
 
     // Estimate the battery percentage remaining via coulometry. This is a rough estimate and mostly meaningless before the first full charge because we don't know the initial state of the battery. It becomes still more accurate after the first full discharge.
 
-    // If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery precentage as we're charging)
+    // If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery percentage as we're charging)
     if (chargingStatus == 1 && (nowtime - minuteTimer) > 60000) {
         prevRunTime = prevRunTime - (fullRunTime * 0.0055);  // Subtract the estimated run time added per one minute of charging
         if (prevRunTime < 1) {
@@ -151,10 +151,10 @@ void manageBattery(bool send) {
             sendMIDI(CONTROL_CHANGE, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
 
             sendMIDI(CONTROL_CHANGE, 7, 106, 71);
-            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  // Send charging status
+            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  // Send charging status.
 
             sendMIDI(CONTROL_CHANGE, 7, 106, 74);
-            sendMIDI(CONTROL_CHANGE, 7, 119, battLevel);  // Send battery level
+            sendMIDI(CONTROL_CHANGE, 7, 119, battLevel);  // Send battery level.
         }
     }
 
@@ -176,7 +176,7 @@ void manageBattery(bool send) {
                 for (byte i = 1; i < 21; i++) {  // Adjust all previous measurements.
                     voltageQueue[i] = voltageQueue[i] - voltageDrop;
                 }
-                writeEEPROM(1987, readEEPROM(1987) + 1);  // testing--record if there's been an adjustment
+                writeEEPROM(1987, readEEPROM(1987) + 1);  // Testing--record if there's been an adjustment
             }
 
 
@@ -212,7 +212,7 @@ void manageBattery(bool send) {
 
 
     // Enable or disable charging (by supplying power to the charger with the buck converter) based on settings and whether USB power is available.
-    // It is important to make sure chargeEnable never goes high when there's no USB power because it may power the buck converter through the EN pin.
+    // Make sure chargeEnable doesn't go high when there's no USB power because it may backpower the buck converter through the EN pin.
     if ((nowtime - USBstatusChangeTimer) > 2000 && !chargeTerminated && !chargeEnabled && ((WARBL2settings[CHARGE_FROM_HOST] && !battPower) || USBstatus == DUMB_CHARGER)) {
         digitalWrite(chargeEnable, HIGH);  // Enable charging (the charger will determine if it should actually start charging, based on batt voltage and temp.)
         chargeEnabled = 1;

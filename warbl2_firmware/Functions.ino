@@ -88,7 +88,7 @@ void getSensors(void) {
     // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 us.
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(2, LOW);   // CS -- wake up ATmega.
+    digitalWrite(2, LOW);   // CS -- Wake up ATmega.
     delayMicroseconds(10);  // Give it time to wake up.
     SPI.transfer(0);        // We don't receive anything useful back from the first transfer.
     for (byte i = 0; i < 12; i++) {
@@ -1024,32 +1024,18 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeBansuriWARBL:
             {
-            }
-
-        case kModeBansuri:  // ToDO: Make sure this matches the old firmware (2.2)
-            {
-
-                //check the chart.
                 tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
-                ret = bansuri_explicit[tempCovered].midi_note;
-                if ((fingerPattern & 0b100000000) == 0) {  // If the thumb hole is open, play G
-                    ret = 74;
-                } else if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play F# if all holes are covered
+                ret = pgm_read_byte(&bansuri_explicit[tempCovered].midi_note);
+
+                if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play F# if all holes are covered
                     ret = 61;
-                }
-
-
-                if (modeSelector[mode] == kModeBansuriWARBL) {
-                    if (fingerPattern >> 1 != 0b11111111 && (bitRead(fingerPattern, 1) == 1)) {  // If R4 is covered and we're not playing an F#, raise the note one semitone
-                        ret--;
-                    }
                 }
                 return ret;
             }
 
 
 
-        case kWARBL2Custom1:  // If we're using a custom chart we've already loaded the currently selected one from EEPROM into the array, so these can all fall through here.
+        case kWARBL2Custom1:  // If we're using a custom chart we've already loaded the correct one from EEPROM into the array, so these can all fall through here.
             {
             }
         case kWARBL2Custom2:
@@ -1125,7 +1111,7 @@ void getShift() {
         shift = shift + 2;
     }
 
-    if (modeSelector[mode] == kModeBansuri || modeSelector[mode] == kModeBansuriWARBL) {
+    if (modeSelector[mode] == kModeBansuriWARBL) {
         shift = shift - 5;
     }
 }
@@ -3494,7 +3480,7 @@ void connect_callback(uint16_t conn_handle) {
         sendMIDI(CONTROL_CHANGE, 7, 106, 72);
         sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) & 0x7F);  // Send LSB of the connection interval to Config Tool.
         sendMIDI(CONTROL_CHANGE, 7, 106, 73);
-        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  // Send MSB of the connection interval to Conf Tool.
+        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  // Send MSB of the connection interval to Config Tool.
     }
 
     blinkNumber[BLUE_LED] = 3;  // Indicate connection.

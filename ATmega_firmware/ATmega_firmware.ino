@@ -215,7 +215,7 @@ void ADC_init(void) {
 
 
 
-// We use ADC noise reduction mode to sleep the CPU while performing conversions. It saves a lot of power and gives super stable readings.
+// We use ADC noise reduction mode to sleep the CPU while performing conversions. It saves a lot of power and gives stable readings.
 int ADC_read(byte pin) {
 
     if (pin >= 18) pin -= 18;  // Allow for channel or pin numbers.
@@ -228,14 +228,12 @@ int ADC_read(byte pin) {
     set_sleep_mode(SLEEP_MODE_ADC);  // Sleep during sample.
     sleep_enable();
 
-    // Start the conversion.
     ADCSRA |= bit(ADSC) | bit(ADIE);
     interrupts();
-    sleep_cpu();
+    sleep_cpu();  // Start the conversion.
     sleep_disable();
 
-    // Awake again, reading should be done, but better make sure.
-    while (bit_is_set(ADCSRA, ADSC)) {}
+    while (bit_is_set(ADCSRA, ADSC)) {}  // Awake again, reading should be done, but better make sure.
 
     return ADC;
 }

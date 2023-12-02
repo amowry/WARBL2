@@ -37,8 +37,8 @@
 #define kModeNAF 6
 #define kModeKaval 7
 #define kModeRecorder 8
-#define kModeBansuriWARBL 9       // Only used for a custom regulators implementation, not the "official" software, or BansuriWARBL
-#define kModeUilleannStandard 10 
+#define kModeBansuriWARBL 9  // Only used for a custom regulators implementation, or BansuriWARBL
+#define kModeUilleannStandard 10
 #define kModeXiao 11
 #define kModeSax 12
 #define kModeGaitaExtended 13
@@ -51,7 +51,7 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeBansuri 23
+#define kModeBarbaro 23  // Hasn't been added yet.
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
