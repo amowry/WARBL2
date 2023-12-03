@@ -1159,7 +1159,7 @@
                 <div class="smallcontrolbox" id="box5">
 
                     <h2 class="controlboxtitle noTouch">
-                        Vibrato and Slide
+                        Finger Vibrato and Slide
 
                     <button type="button" class="infocircle" onClick="modal(7)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
@@ -1172,6 +1172,7 @@
 
                     <div class="pitchbendlabel noTouch">Finger-sensing distance</div>
 
+
                     <div class="slidecontainer2" id="depthContainer">
 
                         <input type="range" min="1" max="50" value="12" class="ranger" id="depth" onChange="sendDepth(value)" />
@@ -1180,9 +1181,25 @@
 
                     <div class="depthlabel noTouch">Vibrato depth (cents)</div>
 
+
+                    <div class="slidecontainer2" id="slideLimitContainer">
+
+                        <input type="range" min="1" max="12" value="4" class="ranger" id="slidelimit" onChange="sendSlideLimit(value)" />
+
+                    </div>
+
+                    <div class="slidelimitlabel noTouch">Slide Limit (semitones)</div>
+
+
                     <div class="jumpvalues jumpvalue14">
 
                         <p><span id="demo14"></span></p>
+
+                    </div>
+
+                    <div class="jumpvalues jumpvalue18">
+
+                        <p><span id="demo18"></span></p>
 
                     </div>
 
@@ -3033,7 +3050,7 @@
 
                 <h2 title="Close" onClick="modalclose(7)" class="modal-close">Close</h2>
 
-                <h1>Vibrato and Slide</h1>
+                <h1>Finger Vibrato and Slide</h1>
 
                 <div>
 

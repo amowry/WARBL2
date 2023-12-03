@@ -2026,7 +2026,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 40px;
 	width: 110px;
-	top: 250px;
+	top: 265px;
 	left: 70px;
 }
 
@@ -2972,8 +2972,14 @@ h3 {
 
 .jumpvalue14 {
 	left: 195px;
-	top: 165px;
+	top: 140px;
 }
+
+.jumpvalue18 {
+	left: 195px;
+	top: 205px;
+}
+
 
 /*transient filter value */
 .jumpvalue10b {
@@ -3011,7 +3017,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 40px;
-	top: 115px;
+	top: 95px;
 	z-index: 99;
 }
 
@@ -3019,7 +3025,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 44px;
-	top: 90px;
+	top: 70px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3028,7 +3034,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 40px;
-	top: 180px;
+	top: 160px;
 	z-index: 99;
 }
 
@@ -3036,7 +3042,24 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 55px;
-	top: 155px;
+	top: 135px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#slideLimitContainer {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 225px;
+	z-index: 99;
+}
+
+.slidelimitlabel {
+	display: block;
+	position: absolute;
+	left: 55px;
+	top: 200px;
 	z-index: 99;
 	font-size: 14px;
 }

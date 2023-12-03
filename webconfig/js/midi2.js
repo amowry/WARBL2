@@ -1160,12 +1160,6 @@ function WARBL_Receive(event) {
                         outputSliderMax[3] = data2;
                         slider2.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 85) {
-                        slider3.noUiSlider.set([data2, null]);
-                    }
-                    else if (jumpFactorWrite == 86) {
-                        slider3.noUiSlider.set([null, data2]);
-                    }
                     else if (jumpFactorWrite == 82) {
                         curve[1] = data2;
                     }
@@ -1175,6 +1169,19 @@ function WARBL_Receive(event) {
                     else if (jumpFactorWrite == 84) {
                         curve[3] = data2;
                     }
+                    else if (jumpFactorWrite == 85) {
+                        slider3.noUiSlider.set([data2, null]);
+                    }
+                    else if (jumpFactorWrite == 86) {
+                        slider3.noUiSlider.set([null, data2]);
+                    }
+                    else if (jumpFactorWrite == 87) {
+						// slideLimit
+						document.getElementById("slidelimit").value = data2 ;
+	                    var output = document.getElementById("demo18");
+	                    depth.dispatchEvent(new Event('input'));
+	                    output.innerHTML = data2;
+					}
 
                     else if (jumpFactorWrite > 86 && jumpFactorWrite < 98) { //custom fingering chart inputs
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
@@ -2129,6 +2136,13 @@ function sendDepth(selection) {
     blink(1);
     selection = parseFloat(selection);
     sendToWARBL(117, selection);
+}
+
+function sendSlideLimit(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(104, 87);
+    sendToWARBL(105, selection);
 }
 
 function sendShakeDepth(selection) {
@@ -3545,6 +3559,14 @@ function noteOff(pitch) {
         }
     }
 }
+
+var output18 = document.getElementById("demo18");
+var slideLimitSlider = document.getElementById('slidelimit');
+slideLimitSlider.addEventListener('input', sliderLimitChange);
+function sliderLimitChange() {
+    output18.innerHTML = slideLimitSlider.value;
+}
+
 
 var output14 = document.getElementById("demo14");
 var depthSlider = document.getElementById('depth');

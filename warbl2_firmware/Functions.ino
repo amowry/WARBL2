@@ -643,9 +643,6 @@ void debounceFingerHoles() {
         fingersChanged = 1;
         tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
         sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
-        if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {
-            findStepsDown();
-        }
 
         if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
             if (pitchBendMode != kPitchBendNone) {
@@ -1339,23 +1336,13 @@ void getExpression() {
 
 
 
-
-
-
-
-// Find how many steps down to the next lower note on the scale.
-void findStepsDown() {
-    slideHole = findleftmostunsetbit(holeCovered);  // Determine the highest uncovered hole, to use for sliding
-    if (slideHole == 127) {                         // This means no holes are covered.
-        // This could mean the highest hole is starting to be uncovered, so use that as the slideHole
-        slideHole = 7;
-    }
-    unsigned int closedSlideholePattern = holeCovered;
-    bitSet(closedSlideholePattern, slideHole);                                   // Figure out what the fingering pattern would be if we closed the slide hole
-    stepsDown = constrain(tempNewNote - getNote(closedSlideholePattern), 0, 2);  // And then figure out how many steps down it would be if a new note were triggered with that pattern.
+// for a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state
+int findStepsOffsetFor(int hole) {
+    unsigned int closedHolePattern = holeCovered;
+    bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole
+    int stepsOffset = getNote(closedHolePattern) - newNote;
+    return stepsOffset;
 }
-
-
 
 
 
@@ -1483,9 +1470,9 @@ void handlePitchBend() {
             (bitWrite(holeLatched, i, 0));  // We "unlatch" (enable for vibrato) a hole if it was covered when the note was triggered but now the finger has been completely removed.
         }
 
-        // If this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched, and not the slide-hole and not the chromatic hole
+        // If this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched, and not already being used for slide
         if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0
-            && (pitchBendMode == kPitchBendVibrato || (i != slideHole && !(modeSelector[mode] == kModeChromatic && i == 1)))) {
+            && (pitchBendMode == kPitchBendVibrato || ( iPitchBend[i] == 0 ))) {
             if (toneholeRead[i] > senseDistance) {
                 if (bitRead(holeCovered, i) != 1) {
                     iPitchBend[i] = (((toneholeRead[i] - senseDistance) * vibratoScale[i]) >> 3);  //bend downward
@@ -1511,21 +1498,21 @@ void handlePitchBend() {
 
 
 
-
-
-
-
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
-        if (toneholeRead[i] > senseDistance
-            && ((i == slideHole && stepsDown > 0) || (i == 1 && modeSelector[mode] == kModeChromatic))) {
-            if (bitRead(holeCovered, i) != 1) {
-                if (i == 1 && modeSelector[mode] == kModeChromatic) {
-                    iPitchBend[i] = ((toneholeRead[i] - senseDistance) * toneholeScale[i]) >> (3);  // Bend down a half-step
-                } else {
-                    iPitchBend[i] = ((toneholeRead[i] - senseDistance) * toneholeScale[i]) >> (4 - stepsDown);  // Bend down toward the next lowest note in the scale, the amount of bend depending on the number of steps down.
-                }
+        if (toneholeRead[i] > senseDistance) {
+            const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
+
+            int offsetSteps = findStepsOffsetFor(i);
+
+            if (offsetSteps != 0
+                && bitRead(holeCovered, i) != 1
+                && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit )
+            {
+                iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps) >> 3);
+            } else {
+                iPitchBend[i] = 0;
             }
         } else {
             iPitchBend[i] = 0;
