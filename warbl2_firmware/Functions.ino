@@ -619,11 +619,62 @@ void getFingers() {
 
 
 
+unsigned long transitionFilter = 0;
+
+// this should be called right after a new hole state change, before sending out any new note
+bool isMaybeInTransition()
+{
+    // look at all finger hole state to see if there might be other
+    // fingers in motion (partial hole covered) which means this 
+    // might be a multi-finger note transition and we may want to wait
+    // a bit to see if the pending fingers land before triggering the new note
+    int pendingHoleCovered = holeCovered;
+    unsigned long now = millis();
+    int otherholes = 0;
+
+    for (byte i = 0; i < 9; i++) {
+        int thresh = senseDistance; //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
+        if (toneholeRead[i] > thresh) {
+
+            if (bitRead(holeCovered, i) != 1)
+            {
+                bitWrite(pendingHoleCovered, i, 1);
+                ++otherholes;
+                /*
+                Serial.print("offs: ");
+                Serial.print(offsetSteps);
+                Serial.print(" tscale: ");
+                Serial.print(toneholeScale[i]);
+                Serial.print(" bend: ");
+                Serial.println(iPitchBend[i]);
+                */
+            } 
+        } 
+    }
+
+    if (pendingHoleCovered != holeCovered) {
+        // see if the pending is a new note
+        int tempNewNote = getNote(holeCovered);
+        int pendingNote = getNote(pendingHoleCovered);
+        if (pendingNote >= 0 && pendingNote != tempNewNote) {
+          #if DEBUG_TRANSITION_FILTER
+            Serial.print(now);
+            Serial.print(" : Maybe: ");
+            Serial.print(pendingNote);
+            Serial.print(" wait on: ");
+            Serial.println(tempNewNote);
+           #endif
+            return true;
+        }
+    }
+
+    return false;
+}
 
 
+#define DEBUG_TRANSITION_FILTER 0
 
-
-// Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman
+// Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman, but reworked by Jesse Chappell
 void debounceFingerHoles() {
 
     static unsigned long debounceTimer;
@@ -634,9 +685,26 @@ void debounceFingerHoles() {
         prevHoleCovered = holeCovered;
         debounceTimer = now;
         timing = 1;
+        if (transientFilterDelay > 0 && isMaybeInTransition()) {
+            transitionFilter = transientFilterDelay; // ms timeout for transition to fail out
+        } else {
+            transitionFilter = 0;
+        }
     }
 
-    if (now - debounceTimer >= transientFilter && timing == 1) {  // The fingering pattern has changed.
+    long debounceDelta = now - debounceTimer;
+
+    if (transitionFilter > 0 && ( debounceDelta >= transitionFilter || !isMaybeInTransition())) {
+        // reset it if necessary
+      #if DEBUG_TRANSITION_FILTER
+        Serial.print(now);
+        Serial.println(" canceltrans");
+      #endif
+        transitionFilter = 0;
+    }
+
+    if (debounceDelta >= transitionFilter
+        && timing == 1) {  // The fingering pattern has changed.
         timing = 0;
 
         fingersChanged = 1;
@@ -652,6 +720,12 @@ void debounceFingerHoles() {
                 }
             }
         }
+
+      #if DEBUG_TRANSITION_FILTER
+        Serial.print(now);
+        Serial.print(" : Commit: ");
+        Serial.println(tempNewNote);
+      #endif
 
         newNote = tempNewNote;
         tempNewNote = -1;
@@ -1510,7 +1584,7 @@ void handlePitchBend() {
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
-        if (toneholeRead[i] > senseDistance) {
+        if (toneholeRead[i] > senseDistance && transitionFilter == 0) {
             const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
@@ -3000,7 +3074,7 @@ void loadPrefs() {
     breathMode = breathModeSelector[mode];
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
-    transientFilter = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    transientFilterDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
