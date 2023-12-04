@@ -512,10 +512,11 @@ function WARBL_Receive(event) {
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
 
-    // If we haven't established the WARBL output port and we get a received message on channel 7
+    // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
-    if ((!WARBLout) && ((data0 & 0x0F) == 6)) {
+    if ((!WARBLout) && ((data0 & 0x0F) == 6) && ((data0 & 0xf0) == 176) && (data1 == 110)) {
         //alert(data0 & 0x0F);
+		
 
         if (platform == "web") {
 
