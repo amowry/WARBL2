@@ -256,18 +256,16 @@ byte transientFilter = 0;  // Small delay for filtering out transient notes
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
 int pitchBend = 8192;                                                         // Total current pitchbend value
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
-int pitchBendPerSemi = 4096;
+float pitchBendPerSemi = 4096.0f;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
 unsigned long noteOnTimestamp = 0;                             // When the note was activated
-byte slideHole;                                                // The hole above the current highest uncovered hole. Used for detecting slides between notes.
-byte stepsDown = 1;                                            // The number of half steps down from the slideHole to the next lowest note on the scale, used for calculating pitchbend values.
 byte vibratoEnable = 0;                                        // If non-zero, send vibrato pitch bend
 unsigned int holeLatched = 0b000000000;                        // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
 unsigned int vibratoHoles = 0b111111111;                       // Holes to be used for vibrato, left thumb on left, bell sensor far right.
-unsigned int toneholeScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // A scale for normalizing the range of each sensor, for sliding
-unsigned int vibratoScale[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };   // Same as above but for vibrato
+float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // A scale for normalizing the range of each sensor, for sliding
+float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };   // Same as above but for vibrato
 int expression = 0;                                            // Pitchbend up or down from current note based on pressure
 bool customEnabled = 0;                                        // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                               // Vibrato depth scaled to MIDI bend range.
