@@ -1126,8 +1126,9 @@ void getShift() {
 void getState() {
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
-
-    scalePosition = findleftmostunsetbit(holeCovered) + 62;  // Use the highest open hole to calculate.
+    unsigned int tempHoleCovered = holeCovered;
+    bitSet(tempHoleCovered, 8);                                  // Ignore thumb hole.
+    scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate.
     if (scalePosition > 69) {
         scalePosition = 70;
     }
@@ -1144,7 +1145,6 @@ void getState() {
     }
 
     upperBound = (sensorThreshold[1] + ((scalePosition - 60) * multiplier));  // Calculate the threshold between state 2 (bottom register) and state 3 (top register). This will also be used to calculate expression.
-
 
     newState = currentState;
 
@@ -1360,7 +1360,8 @@ void handleCustomPitchBend() {
     }
 
     // this method only cares if 2 or 3 are slideholes
-    int slideHoleIndex = iPitchBend[2] != 0 ? 2 : iPitchBend[3] != 0 ? 3 : 0;
+    int slideHoleIndex = iPitchBend[2] != 0 ? 2 : iPitchBend[3] != 0 ? 3
+                                                                     : 0;
 
     if (modeSelector[mode] != kModeGHB && modeSelector[mode] != kModeNorthumbrian) {  // Only used for whistle and uilleann
         if (vibratoEnable == 1) {                                                     // If it's a vibrato fingering pattern
@@ -1442,7 +1443,7 @@ void handleCustomPitchBend() {
             }
         }
         if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (holeCovered & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
-            iPitchBend[2] = 0 - adjvibdepth;                                                                                                       // Assign max vibrato depth to a hole that isn't being used for sliding.
+            iPitchBend[2] = 0 - adjvibdepth;                                                                                                                 // Assign max vibrato depth to a hole that isn't being used for sliding.
             iPitchBend[3] = 0;
         }
     }
@@ -1476,7 +1477,7 @@ void handlePitchBend() {
 
         // If this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched, and not already being used for slide
         if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0
-            && (pitchBendMode == kPitchBendVibrato || ( iPitchBend[i] == 0 ))) {
+            && (pitchBendMode == kPitchBendVibrato || (iPitchBend[i] == 0))) {
             if (toneholeRead[i] > senseDistance) {
                 if (bitRead(holeCovered, i) != 1) {
                     iPitchBend[i] = (int)(((toneholeRead[i] - senseDistance) * vibratoScale[i]));  //bend downward
@@ -1502,6 +1503,11 @@ void handlePitchBend() {
 
 
 
+
+
+
+
+
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
@@ -1512,9 +1518,8 @@ void getSlide() {
 
             if (offsetSteps != 0
                 && bitRead(holeCovered, i) != 1
-                && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit )
-            {
-                iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps)); // scale
+                && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
+                iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // scale
                 /*
                 Serial.print("offs: ");
                 Serial.print(offsetSteps);
@@ -1552,7 +1557,7 @@ void sendPitchbend() {
     int noteshift = 0;
     if (noteon && pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
         noteshift = (notePlaying - shift) - newNote;
-        pitchBend += (int) (noteshift * pitchBendPerSemi);
+        pitchBend += (int)(noteshift * pitchBendPerSemi);
     }
 
     pitchBend = 8192 - pitchBend + expression + shakeVibrato;
@@ -3034,7 +3039,7 @@ void loadPrefs() {
 
     for (byte i = 0; i < 9; i++) {
         //toneholeScale[i] = ((8 * (16383 / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);            // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
-        toneholeScale[i] = (((16383.0f / midiBendRange)) / (toneholeCovered[i] - 50.0f - senseDistance) / 2.0f);            // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
+        toneholeScale[i] = (((16383.0f / midiBendRange)) / (toneholeCovered[i] - 50.0f - senseDistance) / 2.0f);                     // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
         vibratoScale[i] = ((2.0f * (((float)vibratoDepth) / midiBendRange)) / (toneholeCovered[i] - 50.0f - senseDistance) / 2.0f);  // This one is for vibrato.
     }
 
