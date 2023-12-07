@@ -3488,7 +3488,7 @@ void connect_callback(uint16_t conn_handle) {
         sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  // Send MSB of the connection interval to Config Tool.
     }
 
-    blinkNumber[BLUE_LED] = 3;  // Indicate connection.
+    blinkNumber[BLUE_LED] = 2;  // Indicate connection.
 }
 
 

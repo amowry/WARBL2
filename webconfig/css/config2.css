@@ -689,7 +689,7 @@ input {
 	position: absolute;
 	width: 230px;
 	height: 32px;
-	top: 370px;
+	top: 375px;
 	left: 50px;
 	z-index:210;
 }
@@ -698,7 +698,7 @@ input {
 .notechannellabel {
 	display: block;
 	position: absolute;
-	left: 315px;
+	left: 305px;
 	top: 384px;
 	width: 100px;
 	z-index: 99;
@@ -708,7 +708,7 @@ input {
 .noteChannelContainer {
 	display: block;
 	position: absolute;
-	left: 420px;
+	left: 410px;
 	top: 380px;
 }
 
@@ -2026,7 +2026,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 40px;
 	width: 110px;
-	top: 265px;
+	top: 250px;
 	left: 70px;
 }
 
@@ -2548,8 +2548,8 @@ input:disabled + .slider2:before {
 	display: block;
 	position: absolute;
 	width: 300px;
-	top: 85px;
-	left: 230px;
+	top: 70px;
+	left: 130px;
 	padding: 0px;
 }
 
@@ -2971,13 +2971,13 @@ h3 {
 }
 
 .jumpvalue14 {
-	left: 195px;
-	top: 140px;
+	left: 205px;
+	top: 150px;
 }
 
 .jumpvalue18 {
-	left: 195px;
-	top: 205px;
+	left: 205px;
+	top: 220px;
 }
 
 
@@ -2986,7 +2986,7 @@ h3 {
 	display: block;
 	position: absolute;
 	z-index: 99;
-	left: 890px;
+	left: 970px;
 	top: 370px;
 }
 
@@ -2995,9 +2995,9 @@ h3 {
 #jumpfactor10bContainer {
 	display: block;
 	position: absolute;
-	left: 715px;
+	left: 840px;
 	top: 385px;
-	width: 150px;
+	width: 110px;
 	z-index: 99;
 }
 
@@ -3007,9 +3007,18 @@ h3 {
 	position: absolute;
 	z-index: 99;
 	font-size: 14px;
-	left: 540px;
+	left: 665px;
 	top: 385px;
 	width: 170px;
+}
+
+#advancedPBsliders {
+	display: block;
+	position: absolute;
+	left: 120px;
+	top: 20px;
+	width: 500px;
+	z-index: 99;
 }
 
 
@@ -3034,7 +3043,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 40px;
-	top: 160px;
+	top: 165px;
 	z-index: 99;
 }
 
@@ -3042,7 +3051,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 55px;
-	top: 135px;
+	top: 140px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3051,15 +3060,15 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 40px;
-	top: 225px;
+	top: 235px;
 	z-index: 99;
 }
 
 .slidelimitlabel {
 	display: block;
 	position: absolute;
-	left: 55px;
-	top: 200px;
+	left: 47px;
+	top: 210px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3067,8 +3076,9 @@ h3 {
 .bendrangelabel {
 	display: block;
 	position: absolute;
-	left: 140px;
-	top: 105px;
+	left: 490px;
+	top: 382px;
+	width: 100px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3076,8 +3086,8 @@ h3 {
 .midiBendRangeContainer {
 	display: block;
 	position: absolute;
-	left: 210px;
-	top: 132px;
+	left: 590px;
+	top: 380px;
 }
 
 #switch12 {
@@ -3187,12 +3197,12 @@ h3 {
 
 
 #switch14 {
-	top: 200px;
+	top: 310px;
 	left: 350px;
 }
 
 #switch15 {
-	top: 250px;
+	top: 360px;
 	left: 350px;
 }
 
@@ -3221,7 +3231,7 @@ h3 {
 .hack1Label {
 	position: absolute;
 	left: 45px;
-	top: 202px;
+	top: 312px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3229,7 +3239,7 @@ h3 {
 .hack2Label {
 	position: absolute;
 	left: 200px;
-	top: 252px;
+	top: 362px;
 	z-index: 99;
 	font-size: 14px;
 }

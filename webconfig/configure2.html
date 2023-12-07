@@ -758,6 +758,13 @@
                         <input class="channelInput" type="text" onChange="sendNoteChannel(value)" id="noteChannel" value="1" />
 
                     </div>
+                      <div class="bendrangelabel noTouch">Bend Range</div>
+
+                    <div class="midiBendRangeContainer">
+
+                        <input class="expressionInput" type="text" onChange="sendBendRange(value)" id="midiBendRange" value="2" />
+
+                    </div>
 
                     <button type="button" class="headerbuttons noTouch" id="configureCustomFingering" onClick="configureCustomFingering()">Configure custom fingering...</button>
 
@@ -1164,46 +1171,6 @@
                     <button type="button" class="infocircle" onClick="modal(7)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
-                    <div class="slidecontainer2" id="pitchBendContainer">
-
-                        <input type="range" min="-75" max="-10" value="-10" class="ranger" id="senseDistance" onChange="sendSenseDistance(value)" />
-
-                    </div>
-
-                    <div class="pitchbendlabel noTouch">Finger-sensing distance</div>
-
-
-                    <div class="slidecontainer2" id="depthContainer">
-
-                        <input type="range" min="1" max="50" value="12" class="ranger" id="depth" onChange="sendDepth(value)" />
-
-                    </div>
-
-                    <div class="depthlabel noTouch">Vibrato depth (cents)</div>
-
-
-                    <div class="slidecontainer2" id="slideLimitContainer">
-
-                        <input type="range" min="1" max="12" value="4" class="ranger" id="slidelimit" onChange="sendSlideLimit(value)" />
-
-                    </div>
-
-                    <div class="slidelimitlabel noTouch">Slide Limit (semitones)</div>
-
-
-                    <div class="jumpvalues jumpvalue14">
-
-                        <p><span id="demo14"></span></p>
-
-                    </div>
-
-                    <div class="jumpvalues jumpvalue18">
-
-                        <p><span id="demo18"></span></p>
-
-                    </div>
-
-
 
                     <div class="radiogroup3">
 
@@ -1349,14 +1316,50 @@
                      <button type="button" class="infocircle" onClick="modal(17)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
-                    <div class="bendrangelabel noTouch">MIDI Bend Range (semitones)</div>
+                    <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="advancedOkayPB()">OK</button>
+                    
+                    <div id="advancedPBsliders">
+                    
+                    <div class="slidecontainer2" id="pitchBendContainer">
 
-                    <div class="midiBendRangeContainer">
-
-                        <input class="expressionInput" type="text" onChange="sendBendRange(value)" id="midiBendRange" value="2" />
+                        <input type="range" min="-75" max="-10" value="-10" class="ranger" id="senseDistance" onChange="sendSenseDistance(value)" />
 
                     </div>
-                    <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="advancedOkayPB()">OK</button>
+
+                    <div class="pitchbendlabel noTouch">Finger-sensing distance</div>
+
+
+                    <div class="slidecontainer2" id="depthContainer">
+
+                        <input type="range" min="1" max="50" value="12" class="ranger" id="depth" onChange="sendDepth(value)" />
+
+                    </div>
+
+                    <div class="depthlabel noTouch">Vibrato depth (cents)</div>
+
+
+                    <div class="slidecontainer2" id="slideLimitContainer">
+
+                        <input type="range" min="1" max="12" value="4" class="ranger" id="slidelimit" onChange="sendSlideLimit(value)" />
+
+                    </div>
+
+                    <div class="slidelimitlabel noTouch" id="slidelimitlabel">Slide Limit (semitones)</div>
+
+
+                    <div class="jumpvalues jumpvalue14">
+
+                        <p><span id="demo14"></span></p>
+
+                    </div>
+
+                    <div class="jumpvalues jumpvalue18">
+
+                        <p><span id="demo18"></span></p>
+
+                    </div>
+                    </div>
+                    
 
 
                     <div class="hack1Label noTouch">Send pitch bend immmediately before Note On</div>

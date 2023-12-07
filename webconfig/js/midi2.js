@@ -127,6 +127,7 @@ window.addEventListener('load', function () {
     }
 
     depth.dispatchEvent(new Event('input'));
+	slidelimit.dispatchEvent(new Event('input'));
 
     $(".volume").click(function () {
         toggleOn();
@@ -519,10 +520,9 @@ function WARBL_Receive(event) {
 		
 
         if (platform == "web") {
-
-            //alert(input.value.name);
+            
             var inputName = event.target.name;
-
+			//console.log(inputName);
 
             // Strip any [] postfix
 
@@ -1394,6 +1394,10 @@ function WARBL_Receive(event) {
 						for (let element of document.getElementsByClassName("WARBL2Elements")){element.style.display="none";}
                         document.getElementById("box9").style.display = "none";
                         document.getElementById("box6").style.display = "block";
+						document.getElementById("demo18").style.display = "none";
+						document.getElementById("slideLimitContainer").style.display = "none";
+						document.getElementById("slidelimitlabel").style.display = "none";
+						document.getElementById("advancedPBsliders").style.top = "50px";
                         document.getElementById("backPressureButton").style.display = "none";
                         document.getElementById("fingeringSelect0").options[22].disabled = true;
                         document.getElementById("fingeringSelect0").options[23].disabled = true;

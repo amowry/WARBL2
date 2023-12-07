@@ -260,15 +260,15 @@ float pitchBendPerSemi = 4096.0f;
 int prevChanPressure = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
-unsigned long noteOnTimestamp = 0;                             // When the note was activated
-byte vibratoEnable = 0;                                        // If non-zero, send vibrato pitch bend
-unsigned int holeLatched = 0b000000000;                        // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
-unsigned int vibratoHoles = 0b111111111;                       // Holes to be used for vibrato, left thumb on left, bell sensor far right.
+unsigned long noteOnTimestamp = 0;                                                 // When the note was activated
+byte vibratoEnable = 0;                                                            // If non-zero, send vibrato pitch bend
+unsigned int holeLatched = 0b000000000;                                            // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
+unsigned int vibratoHoles = 0b111111111;                                           // Holes to be used for vibrato, left thumb on left, bell sensor far right.
 float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // A scale for normalizing the range of each sensor, for sliding
 float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };   // Same as above but for vibrato
-int expression = 0;                                            // Pitchbend up or down from current note based on pressure
-bool customEnabled = 0;                                        // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
-int adjvibdepth;                                               // Vibrato depth scaled to MIDI bend range.
+int expression = 0;                                                                // Pitchbend up or down from current note based on pressure
+bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
+int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
 
 
 // Variables for managing MIDI note output
@@ -314,7 +314,7 @@ void setup() {
 #endif
 
     // NRF stuff
-    dwt_enable();                 // Enable DWT for high-resolution micros() for testing purposes only. Will consume more power(?)
+    dwt_enable();                 // Enable DWT for high-resolution micros() (uses a bit more power).
     sd_clock_hfclk_request();     // Enable the high-frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
     NRF_POWER->DCDCEN = 1;        // ENABLE DC/DC CONVERTER, cuts power consumption.
     NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average.
@@ -364,7 +364,7 @@ void setup() {
 
     digitalWrite(powerEnable, HIGH);  // Enable the boost converter at startup at least until we have time to check for USB power.
     runTimer = millis();
-    battPower = true;
+    battPower = true;  // We'll change this if we detect USB.
 
     digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate powerup.
     delay(600);
