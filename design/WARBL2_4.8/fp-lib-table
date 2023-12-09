@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "WARBL_footprints")(type "KiCad")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/footprints.pretty")(options "")(descr ""))
+)

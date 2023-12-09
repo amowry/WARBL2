@@ -1,0 +1,8 @@
+(sym_lib_table
+  (lib (name "SIP_1807")(type "Legacy")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/2022-12-15_17-55-02.lib")(options "")(descr ""))
+  (lib (name "USB4145-03-0070-C_REVA")(type "KiCad")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/USB4145-03-0070-C_REVA.kicad_sym")(options "")(descr ""))
+  (lib (name "CSD13381F4")(type "KiCad")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/CSD13381F4.kicad_sym")(options "")(descr ""))
+  (lib (name "WARBL2.2-rescue")(type "Legacy")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/WARBL2.2-rescue.lib")(options "")(descr ""))
+  (lib (name "SIA519EDJ-T1-GE3")(type "KiCad")(uri "C:/Users/Andrew/Documents/lutherie/CNC/electronics/whistle/kicad files/WARBL_BL/footprints_and_symbols/2023-06-21_21-36-02.kicad_sym")(options "")(descr ""))
+  (lib (name "BQ25172DSGR")(type "KiCad")(uri "${WARBL_SYMBOLS}/2023-06-22_20-16-46.kicad_sym")(options "")(descr ""))
+)
