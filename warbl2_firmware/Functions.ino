@@ -10,9 +10,8 @@ void printStuff(void) {
         //Serial.println(toneholeRead[i]);
     }
 
-
     /*
-    Serial.print(4.0f);
+    Serial.print(byte((4+5)/10);
     Serial.print(",");
     Serial.print(accelY, 3);
     Serial.print(",");
@@ -2485,8 +2484,12 @@ void performAction(byte action) {
         case SHOW_BATTERY_LEVEL:
             {
                 byte level = (battLevel + 5) / 10;
-                blinkNumber[GREEN_LED] = level;  // Blink LED in teal 0-10 times based on battery percentage.
-                blinkNumber[BLUE_LED] = level;
+                if (level > 0) {
+                    blinkNumber[GREEN_LED] = level;  // Blink LED in teal 0-10 times based on battery percentage.
+                    blinkNumber[BLUE_LED] = level;
+                } else {
+                    blinkNumber[RED_LED] = 1;
+                }
                 break;
             }
 
