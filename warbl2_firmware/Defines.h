@@ -144,8 +144,7 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-//#define CUSTOM_FINGERING_1 38  //None of these "custom" variables these are used by WARBL2.
-#define CUSTOM_FINGERING_2 39
+#define CUSTOM_FINGERING_2 39  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_3 40
 #define CUSTOM_FINGERING_4 41
 #define CUSTOM_FINGERING_5 42
