@@ -12,7 +12,7 @@
 #define FUSE_EXT 3                // Extended fuse
 #define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly.
 #define FLASH_CLOCKSPEED 1000000  // Once fused you can flash fast!
-#define AVRPROG_RESET 8           // This will be 27 in final WARBL version. This pin is left in default state (highZ) when not programming (it has a pullup resistor).
+#define AVRPROG_RESET 26           //This pin is left in default state (highZ) when not programming (it has a pullup resistor).
 #define debug(string)             // Serial.println(string);
 
 typedef struct image {             // Struct for holding program fuses & code
@@ -374,9 +374,9 @@ bool programATmega(void) {
     }
 
     for (byte i = 0; i < 4; i++) {  // Indicate success.
-        digitalWrite(LED_BUILTIN, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
         delay(200);
-        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(GREEN_LED, LOW);
         delay(200);
     }
 
@@ -395,7 +395,7 @@ void endProgramMode(void) {
 
 bool targetPower(bool poweron) {
     if (poweron) {
-        digitalWrite(LED_BUILTIN, HIGH);
+        digitalWrite(GREEN_LED, HIGH);
         Serial.print(F("Starting Program Mode..."));
         if (startProgramMode(100000)) {
             Serial.println(F(" [OK]"));
@@ -406,7 +406,7 @@ bool targetPower(bool poweron) {
         }
     } else {
         endProgramMode();
-        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(GREEN_LED, LOW);
         return true;
     }
 }
@@ -827,7 +827,7 @@ byte hexToByte(byte h) {
 
 void error(const char *string) {
     Serial.println(string);
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(GREEN_LED, HIGH);
     while (1) {
     }
 }
@@ -835,7 +835,7 @@ void error(const char *string) {
 
 void error(const __FlashStringHelper *string) {
     Serial.println(string);
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(GREEN_LED, HIGH);
     while (1) {
     }
 }

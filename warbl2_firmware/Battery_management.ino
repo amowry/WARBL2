@@ -24,7 +24,6 @@ void manageBattery(bool send) {
     static unsigned long minuteTimer = 0;    // Resets every minute while charging to recalculate battery percentage.
     static bool chargeTerminated = false;    // Tells us that a charge cycle has been terminated because the cell is full.
     static byte flatSlopeCounts = 0;         // Tally of zero-slope readings (two are required to terminate charging).
-    static byte battLevel;                   // Estimated battery percentage remaining
     static bool statusChanged;               // Flag when the charging status has changed.
     unsigned long nowtime = millis();
 

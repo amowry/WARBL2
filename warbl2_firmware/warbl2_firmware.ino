@@ -23,6 +23,12 @@
 Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
 
 
+***Notes about the FFC expansion port:
+Connector is Molex 0512810598 (see datasheet for cable design): https://tools.molex.com/pdm_docs/sd/512810598_sd.pdf
+An example of an off-the-shelf cable is GCT 05-05-A-0050-A-4-06-4-T.
+Pinout from left to right, holding WARBL with mouthpiece pointing up: GND, D31, D5, 3V0, A0/D14. Any of these pins can be used at high speed for I2S, software I2C, etc. If reading a sensor, it's recommended to conserve battery life by using a digital pin to turn the sensor on only when needed. 
+
+
 */
 
 #include "Defines.h"
@@ -49,7 +55,11 @@ BLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 Adafruit_LSM6DSOX sox;
 SF sfusion;
+#if defined(PROTOTYPE46)
 ResponsiveAnalogRead analogPressure(A0, true);
+#else
+ResponsiveAnalogRead analogPressure(A1, true);
+#endif
 
 // Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
@@ -63,10 +73,13 @@ MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 // GPIO constants
 const uint8_t LEDpins[] = { 8, 10, 3 };  // RGB. Green is also LED_BUILTIN.
-//const uint8_t LEDpins[] = { 27, 10, 3 };  // TESTING programming ATmega with NRF, with older protoype where pin 8 is used to reset ATmega. On final version pin 27 will be to reset Atmega.
-const uint8_t powerEnable = 19;           // Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
-const uint8_t chargeEnable = 7;           // Enables charging.
-const uint8_t STAT = 15;                  // Battery charger STAT pin
+const uint8_t powerEnable = 19;          // Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
+const uint8_t chargeEnable = 7;          // Enables charging.
+#if defined(PROTOTYPE46)
+const uint8_t STAT = 15;  // Battery charger STAT pin for early prototype
+#else
+const uint8_t STAT = 27;  // Battery charger STAT pin
+#endif
 const uint8_t battReadEnable = 6;         // Driving this high connects the battery to NRF ADC for reading voltage.
 const uint8_t battRead = 16;              // Analog pin for reading battery voltage
 const uint8_t buttons[] = { 4, 17, 18 };  // Buttons 1, 2, 3
@@ -80,6 +93,7 @@ unsigned long prevRunTime = 120;    // The total run time since the last full ch
 unsigned long powerDownTimer;       // For powering down after a period of no activity
 byte USBstatus = 0;                 // Battery power (0), dumb charger (1), or connected USB host (2).
 unsigned long chargeStartTime = 0;  // When we started charging.
+byte battLevel;                     // Estimated battery percentage remaining
 
 
 // BLE
@@ -410,35 +424,32 @@ void setup() {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
-    if (readEEPROM(1991) != VERSION) {  // Temporary, for upgrading to v4.1 with different EEPROM locations so battery data is saved.
-        byte tempSettings[9];
-        for (byte i = 0; i < 9; i++) {
-            tempSettings[i] = readEEPROM(1007 + i);
-        }
-        writeEEPROM(1992, HARDWARE_REVISION);
-        writeEEPROM(1991, VERSION);
-        writeEEPROM(1995, ATMEGA_FIRMWARE_VERSION);
-        saveFactorySettings();
-        for (byte i = 0; i < 9; i++) {
-            writeEEPROM(1975 + i, tempSettings[i]);
-        }
-    }
 
     loadFingering();
     loadSettingsForAllModes();
-    mode = defaultMode;                       // Set the startup instrument.
-    sensorCalibration = analogRead(A0) >> 2;  // Calibrate the pressure sensor to ambient pressure.
-    loadPrefs();                              // Load the correct user settings based on current instrument.
-    powerDownTimer = millis();                // Reset the powerDown timer.
+    mode = defaultMode;  // Set the startup instrument.
+    //sensorCalibration = analogRead(A0) >> 2;  // Calibrate the pressure sensor to ambient pressure.
+    analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
+    twelveBitPressure = analogPressure.getRawValue();
+    sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
+    loadPrefs();                                 // Load the correct user settings based on current instrument.
+    powerDownTimer = millis();                   // Reset the powerDown timer.
 
     //eraseEEPROM(); // Testing
 
-    /*
-    while(!Serial);
-    if (programATmega()) {  // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin. This will be added in the final version.)
-        Serial.println("Success");
+    writeEEPROM(1991, VERSION);  // Update the firmware version if it has changed.
+
+    // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
+#ifndef PROTOTYPE46
+    //while(!Serial); // Can uncomment this if not using release version, to show verbose programming output.
+    if (ATMEGA_FIRMWARE_VERSION != readEEPROM(1995)) {
+        if (programATmega()) {
+            Serial.println("Success");
+            writeEEPROM(1995, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
+        }
     }
-*/
+#endif
+
     watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
 }
 

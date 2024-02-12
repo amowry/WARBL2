@@ -32,7 +32,7 @@ void printStuff(void) {
     //Serial.println(fullRunTime);
     //Serial.println(readEEPROM(1991));
     //Serial.println(IMUtemp);
-    // Serial.println(USBstatus);
+    //Serial.println(USBstatus);
     //Serial.println(battPower);
     //Serial.print(roll);
     //Serial.print(",");
@@ -2482,6 +2482,13 @@ void performAction(byte action) {
             break;
 
 
+        case SHOW_BATTERY_LEVEL:
+            {
+                byte level = (battLevel + 5) / 10;
+                blinkNumber[GREEN_LED] = level;  // Blink LED in teal 0-10 times based on battery percentage.
+                blinkNumber[BLUE_LED] = level;
+                break;
+            }
 
         default:
             return;
@@ -3434,21 +3441,21 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
     switch (m) {
 
-        case 0xD0:  //Channel pressure
+        case 0xD0:  // Channel pressure
             {
                 if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendAfterTouch(d, c);
-                    //MIDI.sendPolyPressure(d, c); //deprecated
+                    // MIDI.sendPolyPressure(d, c); // deprecated
                 }
                 if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
                     BLEMIDI.sendAfterTouch(d, c);
-                    //BLEMIDI.sendPolyPressure(d, c); //deprecated
+                    // BLEMIDI.sendPolyPressure(d, c); // deprecated
                 }
                 break;
             }
 
 
-        case 0xC0:  //Program Change
+        case 0xC0:  // Program Change
             {
                 if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
                     MIDI.sendProgramChange(d, c);
@@ -3532,7 +3539,7 @@ void watchdog_enable(int maxPeriodMS) {
 
     nrf_wdt_behaviour_set(NRF_WDT, NRF_WDT_BEHAVIOUR_RUN_SLEEP);  // WDT run when CPU is asleep
     nrf_wdt_reload_value_set(NRF_WDT, (maxPeriodMS * 32768) / 1000);
-    nrf_wdt_reload_request_enable(NRF_WDT, NRF_WDT_RR0);  // Use channel 0
+    nrf_wdt_reload_request_enable(NRF_WDT, NRF_WDT_RR0);  // Use channel 0.
     nrf_wdt_task_trigger(NRF_WDT, NRF_WDT_TASK_START);    // Start WDT. After started CRV, RREN and CONFIG is blocked--there is no way to stop/disable watchdog using source code, it can only be reset by WDT timeout, Pin reset, Power reset.
 }
 

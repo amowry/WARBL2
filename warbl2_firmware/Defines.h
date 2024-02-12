@@ -2,8 +2,9 @@
 
 // #define RELEASE //Uncomment for release version (turns off CDC)
 
-#define VERSION 41                  // Firmware version (without decimal point)
-#define HARDWARE_REVISION 46        // Hardware
+#define VERSION 41  // Firmware version (without decimal point)
+#define PROTOTYPE46       // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions
+#define HARDWARE_REVISION 48
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
 #define WATCHDOG_TIMEOUT_SECS 10  // The timeout needs to be set longer than any task that might interrupt the loop().
@@ -185,7 +186,8 @@
 #define AUTOCALIBRATE 12
 #define POWER_DOWN 13
 #define RECENTER_YAW 14
-#define kACTIONSnVariables 15
+#define SHOW_BATTERY_LEVEL 15
+#define kACTIONSnVariables 16
 
 // Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
