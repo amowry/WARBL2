@@ -3,7 +3,7 @@
 // #define RELEASE //Uncomment for release version (turns off CDC)
 
 #define VERSION 41  // Firmware version (without decimal point)
-//#define PROTOTYPE46       // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+#define PROTOTYPE46       // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 48        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
@@ -52,7 +52,7 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeBarbaro 23  // Hasn't been added yet.
+#define kModeBansuri 23
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
