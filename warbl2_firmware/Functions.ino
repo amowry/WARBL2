@@ -5,6 +5,17 @@ void printStuff(void) {
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
+    //This can be used to print out the currently selected fingering chart (all 256 possible values) when button 1 is clicked.
+    /*
+    static byte printed = 0;
+    if (digitalRead(4) == 0) {
+        for (unsigned int i = 0; i < 256; i++) {
+            Serial.print(getNote(i << 1));
+            Serial.print(" ");
+        }
+        delay(5000);
+    }
+*/
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
@@ -622,10 +633,9 @@ void getFingers() {
 unsigned long transitionFilter = 0;
 
 // this should be called right after a new hole state change, before sending out any new note
-bool isMaybeInTransition()
-{
+bool isMaybeInTransition() {
     // look at all finger hole state to see if there might be other
-    // fingers in motion (partial hole covered) which means this 
+    // fingers in motion (partial hole covered) which means this
     // might be a multi-finger note transition and we may want to wait
     // a bit to see if the pending fingers land before triggering the new note
     int pendingHoleCovered = holeCovered;
@@ -633,11 +643,10 @@ bool isMaybeInTransition()
     int otherholes = 0;
 
     for (byte i = 0; i < 9; i++) {
-        int thresh = senseDistance; //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
+        int thresh = senseDistance;  //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
         if (toneholeRead[i] > thresh) {
 
-            if (bitRead(holeCovered, i) != 1)
-            {
+            if (bitRead(holeCovered, i) != 1) {
                 bitWrite(pendingHoleCovered, i, 1);
                 ++otherholes;
                 /*
@@ -648,8 +657,8 @@ bool isMaybeInTransition()
                 Serial.print(" bend: ");
                 Serial.println(iPitchBend[i]);
                 */
-            } 
-        } 
+            }
+        }
     }
 
     if (pendingHoleCovered != holeCovered) {
@@ -657,13 +666,13 @@ bool isMaybeInTransition()
         int tempNewNote = getNote(holeCovered);
         int pendingNote = getNote(pendingHoleCovered);
         if (pendingNote >= 0 && pendingNote != tempNewNote) {
-          #if DEBUG_TRANSITION_FILTER
+#if DEBUG_TRANSITION_FILTER
             Serial.print(now);
             Serial.print(" : Maybe: ");
             Serial.print(pendingNote);
             Serial.print(" wait on: ");
             Serial.println(tempNewNote);
-           #endif
+#endif
             return true;
         }
     }
@@ -686,7 +695,7 @@ void debounceFingerHoles() {
         debounceTimer = now;
         timing = 1;
         if (transientFilterDelay > 0 && isMaybeInTransition()) {
-            transitionFilter = transientFilterDelay; // ms timeout for transition to fail out
+            transitionFilter = transientFilterDelay;  // ms timeout for transition to fail out
         } else {
             transitionFilter = 0;
         }
@@ -694,12 +703,12 @@ void debounceFingerHoles() {
 
     long debounceDelta = now - debounceTimer;
 
-    if (transitionFilter > 0 && ( debounceDelta >= transitionFilter || !isMaybeInTransition())) {
+    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || !isMaybeInTransition())) {
         // reset it if necessary
-      #if DEBUG_TRANSITION_FILTER
+#if DEBUG_TRANSITION_FILTER
         Serial.print(now);
         Serial.println(" canceltrans");
-      #endif
+#endif
         transitionFilter = 0;
     }
 
@@ -721,11 +730,11 @@ void debounceFingerHoles() {
             }
         }
 
-      #if DEBUG_TRANSITION_FILTER
+#if DEBUG_TRANSITION_FILTER
         Serial.print(now);
         Serial.print(" : Commit: ");
         Serial.println(tempNewNote);
-      #endif
+#endif
 
         newNote = tempNewNote;
         tempNewNote = -1;
@@ -784,6 +793,7 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 
+
 // Return a MIDI note number (0-127) based on the current fingering.
 int getNote(unsigned int fingerPattern) {
     int ret = -1;  //default for unknown fingering
@@ -793,7 +803,7 @@ int getNote(unsigned int fingerPattern) {
 
         case kModeWhistle:
             {
-            }  // These first two are the same
+            }  // These first two are the same except for R4.
 
         case kModeChromatic:
             {
@@ -804,9 +814,9 @@ int getNote(unsigned int fingerPattern) {
             }  // This one is very similar-- a modification will be made below.
 
         case kModeBaroqueFlute:
-            {  // This one is very similar-- a modification will be made below.
+            {  // Also similar
 
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Use bitmask and bitshift to ignore thumb sensor, R4 sensor, and bell sensor when using tinwhistle fingering. The R4 value will be checked later to see if a note needs to be flattened.
+                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
                 ret = tinwhistle_explicit[tempCovered].midi_note;
                 if (modeSelector[mode] == kModeChromatic && bitRead(fingerPattern, 1) == 1) {
                     ret--;  // Lower a semitone if R4 hole is covered and we're using the chromatic pattern
@@ -1092,7 +1102,7 @@ int getNote(unsigned int fingerPattern) {
 
 
 
-        case kModeBansuriWARBL:
+        case kModeBansuri:
             {
                 tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
                 ret = pgm_read_byte(&bansuri_explicit[tempCovered].midi_note);
@@ -1130,6 +1140,9 @@ int getNote(unsigned int fingerPattern) {
 
     return ret;
 }
+
+
+
 
 
 
