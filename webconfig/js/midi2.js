@@ -18,7 +18,8 @@ var outputSliderMax = [127, 127, 127, 127, 127, 127, 127];
 var consoleEntries = 0; //number of lines in MIDI console
 var customFingeringFills = [[null, null, null, null, null, null, null, null, null, null, null], [0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61], [0, 74, 72, 72, 70, 68, 67, 65, 64, 62, 61], [0, 74, 74, 72, 72, 69, 68, 67, 65, 62, 60]];
 var communicationMode = false; //if we're communicating with WARBL
-
+var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
+var notesPlaying = 0; //Number of MIDI notes currently playing
 var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
@@ -694,13 +695,17 @@ function WARBL_Receive(event) {
         case 0x90:
             if (data2 != 0) { // if velocity != 0, this is a note-on message
                 noteOn(data1);
+				if(notesPlaying < 2) {notesPlaying ++;} //keep track of many notes are currently playing so we know when to turn off the note display.
                 logKeys;
+				document.getElementById("tinyConsole").value = noteNames[data1 - 1] + " " + data1;
                 return;
             }
         // if velocity == 0, fall thru: it's a note-off.
         case 0x80:
             noteOff(data1);
+			notesPlaying --;
             logKeys;
+			if (notesPlaying == 0) {document.getElementById("tinyConsole").value = "";}
             return;
 
         case 0xB0: //incoming CC from WARBL
@@ -1960,7 +1965,8 @@ function sendFingeringSelect(row, selection) {
     updateCells();
     updateCustom();
     blink(1);
-    //default keys
+    //default keys for original WARBL
+	if (version < 4.0){
     var key;
     if (selection == 2) {
         key = 8;
@@ -1995,8 +2001,10 @@ function sendFingeringSelect(row, selection) {
     else {
         key = 0;
     } //default key of D for many patterns
-    document.getElementById("keySelect" + row).value = key; //set key menu
 
+	}
+	else {key = 0;} // For WARBL2 always revert key (transpose) to 0 when a new fingerin chart is selected
+	document.getElementById("keySelect" + row).value = key; //set key menu
     //send the fingering pattern
     sendToWARBL(102, 30 + row);
     sendToWARBL(102, 33 + selection);

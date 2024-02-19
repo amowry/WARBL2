@@ -738,7 +738,7 @@ input {
 
 .headerbuttons {
 	position: relative;
-	height: 70px;
+	height: 50px;
 	width: 160px;
 	margin-bottom: 30px;
 	padding: 8px;
@@ -1017,7 +1017,7 @@ input {
 .keySelectLabel {
 	display: block;
 	position: absolute;
-	left: 303px;
+	left: 285px;
 	top: 280px;
 	z-index: 99;
 	font-size: 14px;
@@ -1254,7 +1254,7 @@ fieldset {
 
 .middleControlBox {
 	position: absolute;
-	top: 0px;
+	top: 25px;
 	background-color: var(--main-bg-color);
 	display: block;
 	clear: both;
@@ -2216,7 +2216,7 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;	
 }
 
-.slidecontainer4 {
+.slidecontainer5 {
 	width: 60%;
 }
 
@@ -2259,10 +2259,6 @@ input:disabled + .vibratoSlider:before {
 	top: 401px;
 	z-index: 99;
 	font-size: 14px;
-}
-
-.slidecontainer5 {
-	width: 30%;
 }
 
 .slidecontainer6 {
@@ -2358,10 +2354,42 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 150px;
-	top: 40px;
-	left: 100px;
+	top: 100px;
+	left: 350px;
 }
 
+.tinyConsoleLabel {
+	display: block;
+	position: absolute;
+	left: 510px;
+	top: 100px;
+	width: 100px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.tinyConsoleContainer {
+	display: block;
+	position: absolute;
+	left: 610px;
+	top: 104px;
+}
+
+.tinyConsole {
+	display: block;
+	position: absolute;
+	margin: auto;
+	text-align: center;
+	width: 60px;
+	height: 21px;
+	color: var(--text-color);
+	z-index: 99;
+	font-size: 14px;
+	line-height: 21px;
+	border: solid 2px var(--console-border-color);
+	background-color: var(--console-bg-color);
+	border-radius: 5px;
+}
 
 .graph {
 	position: absolute;
@@ -2723,7 +2751,7 @@ h3 {
 }
 
 .slidecontainer2 {
-	width: 30%;
+	width: 50%;
 }
 
 .slidecontainer3 {
@@ -2971,12 +2999,12 @@ h3 {
 }
 
 .jumpvalue14 {
-	left: 205px;
+	left: 255px;
 	top: 150px;
 }
 
 .jumpvalue18 {
-	left: 205px;
+	left: 255px;
 	top: 220px;
 }
 
@@ -3025,7 +3053,7 @@ h3 {
 #pitchBendContainer {
 	display: block;
 	position: absolute;
-	left: 40px;
+	left: -10px;
 	top: 95px;
 	z-index: 99;
 }
@@ -3042,7 +3070,7 @@ h3 {
 #depthContainer {
 	display: block;
 	position: absolute;
-	left: 40px;
+	left: -10px;
 	top: 165px;
 	z-index: 99;
 }
@@ -3059,7 +3087,7 @@ h3 {
 #slideLimitContainer {
 	display: block;
 	position: absolute;
-	left: 40px;
+	left: -10px;
 	top: 235px;
 	z-index: 99;
 }
@@ -3111,6 +3139,10 @@ h3 {
 	left: 250px;
 	top: 175px;
 	z-index: 99;
+}
+
+.slidecontainer4 {
+	width: 30%;
 }
 
 .expressionDepthLabel {
@@ -4044,7 +4076,7 @@ input[type=range]::-moz-range-track {
 	background-size: 20px 33px;
 	height: 23px;
 	overflow: hidden;
-	width: 50px;
+	width: 55px;
 	margin-bottom: 15px;
 }
 

@@ -256,13 +256,12 @@ unsigned int toneholeCovered[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Value at whi
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              // Tonehole sensor readings after being reassembled from above bytes
 unsigned int holeCovered = 0;                                    // Whether each hole is covered-- each bit corresponds to a tonehole.
-uint8_t tempCovered = 0;                                         // Used when masking holeCovered to ignore certain holes depending on the fingering pattern.
 bool fingersChanged = 1;                                         // Keeps track of when the fingering pattern has changed.
 unsigned int prevHoleCovered = 1;                                // So we can track changes.
 volatile int tempNewNote = 0;
 byte prevNote;
-byte newNote = -1;         // The next note to be played, based on the fingering chart (does not include transposition).
-byte notePlaying;          // The actual MIDI note being played, which we remember so we can turn it off again.
+byte newNote = -1;              // The next note to be played, based on the fingering chart (does not include transposition).
+byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
 
 
@@ -427,8 +426,7 @@ void setup() {
 
     loadFingering();
     loadSettingsForAllModes();
-    mode = defaultMode;  // Set the startup instrument.
-    //sensorCalibration = analogRead(A0) >> 2;  // Calibrate the pressure sensor to ambient pressure.
+    mode = defaultMode;       // Set the startup instrument.
     analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
     twelveBitPressure = analogPressure.getRawValue();
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
@@ -439,7 +437,7 @@ void setup() {
 
     writeEEPROM(1991, VERSION);  // Update the firmware version if it has changed.
 
-    // Reprogram the ATmega32U4 if necessary (doesn't work with current 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
+    // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
 #ifndef PROTOTYPE46
     //while(!Serial); // Can uncomment this if not using release version, to show verbose programming output.
     if (ATMEGA_FIRMWARE_VERSION != readEEPROM(1995)) {
@@ -472,7 +470,7 @@ void loop() {
     getFingers();                           // Find which holes are covered. 4 us.
     getState();                             // Get the breath state. 3 us.
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
-    getShift();                             // Shift the next note up or down based on register, key, and characteristics of the current fingering pattern.
+    getShift();                             // Shift the next note up or down based on register and key.
     sendNote();                             // Send the note as soon as we know the note, state, and shift.
     readMIDI();                             // Read incoming MIDI messages.
 

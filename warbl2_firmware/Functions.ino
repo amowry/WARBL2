@@ -16,6 +16,7 @@ void printStuff(void) {
         delay(5000);
     }
 */
+    //Serial.println(newNote);
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
@@ -630,14 +631,19 @@ void getFingers() {
 
 
 
+
+
+
+
+
 unsigned long transitionFilter = 0;
 
-// this should be called right after a new hole state change, before sending out any new note
+// This should be called right after a new hole state change, before sending out any new note.
 bool isMaybeInTransition() {
-    // look at all finger hole state to see if there might be other
+    // Look at all finger hole state to see if there might be other
     // fingers in motion (partial hole covered) which means this
     // might be a multi-finger note transition and we may want to wait
-    // a bit to see if the pending fingers land before triggering the new note
+    // a bit to see if the pending fingers land before triggering the new note.
     int pendingHoleCovered = holeCovered;
     unsigned long now = millis();
     int otherholes = 0;
@@ -662,7 +668,7 @@ bool isMaybeInTransition() {
     }
 
     if (pendingHoleCovered != holeCovered) {
-        // see if the pending is a new note
+        // See if the pending is a new note.
         int tempNewNote = getNote(holeCovered);
         int pendingNote = getNote(pendingHoleCovered);
         if (pendingNote >= 0 && pendingNote != tempNewNote) {
@@ -680,8 +686,13 @@ bool isMaybeInTransition() {
     return false;
 }
 
-
 #define DEBUG_TRANSITION_FILTER 0
+
+
+
+
+
+
 
 // Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman, but reworked by Jesse Chappell
 void debounceFingerHoles() {
@@ -796,346 +807,24 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 // Return a MIDI note number (0-127) based on the current fingering.
 int getNote(unsigned int fingerPattern) {
-    int ret = -1;  //default for unknown fingering
-
-    switch (modeSelector[mode]) {  // Determine the note based on the fingering pattern
-
-
-        case kModeWhistle:
-            {
-            }  // These first two are the same except for R4.
-
-        case kModeChromatic:
-            {
-            }
-
-        case kModeBombarde:
-            {
-            }  // This one is very similar-- a modification will be made below.
-
-        case kModeBaroqueFlute:
-            {  // Also similar
-
-                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
-                ret = tinwhistle_explicit[tempCovered].midi_note;
-                if (modeSelector[mode] == kModeChromatic && bitRead(fingerPattern, 1) == 1) {
-                    ret--;  // Lower a semitone if R4 hole is covered and we're using the chromatic pattern
-                }
-                if (modeSelector[mode] == kModeBaroqueFlute) {
-                    if ((0b011111110 & fingerPattern) >> 2 == 0b010011) {
-                        ret = 75;
-                    }
-                    if ((0b011111110 & fingerPattern) >> 2 == 0b110011) {
-                        ret = 76;
-                    }
-                    if (bitRead(fingerPattern, 1) == 1) {
-                        ret++;  // Raise a semitone if R4 hole is covered and we're using the baroque pattern, imitating a D# key
-                    }
-                }
-
-                if (fingerPattern == holeCovered) {
-                    vibratoEnable = tinwhistle_explicit[tempCovered].vibrato;
-                }
-                if (modeSelector[mode] == kModeBombarde) {
-                    if ((0b011111110 & fingerPattern) >> 1 == 0b1111111) {
-                        ret = 61;  //
-                    }
-                    if ((0b011111110 & fingerPattern) >> 1 == 0b0100000) {
-                        ret = 72;  //
-                    }
-                }
-                return ret;
-            }
-
-
-        case kModeUilleann:
-            {
-            }  // These two are the same, with the exception of cancelling accidentals.
-
-        case kModeUilleannStandard:
-            {  // The same as the previous one, but we cancel the accidentals Bb and F#
-
-
-                // If back D open, always play the D and allow finger vibrato
-                if ((fingerPattern & 0b100000000) == 0) {
-                    if (fingerPattern == holeCovered) {
-                        vibratoEnable = 0b000010;
-                    }
-                    return 74;
-                }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = uilleann_explicit[tempCovered].midi_note;
-                if (fingerPattern == holeCovered) {
-                    vibratoEnable = uilleann_explicit[tempCovered].vibrato;
-                }
-                if (modeSelector[mode] == kModeUilleannStandard) {  // Cancel accidentals if we're in standard uilleann mode
-                    if (tempCovered == 0b1001000 || tempCovered == 0b1001010) {
-                        return 71;
-                    }
-
-                    if (tempCovered == 0b1101000 || tempCovered == 0b1101010) {
-                        return 69;
-                    }
-                }
-                return ret;
-            }
-
-
-        case kModeGHB:
-            {
-
-                // If back A open, always play the A
-                if ((fingerPattern & 0b100000000) == 0) {
-                    return 74;
-                }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = GHB_explicit[tempCovered].midi_note;
-                return ret;
-            }
-
-
-        case kModeRecorder:
-            {  // This is especially messy, should be cleaned up
-
-                // If back thumb and L1 are open
-                if ((((fingerPattern & 0b110000000) == 0) && (fingerPattern & 0b011111111) != 0) && (fingerPattern >> 1) != 0b00101100) {
-                    if (fingerPattern >> 1 == 0b00110000) {  // Special fingering for D#
-                        return 77;
-                    } else {
-                        return 76  // Play D
-                          ;
-                    }
-                }
-                if (fingerPattern >> 1 == 0b01011010) return 88;  // Special fingering for high D
-                if (fingerPattern >> 1 == 0b01001100) return 86;  // Special fingering for high C
-                //otherwise check the chart.
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = recorder_explicit[tempCovered].midi_note;
-                //If back thumb is open
-                if ((fingerPattern & 0b100000000) == 0 && (fingerPattern >> 1) != 0b00101100) {
-                    ret = ret + 12;
-                }
-                return ret;
-            }
-
-
-        case kModeNorthumbrian:
-            {
-
-                // If back A open, always play the A
-                if ((fingerPattern & 0b100000000) == 0) {
-                    return 74;
-                }
-                tempCovered = fingerPattern >> 1;                 // Bitshift once to ignore bell sensor reading.
-                tempCovered = findleftmostunsetbit(tempCovered);  // Here we find the index of the leftmost uncovered hole, which will be used to determine the note from the general chart.
-                for (uint8_t i = 0; i < 9; i++) {
-                    if (tempCovered == northumbrian_general[i].keys) {
-                        ret = northumbrian_general[i].midi_note;
-                        return ret;
-                    }
-                }
-                break;
-            }
-
-        case kModeGaita:
-            {
-
-                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
-                ret = gaita_explicit[tempCovered].midi_note;
-                if (ret == 0) {
-                    ret = -1;
-                }
-                return ret;
-            }
-
-
-        case kModeGaitaExtended:
-            {
-
-                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
-                ret = gaita_extended_explicit[tempCovered].midi_note;
-                if (ret == 0) {
-                    ret = -1;
-                }
-                return ret;
-            }
-
-
-        case kModeNAF:
-            {
-
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = naf_explicit[tempCovered].midi_note;
-                return ret;
-            }
-
-
-        case kModeEVI:
-            {
-
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = evi_explicit[tempCovered].midi_note;
-                ret = ret + 4;  // Transpose up to D so that key selection in the Configuration Tool works properly
-                return ret;
-            }
-
-
-        case kModeKaval:
-            {
-
-                //If back thumb is open, always play the B
-                if ((fingerPattern & 0b100000000) == 0) {
-                    return 71;
-                }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = kaval_explicit[tempCovered].midi_note;
-                return ret;
-            }
-
-
-        case kModeXiao:
-            {
-
-                // Catch a few specific patterns with the thumb hole open:
-                if ((fingerPattern & 0b100000000) == 0) {
-                    if ((fingerPattern >> 4) == 0b01110) {  // If the top 5 holes are as shown
-                        return 70;                          // Blay Bb
-                    }
-                    if ((fingerPattern & 0b010000000) == 0) {  // If hole L1 is also open
-                        return 71;                             // Play B
-                    }
-                    return 72;  //otherwise play a C
-                } else if ((fingerPattern & 0b010000000) == 0) {
-                    return 69;  // If thumb is closed but L1 is open play an A
-                }
-                // Otherwise check the chart.
-                tempCovered = (0b001111110 & fingerPattern) >> 1;  // Ignore thumb hole, L1 hole, and bell sensor
-                ret = xiao_explicit[tempCovered].midi_note;
-                return ret;
-            }
-
-
-        case kModeSax:
-            {
-
-                // Check the chart.
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
-                ret = sax_explicit[tempCovered].midi_note;
-                if (((fingerPattern & 0b000000010) != 0) && ret != 47 && ret != 52 && ret != 53 && ret != 54 && ret != 59 && ret != 60 && ret != 61) {  // Sharpen the note if R4 is covered and the note isn't one of the ones that can't be sharpened (a little wonky but works and keeps the chart shorter ;)
-                    ret++;
-                }
-                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  // If the thumb hole is covered, raise the octave
-                    ret = ret + 12;
-                }
-                return ret;
-            }
-
-
-        case kModeSaxBasic:
-            {
-
-                //check the chart.
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = saxbasic_explicit[tempCovered].midi_note;
-                if ((fingerPattern & 0b100000000) != 0 && ret > 49) {  // If the thumb hole is covered, raise the octave
-                    ret = ret + 12;
-                }
-                return ret;
-            }
-
-
-        case kModeShakuhachi:
-            {
-
-                // Ignore all unused holes by extracting bits and then logical OR
-                {  // Braces necessary for scope
-                    byte high = (fingerPattern >> 4) & 0b11000;
-                    byte middle = (fingerPattern >> 4) & 0b00011;
-                    middle = middle << 1;
-                    byte low = (fingerPattern >> 2) & 0b0000001;
-                    tempCovered = high | middle;
-                    tempCovered = tempCovered | low;
-                    ret = shakuhachi_explicit[tempCovered].midi_note;
-                    return ret;
-                }
-            }
-
-
-        case kModeSackpipaMajor:
-            {
-            }
-
-        case kModeSackpipaMinor:
-            {  // The same except we'll change C# to C
-                // Check the chart.
-                tempCovered = (0b011111100 & fingerPattern) >> 2;        // Ignore thumb hole, R4 hole, and bell sensor
-                if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play D if all holes are covered
-                    return 60;                                           // Play D
-                }
-                if ((fingerPattern & 0b100000000) == 0) {  // If the thumb hole is open, play high E
-                    return 74;                             // Play E
-                }
-                ret = sackpipa_explicit[tempCovered].midi_note;
-                if (modeSelector[mode] == kModeSackpipaMinor) {  // Flatten the C# if we're in "minor" mode
-                    if (ret == 71) {
-                        return 70;  // Play C natural instead
-                    }
-                }
-                return ret;
-            }
-
-
-
-        case kModeMedievalPipes:
-            {
-                // If back A open, always play the A
-                if ((fingerPattern & 0b100000000) == 0) {
-                    if ((fingerPattern & 0b010000000) == 0) {
-                        return 76;  // A if thumb and L1 are open
-                    }
-                    return 78;  // Bb if only thumb is open
-                }
-                tempCovered = (0b011111110 & fingerPattern) >> 1;  // Ignore thumb hole and bell sensor
-                ret = medievalPipes_explicit[tempCovered].midi_note;
-                return ret;
-            }
-
-
-
-        case kModeBansuri:
-            {
-                tempCovered = (0b011111100 & fingerPattern) >> 2;  // Ignore thumb hole, R4 hole, and bell sensor
-                ret = pgm_read_byte(&bansuri_explicit[tempCovered].midi_note);
-
-                if ((fingerPattern & 0b111111110) >> 1 == 0b11111111) {  // Play F# if all holes are covered
-                    ret = 61;
-                }
-                return ret;
-            }
-
-
-
-        case kWARBL2Custom1:  // If we're using a custom chart we've already loaded the correct one from EEPROM into the array, so these can all fall through here.
-            {
-            }
-        case kWARBL2Custom2:
-            {
-            }
-        case kWARBL2Custom3:
-            {
-            }
-        case kWARBL2Custom4:
-            {
-                tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading
-                ret = WARBL2CustomChart[tempCovered];
-                return ret;
-            }
-
-
-        default:
-            {
-                return ret;
-            }
+    int ret = -1;  // Default for unknown fingering
+
+    uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
+
+    // Read the MIDI note for the current fingering (all charts except the custom ones).
+    if (modeSelector[mode] < kWARBL2Custom1) {
+        ret = charts[modeSelector[mode]][tempCovered];
+    } else {
+        ret = WARBL2CustomChart[tempCovered];  // Otherwise read from the currently selected custom chart.
+    }
+
+    // For whistle and uilleann also read the vibrato flag for the current fingering.
+    if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
+        vibratoEnable = whistleVibrato[tempCovered];
+    }
+
+    if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
+        vibratoEnable = uilleannVibrato[tempCovered];
     }
 
     return ret;
@@ -1162,40 +851,28 @@ void getShift() {
 
     shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
 
-    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 62) || (modeSelector[mode] == kModeSaxBasic && newNote < 74) || (modeSelector[mode] == kModeRecorder && newNote < 76)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax in the lower register, and low D with uilleann fingering, which can't overblow)
+    // Overblow if allowed.
+    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
         shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
         if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
     }
-
-    if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {  // If we're using the bell sensor to control register
+    // Use the bell sensor to control register if desired.
+    if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {
         if (bitRead(holeCovered, 0) == switches[mode][INVERT]) {
-            shift = shift + 12;  // Add a register jump to the transposition if necessary.
+            shift = shift + 12;
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
             }
         }
     }
 
+    // ToDo: Are there any others that don 't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
     else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
             shift = shift + 12;  // Add an octave jump to the transposition if necessary.
         }
-    }
-
-    // Some charts require another transposition to bring them to the correct key
-    if (modeSelector[mode] == kModeGaita || modeSelector[mode] == kModeGaitaExtended) {
-        shift = shift - 1;
-    }
-
-    if (modeSelector[mode] == kModeSax) {
-        shift = shift + 2;
-    }
-
-    if (modeSelector[mode] == kModeBansuriWARBL) {
-        shift = shift - 5;
     }
 }
 
@@ -1422,10 +1099,10 @@ void getExpression() {
 
 
 
-// for a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state
+// For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
     unsigned int closedHolePattern = holeCovered;
-    bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole
+    bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole.
     int stepsOffset = getNote(closedHolePattern) - newNote;
     return stepsOffset;
 }
@@ -1463,7 +1140,7 @@ void handleCustomPitchBend() {
 
 
 
-        if (vibratoEnable == 0b000010) {  // Used for whistle and uilleann, indicates that it's a pattern where lowering finger 2 or 3 partway would trigger progressive vibrato.
+        if (vibratoEnable == 2) {  // Used for whistle and uilleann, indicates that it's a pattern where lowering finger 2 or 3 partway would trigger progressive vibrato.
 
             if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
                 for (byte i = 2; i < 4; i++) {
@@ -1703,7 +1380,7 @@ void sendNote() {
       ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&  // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       //!(prevNote == 62 && (newNote + shift) == 86) &&                                                   // And if we're currently on a middle D in state 3 (all finger holes covered), we wait until we get a new state reading before switching notes. This it to prevent erroneous octave jumps to a high D.
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
-      !(modeSelector[mode] == kModeNorthumbrian && newNote == 60) &&                                    //And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
+      !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
       !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {                     // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
 
         int notewason = noteon;
@@ -1775,7 +1452,7 @@ void sendNote() {
     if (noteon) {  // Several conditions to turn a note off
         if (
           ((newState == 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
-          (modeSelector[mode] == kModeNorthumbrian && newNote == 60) ||                           // Or closed Northumbrian pipe.
+          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                           // Or closed Northumbrian pipe.
           (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
                                                                                                   // Keep track.

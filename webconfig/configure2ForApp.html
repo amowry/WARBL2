@@ -134,6 +134,17 @@
 
 
                 <p id="current" class="noTouch">Your firmware is up to date.</p>
+                
+                <button type="button" class="smallbutton noTouch openConsole" onClick="modal(18)">MIDI Console...</button>
+                
+                <div class="tinyConsoleLabel noTouch">MIDI Note:</div>
+
+                <div class="tinyConsoleContainer">
+
+                 <input class="tinyConsole noTouch" type="text" id="tinyConsole"/>
+
+                 </div>
+                
             </div>
 
             <div class="middleControlBox">
@@ -625,109 +636,138 @@
 
                     </div>
 
-                    <div class="keySelectLabel noTouch">Key</div>
+                    <div class="keySelectLabel noTouch">Transpose</div>
 
                     <div class="keySelectContainer">
 
                         <div class="styled-key-select blue semi-square" id="key0">
 
-                            <select id="keySelect0" onChange="sendKey(0,value)">
-                                <option value="113">C3</option>
-                                <option value="114">C#</option>
-                                <option value="115">D</option>
-                                <option value="116">Eb</option>
-                                <option value="117">E</option>
-                                <option value="118">F</option>
-                                <option value="119">F#</option>
-                                <option value="120">G</option>
-                                <option value="121">G#</option>
-                                <option value="122">A</option>
-                                <option value="123">Bb</option>
-                                <option value="124">B</option>
-                                <option value="125">C4</option>
-                                <option value="126">C#</option>
-                                <option selected="selected" value="0">D</option>
-                                <option value="1">Eb</option>
-                                <option value="2">E</option>
-                                <option value="3">F</option>
-                                <option value="4">F#</option>
-                                <option value="5">G</option>
-                                <option value="6">G#</option>
-                                <option value="7">A</option>
-                                <option value="8">Bb</option>
-                                <option value="9">B</option>
-                                <option value="10">C5</option>
-                                <option value="11">C#</option>
-                                <option value="12">D</option>
+                           <select id="keySelect0" onChange="sendKey(0,value)">
+                                <option value="109">-18</option>
+                                <option value="110">-17</option>
+                                <option value="111">-16</option>
+                                <option value="112">-15</option>
+                                <option value="113">-14</option>
+                                <option value="114">-13</option>
+                                <option value="115">-12</option>
+                                <option value="116">-11</option>
+                                <option value="117">-10</option>
+                                <option value="118">-9</option>
+                                <option value="119">-8</option>
+                                <option value="120">-7</option>
+                                <option value="121">-6</option>
+                                <option value="122">-5</option>
+                                <option value="123">-4</option>
+                                <option value="124">-3</option>
+                                <option value="125">-2</option>
+                                <option value="126">-1</option>
+                                <option selected="selected" value="0">0</option>
+                                <option value="1">+1</option>
+                                <option value="2">+2</option>
+                                <option value="3">+3</option>
+                                <option value="4">+4</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7">+7</option>
+                                <option value="8">+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                                <option value="11">+11</option>
+                                <option value="12">+12</option>
+                                <option value="13">+13</option>
+                                <option value="14">+14</option>
+                                <option value="15">+15</option>
+                                <option value="16">+16</option>
+                                <option value="17">+17</option>
+                                <option value="18">+18</option>
                             </select>
-
                         </div>
 
                         <div class="styled-key-select blue semi-square" id="key1">
 
                             <select id="keySelect1" onChange="sendKey(1,value)">
-                                <option value="113">C3</option>
-                                <option value="114">C#</option>
-                                <option value="115">D</option>
-                                <option value="116">Eb</option>
-                                <option value="117">E</option>
-                                <option value="118">F</option>
-                                <option value="119">F#</option>
-                                <option value="120">G</option>
-                                <option value="121">G#</option>
-                                <option value="122">A</option>
-                                <option value="123">Bb</option>
-                                <option value="124">B</option>
-                                <option value="125">C4</option>
-                                <option value="126">C#</option>
-                                <option selected="selected" value="0">D</option>
-                                <option value="1">Eb</option>
-                                <option value="2">E</option>
-                                <option value="3">F</option>
-                                <option value="4">F#</option>
-                                <option value="5">G</option>
-                                <option value="6">G#</option>
-                                <option value="7">A</option>
-                                <option value="8">Bb</option>
-                                <option value="9">B</option>
-                                <option value="10">C5</option>
-                                <option value="11">C#</option>
-                                <option value="12">D</option>
+                            	<option value="109">-18</option>
+                                <option value="110">-17</option>
+                                <option value="111">-16</option>
+                                <option value="112">-15</option>
+                                <option value="113">-14</option>
+                                <option value="114">-13</option>
+                                <option value="115">-12</option>
+                                <option value="116">-11</option>
+                                <option value="117">-10</option>
+                                <option value="118">-9</option>
+                                <option value="119">-8</option>
+                                <option value="120">-7</option>
+                                <option value="121">-6</option>
+                                <option value="122">-5</option>
+                                <option value="123">-4</option>
+                                <option value="124">-3</option>
+                                <option value="125">-2</option>
+                                <option value="126">-1</option>
+                                <option selected="selected" value="0">0</option>
+                                <option value="1">+1</option>
+                                <option value="2">+2</option>
+                                <option value="3">+3</option>
+                                <option value="4">+4</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7">+7</option>
+                                <option value="8">+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                                <option value="11">+11</option>
+                                <option value="12">+12</option>
+                                 <option value="13">+13</option>
+                                <option value="14">+14</option>
+                                <option value="15">+15</option>
+                                <option value="16"> +16</option>
+                                <option value="17">+17</option>
+                                <option value="18">+18</option>
                             </select>
-
                         </div>
 
                         <div class="styled-key-select blue semi-square" id="key2">
 
                             <select id="keySelect2" onChange="sendKey(2,value)">
-                                <option value="113">C3</option>
-                                <option value="114">C#</option>
-                                <option value="115">D</option>
-                                <option value="116">Eb</option>
-                                <option value="117">E</option>
-                                <option value="118">F</option>
-                                <option value="119">F#</option>
-                                <option value="120">G</option>
-                                <option value="121">G#</option>
-                                <option value="122">A</option>
-                                <option value="123">Bb</option>
-                                <option value="124">B</option>
-                                <option value="125">C4</option>
-                                <option value="126">C#</option>
-                                <option value="0">D</option>
-                                <option value="1">Eb</option>
-                                <option value="2">E</option>
-                                <option value="3">F</option>
-                                <option value="4">F#</option>
-                                <option value="5">G</option>
-                                <option value="6">G#</option>
-                                <option value="7">A</option>
-                                <option selected="selected" value="8">Bb</option>
-                                <option value="9">B</option>
-                                <option value="10">C5</option>
-                                <option value="11">C#</option>
-                                <option value="12">D</option>
+                            	<option value="109">-18</option>
+                                <option value="110">-17</option>
+                                <option value="111">-16</option>
+                                <option value="112">-15</option>
+                                <option value="113">-14</option>
+                                <option value="114">-13</option>
+                                <option value="115">-12</option>
+                                <option value="116">-11</option>
+                                <option value="117">-10</option>
+                                <option value="118">-9</option>
+                                <option value="119">-8</option>
+                                <option value="120">-7</option>
+                                <option value="121">-6</option>
+                                <option value="122">-5</option>
+                                <option value="123">-4</option>
+                                <option value="124">-3</option>
+                                <option value="125">-2</option>
+                                <option value="126">-1</option>
+                                <option selected="selected" value="0">0</option>
+                                <option value="1">+1</option>
+                                <option value="2">+2</option>
+                                <option value="3">+3</option>
+                                <option value="4">+4</option>
+                                <option value="5">+5</option>
+                                <option value="6">+6</option>
+                                <option value="7">+7</option>
+                                <option value="8">+8</option>
+                                <option value="9">+9</option>
+                                <option value="10">+10</option>
+                                <option value="11">+11</option>
+                                <option value="12">+12</option>
+                                <option value="13">+13</option>
+                                <option value="14">+14</option>
+                                <option value="15">+15</option>
+                                <option value="16"> +16</option>
+                                <option value="17">+17</option>
+                                <option value="18">+18</option>
                             </select>
+
 
                         </div>
 
@@ -738,7 +778,7 @@
 
                     <div hidden=hidden class="slidecontainer" id="jumpfactor10bContainer">
 
-                        <input type="range" min="0" max="50" value="0" class="ranger" id="jumpFactor10b" onChange="sendJumpFactor(10, value)" />
+                        <input type="range" min="0" max="100" value="0" class="ranger" id="jumpFactor10b" onChange="sendJumpFactor(10, value)" />
 
                     </div>
 
@@ -1393,7 +1433,7 @@
                       <button type="button" class="infocircle" onClick="modal(12)">  <object class = "info" data="img/info-circle.svg" type="image/svg+xml"></object></button>
                     </h2>
 
-                    <div class="slidecontainer2" id="ExpressionDepthContainer">
+                    <div class="slidecontainer4" id="ExpressionDepthContainer">
 
                         <input type="range" min="1" max="8" value="3" class="ranger" id="expressionDepth" onChange="sendExpressionDepth(value)" />
 
@@ -1561,7 +1601,7 @@
 
                     </div>
 					
-                    <div class="slidecontainer4" id="shakeDepthContainer">
+                    <div class="slidecontainer5" id="shakeDepthContainer">
                         <input type="range" min="1" max="100" value="50" class="ranger" id="shakeDepth" onChange="sendShakeDepth(value)" />
 
                     </div>
@@ -2063,10 +2103,6 @@
                     </h2>
 
 
-                    <button type="button" class="smallbutton noTouch openConsole" onClick="modal(18)">MIDI Console...</button>
-
-
-
 
                     <div class="secretLabel noTouch">Use "secret" button commands</div>
 
@@ -2152,6 +2188,7 @@
                                 <option value="12" id="autoCal0">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2174,6 +2211,7 @@
                                 <option value="12" id="autoCal1">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2196,6 +2234,7 @@
                                 <option value="12" id="autoCal2">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2218,6 +2257,7 @@
                                 <option value="12" id="autoCal3">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2240,6 +2280,7 @@
                                 <option value="12" id="autoCal4">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2262,6 +2303,7 @@
                                 <option value="12" id="autoCal5">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2284,6 +2326,7 @@
                                 <option value="12" id="autoCal6">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2306,6 +2349,7 @@
                                 <option value="12" id="autoCal7">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2330,6 +2374,7 @@
                                 <option value="12" id="autoCal7">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
 
                         </div>
@@ -2352,6 +2397,7 @@
                                 <option value="12" id="autoCal7">Begin autocalibration</option>
                                 <option value="13">Power down</option>
                                 <option value="14">Recenter yaw</option>
+                                <option value="15">Show battery level</option>
                             </select>
                             
                          </div>
