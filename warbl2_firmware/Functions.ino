@@ -556,7 +556,7 @@ void checkButtons() {
 
         if (integrator[j] == 0) {  // The button is pressed.
             pressed[j] = 1;        // We make the output the inverse of the input so that a pressed button reads as a "1".
-            buttonUsed = 1;        // we don't currently used pressed by itself for anything so we don't need to handle it.
+            buttonUsed = 1;
 
             if (prevOutput[j] == 0 && !longPressUsed[j]) {
                 justPressed[j] = 1;  // The button has just been pressed
@@ -636,7 +636,6 @@ void getFingers() {
 
 
 
-unsigned long transitionFilter = 0;
 
 // This should be called right after a new hole state change, before sending out any new note.
 bool isMaybeInTransition() {
@@ -686,7 +685,7 @@ bool isMaybeInTransition() {
     return false;
 }
 
-#define DEBUG_TRANSITION_FILTER 0
+
 
 
 

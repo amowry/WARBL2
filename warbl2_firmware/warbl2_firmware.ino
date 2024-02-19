@@ -263,6 +263,7 @@ byte prevNote;
 byte newNote = -1;              // The next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
+unsigned long transitionFilter = 0;
 
 
 // Pitchbend variables
