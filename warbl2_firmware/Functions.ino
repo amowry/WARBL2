@@ -837,7 +837,6 @@ int getNote(unsigned int fingerPattern) {
 
 
 
-
 // Add up any transposition based on key and register.
 void getShift() {
 

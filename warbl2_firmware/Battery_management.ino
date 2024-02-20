@@ -107,7 +107,7 @@ void manageBattery(bool send) {
 
     // If we're charging, every minute subtract the estimated added run time due to charging from the stored run time on the current charge (increasing the battery percentage as we're charging)
     if (chargingStatus == 1 && (nowtime - minuteTimer) > 60000) {
-        prevRunTime = prevRunTime - (fullRunTime * 0.0055);  // Subtract the estimated run time added per one minute of charging
+        prevRunTime = prevRunTime - (fullRunTime * 0.0055);  // Subtract the estimated run time added per one minute of charging.
         if (prevRunTime < 1) {
             prevRunTime = 1;  // Never go below 1.
         }

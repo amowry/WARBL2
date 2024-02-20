@@ -4,7 +4,7 @@
 /*
     Copyright (C) 2018-2023 Andrew Mowry warbl.xyz
 
-    Many thanks to Michael Eskin, Jesse Chappell, and Louis Barman for their additions.
+    Many thanks to Michael Eskin, Jesse Chappell, Gerard Kilbride, Louis Barman, Randy George, and many other WARBL users for their additions and suggestions.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 ***Notes about the FFC expansion port:
 Connector is Molex 0512810598 (see datasheet for cable design): https://tools.molex.com/pdm_docs/sd/512810598_sd.pdf
 An example of an off-the-shelf cable is GCT 05-05-A-0050-A-4-06-4-T.
-Pinout from left to right, holding WARBL with mouthpiece pointing up: GND, D31, D5, 3V0, A0/D14. Any of these pins can be used at high speed for I2S, software I2C, etc. If reading a sensor, it's recommended to conserve battery life by using a digital pin to turn the sensor on only when needed. 
+Pinout from left to right, holding WARBL with mouthpiece pointing up: GND, D31, D5, 3V0, A0/D14. A0 can be used for reading an analog sensor, and any of the GPIO can be used at high speed for I2S, software I2C, etc. If reading a sensor, it's recommended to conserve battery life by using a digital pin to turn the sensor on only when needed. 
 
 
 */
