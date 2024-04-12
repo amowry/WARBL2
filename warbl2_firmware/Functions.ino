@@ -1,6 +1,6 @@
 
 
-//debug
+// Debug
 void printStuff(void) {
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
@@ -16,44 +16,13 @@ void printStuff(void) {
         delay(5000);
     }
 */
-    //Serial.println(newNote);
 
     for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeRead[i]);
+        Serial.println(toneholeRead[i]);
     }
-
-    /*
-    Serial.print(byte((4+5)/10);
-    Serial.print(",");
-    Serial.print(accelY, 3);
-    Serial.print(",");
-    Serial.println(-4.0f);
-    */
-    //Serial.println(sensorCalibration);
-    //Serial.println(gyroZ, 3);
-    //Serial.println(IMUsettings[mode][PITCH_REGISTER]);
-    //Serial.println(IMUsettings[mode][PITCH_REGISTER_NUMBER]);
-    //Serial.println(IMUsettings[2][PITCH_REGISTER_INPUT_MIN]);
-
-    //Serial.println(buttonPrefs[mode][8][1]);
-    //Serial.println(sensorValue);
-    //Serial.println(word(readEEPROM(1013), readEEPROM(1014)));  //read the run time on battery since last full charge (minutes)
-    //Serial.println(scalePosition);
-    //Serial.println(prevRunTime);
-    //Serial.println(fullRunTime);
-    //Serial.println(readEEPROM(1991));
-    //Serial.println(IMUtemp);
-    //Serial.println(USBstatus);
-    //Serial.println(battPower);
-    //Serial.print(roll);
-    //Serial.print(",");
-    //Serial.println(modeSelector[0]);
-
-    //Serial.println(holeCovered, BIN);
-    //Serial.println(newState);
-    //Serial.println(sensorCalibration);
-    //Serial.println("");
+    Serial.println(" ");
 }
+
 
 
 
@@ -81,6 +50,7 @@ byte calculateDelayTime(void) {
     }
     return 0;
 }
+
 
 
 
@@ -3122,6 +3092,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MI
     d1 &= 0x7F;
     d2 &= 0x7F;
 
+
     switch (m) {
 
         case 0x80:  // Note Off
@@ -3156,10 +3127,10 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MI
             }
         case 0xB0:  // CC
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0 || (c == 7 && d1 >= 102)) {  // Always send CC messages within the Config Tool range so user can't get locked out of Config Tool if only BLE or USB is selected (changed by AM 4/11/24).
                     MIDI.sendControlChange(d1, d2, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
+                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST || (c == 7 && d1 >= 102)) {
                     BLEMIDI.sendControlChange(d1, d2, c);
                 }
                 break;

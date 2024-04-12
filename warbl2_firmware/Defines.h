@@ -1,9 +1,9 @@
 
 
-// #define RELEASE // Uncomment for release version (turns off CDC to make the device USB class compliant).
+//#define RELEASE // Uncomment for release version (turns off CDC to make the device USB class compliant).
 
 #define VERSION 41                  // Firmware version (without decimal point)
-#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 48        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
@@ -18,7 +18,7 @@
 #define MAXIMUM (DEBOUNCE_TIME * SAMPLE_FREQUENCY)  // The integrator value required to register a button press
 
 #define BATTERY_POWER 0  // No USB connected (running on battery power)
-#define DUMB_CHARGER 1   // Powered by a dumb USB charger
+#define DUMB_CHARGER 1   // Powered by a USB charging brick
 #define USB_HOST 2       // Connected to a USB host
 
 // MIDI commands
@@ -50,7 +50,7 @@
 #define kModeShakuhachi 16
 #define kModeSackpipaMajor 17
 #define kModeSackpipaMinor 18
-#define kModeCustom 19
+#define kModeCustom 19 // From original WARBL -- can be used for other chart.
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22

@@ -186,10 +186,10 @@ byte pressureSelector[3][12] =                         // Register control varia
     { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 1
     { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 } };  // Instrument 2
 
-uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                         // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
-  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 0
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 1
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  // Instrument 2
+uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                          // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
+  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 0
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 1
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  // Instrument 2
 
 
 // Other misc. variables
@@ -210,12 +210,12 @@ unsigned long timerF = 0;
 unsigned long pressureTimer = 0;
 
 // Variables for reading pressure sensor
-int sensorValue = 0;                   // First value read from the pressure sensor
+int sensorValue = 0;                   // Current pressure sensor reading
 int prevSensorValue = 0;               // Previous sensor reading, used to tell if the pressure has changed and should be sent.
 int twelveBitPressure;                 // Raw 12-bit reading
 int smoothed_pressure;                 // Smoothed 12-bit pressure for mapping to CC, aftertouch, etc.
-int sensorCalibration = 0;             // The sensor reading at startup, used as a base value
-byte offset = 15;                      // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register
+int sensorCalibration = 0;             // The sensor reading at startup
+byte offset = 15;                      // Called "threshold" in the Configuration Tool-- used along with the multiplier for calculating the transition to the second register.
 byte multiplier = 15;                  // Controls how much more difficult it is to jump to second octave from higher first-octave notes than from lower first-octave notes.
 int sensorThreshold[] = { 260, 0 };    // The pressure sensor thresholds for initial note on and shift from register 1 to register 2, before some transformations.
 int upperBound = 255;                  // This represents the pressure transition between the first and second registers. It is calculated on the fly as: (sensorThreshold[1] + ((newNote - 60) * multiplier))
@@ -227,7 +227,7 @@ int dropTime = 15;                     // The amount of time to wait (ms) before
 byte hysteresis = 15;                  // Register hysteresis
 byte soundTriggerOffset = 3;           // The number of 10-bit sensor values above the calibration setting at which a note on will be triggered (first octave)
 int learnedPressure = 0;               // The learned pressure reading, used as a base value
-int currentState;                      // These several are used by the new state machine
+int currentState;                      // These several are used by the new state machine.
 int rateChangeIdx = 0;
 int previousPressure = 0;
 bool holdoffActive = false;
@@ -450,7 +450,11 @@ void setup() {
 #endif
 
     watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
+
+//eraseEEPROM();
+ 
 }
+
 
 
 

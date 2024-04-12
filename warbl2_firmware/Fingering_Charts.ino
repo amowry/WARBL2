@@ -4954,7 +4954,7 @@ const byte charts[kModeNModes - 4][256] =
         62   //11111111
       },
 
-      // Custom (from original WARBL, no lponger used but needed as a placeholder to ensure compatability)
+      // Custom (from original WARBL, no longer used but needed as a placeholder to ensure compatability)
       {
         60,  //00000000
         60,  //00000001
