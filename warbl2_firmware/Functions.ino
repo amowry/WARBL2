@@ -18,9 +18,9 @@ void printStuff(void) {
 */
 
     for (byte i = 0; i < 9; i++) {
-        Serial.println(toneholeRead[i]);
+        //Serial.println(toneholeRead[i]);
     }
-    Serial.println(" ");
+    //Serial.println(" ");
 }
 
 
