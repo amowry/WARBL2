@@ -1835,6 +1835,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     for (int i = 1975; i < 1987; i++) {  // Save gyroscope calibration as factory calibration
                         writeEEPROM(i + 2000, readEEPROM(i));
                     }
+                    blinkNumber[GREEN_LED] = 2;
                 }
 
                 else if (value == 54) {

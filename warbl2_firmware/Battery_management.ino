@@ -169,7 +169,7 @@ void manageBattery(bool send) {
             }
             voltageQueue[0] = smoothed_voltage;
 
-            // On occasion the battery voltage will suddenly jump up or down while charging. Currently undiagnosed-- it may be the charger or a change in battery load. The block below detects a sudden drop in voltage and adjusts previous measurements accordingly to prevent false termination.
+            // On rare occasions the battery voltage may suddenly jump up or down while charging. Currently undiagnosed-- it may be the charger or a change in battery load. The block below detects a sudden drop in voltage and adjusts previous measurements accordingly to prevent false termination.
             float voltageDrop = voltageQueue[1] - voltageQueue[0];
             if (voltageDrop > 0.002) {
                 for (byte i = 1; i < 21; i++) {  // Adjust all previous measurements.
@@ -263,7 +263,6 @@ byte faultDetect(bool statusChanged) {
         }
     }
 
-    // ToDo: could probably use shorter than 5 seconds, maybe 4.
     if ((nowtime - faultTimer) > 5000) {  // If we're timing and 5 seconds has past (The pin blinks at 1 Hz and this is called every 0.75 seconds, so we should detect a fault in 5 seconds if there is one.)...
         faultTimer = nowtime;
         timing = false;

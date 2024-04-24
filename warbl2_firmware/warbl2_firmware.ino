@@ -72,7 +72,7 @@ MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 
 // GPIO constants
-const uint8_t LEDpins[] = { 8, 10, 3 };  // RGB. Green is also LED_BUILTIN.
+const uint8_t LEDpins[] = { 8, 10, 3 };  // RGB. Blue is also LED_BUILTIN.
 const uint8_t powerEnable = 19;          // Driving this high enables the boost converter, keeping the device powered from the battery after button 3 has been released.
 const uint8_t chargeEnable = 7;          // Enables charging.
 #if defined(PROTOTYPE46)
@@ -152,7 +152,7 @@ byte mainMidiChannel = 1;                     // Current MIDI channel to send no
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
 byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three instruments.
 int8_t octaveShiftSelector[] = { 0, 0, 0 };
-int8_t noteShiftSelector[] = { 0, 0, 8 };
+int8_t noteShiftSelector[] = { 0, 0, 0 };
 byte pitchBendModeSelector[] = { 1, 1, 1 };
 byte senseDistanceSelector[] = { 10, 10, 10 };
 byte breathModeSelector[] = { 1, 1, 0 };
