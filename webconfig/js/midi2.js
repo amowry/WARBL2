@@ -24,7 +24,8 @@ var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
 
-var currentVersion = 40;
+var currentVersion = 40; // Current version of the WARBL2 firmware
+var currentVersionOriginal = 21; // Current version of the original WARBL firmware
 var previousVersion = 0; //Used to keep track of which version of WARBL is connected so that the page will refresh if a different WARBL with an older firmware version is connected.
 
 var midiAccess = null; // the MIDIAccess object.
@@ -94,7 +95,7 @@ if (platform == "app") {
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
 
-    for (var i = 1; i <= 29; i++) {
+    for (var i = 1; i <= 30; i++) {
 
         if (event.target == modals[i]) {
 
@@ -697,6 +698,7 @@ function WARBL_Receive(event) {
                 noteOn(data1);
 				if(notesPlaying < 2) {notesPlaying ++;} //keep track of many notes are currently playing so we know when to turn off the note display.
                 logKeys;
+				console.log(noteNames[data1 - 1]);
 				document.getElementById("tinyConsole").value = noteNames[data1 - 1] + " " + data1;
                 return;
             }
@@ -1344,7 +1346,7 @@ function WARBL_Receive(event) {
 
                     previousVersion = version;
 
-                    if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= 22)) { //display the appropriate messages
+                    if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
                         document.getElementById("current").innerHTML = "Your firmware is up to date.";
                         document.getElementById("current").style.left = "710px";
                         document.getElementById("current").style.visibility = "visible";
@@ -1445,8 +1447,9 @@ function WARBL_Receive(event) {
 
                         for (i = 0; i < 8; ++i) {
 
-                            document.getElementById("row" + i).options[13].disabled = true; //disable Power down and recenter yaw options
+                            document.getElementById("row" + i).options[13].disabled = true; //disable Power down, recenter yaw, batt level options
                             document.getElementById("row" + i).options[14].disabled = true;
+							document.getElementById("row" + i).options[15].disabled = true;
 
                             var opt = document.getElementById("autoCal" + i); //Change autocalibrate option value to 19 to work with original WARBL firmware
                             opt.value = '19';
@@ -1468,7 +1471,7 @@ function WARBL_Receive(event) {
 
                             document.getElementById("row" + i).options[13].disabled = false; //disable Power down and recenter yaw options
                             document.getElementById("row" + i).options[14].disabled = false;
-
+							document.getElementById("row" + i).options[15].disabled = false;
                             var opt = document.getElementById("autoCal" + i); //Change autocalibrate option value to 19 to work with original WARBL firmware
                             opt.value = '12';
                         }
@@ -3417,6 +3420,11 @@ function saveAsDefaults() {
     blink(3);
     sendToWARBL(102, 123);
 }
+
+function saveCalibAsFactoryDefault() { // Only used for "factory calibtration"
+	modalclose(2);
+	blink(3);
+	sendToWARBL(106,45);}
 
 function saveAsDefaultsForAll() {
     modalclose(3);

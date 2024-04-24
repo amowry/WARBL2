@@ -2220,6 +2220,10 @@ input:disabled + .vibratoSlider:before {
 	width: 60%;
 }
 
+.slidecontainer7 {
+	width: 32%;
+}
+
 #shakeDepthContainer {
 	display: block;
 	position: absolute;
@@ -3095,7 +3099,7 @@ h3 {
 .slidelimitlabel {
 	display: block;
 	position: absolute;
-	left: 47px;
+	left: 27px;
 	top: 210px;
 	z-index: 99;
 	font-size: 14px;
