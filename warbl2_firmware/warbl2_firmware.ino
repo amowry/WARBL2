@@ -474,7 +474,7 @@ void loop() {
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
     getShift();                             // Shift the next note up or down based on register and key.
     sendNote();                             // Send the note as soon as we know the note, state, and shift.
-    readMIDI();                             // Read incoming MIDI messages.
+    readMIDI();                             // Read incoming MIDI messages .
 
 
 
