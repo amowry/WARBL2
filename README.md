@@ -4,9 +4,9 @@ Please see the web site for more info:
 
 https://warbl.xyz
 
-To power the WARBL on, plug into USB or hold down button 3 until the LED turns green, then release.
+To power the WARBL on, plug into USB or click button 3 (lowest button).
 
-To manually power off the WARBL while under battery power, you can click the reset button (or use a button action assigned in  the Configuration Tool).
+To manually power off the WARBL while under battery power, you can click the reset button (or use a button action assigned in the Configuration Tool, which by default is a long-press of button 3).
 
 For updating the firmware, typical users would just hold down button 1 while plugging the WARBL in to USB and then drag/drop the supplied .uf2 file to the drive named WARBLBOOT. If the WARBL is already plugged in, you can also double-click the reset button to enter the bootloader mode. The most recent flash.uf2 file is located in the build/adafruit.nrf52.warbl2 directory.
  
@@ -26,7 +26,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 
 *  I used the Adafruit ItsyBitsy NRF52840 Express for prototyping WARBL, so the easiest way to set up the IDE is to install the Adafruit boards package, [following the instructions here](https://learn.adafruit.com/adafruit-itsybitsy-nrf52840-express/arduino-support-setup).
 
-* Download the code from the repository, and move the boards.local.txt file from the "firmware" directory into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
+* Download the WARBL2 code from this repository, and move the boards.local.txt file from the "firmware" directory into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
    
    * Windows: `C:\Users\(username)\AppData\Local\Arduino15\packages\adafruit\hardware\nrf52\1.3.0` 
    
@@ -51,7 +51,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
 `Waiting for upload port...`
 
 
-*	IF the WARBL currently has a "Release" version of the firmware (see below), you'll then have to use a toothpick to double-click the reset button to enter programming mode. The LED should illuminate blue and the code should upload. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right. If you've loaded a non-release version then the serial CDC port will be active and the firmware upload should proceed without having to first double-click the reset button.
+*	IF the WARBL currently has a "Release" version of the firmware (see below), you'll then have to use a toothpick to double-click the reset button to enter programming mode. The LED pulse in blue and the code should upload, which will take several seconds. If the LED doesn’t light or blinks rapidly, try again. If the IDE stops trying to upload, click “Upload” again, and try double-clicking again. It can take a few tries to get the timing right. If you've loaded a non-release version then the serial CDC port will be active and the firmware upload should proceed without having to first double-click the reset button.
 
 
 
