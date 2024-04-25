@@ -4,9 +4,9 @@ Please see the web site for more info:
 
 https://warbl.xyz
 
-To power the WARBL on, plug into USB or hold down button 3 until the LED turns green, then release.
+To power the WARBL on, plug into USB or click button 3 (lowest button).
 
-To manually power off the WARBL while under battery power, you can click the reset button (or use a button action assigned in  the Configuration Tool).
+To manually power off the WARBL while under battery power, you can click the reset button (or use a button action assigned in the Configuration Tool, which by default is a long-press of button 3).
 
 For updating the firmware, typical users would just hold down button 1 while plugging the WARBL in to USB and then drag/drop the supplied .uf2 file to the drive named WARBLBOOT. If the WARBL is already plugged in, you can also double-click the reset button to enter the bootloader mode. The most recent flash.uf2 file is located in the build/adafruit.nrf52.warbl2 directory.
  
