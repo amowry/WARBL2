@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "WARBL2")(type "KiCad")(uri "${WARBL_SYMBOLS}/51281-0594.kicad_sym")(options "")(descr ""))
+)

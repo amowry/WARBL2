@@ -1,0 +1,7 @@
+### Module positions - created on Wed Oct 25 14:10:23 2023 ###
+### Printed by Pcbnew version (6.0.8)
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val                     Package                          PosX       PosY       Rot  Side
+J2        USB4145-03-0070-C_REVA  GCT_USB4145-03-0070-C_REVA   105.5000  -104.3700  180.0000  top
+## End
