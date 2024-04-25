@@ -236,8 +236,10 @@ void readIMU(void) {
 void calibrateIMU() {
 
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
-    delay(6);                                 // Give it a bit of time.
+    delay(50);                                 // Give it a bit of time.
     readIMU();                                // Get a reading in case we haven't been reading it.
+    delay(50);                                 // Give it a bit of time.
+    readIMU();                                // Another reading seems to be necessary after turning the gyro on.
 
     gyroXCalibration = rawGyroX;
     gyroYCalibration = rawGyroY;
