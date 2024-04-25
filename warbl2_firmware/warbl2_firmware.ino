@@ -26,7 +26,7 @@ Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for AT
 ***Notes about the FFC expansion port:
 Connector is Molex 0512810598 (see datasheet for cable design): https://tools.molex.com/pdm_docs/sd/512810598_sd.pdf
 An example of an off-the-shelf cable is GCT 05-05-A-0050-A-4-06-4-T.
-Pinout from left to right, holding WARBL with mouthpiece pointing up: GND, D31, D5, 3V0, A0/D14. A0 can be used for reading an analog sensor, and any of the GPIO can be used at high speed for I2S, software I2C, etc. If reading a sensor, it's recommended to conserve battery life by using a digital pin to turn the sensor on only when needed. 
+Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at the port: GND, D31, D5, 3V0, A0/D14. A0 can be used for reading an analog sensor, and any of the GPIO can be used at high speed for I2S, software I2C, etc. If reading a sensor, it's recommended to conserve battery life by using a digital pin to turn the sensor on only when needed. 
 
 
 */
@@ -253,11 +253,11 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 
 // Variables for reading tonehole sensors
 unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
-int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };          // Baseline (uncovered) hole tonehole sensor readings
-int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };              // Tonehole sensor readings after being reassembled from above bytes
-unsigned int holeCovered = 0;                                    // Whether each hole is covered-- each bit corresponds to a tonehole.
-bool fingersChanged = 1;                                         // Keeps track of when the fingering pattern has changed.
-unsigned int prevHoleCovered = 1;                                // So we can track changes.
+int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
+int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
+unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
+bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
+unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
 volatile int tempNewNote = 0;
 byte prevNote;
 byte newNote = -1;              // The next note to be played, based on the fingering chart (does not include transposition).
@@ -450,7 +450,6 @@ void setup() {
 #endif
 
     watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
- 
 }
 
 
