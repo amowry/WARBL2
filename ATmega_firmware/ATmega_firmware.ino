@@ -1,10 +1,10 @@
 
 /*
-    The ATmega32U4 is dedicated to  reading the WARBL tone hole sensors. It reads the sensors
+    The ATmega32U4 is dedicated to reading the WARBL tone hole sensors. It reads the sensors
      then goes to sleep. When wakened by a pin interrupt it
     sends all tone hole data by SPI and then repeats.
 
-    To allow the NRF52840 tp automatically update the firmware on the ATmega, compile this code as hex and paste it into the ATmega_programming.ino tab in the WARBL2 firmware.
+    To allow the NRF52840 to automatically update the firmware on the ATmega, compile this code as hex and paste it into the ATmega_programming.ino tab in the WARBL2 firmware.
 
     Copyright (C) 2023 Andrew Mowry warbl.xyz
 
@@ -46,7 +46,7 @@ void setup() {
     PLLCSR &= ~(1 << PLLE);   // Disable the USB Clock (PPL).
     USBCON &= ~(1 << USBE);   // Disable USB.
 
-    // Disable other things we don't need, to save power.  The ATmega32U4 iteslf consumes ~1.5 mA when awakened for a reading every 3 mS or ~1.8 when awakened very 2 mS.
+    // Disable other things we don't need, to save power. The ATmega32U4 iteslf consumes ~1.5 mA when awakened for a reading every 3 mS or ~1.8 when awakened very 2 ms.
     power_usb_disable();
     power_usart0_disable();
     power_timer0_disable();  // This disables millis()!! We don't want any timer ticks because they mess with SPI.
