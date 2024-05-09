@@ -19,6 +19,8 @@ var consoleEntries = 0; //number of lines in MIDI console
 var customFingeringFills = [[null, null, null, null, null, null, null, null, null, null, null], [0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61], [0, 74, 72, 72, 70, 68, 67, 65, 64, 62, 61], [0, 74, 74, 72, 72, 69, 68, 67, 65, 62, 60]];
 var communicationMode = false; //if we're communicating with WARBL
 var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
+var noteNamesforKeySelect = ["G#","A","Bb","B","C3","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C4","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C5","C#","D","Eb","F","F#","G","G#","A"];
+
 var notesPlaying = 0; //Number of MIDI notes currently playing
 var numberOfGestures = 10; //Number of button gestures
 
@@ -1418,6 +1420,12 @@ function WARBL_Receive(event) {
                         document.getElementById("fingeringSelect2").options[23].disabled = true;
                         document.getElementById("fingeringSelect2").options[24].disabled = true;
                         document.getElementById("fingeringSelect2").options[25].disabled = true;
+						
+						for (i = 0; i < 37; ++i) {	
+							document.getElementsByName('keySelect')[0].options[i].innerHTML = noteNamesforKeySelect[i];
+							document.getElementsByName('keySelect')[1].options[i].innerHTML = noteNamesforKeySelect[i];
+							document.getElementsByName('keySelect')[2].options[i].innerHTML = noteNamesforKeySelect[i];
+						}
 
                         for (i = 0; i < document.getElementById("fingeringSelect0").length; ++i) { //add the "Custom" option back in
                             if (document.getElementById("fingeringSelect0").options[i].value == "19") {

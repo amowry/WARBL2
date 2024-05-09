@@ -3,7 +3,7 @@
    <script>
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
       var platform = "app";
-      //var platform = "web";
+     //var platform = "web";
    </script>
    <head>
       <meta charset="utf-8" />
@@ -443,7 +443,7 @@
                   <div class="keySelectLabel noTouch">Transpose</div>
                   <div class="keySelectContainer">
                      <div class="styled-key-select blue semi-square" id="key0">
-                        <select id="keySelect0" onChange="sendKey(0,value)">
+                        <select name="keySelect" id="keySelect0" onChange="sendKey(0,value)">
                            <option value="109">-18</option>
                            <option value="110">-17</option>
                            <option value="111">-16</option>
@@ -484,7 +484,7 @@
                         </select>
                      </div>
                      <div class="styled-key-select blue semi-square" id="key1">
-                        <select id="keySelect1" onChange="sendKey(1,value)">
+                        <select name="keySelect" id="keySelect1" onChange="sendKey(1,value)">
                            <option value="109">-18</option>
                            <option value="110">-17</option>
                            <option value="111">-16</option>
@@ -525,7 +525,7 @@
                         </select>
                      </div>
                      <div class="styled-key-select blue semi-square" id="key2">
-                        <select id="keySelect2" onChange="sendKey(2,value)">
+                        <select name="keySelect" id="keySelect2" onChange="sendKey(2,value)">
                            <option value="109">-18</option>
                            <option value="110">-17</option>
                            <option value="111">-16</option>
