@@ -1419,8 +1419,11 @@ function WARBL_Receive(event) {
                         document.getElementById("fingeringSelect2").options[22].disabled = true;
                         document.getElementById("fingeringSelect2").options[23].disabled = true;
                         document.getElementById("fingeringSelect2").options[24].disabled = true;
-                        document.getElementById("fingeringSelect2").options[25].disabled = true;
+                        document.getElementById("fingeringSelect2").options[25].disabled = true;	
 						
+						document.getElementById("keyLabel").innerHTML = "Key";
+						document.getElementById("keyLabel").style.left = "305px";
+	
 						for (i = 0; i < 37; ++i) {	
 							document.getElementsByName('keySelect')[0].options[i].innerHTML = noteNamesforKeySelect[i];
 							document.getElementsByName('keySelect')[1].options[i].innerHTML = noteNamesforKeySelect[i];
