@@ -1249,6 +1249,10 @@ void getSlide() {
 
             int offsetSteps = findStepsOffsetFor(i);
 
+            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) { // Added by AM 5/24 to make the slide behavior more like that on the original WARBL.
+              offsetSteps = -offsetLimit;
+            }
+
             if (offsetSteps != 0
                 && bitRead(holeCovered, i) != 1
                 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
