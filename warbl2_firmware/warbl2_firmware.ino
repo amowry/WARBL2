@@ -327,6 +327,9 @@ void setup() {
     Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device
 #endif
 
+    // AM 5/24 -- starting watchdog here in case something goes wrong during setup, like initializing peripherals.
+    watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
+
     // NRF stuff
     dwt_enable();                 // Enable DWT for high-resolution micros() (uses a bit more power).
     sd_clock_hfclk_request();     // Enable the high-frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
@@ -449,7 +452,6 @@ void setup() {
     }
 #endif
 
-    watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
 }
 
 
