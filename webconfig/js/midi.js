@@ -630,6 +630,30 @@ function WARBL_Receive(event) {
     }
 
 
+    //Display received PB messages
+    if (e == "PB") {	
+		var pitch = ((data1 + (data2 << 8)) >> 1)-8192;	
+        document.getElementById('receivedPB').innerHTML = pitch;
+        var barHeight = pitch / 81.92;
+		var heightPixels = 65 - (barHeight/100*65) + "px";
+		var markerTopPixels = 65 - (barHeight/100*65) + 90 + "px";
+		document.getElementById("PBmarker").style.top = markerTopPixels;
+		if(pitch < 0){
+        	document.getElementById("PBlevel").style.height = -barHeight + "%";
+			document.getElementById("topPBlevel").style.height = 0 + "%";
+		}
+		else if(pitch > 0){
+			document.getElementById("PBlevel").style.height = 0 + "%";
+			document.getElementById("topPBlevel").style.height = barHeight + "%";
+			document.getElementById("topPBlevel").style.top = heightPixels;
+		}
+		else {
+			document.getElementById("PBlevel").style.height = 0 + "%";
+			document.getElementById("topPBlevel").style.height = 0 + "%";
+		}
+
+    }
+
 
     //If we receive a CC on the channel and CC# currently assigned in the IMU mapping panel, display the CC value
     var IMUchan = document.getElementById('IMUChannelInput').value;
@@ -700,7 +724,7 @@ function WARBL_Receive(event) {
                 noteOn(data1);
 				if(notesPlaying < 2) {notesPlaying ++;} //keep track of many notes are currently playing so we know when to turn off the note display.
                 logKeys;
-				console.log(noteNames[data1 - 1]);
+				//console.log(noteNames[data1 - 1]);
 				document.getElementById("tinyConsole").value = noteNames[data1 - 1] + " " + data1;
                 return;
             }

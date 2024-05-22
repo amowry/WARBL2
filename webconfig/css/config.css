@@ -1910,7 +1910,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch5 {
-	top: 258px;
+	top: 268px;
 	left: 365px;
 }
 
@@ -1957,7 +1957,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 258px;
-	top: 262px;
+	top: 272px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2581,7 +2581,7 @@ input:disabled + .slider2:before {
 	position: absolute;
 	width: 300px;
 	top: 70px;
-	left: 130px;
+	left: 30px;
 	padding: 0px;
 }
 
@@ -3852,6 +3852,100 @@ h3 {
 	top: 330px;
 	z-index: 99;
 	font-size: 14px;
+}
+
+
+.receivedPBLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 103px;
+	width: 40px;
+	height: 40px;
+	line-height: 21px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.receivedPB {
+	display: block;
+	position: absolute;
+	margin: auto;
+	text-align: center;
+	width: 60px;
+	height: 21px;
+	left: 275px;
+	top: 155px;
+	color: var(--text-color);
+	z-index: 99;
+	font-size: 14px;
+	line-height: 21px;
+	border: solid 2px var(--console-border-color);
+	background-color: var(--console-bg-color);
+	border-radius: 5px;
+}
+
+
+#PBlevelContainer{
+	display: block;
+	position: absolute;
+	width: 20px;
+	height: 65px;
+	left: 390px;
+	top: 155px;
+	background: var(--secondary-color);
+	z-index: 109;
+}
+
+#PBlevel{
+	display: block;
+	height: 0%;
+	left: 240px;
+	top: 285px;
+	background: #333;
+	z-index: 99;
+}
+
+#topPBlevelContainer{
+	display: block;
+	position: absolute;
+	width: 20px;
+	height: 65px;
+	left: 390px;
+	top: 90px;
+	background: var(--secondary-color);
+	z-index: 109;
+}
+
+
+#PBmarker{
+	display: block;
+	position: absolute;
+	width: 20px;
+	height: 3px;
+	left: 390px;
+	top: 155px;
+	background: #FFF;
+	z-index: 999;
+}
+
+#PBZeromarker{
+	display: block;
+	position: absolute;
+	width: 30px;
+	height: 3px;
+	left: 385px;
+	top: 155px;
+	background: #FFF;
+	z-index: 99;
+}
+
+#topPBlevel{
+	display: block;
+	position: relative;
+	height: 0%;
+	background: #333;
+	z-index: 99;
 }
 
 .receivedCCLabel {

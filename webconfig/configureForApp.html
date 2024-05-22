@@ -440,7 +440,7 @@
                         </select>
                      </div>
                   </div>
-                  <div class="keySelectLabel noTouch">Transpose</div>
+                  <div id = "keyLabel" class="keySelectLabel noTouch">Transpose</div>
                   <div class="keySelectContainer">
                      <div class="styled-key-select blue semi-square" id="key0">
                         <select name="keySelect" id="keySelect0" onChange="sendKey(0,value)">
@@ -797,6 +797,18 @@
                         </div>
                      </fieldset>
                   </div>
+                  
+                  <div class="receivedPBLabel noTouch">Received pitch&nbspbend:</div>
+                  <div class="receivedPB noTouch" id="receivedPB"></div>
+                  <div id="PBlevelContainer">
+                     <div id="PBlevel"></div>
+                  </div>
+                  <div id="PBmarker"></div>
+                  <div id="PBZeromarker"></div>
+                  <div id="topPBlevelContainer">
+                     <div id="topPBlevel"></div>
+                  </div>
+                  
                   <div class="customLabel noTouch">Custom vibrato</div>
                   <label class="switch" id="switch5">
                   <input type="checkbox" class="checkboxes" id="checkbox5" onChange="sendCustom(this.checked)" />
