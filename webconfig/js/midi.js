@@ -4022,7 +4022,7 @@ function importPreset(context) {
 
                 document.getElementById("modal14-title").innerHTML = "Error: File is not a WARBL Preset";
                 return;
-
+				document.getElementById("modal14-ok").style.opacity = 1;
             }
 
             // Sanity check the import file
@@ -4031,26 +4031,26 @@ function importPreset(context) {
 
                 document.getElementById("modal14-title").innerHTML = "Error: File is not a WARBL Preset";
                 return;
-
+				document.getElementById("modal14-ok").style.opacity = 1;
             }
 
             if ((!theImportObject.signature) || (theImportObject.signature != "WARBL")) {
 
                 document.getElementById("modal14-title").innerHTML = "Error: File is not a WARBL Preset";
                 return;
-
+				document.getElementById("modal14-ok").style.opacity = 1;
             }
 
             if (!theImportObject.version) {
 
                 document.getElementById("modal14-title").innerHTML = "Error: File is not a WARBL Preset";
                 return;
-
+				document.getElementById("modal14-ok").style.opacity = 1;
             }
 
             if (theImportObject.version > maxSupportedPresetVersion) {
-
                 document.getElementById("modal14-title").innerHTML = "Error: WARBL Preset Version " + theImportObject.version + " not supported by this version of the configuration tool";
+				document.getElementById("modal14-ok").style.opacity = 1;
                 return;
 
             }
