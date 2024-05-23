@@ -724,7 +724,6 @@ function WARBL_Receive(event) {
                 noteOn(data1);
 				if(notesPlaying < 2) {notesPlaying ++;} //keep track of many notes are currently playing so we know when to turn off the note display.
                 logKeys;
-				//console.log(noteNames[data1 - 1]);
 				document.getElementById("tinyConsole").value = noteNames[data1 - 1] + " " + data1;
                 return;
             }
@@ -4055,6 +4054,17 @@ function importPreset(context) {
                 return;
 
             }
+			
+			if ((theImportObject.messages[0][2] > 40 && version < 4.0) || (theImportObject.messages[0][2] < 40 && version > 4.0)) {
+
+                document.getElementById("modal14-title").innerHTML = "Sorry, it is not possible to import settings from the original WARBL to WARBL2 or vice versa.";
+				document.getElementById("modal14-ok").style.opacity = 1;
+                return;
+
+            }
+			
+			
+
 
             //debugger;
 
