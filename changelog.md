@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - It is now possible to enter either zeros or blanks in a custom fingering chart to result in silent notes.
 
-- Watchdog timer is now started at the beginning of setup() rather then the end, to catch hangs during intialization of peripherals.
+- Watchdog timer is now started at the beginning of setup() rather then the end, to catch hangs during initialization of peripherals.
 
 ### Added
 
