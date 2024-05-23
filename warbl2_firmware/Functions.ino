@@ -30,6 +30,8 @@ void printStuff(void) {
 
 
 
+
+
 // Determine how long to sleep each time through the loop.
 byte calculateDelayTime(void) {
 
@@ -236,9 +238,9 @@ void readIMU(void) {
 void calibrateIMU() {
 
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
-    delay(50);                                 // Give it a bit of time.
+    delay(50);                                // Give it a bit of time.
     readIMU();                                // Get a reading in case we haven't been reading it.
-    delay(50);                                 // Give it a bit of time.
+    delay(50);                                // Give it a bit of time.
     readIMU();                                // Another reading seems to be necessary after turning the gyro on.
 
     gyroXCalibration = rawGyroX;
@@ -1249,8 +1251,8 @@ void getSlide() {
 
             int offsetSteps = findStepsOffsetFor(i);
 
-            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) { // Added by AM 5/24 to make the slide behavior more like that on the original WARBL.
-              offsetSteps = -offsetLimit;
+            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that on the original WARBL.
+                offsetSteps = -offsetLimit;
             }
 
             if (offsetSteps != 0
@@ -1355,7 +1357,8 @@ void sendNote() {
       //!(prevNote == 62 && (newNote + shift) == 86) &&                                                   // And if we're currently on a middle D in state 3 (all finger holes covered), we wait until we get a new state reading before switching notes. This it to prevent erroneous octave jumps to a high D.
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
       !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
-      !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {                     // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
+      !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
+    {
 
         int notewason = noteon;
         int notewasplaying = notePlaying;
@@ -1403,7 +1406,9 @@ void sendNote() {
             calculateAndSendPitchbend();
         }
 
-        sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  // Send the new note.
+        if (newNote != 0) {                                                 // With a custom chart a MIDI note of 0 can be used as a silennt position, so don't play the note.
+            sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  // Send the new note.
+        }
 
         if (notewason) {
             // Turn off the previous note after turning on the new one (if it wasn't already done above).
