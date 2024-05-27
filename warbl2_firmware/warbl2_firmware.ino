@@ -379,6 +379,8 @@ void setup() {
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
 
+    //delay(2000); // Makes it so button 3 must be held down for two seconds to power on.
+
     digitalWrite(powerEnable, HIGH);  // Enable the boost converter at startup at least until we have time to check for USB power.
     runTimer = millis();
     battPower = true;  // We'll change this if we detect USB.
@@ -386,6 +388,13 @@ void setup() {
     digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate powerup.
     delay(600);
     digitalWrite(LEDpins[GREEN_LED], LOW);
+
+    // Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to restart SPI when the ATmega hasn't been reset.
+    pinMode(26, OUTPUT);
+    digitalWrite(26, LOW);
+    delay(5);
+    pinMode(26, INPUT_PULLUP);
+    delay(75);
 
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
@@ -427,7 +436,6 @@ void setup() {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
-
     loadFingering();
     loadSettingsForAllModes();
     mode = defaultMode;       // Set the startup instrument.
@@ -451,7 +459,6 @@ void setup() {
         }
     }
 #endif
-
 }
 
 
