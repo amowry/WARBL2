@@ -389,12 +389,14 @@ void setup() {
     delay(600);
     digitalWrite(LEDpins[GREEN_LED], LOW);
 
-    // Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to restart SPI when the ATmega hasn't been reset.
-    pinMode(26, OUTPUT);
+    // Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to start SPI when the ATmega hasn't been reset.
+    #ifndef PROTOTYPE46
+    pinMode(26, OUTPUT);  // ATmega reset pin
     digitalWrite(26, LOW);
     delay(5);
-    pinMode(26, INPUT_PULLUP);
+    pinMode(26, INPUT);
     delay(75);
+    #endif
 
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
