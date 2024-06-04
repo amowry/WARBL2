@@ -473,6 +473,7 @@ void setup() {
 
 void loop() {
 
+//  if (tud_ready() == 1) { digitalWrite(LED_BUILTIN, HIGH); } //testing
 
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 

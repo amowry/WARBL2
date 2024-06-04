@@ -357,17 +357,25 @@ bool programATmega(void) {
         return false;
     }
 
+    watchdogReset();       // Feed the watchdog.
+
     if (!writeImage(targetimage->image_hexcode, pgm_read_byte(&targetimage->image_pagesize), pgm_read_word(&targetimage->chipsize))) {
         return false;
     }
+
+    watchdogReset();       // Feed the watchdog.
 
     if (!verifyImage(targetimage->image_hexcode)) {  // Verify flash.
         return false;
     }
 
+    watchdogReset();       // Feed the watchdog.
+
     if (!programFuses(targetimage->image_normfuses, 5)) {  // Set fuses to 'final' state.
         return false;
     }
+
+    watchdogReset();       // Feed the watchdog.
 
     if (!verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
