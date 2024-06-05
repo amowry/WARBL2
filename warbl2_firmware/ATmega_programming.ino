@@ -12,8 +12,9 @@
 #define FUSE_EXT 3                // Extended fuse
 #define FUSE_CLOCKSPEED 10000     // Fuses need to be programmed slowly.
 #define FLASH_CLOCKSPEED 1000000  // Once fused you can flash fast!
-#define AVRPROG_RESET 26           //This pin is left in default state (highZ) when not programming (it has a pullup resistor).
+#define AVRPROG_RESET 26          // This pin is left in default state (highZ) when not programming (it has a pullup resistor).
 #define debug(string)             // Serial.println(string);
+
 
 typedef struct image {             // Struct for holding program fuses & code
     uint16_t image_chipsig;        // Low two bytes of signature
@@ -331,6 +332,7 @@ const image_t *images[] = {
 
 bool programATmega(void) {
 
+
     if (!targetPower(true)) {
         return false;
     }
@@ -345,11 +347,13 @@ bool programATmega(void) {
         return false;
     }
 
+
     eraseChip();
 
     if (!programFuses(targetimage->image_progfuses, 5)) {  // Get fuses ready to program.
         return false;
     }
+
 
     targetPower(false);  // Disconnect/reconnect after fusing.
     delay(100);
@@ -357,25 +361,21 @@ bool programATmega(void) {
         return false;
     }
 
-    watchdogReset();       // Feed the watchdog.
 
     if (!writeImage(targetimage->image_hexcode, pgm_read_byte(&targetimage->image_pagesize), pgm_read_word(&targetimage->chipsize))) {
         return false;
     }
 
-    watchdogReset();       // Feed the watchdog.
 
     if (!verifyImage(targetimage->image_hexcode)) {  // Verify flash.
         return false;
     }
 
-    watchdogReset();       // Feed the watchdog.
 
     if (!programFuses(targetimage->image_normfuses, 5)) {  // Set fuses to 'final' state.
         return false;
     }
 
-    watchdogReset();       // Feed the watchdog.
 
     if (!verifyFuses(targetimage->image_normfuses, targetimage->fusemask)) {
         return false;
@@ -762,6 +762,12 @@ bool flashPage(byte *pagebuff, uint16_t pageaddr,
                uint16_t pagesize) {
     Serial.print(F("Flashing page "));
     Serial.println(pageaddr, HEX);
+
+    if (millis() - WDDTelapsedTime > 1000) {
+        WDDTelapsedTime = millis();
+        watchdogReset();  // Feed the watchdog.
+        Serial.print(F("WDT reset"));
+    }
 
     startProgramMode(FLASH_CLOCKSPEED);
 

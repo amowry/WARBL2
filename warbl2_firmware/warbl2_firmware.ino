@@ -315,7 +315,7 @@ byte fingeringReceiveMode = 0;       // Indicates the mode (instrument) for  whi
 byte WARBL2settingsReceiveMode = 0;  // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
 
-
+unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
 
 
 
@@ -329,6 +329,7 @@ void setup() {
 
     // AM 5/24 -- starting watchdog here in case something goes wrong during setup, like initializing peripherals.
     watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
+    WDDTelapsedTime = millis();                     // Record when we started it.
 
     // NRF stuff
     dwt_enable();                 // Enable DWT for high-resolution micros() (uses a bit more power).
@@ -389,14 +390,14 @@ void setup() {
     delay(600);
     digitalWrite(LEDpins[GREEN_LED], LOW);
 
-    // Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to start SPI when the ATmega hasn't been reset.
-    #ifndef PROTOTYPE46
+// Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to start SPI when the ATmega hasn't been reset.
+#ifndef PROTOTYPE46
     pinMode(26, OUTPUT);  // ATmega reset pin
     digitalWrite(26, LOW);
     delay(5);
     pinMode(26, INPUT);
     delay(75);
-    #endif
+#endif
 
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
@@ -431,6 +432,8 @@ void setup() {
     //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
     if (readEEPROM(44) != 3) {
+        WDDTelapsedTime = millis();
+        watchdogReset();        // Feed the watchdog because we need to do some things that will take some time.
         saveFactorySettings();  // If we're running the software for the first time, or if a factory reset has been requested, copy all settings to EEPROM.
     }
 
@@ -453,7 +456,9 @@ void setup() {
 
     // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
 #ifndef PROTOTYPE46
-    //while(!Serial); // Can uncomment this if not using release version, to show verbose programming output.
+    WDDTelapsedTime = millis();
+    watchdogReset();  // Feed the watchdog.
+                      //while (!Serial);                 // Can uncomment this if not using release version, to show verbose programming output.
     if (ATMEGA_FIRMWARE_VERSION != readEEPROM(1995)) {
         if (programATmega()) {
             Serial.println("Success");
@@ -473,7 +478,7 @@ void setup() {
 
 void loop() {
 
-//  if (tud_ready() == 1) { digitalWrite(LED_BUILTIN, HIGH); } //testing
+    //  if (tud_ready() == 1) { digitalWrite(LED_BUILTIN, HIGH); } //testing
 
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
