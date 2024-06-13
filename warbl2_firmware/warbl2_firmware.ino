@@ -124,7 +124,9 @@ unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the 
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
 int pitchRegisterBounds[6];        // Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
 bool shakeDetected = 0;
-
+byte yawOutput;                // This is global because it used by both yaw mapping and sticks mode.
+byte prevKey = 0;              // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
+unsigned long sticksModeTimer;  // For timing out the hidden way of entering sticks mode.
 
 // Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -171,10 +173,10 @@ byte switches[3][kSWITCHESnVariables] =           // Settings for the switches i
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 } };  // Instrument 2
 
-byte IMUsettings[3][kIMUnVariables] =                                                                                   // Settings for mapping and sending IMU readings (see defines above)
-  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },    // Instrument 0
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 },    // Instrument 1
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0 } };  // Instrument 2
+byte IMUsettings[3][kIMUnVariables] =                                                                                      // Settings for mapping and sending IMU readings (see defines above)
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                           // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
   { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 0

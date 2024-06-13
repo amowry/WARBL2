@@ -97,7 +97,7 @@
 #define INVERT 3
 #define CUSTOM 4
 #define SEND_VELOCITY 5
-#define SEND_AFTERTOUCH 6  //second bit of this one is used for poly
+#define SEND_AFTERTOUCH 6  // Second bit of this one is used for poly.
 #define FORCE_MAX_VELOCITY 7
 #define IMMEDIATE_PB 8
 #define LEGATO 9
@@ -191,20 +191,20 @@
 #define kACTIONSnVariables 16
 
 // Variables in the WARBL2settings array (independent of mode)
-#define MIDI_DESTINATION 0  //0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
-#define CHARGE_FROM_HOST 1  //Charge from USB host in addition to "dumb" charging brick.
+#define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
+#define CHARGE_FROM_HOST 1  // Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
 
 // Variables in the IMUsettings array
-#define SEND_ROLL 0       //On/off
-#define SEND_PITCH 1      //On/Off
-#define SEND_YAW 2        //On/Off
-#define CENTER_ROLL 3     //On/off
-#define CENTER_YAW 4      //On/Off
-#define ROLL_INPUT_MIN 5  //0-36
+#define SEND_ROLL 0       // On/off
+#define SEND_PITCH 1      // On/Off
+#define SEND_YAW 2        // On/Off
+#define CENTER_ROLL 3     // On/off
+#define CENTER_YAW 4      // On/Off
+#define ROLL_INPUT_MIN 5  // 0-36
 #define ROLL_INPUT_MAX 6
-#define ROLL_OUTPUT_MIN 7  //0-127
+#define ROLL_OUTPUT_MIN 7  // 0-127
 #define ROLL_OUTPUT_MAX 8
 #define PITCH_INPUT_MIN 9
 #define PITCH_INPUT_MAX 10
@@ -220,16 +220,17 @@
 #define ROLL_CC_NUMBER 20
 #define PITCH_CC_NUMBER 21
 #define YAW_CC_NUMBER 22
-#define AUTOCENTER_YAW 23           //On/Off
-#define Y_SHAKE_PITCHBEND 24        //On/Off
-#define AUTOCENTER_YAW_INTERVAL 25  //0-20 (represents 0-5s pause interval for yaw recentering)
-#define PITCH_REGISTER 26           //On/Off
-#define Y_PITCHBEND_DEPTH 27        //0-100
+#define AUTOCENTER_YAW 23           // On/Off
+#define Y_SHAKE_PITCHBEND 24        // On/Off
+#define AUTOCENTER_YAW_INTERVAL 25  // 0-20 (represents 0-5s pause interval for yaw recentering)
+#define PITCH_REGISTER 26           // On/Off
+#define Y_PITCHBEND_DEPTH 27        // 0-100
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
 #define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
-#define kIMUnVariables 32
+#define STICKS_MODE 32 // On/off
+#define kIMUnVariables 33
 
 #define Y_PITCHBEND_MODE_UPDOWN 0
 #define Y_PITCHBEND_MODE_DOWNUP 1

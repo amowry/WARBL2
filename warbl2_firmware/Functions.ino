@@ -14,8 +14,9 @@ void printStuff(void) {
             Serial.print(" ");
         }
         delay(5000);
-    }
+    } 
 */
+
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
@@ -225,6 +226,45 @@ void readIMU(void) {
     rollLocal -= correctionFactor;
     roll = rollLocal;
 #endif
+
+
+    // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note off messages are sent.
+    if (IMUsettings[mode][STICKS_MODE]) {
+        static bool armed = 0;
+        static float maxGyro;
+        static byte LEDCounter = 0;  // Time how long the LED is on.
+
+        if (LEDCounter > 0) { // Count up if the LED is on.
+            LEDCounter++;
+        };
+
+        if (LEDCounter > 5) { // Turn off LED after a bit.
+            analogWrite(LEDpins[GREEN_LED], 0);
+            analogWrite(LEDpins[BLUE_LED], 0);
+            LEDCounter = 0;
+        }
+
+        if (gyroX > 1) {
+            armed = true;                              // Detect forward rotation above a threshold to prepare for a hit.
+            if (gyroX > maxGyro) { maxGyro = gyroX; }  // Find the fastest X rotation, to use for hit velocity.
+            else if (maxGyro > 0) {
+                maxGyro -= 0.7f;  // Gradually reduce the velocity analog if the rotation is slowing. This adjusts the velocity and/or prevents a hit if you start out with a fast swing but then slow it before the rebound occurs.
+            }
+            if (maxGyro <= 0) {
+                armed = false;
+            }
+        }
+        if (gyroX < 0 && armed == true) {                                // A hit occurs if we are armed and the X gyro goes negative (indicating a slight rebound).
+            byte hitVelocity = 10 * (constrain(maxGyro, 0.0f, 12.7f));   // Scale the velocity up to 0-127.
+            sendMIDI(NOTE_ON, mainMidiChannel, yawOutput, hitVelocity);  // Use yawOutput for MIDI note.
+            analogWrite(LEDpins[GREEN_LED], hitVelocity << 3);           // Fire teal LED to indicate a hit, with brightness based on note velocity.
+            analogWrite(LEDpins[BLUE_LED], hitVelocity << 1);
+            LEDCounter = 1; // Start counting to turn the LED off again.
+            armed = false;  // Don't allow another hit until we've passed the threshold again.
+            maxGyro = 0;
+            powerDownTimer = pitchBendTimer;  // Reset the powerDown timer because we're sending notes.
+        }
+    }
 }
 
 
@@ -334,7 +374,7 @@ void sendIMU() {
 
 
 
-    if (IMUsettings[mode][SEND_YAW]) {
+    if (IMUsettings[mode][SEND_YAW] || IMUsettings[mode][STICKS_MODE]) {
 
         byte lowerConstraint;
         byte upperConstraint;
@@ -349,10 +389,10 @@ void sendIMU() {
             upperConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
         }
 
-        byte yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
         //Serial.println(yawOutput);
 
-        if (prevYawCC != yawOutput) {
+        if (prevYawCC != yawOutput && IMUsettings[mode][SEND_YAW]) {
             sendMIDI(CONTROL_CHANGE, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
             prevYawCC = yawOutput;
         }
@@ -1693,6 +1733,10 @@ void handleControlChange(byte channel, byte number, byte value) {
 
             for (byte i = 0; i < 3; i++) {  // Update noteshift.
                 if (number == 111 + i) {
+                    if (value == 109) {
+                        sticksModeTimer = millis();         // We will be toggling hidden "sticks" mode, if "autocalibrate bell sensor only" is clicked within 10 seconds.
+                        prevKey = noteShiftSelector[mode];  // Remember the current key because we'll need to reset it if we're entering or exiting sticks mode.
+                    }
                     if (value < 50) {
                         noteShiftSelector[i] = value;
                     } else {
@@ -1819,9 +1863,22 @@ void handleControlChange(byte channel, byte number, byte value) {
                     loadPrefs();
                 }
 
-                else if (value == 42) {  // Autocalibrate bell sensor only.
-                    calibration = 2;
+                else if (value == 42) {  // Autocalibrate bell sensor only, or turn on stick mode using "hidden" Config Tool sequence.
                     blinkNumber[GREEN_LED] = 0;
+                    if ((millis() - sticksModeTimer) < 10000) {  // Hidden way to turn on sticks mode.
+                        IMUsettings[mode][STICKS_MODE] = !IMUsettings[mode][STICKS_MODE];
+                        if (IMUsettings[mode][STICKS_MODE] == true) {
+                            blinkNumber[GREEN_LED] = 3;
+                        } else {
+                            blinkNumber[GREEN_LED] = 1;
+                        }
+                        noteShiftSelector[mode] = prevKey;  // Reset the key to the previous value because it was only changed to toggle sticksMode.
+                        sendMIDI(CONTROL_CHANGE, 7, (111 + mode), noteShiftSelector[mode]);
+                        loadPrefs();
+                        return;
+                    }
+                    calibration = 2;
+
                 }
 
 
@@ -2722,6 +2779,8 @@ void loadSettingsForAllModes() {
         for (byte p = 0; p < kIMUnVariables; p++) {
             IMUsettings[i][p] = readEEPROM(625 + i + (p * 3));
         }
+
+        IMUsettings[i][32] = IMUsettings[i][32] > 1 ? 0 : IMUsettings[i][32];  // Sanity check for sticks mode in case uninitialized
     }
 }
 
@@ -2823,7 +2882,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER]) {
+    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     }
 
@@ -3037,6 +3096,16 @@ byte calculatePressureInterval(void) {
 
 // Send pressure data
 void sendPressure(bool force) {
+
+    // Experimental smoothing of pressure at the expense of responsiveness
+
+    /*
+    static float filteredOld;
+    const float timeConstant = 0.2f;
+    float filtered = timeConstant * inputPressureBounds[0][3] + (1.0f - timeConstant) * filteredOld;  // Low-pass filter.
+    inputPressureBounds[0][3] = filtered;
+    filteredOld = filtered;
+*/
 
     if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
         sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  // Send MSB of pressure mapped to the output range.
