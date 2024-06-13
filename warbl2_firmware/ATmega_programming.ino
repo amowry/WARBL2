@@ -382,9 +382,9 @@ bool programATmega(void) {
     }
 
     for (byte i = 0; i < 4; i++) {  // Indicate success.
-        digitalWrite(GREEN_LED, HIGH);
+        analogWrite(GREEN_LED, 1023);
         delay(200);
-        digitalWrite(GREEN_LED, LOW);
+        analogWrite(GREEN_LED, 0);
         delay(200);
     }
 
@@ -403,7 +403,7 @@ void endProgramMode(void) {
 
 bool targetPower(bool poweron) {
     if (poweron) {
-        digitalWrite(GREEN_LED, HIGH);
+        analogWrite(GREEN_LED, 1023);
         Serial.print(F("Starting Program Mode..."));
         if (startProgramMode(100000)) {
             Serial.println(F(" [OK]"));
@@ -414,7 +414,7 @@ bool targetPower(bool poweron) {
         }
     } else {
         endProgramMode();
-        digitalWrite(GREEN_LED, LOW);
+        analogWrite(GREEN_LED, 0);
         return true;
     }
 }
@@ -841,7 +841,7 @@ byte hexToByte(byte h) {
 
 void error(const char *string) {
     Serial.println(string);
-    digitalWrite(GREEN_LED, HIGH);
+    analogWrite(GREEN_LED, 1023);
     while (1) {
     }
 }
@@ -849,7 +849,7 @@ void error(const char *string) {
 
 void error(const __FlashStringHelper *string) {
     Serial.println(string);
-    digitalWrite(GREEN_LED, HIGH);
+    analogWrite(GREEN_LED, 1023);
     while (1) {
     }
 }

@@ -388,9 +388,9 @@ void setup() {
     runTimer = millis();
     battPower = true;  // We'll change this if we detect USB.
 
-    digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate powerup.
+    analogWrite(LEDpins[GREEN_LED], 1023);  // Indicate powerup.
     delay(600);
-    digitalWrite(LEDpins[GREEN_LED], LOW);
+    analogWrite(LEDpins[GREEN_LED], 0);
 
 // Reset ATmega32u4 in case only the NRF52840 has been restarted (which can happen when powered by USB). I suspect things can occasionally hang if we try to start SPI when the ATmega hasn't been reset.
 #ifndef PROTOTYPE46
@@ -480,7 +480,7 @@ void setup() {
 
 void loop() {
 
-    //  if (tud_ready() == 1) { digitalWrite(LED_BUILTIN, HIGH); } //testing
+    //  if (tud_ready() == 1) { analogWrite(LED_BUILTIN, 1023); } //testing
 
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 

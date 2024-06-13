@@ -188,7 +188,7 @@ void manageBattery(bool send) {
                 chargeEnabled = 0;
                 chargeTerminated = 1;  // This tells us not to enable charging again until the power is cycled.
                 //Serial.println("charge terminated by 0 dV");
-                digitalWrite(LEDpins[GREEN_LED], HIGH);  // Indicate end of charge.
+                analogWrite(LEDpins[GREEN_LED], 1023);  // Indicate end of charge.
                 writeEEPROM(1993, 0);                    // Reset the total run time because we are now fully charged (high byte).
                 writeEEPROM(1994, 0);                    // Low byte
                 writeEEPROM(1988, 3);                    // Remember that there has been a termination.
@@ -234,7 +234,7 @@ void manageBattery(bool send) {
 
     // Shut down when the battery is low.
     if (nowtime > 2000 && battPower && smoothed_voltage <= 1.0) {  // Give some time to make sure we detect USB power if it's present.
-        digitalWrite(LEDpins[RED_LED], HIGH);                      // Long red LED to indicate shutdown because of low battery
+        analogWrite(LEDpins[RED_LED], 1023);                      // Long red LED to indicate shutdown because of low battery
         delay(5000);
         powerDown(true);  // Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
     }
@@ -288,9 +288,9 @@ void powerDown(bool resetTotalRuntime) {
 
     if (battPower) {
         recordRuntime(resetTotalRuntime);
-        digitalWrite(LEDpins[RED_LED], HIGH);  // Indicate power down.
+        analogWrite(LEDpins[RED_LED], 1023);  // Indicate power down.
         delay(500);
-        digitalWrite(powerEnable, LOW);  // Disable the boost converter to cut power to the entire device.
+        analogWrite(powerEnable, 0);  // Disable the boost converter to cut power to the entire device.
     }
 }
 

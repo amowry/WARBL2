@@ -234,17 +234,18 @@ void readIMU(void) {
         static float maxGyro;
         static byte LEDCounter = 0;  // Time how long the LED is on.
 
-        if (LEDCounter > 0) { // Count up if the LED is on.
+        if (LEDCounter > 0) {  // Count up if the LED is on.
             LEDCounter++;
         };
 
-        if (LEDCounter > 5) { // Turn off LED after a bit.
+        if (LEDCounter > 5) {  // Turn off LED after a bit.
             analogWrite(LEDpins[GREEN_LED], 0);
             analogWrite(LEDpins[BLUE_LED], 0);
+
             LEDCounter = 0;
         }
 
-        if (gyroX > 1) {
+        if (gyroX > 0.5f) {
             armed = true;                              // Detect forward rotation above a threshold to prepare for a hit.
             if (gyroX > maxGyro) { maxGyro = gyroX; }  // Find the fastest X rotation, to use for hit velocity.
             else if (maxGyro > 0) {
@@ -254,13 +255,14 @@ void readIMU(void) {
                 armed = false;
             }
         }
-        if (gyroX < 0 && armed == true) {                                // A hit occurs if we are armed and the X gyro goes negative (indicating a slight rebound).
-            byte hitVelocity = 10 * (constrain(maxGyro, 0.0f, 12.7f));   // Scale the velocity up to 0-127.
-            sendMIDI(NOTE_ON, mainMidiChannel, yawOutput, hitVelocity);  // Use yawOutput for MIDI note.
-            analogWrite(LEDpins[GREEN_LED], hitVelocity << 3);           // Fire teal LED to indicate a hit, with brightness based on note velocity.
+        if (gyroX < 0 && armed == true) {                                    // A hit occurs if we are armed and the X gyro goes negative (indicating a slight rebound).
+            byte hitVelocity = 12 * (constrain(maxGyro + 1, 1.0f, 10.58f));  // Scale the velocity up to 0-127.
+                                                                             // Just in case
+            sendMIDI(NOTE_ON, mainMidiChannel, yawOutput, hitVelocity);      // Use yawOutput for MIDI note.
+            analogWrite(LEDpins[GREEN_LED], hitVelocity << 3);  // Fire teal LED to indicate a hit, with brightness based on note velocity.
             analogWrite(LEDpins[BLUE_LED], hitVelocity << 1);
-            LEDCounter = 1; // Start counting to turn the LED off again.
-            armed = false;  // Don't allow another hit until we've passed the threshold again.
+            LEDCounter = 1;  // Start counting to turn the LED off again.
+            armed = false;   // Don't allow another hit until we've passed the threshold again.
             maxGyro = 0;
             powerDownTimer = pitchBendTimer;  // Reset the powerDown timer because we're sending notes.
         }
@@ -1512,14 +1514,14 @@ void blink() {
                 ledTimer[i] = millis();
 
                 if (LEDon[i]) {
-                    digitalWrite(LEDpins[i], LOW);
+                    analogWrite(LEDpins[i], 0);
                     blinkNumber[i]--;
                     LEDon[i] = 0;
                     return;
                 }
 
                 else {
-                    digitalWrite(LEDpins[i], HIGH);
+                    analogWrite(LEDpins[i], 1023);
                     LEDon[i] = 1;
                 }
             }
@@ -2907,7 +2909,7 @@ void calibrate() {
 
     if (calibration > 0) {
         if (!LEDon[GREEN_LED]) {
-            digitalWrite(LEDpins[GREEN_LED], HIGH);
+            analogWrite(LEDpins[GREEN_LED], 1023);
             LEDon[GREEN_LED] = 1;
             calibrationTimer = millis();
 
@@ -2967,7 +2969,7 @@ void saveCalibration() {
     }
     calibration = 0;
     writeEEPROM(37, 3);  // We write a 3 to address 37 to indicate that we have stored a set of calibrations.
-    digitalWrite(LEDpins[GREEN_LED], LOW);
+    analogWrite(LEDpins[GREEN_LED], 0);
     LEDon[GREEN_LED] = 0;
 }
 
@@ -3474,7 +3476,7 @@ void eraseEEPROM(void) {
     for (int i = 0; i < 16384; i++) {
         writeEEPROM(i, 255);
     }
-    digitalWrite(LEDpins[GREEN_LED], HIGH);  // Success
+    analogWrite(LEDpins[GREEN_LED], 1023);  // Success
     delay(500);
-    digitalWrite(LEDpins[GREEN_LED], LOW);
+    analogWrite(LEDpins[GREEN_LED], 0);
 }
