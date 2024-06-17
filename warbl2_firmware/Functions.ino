@@ -1410,13 +1410,12 @@ void calculateAndSendPitchbend() {
 void sendNote() {
     const int velDelayMs = switches[mode][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // Keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
 
-    if (  // Several conditions to tell if we need to turn on a new note.
-      (!noteon
+    if (        // Several conditions to tell if we need to turn on a new note.
+      (!noteon  // If there wasn't any note playing or the current note is different than the previous one
        || (pitchBendModeSelector[mode] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
        || (pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
-      &&                                                                                    // If there wasn't any note playing or the current note is different than the previous one
-      ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&  // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
-      //!(prevNote == 62 && (newNote + shift) == 86) &&                                                   // And if we're currently on a middle D in state 3 (all finger holes covered), we wait until we get a new state reading before switching notes. This it to prevent erroneous octave jumps to a high D.
+      && newNote != 0                                                                                   // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
+      && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&           // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
       !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
       !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
@@ -1468,9 +1467,7 @@ void sendNote() {
             calculateAndSendPitchbend();
         }
 
-        if (newNote != 0) {                                                 // With a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note.
-            sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  // Send the new note.
-        }
+        sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  // Send the new note.
 
         if (notewason) {
             // Turn off the previous note after turning on the new one (if it wasn't already done above).
@@ -1492,11 +1489,11 @@ void sendNote() {
 
     if (noteon) {  // Several conditions to turn a note off
         if (
-          ((newState == 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
-          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                           // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {            // Or completely closed pipe with any fingering chart.
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
-                                                                                                  // Keep track.
+          ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
+          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
+          (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
+            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
+                                                                                                                  // Keep track.
 
             if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
                 autoCenterYawTimer = millis();
