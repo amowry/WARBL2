@@ -259,7 +259,7 @@ void readIMU(void) {
             byte hitVelocity = 12 * (constrain(maxGyro + 1, 1.0f, 10.58f));  // Scale the velocity up to 0-127.
                                                                              // Just in case
             sendMIDI(NOTE_ON, mainMidiChannel, yawOutput, hitVelocity);      // Use yawOutput for MIDI note.
-            analogWrite(LEDpins[GREEN_LED], hitVelocity << 3);  // Fire teal LED to indicate a hit, with brightness based on note velocity.
+            analogWrite(LEDpins[GREEN_LED], hitVelocity << 3);               // Fire teal LED to indicate a hit, with brightness based on note velocity.
             analogWrite(LEDpins[BLUE_LED], hitVelocity << 1);
             LEDCounter = 1;  // Start counting to turn the LED off again.
             armed = false;   // Don't allow another hit until we've passed the threshold again.
@@ -514,11 +514,32 @@ void shakeForVibrato() {
 // Return number of registers to jump based on IMU pitch (elevation).
 int pitchRegister() {
 
+    // Experimenting with gestures instead of absolute elevation.
+    /*
+    static bool shiftedUp = false;
+    static bool shiftedDown = false;
+
+    if (gyroX < -1 && !shiftedUp) {
+        octaveShift += 1;
+        shiftedUp = true;
+        Serial.println("up");
+    }
+    if (gyroX > 1 && !shiftedDown) {
+        octaveShift -= 1;
+        shiftedDown = true;
+        Serial.println("down");
+    }
+
+    if (shiftedUp && gyroX > 0) { shiftedUp = false; }
+    if (shiftedDown && gyroX <= 0) { shiftedDown = false; }
+*/
+
     for (byte i = 1; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
         if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  // See if IMU pitch is within the bounds for each register.
             return i - 1;
         }
     }
+
     return 0;
 }
 
@@ -729,8 +750,7 @@ void debounceFingerHoles() {
 
     long debounceDelta = now - debounceTimer;
 
-    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || !isMaybeInTransition())) {
-        // reset it if necessary
+    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || !isMaybeInTransition())) {  // Reset it if necessary.
 #if DEBUG_TRANSITION_FILTER
         Serial.print(now);
         Serial.println(" canceltrans");
@@ -746,25 +766,25 @@ void debounceFingerHoles() {
         tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
         sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
-        if (tempNewNote != -1 && newNote != tempNewNote) {  // If a new note has been triggered,
+        if (tempNewNote != 0xFF && newNote != tempNewNote) {  // If a new note has been triggered,
             if (pitchBendMode != kPitchBendNone) {
-                holeLatched = holeCovered;  // remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;
                 }
             }
-        }
 
 #if DEBUG_TRANSITION_FILTER
-        Serial.print(now);
-        Serial.print(" : Commit: ");
-        Serial.println(tempNewNote);
+            Serial.print(now);
+            Serial.print(" : Commit: ");
+            Serial.println(tempNewNote);
 #endif
 
-        newNote = tempNewNote;
-        tempNewNote = -1;
-        getState();                       // Get state again if the note has changed.
+            newNote = tempNewNote;
+            tempNewNote = 0xFF;
+            getState();  // Get state again if the note has changed.
+        }
         fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
     }
 }
@@ -821,8 +841,8 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 // Return a MIDI note number (0-127) based on the current fingering.
-int getNote(unsigned int fingerPattern) {
-    int ret = -1;  // Default for unknown fingering
+byte getNote(unsigned int fingerPattern) {
+    byte ret = 0xFF;  // Default for unknown fingering
 
     uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
 
@@ -882,7 +902,7 @@ void getShift() {
         }
     }
 
-    // ToDo: Are there any others that don 't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
+    // ToDo: Are there any others that don't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
     else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
             shift = shift + 12;  // Add an octave jump to the transposition if necessary.
@@ -1448,7 +1468,7 @@ void sendNote() {
             calculateAndSendPitchbend();
         }
 
-        if (newNote != 0) {                                                 // With a custom chart a MIDI note of 0 can be used as a silennt position, so don't play the note.
+        if (newNote != 0) {                                                 // With a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note.
             sendMIDI(NOTE_ON, mainMidiChannel, newNote + shift, velocity);  // Send the new note.
         }
 
@@ -3305,7 +3325,14 @@ void connect_callback(uint16_t conn_handle) {
     connection->getPeerName(central_name, sizeof(central_name));
 
     connIntvl = connection->getConnectionInterval();  // Get the current connection agreed upon connection interval in units of 0.625 ms
-    connIntvl = connIntvl * 0.625;                    // Convert to ms.
+    connIntvl = connIntvl * 0.625;                    // Convert to ms. A 7.5 ms interval gets truncated to 7.
+
+    //Serial.print("connIntvl = ");
+    //Serial.println(connIntvl);
+
+    if (connIntvl < 7) {  // When connecting to a CME Widi Bud Pro, getConnectionInterval() erroneously returns a connection interval of 3 ms. No idea why :).
+        connIntvl = 7;
+    }
 
     if (communicationMode) {
         sendMIDI(CONTROL_CHANGE, 7, 106, 72);

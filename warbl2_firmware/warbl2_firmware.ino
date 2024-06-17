@@ -97,7 +97,7 @@ byte battLevel;                     // Estimated battery percentage remaining
 
 
 // BLE
-uint16_t connIntvl = 0;  // The negotiated connection interval
+int connIntvl = 0;  // The negotiated connection interval
 
 
 // IMU data
@@ -124,8 +124,8 @@ unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the 
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
 int pitchRegisterBounds[6];        // Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
 bool shakeDetected = 0;
-byte yawOutput;                // This is global because it used by both yaw mapping and sticks mode.
-byte prevKey = 0;              // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
+byte yawOutput;                 // This is global because it used by both yaw mapping and sticks mode.
+byte prevKey = 0;               // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
 unsigned long sticksModeTimer;  // For timing out the hidden way of entering sticks mode.
 
 // Instrument
@@ -260,9 +260,9 @@ int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                             
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
 bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
-volatile int tempNewNote = 0;
-byte prevNote;
-byte newNote = -1;              // The next note to be played, based on the fingering chart (does not include transposition).
+byte tempNewNote = 0xFF;
+byte prevNote = 0xFF;
+byte newNote = 0xFF;            // The next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
 unsigned long transitionFilter = 0;

@@ -12,6 +12,7 @@ The charger will report a fault (missing battery, out of temperature range) by b
 
 //#define PRINT_CHARGING_DATA  // For plotting voltage while charging
 
+
 void manageBattery(bool send) {
 
     static byte chargingStatus = 0;          // 0 is not charging, 1 is charging, 2 is fault
