@@ -31,6 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-First release of the WARBL2 firmware. Additions from the firmware for the orginal WARBL include functionality for BLE, the IMU, separate processor for reading the tonehole sensors, and a new custom fingering chart feature.
+First release of the WARBL2 firmware. Additions from the firmware for the orginal WARBL include functionality for BLE, the IMU, battery management separate processor (and associated firmware) for reading the tonehole sensors, and a new custom fingering chart feature.
 
 ### Added
