@@ -676,38 +676,27 @@ void getFingers() {
 
 // This should be called right after a new hole state change, before sending out any new note.
 bool isMaybeInTransition() {
-    // Look at all finger hole state to see if there might be other
+    // Look at all finger hole states to see if there might be other
     // fingers in motion (partial hole covered) which means this
     // might be a multi-finger note transition and we may want to wait
     // a bit to see if the pending fingers land before triggering the new note.
     int pendingHoleCovered = holeCovered;
     unsigned long now = millis();
-    int otherholes = 0;
 
     for (byte i = 0; i < 9; i++) {
         int thresh = senseDistance;  //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
         if (toneholeRead[i] > thresh) {
-
             if (bitRead(holeCovered, i) != 1) {
                 bitWrite(pendingHoleCovered, i, 1);
-                ++otherholes;
-                /*
-                Serial.print("offs: ");
-                Serial.print(offsetSteps);
-                Serial.print(" tscale: ");
-                Serial.print(toneholeScale[i]);
-                Serial.print(" bend: ");
-                Serial.println(iPitchBend[i]);
-                */
             }
         }
     }
 
     if (pendingHoleCovered != holeCovered) {
         // See if the pending is a new note.
-        int tempNewNote = getNote(holeCovered);
-        int pendingNote = getNote(pendingHoleCovered);
-        if (pendingNote >= 0 && pendingNote != tempNewNote) {
+        byte tempNewNote = getNote(holeCovered);
+        byte pendingNote = getNote(pendingHoleCovered);
+        if (pendingNote != 127 && pendingNote != tempNewNote) {
 #if DEBUG_TRANSITION_FILTER
             Serial.print(now);
             Serial.print(" : Maybe: ");
@@ -730,7 +719,7 @@ bool isMaybeInTransition() {
 
 
 
-// Key delay feature for delaying response to tone holes and filtering out transient notes, originally by Louis Barman, but reworked by Jesse Chappell
+// Detect changes in fingering. Contributions by Louis Barman and Jesse Chappell
 void debounceFingerHoles() {
 
     static unsigned long debounceTimer;
@@ -761,12 +750,12 @@ void debounceFingerHoles() {
     if (debounceDelta >= transitionFilter
         && timing == 1) {  // The fingering pattern has changed.
         timing = 0;
-
         fingersChanged = 1;
+        fingeringChangeTimer = millis();     // Start timing after the fingering pattern has changed.
         tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
         sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
-        if (tempNewNote != 0xFF && newNote != tempNewNote) {  // If a new note has been triggered,
+        if (tempNewNote != 127 && newNote != tempNewNote) {  // If a new note has been triggered (127 can be used as a "blank" position that has no effect),
             if (pitchBendMode != kPitchBendNone) {
                 holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
@@ -782,10 +771,8 @@ void debounceFingerHoles() {
 #endif
 
             newNote = tempNewNote;
-            tempNewNote = 0xFF;
             getState();  // Get state again if the note has changed.
         }
-        fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
     }
 }
 
@@ -842,7 +829,7 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 // Return a MIDI note number (0-127) based on the current fingering.
 byte getNote(unsigned int fingerPattern) {
-    byte ret = 0xFF;  // Default for unknown fingering
+    byte ret = 127;  // Default (blank position)
 
     uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
 
