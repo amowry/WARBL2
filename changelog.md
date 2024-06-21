@@ -10,19 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Changed the "basic" slide behavior so that there will some slide even if the predicted slide range is greter than the MIDI pitchbend range.
+- Changed the "basic" slide behavior so that there be will some slide even if the predicted slide range is greater than the MIDI pitchbend range.
 
-- It is now possible to enter either zeros or blanks in a custom fingering chart to produce silent notes.
+- It is now possible to enter either zeros or blanks in a custom fingering chart to produce silent notes. Also MIDI note 127 will produce a "blank" position that has no affect, in other words the previous note will continue to play.
 
 - Watchdog timer is now started at the beginning of setup() rather then the end, to catch hangs during initialization of peripherals.
   
 - Now resetting the ATmega during setup in case only the NRF52840 has been reset.
 
-- Added a hidden "sticks" mode where WARBL acts as a MIDI drumstick. Turned on by setting transpose to -18 in the Config Tool and then clicking "Auto-calibrate bell sensor only" within 10 seconds. Uses yaw mapping settings to map yaw to MIDI notes.
-
   
 
 ### Added
+
+- Added a hidden "sticks" mode where WARBL acts as a MIDI drumstick. Turned on by setting transpose to -18 in the Config Tool and then clicking "Auto-calibrate bell sensor only" within 10 seconds. Uses yaw mapping settings to map yaw to MIDI notes.
+- 
 
 ## [Released]
 
