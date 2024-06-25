@@ -289,10 +289,10 @@ void calibrateIMU() {
     gyroYCalibration = rawGyroY;
     gyroZCalibration = rawGyroZ;
 
-    putEEPROM(1975, gyroXCalibration);  // Put the current readings into EEPROM.
-    putEEPROM(1979, gyroYCalibration);
-    putEEPROM(1983, gyroZCalibration);
-    writeEEPROM(36, 3);  // Remember that we have saved a calibration.
+    putEEPROM(EEPROM_XGYRO_CALIB_START, gyroXCalibration);  // Put the current readings into EEPROM.
+    putEEPROM(EEPROM_YGYRO_CALIB_START, gyroYCalibration);
+    putEEPROM(EEPROM_ZGYRO_CALIB_START, gyroZCalibration);
+    writeEEPROM(EEPROM_XGYRO_CALIB_SAVED, 3);  // Remember that we have saved a calibration.
 }
 
 
@@ -1694,7 +1694,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 if (value == 85) {  // Set current Instrument as default and save default to settings.
                     defaultMode = mode;
-                    writeEEPROM(48, defaultMode);
+                    writeEEPROM(EEPROM_DEFAULT_MODE, defaultMode);
                 }
 
 
@@ -1818,7 +1818,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (WARBL2CustomChartReceiveByte == 256) {
                         WARBL2CustomChartReceiveByte = 0;  // Reset for next time;
                         for (int i = 0; i < 256; i++) {    // Write the chart to EEPROM.
-                            writeEEPROM((4000 + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
+                            writeEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
                         }
                         blinkNumber[GREEN_LED] = 3;
                         sendMIDI(CONTROL_CHANGE, 7, 109, 100);  // Indicate success.
@@ -1901,13 +1901,13 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 else if (value == 45) {  // Save current sensor calibration as factory calibration
                     for (byte i = 18; i < 38; i++) {
-                        writeEEPROM(i + 2000, readEEPROM(i));
+                        writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
                     for (int i = 1; i < 10; i++) {  // Save baseline calibration as factory baseline
-                        writeEEPROM(i + 2000, readEEPROM(i));
+                        writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
                     for (int i = 1975; i < 1987; i++) {  // Save gyroscope calibration as factory calibration
-                        writeEEPROM(i + 2000, readEEPROM(i));
+                        writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
                     blinkNumber[GREEN_LED] = 2;
                 }
@@ -1945,7 +1945,7 @@ void handleControlChange(byte channel, byte number, byte value) {
             if (number == 119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
                 for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
-                    writeEEPROM(600 + r, WARBL2settings[r]);
+                    writeEEPROM(EEPROM_WARBL2_SETTINGS_START + r, WARBL2settings[r]);
                 }
             }
 
@@ -2477,22 +2477,22 @@ void saveFactorySettings() {
         saveSettings(i);
     }
 
-    writeEEPROM(48, defaultMode);  // Save default mode
+    writeEEPROM(EEPROM_DEFAULT_MODE, defaultMode);  // Save default mode
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array
-        writeEEPROM(600 + r, WARBL2settings[r]);
+        writeEEPROM(EEPROM_WARBL2_SETTINGS_START + r, WARBL2settings[r]);
     }
 
-    writeEEPROM(1989, highByte(fullRunTime));  // The initial estimate of the total run time available on a full charge (minutes)
-    writeEEPROM(1990, lowByte(fullRunTime));
+    writeEEPROM(EEPROM_EST_RUNTIME_START, highByte(fullRunTime));  // The initial estimate of the total run time available on a full charge (minutes)
+    writeEEPROM(EEPROM_EST_RUNTIME_START+1, lowByte(fullRunTime));
 
-    writeEEPROM(1993, highByte(prevRunTime));  // The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an estimated number of minutes because the battery charge state is unknown.
-    writeEEPROM(1994, lowByte(prevRunTime));
+    writeEEPROM(EEPROM_RUNTIME_START, highByte(prevRunTime));  // The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an estimated number of minutes because the battery charge state is unknown.
+    writeEEPROM(EEPROM_RUNTIME_START+1, lowByte(prevRunTime));
 
-    writeEEPROM(44, 3);  // Indicates settings have been saved.
+    writeEEPROM(EEPROM_SETTINGS_SAVED, 3);  // Indicates settings have been saved.
 
     for (int i = 39; i < 1975; i++) {          // Then we read every byte in EEPROM from 39 to 1974 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations).
-        writeEEPROM(2000 + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
+        writeEEPROM(EEPROM_FACTORY_SETTINGS_START + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
     }
 
     blinkNumber[GREEN_LED] = 3;
@@ -2508,7 +2508,7 @@ void saveFactorySettings() {
 // Restore original settings from EEPROM
 void restoreFactorySettings() {
     for (int i = 1; i < 1987; i++) {  // Read factory settings and rewrite to the normal settings locations.
-        writeEEPROM(i, readEEPROM(2000 + i));
+        writeEEPROM(i, readEEPROM(EEPROM_FACTORY_SETTINGS_START + i));
     }
 
 
@@ -2638,8 +2638,8 @@ void sendSettings() {
 // Load saved fingering patterns
 void loadFingering() {
     for (byte i = 0; i < 3; i++) {
-        modeSelector[i] = readEEPROM(40 + i);
-        noteShiftSelector[i] = (int8_t)readEEPROM(53 + i);
+        modeSelector[i] = readEEPROM(EEPROM_FINGERING_PATTERN_START + i);
+        noteShiftSelector[i] = (int8_t)readEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i);
 
         if (communicationMode) {
             sendMIDI(CONTROL_CHANGE, 7, 102, 30 + i);                // Indicate that we'll be sending the fingering pattern for instrument i
@@ -2666,48 +2666,50 @@ void loadFingering() {
 
 // Save settings for current instrument as defaults for given instrument (i).
 void saveSettings(byte i) {
-    writeEEPROM(40 + i, modeSelector[mode]);
-    writeEEPROM(53 + i, noteShiftSelector[mode]);
-    writeEEPROM(50 + i, senseDistanceSelector[mode]);
+    writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[mode]);
+    writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[mode]);
+    writeEEPROM(EEPROM_SENS_DISTANCE_START + i, senseDistanceSelector[mode]);
 
     for (byte n = 0; n < kSWITCHESnVariables; n++) {  // Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
-        writeEEPROM((56 + i + (n * 3)), switches[mode][n]);
+        writeEEPROM((EEPROM_SWITCHES_START + i + (n * 3)), switches[mode][n]);
     }
 
-    writeEEPROM(333 + (i * 2), lowByte(vibratoHolesSelector[mode]));
-    writeEEPROM(334 + (i * 2), highByte(vibratoHolesSelector[mode]));
-    writeEEPROM(339 + (i * 2), lowByte(vibratoDepthSelector[mode]));
-    writeEEPROM(340 + (i * 2), highByte(vibratoDepthSelector[mode]));
-    writeEEPROM(345 + i, useLearnedPressureSelector[mode]);
+    writeEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2), lowByte(vibratoHolesSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_HOLES_START+1 + (i * 2), highByte(vibratoHolesSelector[mode]));
+
+    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2), lowByte(vibratoDepthSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_DEPTH_START+1 + (i * 2), highByte(vibratoDepthSelector[mode]));
+
+    writeEEPROM(EEPROM_USE_LEARNED_PRESS_START + i, useLearnedPressureSelector[mode]);
 
     for (byte j = 0; j < 5; j++) {  // Save button configuration for current mode
         for (byte k = 0; k < kGESTURESnVariables; k++) {
-            writeEEPROM(1000 + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
+            writeEEPROM(EEPROM_BUTTON_PREFS_START + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
         }
     }
 
     for (byte h = 0; h < 3; h++) {
-        writeEEPROM(250 + (i * 3) + h, momentary[mode][h]);
+        writeEEPROM(EEPROM_MOMENTARY_MODE_START + (i * 3) + h, momentary[mode][h]);
     }
 
     for (byte q = 0; q < 12; q++) {
-        writeEEPROM((260 + q + (i * 20)), pressureSelector[mode][q]);
+        writeEEPROM((EEPROM_PRESSURE_SETTINGS_START + q + (i * 20)), pressureSelector[mode][q]);
     }
 
-    writeEEPROM(273 + (i * 2), lowByte(learnedPressureSelector[mode]));
-    writeEEPROM(274 + (i * 2), highByte(learnedPressureSelector[mode]));
+    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2), lowByte(learnedPressureSelector[mode]));
+    writeEEPROM(EEPROM_LEARNED_PRESSURE_START+1 + (i * 2), highByte(learnedPressureSelector[mode]));
 
-    writeEEPROM(313 + i, pitchBendModeSelector[mode]);
-    writeEEPROM(316 + i, breathModeSelector[mode]);
-    writeEEPROM(319 + i, midiBendRangeSelector[mode]);
-    writeEEPROM(322 + i, midiChannelSelector[mode]);
+    writeEEPROM(EEPROM_PB_MODE_START + i, pitchBendModeSelector[mode]);
+    writeEEPROM(EEPROM_BREATH_MODE_START + i, breathModeSelector[mode]);
+    writeEEPROM(EEPROM_MIDI_BEND_RANGE_START + i, midiBendRangeSelector[mode]);
+    writeEEPROM(EEPROM_MIDI_CHANNEL_START + i, midiChannelSelector[mode]);
 
     for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-        writeEEPROM((351 + i + (n * 3)), ED[mode][n]);
+        writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), ED[mode][n]);
     }
 
     for (byte n = 0; n < kIMUnVariables; n++) {
-        writeEEPROM((625 + i + (n * 3)), IMUsettings[mode][n]);
+        writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3)), IMUsettings[mode][n]);
     }
 }
 
@@ -2724,66 +2726,66 @@ void saveSettings(byte i) {
 // Load settings for all three instruments from EEPROM.
 void loadSettingsForAllModes() {
     // Some things that are independent of mode.
-    defaultMode = readEEPROM(48);  // Load default mode.
+    defaultMode = readEEPROM(EEPROM_DEFAULT_MODE);  // Load default mode.
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
-        WARBL2settings[r] = readEEPROM(600 + r);
+        WARBL2settings[r] = readEEPROM(EEPROM_WARBL2_SETTINGS_START + r);
     }
 
-    fullRunTime = (word(readEEPROM(1989), readEEPROM(1990)));  // The total run time available on a full charge (minutes)
-    prevRunTime = (word(readEEPROM(1993), readEEPROM(1994)));  // The total run time since the last full charge (minutes)
+    fullRunTime = (word(readEEPROM(EEPROM_EST_RUNTIME_START), readEEPROM(EEPROM_EST_RUNTIME_START+1)));  // The total run time available on a full charge (minutes)
+    prevRunTime = (word(readEEPROM(EEPROM_RUNTIME_START), readEEPROM(EEPROM_RUNTIME_START+1)));  // The total run time since the last full charge (minutes)
 
-    if (readEEPROM(36) == 3) {  // If there has been a gyro calibration saved
-        getEEPROM(1975, gyroXCalibration);
-        getEEPROM(1979, gyroYCalibration);
-        getEEPROM(1983, gyroZCalibration);
+    if (readEEPROM(EEPROM_XGYRO_CALIB_SAVED) == 3) {  // If there has been a gyro calibration saved
+        getEEPROM(EEPROM_XGYRO_CALIB_START, gyroXCalibration);
+        getEEPROM(EEPROM_YGYRO_CALIB_START, gyroYCalibration);
+        getEEPROM(EEPROM_ZGYRO_CALIB_START, gyroZCalibration);
     }
 
     // Do all this for each mode.
     for (byte i = 0; i < 3; i++) {
-        senseDistanceSelector[i] = readEEPROM(50 + i);
+        senseDistanceSelector[i] = readEEPROM(EEPROM_SENS_DISTANCE_START + i);
 
         for (byte n = 0; n < kSWITCHESnVariables; n++) {
-            switches[i][n] = readEEPROM(56 + i + (n * 3));
+            switches[i][n] = readEEPROM(EEPROM_SWITCHES_START + i + (n * 3));
         }
 
-        vibratoHolesSelector[i] = word(readEEPROM(334 + (i * 2)), readEEPROM(333 + (i * 2)));
-        vibratoDepthSelector[i] = word(readEEPROM(340 + (i * 2)), readEEPROM(339 + (i * 2)));
-        useLearnedPressureSelector[i] = readEEPROM(345 + i);
+        vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START+1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
+        vibratoDepthSelector[i] = word(readEEPROM(EEPROM_VIBRATO_DEPTH_START+1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2)));
+        useLearnedPressureSelector[i] = readEEPROM(EEPROM_USE_LEARNED_PRESS_START + i);
 
         for (byte j = 0; j < 5; j++) {
             for (byte k = 0; k < kGESTURESnVariables; k++) {
-                buttonPrefs[i][k][j] = readEEPROM(1000 + (i * 50) + (j * 10) + k);
+                buttonPrefs[i][k][j] = readEEPROM(EEPROM_BUTTON_PREFS_START + (i * 50) + (j * 10) + k);
             }
         }
 
         for (byte h = 0; h < 3; h++) {
-            momentary[i][h] = readEEPROM(250 + (i * 3) + h);
+            momentary[i][h] = readEEPROM(EEPROM_MOMENTARY_MODE_START + (i * 3) + h);
         }
 
         for (byte m = 0; m < 12; m++) {
-            pressureSelector[i][m] = readEEPROM(260 + m + (i * 20));
+            pressureSelector[i][m] = readEEPROM(EEPROM_PRESSURE_SETTINGS_START + m + (i * 20));
         }
 
-        learnedPressureSelector[i] = word(readEEPROM(274 + (i * 2)), readEEPROM(273 + (i * 2)));
+        learnedPressureSelector[i] = word(readEEPROM(EEPROM_LEARNED_PRESSURE_START+1 + (i * 2)), readEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2)));
 
 
-        pitchBendModeSelector[i] = readEEPROM(313 + i);
-        breathModeSelector[i] = readEEPROM(316 + i);
+        pitchBendModeSelector[i] = readEEPROM(EEPROM_PB_MODE_START + i);
+        breathModeSelector[i] = readEEPROM(EEPROM_BREATH_MODE_START + i);
 
-        midiBendRangeSelector[i] = readEEPROM(319 + i);
+        midiBendRangeSelector[i] = readEEPROM(EEPROM_MIDI_BEND_RANGE_START + i);
         midiBendRangeSelector[i] = midiBendRangeSelector[i] > 96 ? 2 : midiBendRangeSelector[i];  // Sanity check in case uninitialized
 
-        midiChannelSelector[i] = readEEPROM(322 + i);
+        midiChannelSelector[i] = readEEPROM(EEPROM_MIDI_CHANNEL_START + i);
         midiChannelSelector[i] = midiChannelSelector[i] > 16 ? 1 : midiChannelSelector[i];  // Sanity check in case uninitialized
 
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-            ED[i][n] = readEEPROM(351 + i + (n * 3));
+            ED[i][n] = readEEPROM(EEPROM_ED_VARS_START + i + (n * 3));
         }
 
         for (byte p = 0; p < kIMUnVariables; p++) {
-            IMUsettings[i][p] = readEEPROM(625 + i + (p * 3));
+            IMUsettings[i][p] = readEEPROM(EEPROM_IMU_SETTINGS_START + i + (p * 3));
         }
 
         IMUsettings[i][32] = IMUsettings[i][32] > 1 ? 0 : IMUsettings[i][32];  // Sanity check for sticks mode in case uninitialized
@@ -2821,7 +2823,7 @@ void loadPrefs() {
     // Read a custom chart from EEPROM if we're using one.
     if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
         for (int i = 0; i < 256; i++) {
-            WARBL2CustomChart[i] = readEEPROM((4000 + (256 * (modeSelector[mode] - 67))) + i);
+            WARBL2CustomChart[i] = readEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (modeSelector[mode] - 67))) + i);
         }
     }
 
@@ -2972,7 +2974,7 @@ void saveCalibration() {
         writeEEPROM((1 + i), lowByte(toneholeBaseline[i]));  // The baseline readings can be stored in a single byte because they should be close to zero.
     }
     calibration = 0;
-    writeEEPROM(37, 3);  // We write a 3 to address 37 to indicate that we have stored a set of calibrations.
+    writeEEPROM(EEPROM_SENSOR_CALIB_SAVED, 3);  // We write a 3 to address 37 to indicate that we have stored a set of calibrations.
     analogWrite(LEDpins[GREEN_LED], 0);
     LEDon[GREEN_LED] = 0;
 }
@@ -2985,11 +2987,14 @@ void saveCalibration() {
 
 // Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
-    for (byte i = 0; i < 9; i++) {
-        byte high = readEEPROM((i + 9) * 2);
-        byte low = readEEPROM(((i + 9) * 2) + 1);
+    // for (byte i = 0; i < 9; i++) {
+    //     byte high = readEEPROM((i + 9) * 2);
+    //     byte low = readEEPROM(((i + 9) * 2) + 1);
+    for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START+18; i+2) {
+        byte high = readEEPROM(i);
+        byte low = readEEPROM(i + 1);
         toneholeCovered[i] = word(high, low);
-        toneholeBaseline[i] = readEEPROM(1 + i);
+        toneholeBaseline[i] = readEEPROM(EEPROM_BASELINE_CALIB_START + i);
     }
 }
 
