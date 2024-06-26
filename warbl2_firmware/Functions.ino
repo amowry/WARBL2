@@ -2993,8 +2993,9 @@ void loadCalibration() {
     for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START+18; i+=2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
-        toneholeCovered[i] = word(high, low);
-        toneholeBaseline[i] = readEEPROM(EEPROM_BASELINE_CALIB_START + i);
+        byte index = (i-EEPROM_SENSOR_CALIB_START)/2;
+        toneholeCovered[index] = word(high, low);
+        toneholeBaseline[index] = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
     }
 }
 
