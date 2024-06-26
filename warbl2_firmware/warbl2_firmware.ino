@@ -461,10 +461,10 @@ void setup() {
     WDDTelapsedTime = millis();
     watchdogReset();  // Feed the watchdog.
                       //while (!Serial);                 // Can uncomment this if not using release version, to show verbose programming output.
-    if (ATMEGA_FIRMWARE_VERSION != readEEPROM(EEPROM_ATMEAGA_FIRMWARE_VERSION)) {
+    if (ATMEGA_FIRMWARE_VERSION != readEEPROM(EEPROM_ATMEGA_FIRMWARE_VERSION)) {
         if (programATmega()) {
             Serial.println("Success");
-            writeEEPROM(EEPROM_ATMEAGA_FIRMWARE_VERSION, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
+            writeEEPROM(EEPROM_ATMEGA_FIRMWARE_VERSION, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
         }
     }
 #endif
