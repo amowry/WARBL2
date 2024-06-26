@@ -2990,7 +2990,7 @@ void loadCalibration() {
     // for (byte i = 0; i < 9; i++) {
     //     byte high = readEEPROM((i + 9) * 2);
     //     byte low = readEEPROM(((i + 9) * 2) + 1);
-    for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START+18; i+2) {
+    for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START+18; i+=2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
         toneholeCovered[i] = word(high, low);
