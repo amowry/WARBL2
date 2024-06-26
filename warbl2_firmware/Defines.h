@@ -307,7 +307,7 @@
 #define EEPROM_FIRMWARE_VERSION         1991 // firmware version
 #define EEPROM_HARDWARE_VERSION         1992 // hardware version
 #define EEPROM_RUNTIME_START            1993 // minutes operating time since last full charge (high byte) - (1994 low byte)
-#define EEPROM_ATMEAGA_FIRMWARE_VERSION 1995 // ATmega firmware version
+#define EEPROM_ATMEGA_FIRMWARE_VERSION 1995 // ATmega firmware version
 /* 1996-1999 unused, room for more settings */
 #define EEPROM_FACTORY_SETTINGS_START   2000 // 2001-3999 locations of factory settings (duplicates of 1-1999, for restoring settings)	
 #define EEPROM_CUSTOM_FINGERING_START   4000 // 4000-4255		Custom fingering chart 1
