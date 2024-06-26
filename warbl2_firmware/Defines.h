@@ -240,3 +240,78 @@
 #define RED_LED 0
 #define GREEN_LED 1
 #define BLUE_LED 2
+
+
+/* EEPROM Addresses */
+#define EEPROM_BASELINE_CALIB_START        1 // values 0-255 baseline sensor calibrations - 9 bytes 1-9
+/* 10-17 unused */
+#define EEPROM_SENSOR_CALIB_START         18 // sensor calibrations - 18 bytes 18-35, two byte per sensor high-low
+#define EEPROM_XGYRO_CALIB_SAVED          36 // value 3 indicates a saved gyro calibration
+#define EEPROM_SENSOR_CALIB_SAVED         37 // value 3 indicates a saved sensor calibration
+/* 38-39 unused */
+#define EEPROM_FINGERING_PATTERN_START    40 // values 0-max fingering pattern - 3 bytes 40-42
+/* 43 unused */
+#define EEPROM_SETTINGS_SAVED             44 // value 3 indicates settings have been saved - this will be reset to indicate that a factory reset needs to be done.
+/* 45-47 unused */
+#define EEPROM_DEFAULT_MODE               48 // default mode (instrument)
+/* 49 unused */
+#define EEPROM_SENS_DISTANCE_START        50 // values 0-255	finger-sensing distance - 3 bytes 50-52
+#define EEPROM_NOTE_SHIFT_SEL_START       53 // values 0-1 note shift selector - 3 bytes 53-55
+#define EEPROM_SWITCHES_START             56 // values 0-1 switches variables - 43 bytes 56-98
+/* 99 unused		
+ * 100-247	unused (previously button prefs)
+ * 248-249	unused
+*/
+#define EEPROM_MOMENTARY_MODE_START      250 // values 0-1 momentary mode 0  - 3 bytes 250-252
+                                             // values 0-1 momentary mode 1  - 3 bytes 253-255
+                                             // values 0-1 momentary mode 2  - 3 bytes 256-258
+/* 259 unused */
+#define EEPROM_PRESSURE_SETTINGS_START   260 // 261-272		pressure settings for mode 0
+                                             // 281-292		pressure settings for mode 1
+                                             // 301-312		pressure settings for mode 2
+#define EEPROM_LEARNED_PRESSURE_START    273 // values 0-255 low byte of learned pressure for mode 0 (274 high byte)
+                                              // 275 low byte of learned pressure for mode 1 (276 high byte)
+                                              // 277 low byte of learned pressure for mode 2 (278 high byte)
+/* 279-280 unused 
+ * 293-300 unused
+*/
+#define EEPROM_PB_MODE_START             313 // pitch bend mode - 3 bytes 313-315
+#define EEPROM_BREATH_MODE_START         316 // breath mode - 3 bytes 316-318
+#define EEPROM_MIDI_BEND_RANGE_START     319 // MIDI bend range - 3 bytes 319-321
+#define EEPROM_MIDI_CHANNEL_START        322 // MIDI channel - 3 bytes 322-324
+/* 325-332 unused */
+#define EEPROM_VIBRATO_HOLES_START       333 // values 0-1 low byte of enabled vibrato holes for mode 0 (334 high byte)
+                                             // 335 low byte of enabled vibrato holes for mode 1 (336 high byte)
+                                             // 337 low byte of enabled vibrato holes for mode 2 (338 high byte)
+#define EEPROM_VIBRATO_DEPTH_START       339 // values 0-255 low byte of evibrato depth  for mode 0 (340 high byte)
+                                             // 341 low byte of vibrato depth  for mode 1 (342 high byte)
+                                             // 343 low byte of vibrato depth  for mode 2 (344 high byte)
+#define EEPROM_USE_LEARNED_PRESS_START   345 //values 0-1	use learned calibration - 3 bytes 345-347 
+/* 348-350 unused */
+#define EEPROM_ED_VARS_START             351 // 351-497	expression and drones (ED) variables
+/* 498-599 unused, room for extending above array or other variables */
+#define EEPROM_WARBL2_SETTINGS_START     600 // 600-602 WARBL2settings array
+/* 603-625 unused, room for extending above array or other variables */
+#define EEPROM_IMU_SETTINGS_START        625 // 625-723 WARBL2 IMUsettings array
+/*724-999 unused, room for extending above array or other variables */
+#define EEPROM_BUTTON_PREFS_START       1000 // 1000-1247 button prefs
+/* 1248-1974 unused */
+/* Note: 1975-1986 currently doesn't get saved to factory settings but does get restored from factory settings (calibrations are saved to factory settings manually) */
+#define EEPROM_XGYRO_CALIB_START        1975 // XGyro calibration	(float) 4 bytes
+#define EEPROM_YGYRO_CALIB_START        1979 // YGyro calibration	(float) 4 bytes
+#define EEPROM_ZGYRO_CALIB_START        1983 // ZGyro calibration	(float) 4 bytes
+/* Note: 1987-2000 doesn't currently get saved to or restored from factory settings. */
+#define EEPROM_RESERVED_TESTING         1987 // Reserved for testing purposes
+#define EEPROM_LOW_CHARGE               1988 // indication that there has been a charge termination (value of 3) or shutdown because of low battery (value of 1)
+#define EEPROM_EST_RUNTIME_START        1989 // operating time on a full charge (minutes, high byte) - (1990 low byte)
+#define EEPROM_FIRMWARE_VERSION         1991 // firmware version
+#define EEPROM_HARDWARE_VERSION         1992 // hardware version
+#define EEPROM_RUNTIME_START            1993 // minutes operating time since last full charge (high byte) - (1994 low byte)
+#define EEPROM_ATMEGA_FIRMWARE_VERSION 1995 // ATmega firmware version
+/* 1996-1999 unused, room for more settings */
+#define EEPROM_FACTORY_SETTINGS_START   2000 // 2001-3999 locations of factory settings (duplicates of 1-1999, for restoring settings)	
+#define EEPROM_CUSTOM_FINGERING_START   4000 // 4000-4255		Custom fingering chart 1
+                                             // 4256-4511		Custom fingering chart 2
+                                             // 4512-4767		Custom fingering chart 3
+                                             // 4768-5023		Custom fingering chart 4
+/* 5024-16383 other ~11 KB unused */

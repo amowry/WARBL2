@@ -431,15 +431,15 @@ void setup() {
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down the gyro for now to save power, and we'll turn it on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
 
-    //writeEEPROM(44, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
+    //writeEEPROM(EEPROM_SETTINGS_SAVED, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
-    if (readEEPROM(44) != 3) {
+    if (readEEPROM(EEPROM_SETTINGS_SAVED) != 3) {
         WDDTelapsedTime = millis();
         watchdogReset();        // Feed the watchdog because we need to do some things that will take some time.
         saveFactorySettings();  // If we're running the software for the first time, or if a factory reset has been requested, copy all settings to EEPROM.
     }
 
-    if (readEEPROM(37) == 3) {
+    if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
@@ -454,17 +454,17 @@ void setup() {
 
     //eraseEEPROM(); // Testing
 
-    writeEEPROM(1991, VERSION);  // Update the firmware version if it has changed.
+    writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
 
     // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
 #ifndef PROTOTYPE46
     WDDTelapsedTime = millis();
     watchdogReset();  // Feed the watchdog.
                       //while (!Serial);                 // Can uncomment this if not using release version, to show verbose programming output.
-    if (ATMEGA_FIRMWARE_VERSION != readEEPROM(1995)) {
+    if (ATMEGA_FIRMWARE_VERSION != readEEPROM(EEPROM_ATMEGA_FIRMWARE_VERSION)) {
         if (programATmega()) {
             Serial.println("Success");
-            writeEEPROM(1995, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
+            writeEEPROM(EEPROM_ATMEGA_FIRMWARE_VERSION, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
         }
     }
 #endif
