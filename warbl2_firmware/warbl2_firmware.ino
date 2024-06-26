@@ -4,7 +4,7 @@
 /*
     Copyright (C) 2018-2023 Andrew Mowry warbl.xyz
 
-    Many thanks to Michael Eskin, Jesse Chappell, Gerard Kilbride, Louis Barman, Randy George, and many other WARBL users for their additions and suggestions.
+    Many thanks to Michael Eskin, Jesse Chappell, Gerard Kilbride, Louis Barman, Randy George, Gianluca Barbaro, and many other WARBL users for their additions and suggestions.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
