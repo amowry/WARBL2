@@ -4,6 +4,8 @@
      then goes to sleep. When wakened by a pin interrupt it
     sends all tone hole data by SPI and then repeats.
 
+    To compile this firmware, use the Adafruit ItsyBitsy 32u4 board package.
+
     To allow the NRF52840 to automatically update the firmware on the ATmega, compile this code as hex and paste it into the ATmega_programming.ino tab in the WARBL2 firmware.
 
     Copyright (C) 2023 Andrew Mowry warbl.xyz
