@@ -3576,6 +3576,7 @@ function toggleOn() {
     else{
 		document.getElementById("volumeOff").style.display = "none";
 		document.getElementById("volumeOn").style.display = "block";
+				alert("Please note that the sound in the Configuration Tool is low quality and is meant for testing purposes only. For much better sound, use a dedicated MIDI app.");
     }
 }
 
