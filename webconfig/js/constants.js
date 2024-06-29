@@ -1,3 +1,4 @@
+const MIDI_DEBUG = true;
 
 /* MIDI Config Tool Constants */
 
