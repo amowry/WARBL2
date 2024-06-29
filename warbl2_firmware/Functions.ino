@@ -2098,7 +2098,7 @@ void handleButtons() {
         if (released[i] && (momentary[mode][i] || (pressed[0] + pressed[1] + pressed[2] == 0))) {  // Do action for a button release ("click") NOTE: button array is zero-indexed, so "button 1" in all documentation is button 0 here (same for others).
             if (!specialPressUsed[i]) {    
                 //20240629 MrMep DoubleClick handling
-                if (switches[BUTTON_DOUBLE_CLICK]) { //Double click is active on buttons
+                if (switches[mode][BUTTON_DOUBLE_CLICK] && !momentary[mode][i] ) { //Double click is active on buttons, and this button is not in momentary
                     if (waitingSecondClick[i]) { //We already had a first click
                         waitingSecondClick[i] = false;
                         if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL)  { //Timer has not expired yet, we had second clic

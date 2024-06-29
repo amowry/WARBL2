@@ -10,6 +10,7 @@
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define DEBUG_TRANSITION_FILTER 0
+#define DEBUG_CONFIG_TOOL 0
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -173,8 +174,7 @@
 #define kGESTURESnVariables 10
 
 // Button/gesture actions
-#define DOUBLE_CLICK_WAIT_INTERVAL     200 //Check button is every 5 ticks, so this hould be about 1 second
-
+#define DOUBLE_CLICK_WAIT_INTERVAL  200 //Check button is every 5 ticks, so this hould be about 1 second
 #define NO_ACTION 0
 #define SEND_MIDI_MESSAGE 1
 #define CHANGE_PITCHBEND_MODE 2
@@ -451,7 +451,7 @@
     #define MIDI_CC_104_VALUE_50             50 //  Bidirectional. Settings for current instrument: indicates that switches[10] is about to be sent with CC 105. 
     #define MIDI_CC_104_VALUE_51             51 //  Bidirectional. Settings for current instrument: indicates that switches[11] is about to be sent with CC 105. 
     #define MIDI_CC_104_VALUE_52             52 //  Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105. 
-    #define MIDI_CC_104_VALUE_53             53 //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
+    #define MIDI_CC_104_VALUE_53             53 //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
     //
     /* 54-60 unused */
     //MrMep: The following 2 must be wrong on the google doc
@@ -800,7 +800,7 @@
 /* 49 unused */
 #define EEPROM_SENS_DISTANCE_START        50 // values 0-255	finger-sensing distance - 3 bytes 50-52
 #define EEPROM_NOTE_SHIFT_SEL_START       53 // values 0-1 note shift selector - 3 bytes 53-55
-#define EEPROM_SWITCHES_START             56 // values 0-1 switches variables - 46 bytes 56-98
+#define EEPROM_SWITCHES_START             56 // values 0-1 switches variables - 43 bytes 56-98
 /* 99 unused		
  * 100-247	unused (previously button prefs)
  * 248-249	unused

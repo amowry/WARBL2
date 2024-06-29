@@ -3,7 +3,7 @@
    <script>
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
       var platform = "app";
-     //var platform = "web";
+      //var platform = "web";
    </script>
    <head>
       <meta charset="utf-8" />
@@ -1264,6 +1264,11 @@
                   <input type="checkbox" class="checkboxes" id="checkbox3" onChange="sendSecret(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+                  <div class="doubleClickLabel noTouch">Use button double clicks</div>
+                  <label class="switch" id="switchDoubleClick">
+                    <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
+                    <span class="slider round"></span>
+                  </label>
                   <div class="momentaryLabel noTouch">Momentary</div>
                   <label class="switch" id="switch0">
                   <input type="checkbox" class="checkboxes" id="checkbox0" onChange="sendMomentary(0)" />
@@ -1989,6 +1994,9 @@
                   </p>
                   <p>
                      On WARBL2 you can also set a button action to <b>recenter the yaw</b>, or <b>show the battery level</b>. When triggered, the latter will blink the LED in a turquoise color from 1-10 times according to the battery level percentage. If the battery level is lower than 10%, the LED will blink once in red.
+                  </p>
+                  <p>
+                     The "<b>double-click</b>" option applies to the first three gestures: when active, the corresponding action will take place only after a quick double press of the button. This is intended to avoid accidental clicks while playing. When enabled, the "momentary" option takes precedence.
                   </p>
                   <p>
                      The "secret" button commands are a few additional hard-coded actions that involve covering certain tone holes while clicking button 1. These can be useful if normal button actions are used for other functions. They give you an alternative way of changing slide/vibrato mode and instrument. With the "secret" commands turned on, covering only hole L3 while pressing button 1 will change the slide/vibrato mode, and covering only R3 while pressing button 1 will change the instrument. Note that the <b>Use "secret" button commands</b> switch does not have to be on to use the "secret" drone control button, if that option is selected in the Drone Control panel.

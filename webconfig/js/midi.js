@@ -797,8 +797,6 @@ function WARBL_Receive(event) {
                         if ((data2 >= MIDI_FINGERING_PATTERN_START && data2 <= MIDI_FINGERING_PATTERN_END)) {
 
                             if (fingeringWrite == i) {
-                                console.log("fingeringWrite", fingeringWrite, "value", data2, "->", data2 - MIDI_FINGERING_PATTERN_START);
-
                                 document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
                             }
                             updateCells(); //update any dependant fields	
@@ -1161,12 +1159,11 @@ function WARBL_Receive(event) {
                         updateCustom();
                     } //R4 flattens
 
-                    /*
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +13) {
-                        document.getElementById("checkbox19").checked = data2;
-                        updateCustom();
-                    } //R4 Invert
-                    */
+                        document.getElementById("cbDoubleClick").checked = data2;
+						updateDoubleClick();
+                    } //BUTTON_DOUBLE_CLICK
+                    
 
                     else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;

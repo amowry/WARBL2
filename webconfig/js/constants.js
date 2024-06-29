@@ -1,4 +1,4 @@
-const MIDI_DEBUG = true;
+const MIDI_DEBUG = false;
 
 /* MIDI Config Tool Constants */
 
