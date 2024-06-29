@@ -806,14 +806,14 @@ void sendToConfig(bool newPattern, bool newPressure) {
         }
 
         if (patternChanged && (nowtime - patternSendTimer) > 25) {  // If some time has past, send the new pattern to the Config Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 114, holeCovered >> 7);     // Because it's MIDI we have to send it in two 7-bit chunks.
-            sendMIDI(CONTROL_CHANGE, 7, 115, lowByte(holeCovered));
+            sendMIDI(MIDI_CC_114_MSG, holeCovered >> 7);     // Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDI(MIDI_CC_115_MSG, lowByte(holeCovered));
             patternChanged = false;
         }
 
         if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  // If some time has past, send the new pressure to the Config Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 116, sensorValue & 0x7F);     // Send LSB of current pressure to Configuration Tool.
-            sendMIDI(CONTROL_CHANGE, 7, 118, sensorValue >> 7);       // Send MSB of current pressure.
+            sendMIDI(MIDI_CC_116_MSG, sensorValue & 0x7F);     // Send LSB of current pressure to Configuration Tool.
+            sendMIDI(MIDI_CC_118_MSG, sensorValue >> 7);       // Send MSB of current pressure.
             pressureChanged = false;
         }
     }
@@ -1586,58 +1586,58 @@ void handleControlChange(byte channel, byte number, byte value) {
 
     if (number < 120) {  // Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == 7) {     // If we're on channel 7, we may be receiving messages from the configuration tool.
+        if ((channel & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL) {     // If we're on channel 7, we may be receiving messages from the configuration tool.
             powerDownTimer = millis();   // Reset the powerDown timer because we've heard from the Config Tool.
             blinkNumber[GREEN_LED] = 1;  // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
 
             /////// CC 102
-            if (number == 102) {                 // Many settings are controlled by a value in CC 102 (always channel 7).
-                if (value > 0 && value <= 18) {  // Handle sensor calibration commands from the configuration tool.
+            if (number == MIDI_CC_102) {                 // Many settings are controlled by a value in CC 102 (always channel 7).
+                if (value >= MIDI_CALIB_MSGS_START && value <= MIDI_CALIB_MSGS_END) {  // Handle sensor calibration commands from the configuration tool.
                     if ((value & 1) == 0) {
                         toneholeCovered[(value >> 1) - 1] -= 5;
                         if ((toneholeCovered[(value >> 1) - 1] - 54) < 5) {  //if the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
-                            sendMIDI(CONTROL_CHANGE, 7, 102, (20 + ((value >> 1) - 1)));
+                            sendMIDI(MIDI_CC_102_MSG, (MIDI_MAX_CALIB_MSGS_START + ((value >> 1) - 1)));
                         }
                     } else {
                         toneholeCovered[((value + 1) >> 1) - 1] += 5;
                     }
                 }
 
-                if (value == 19) {  // Save calibration if directed.
+                if (value == MIDI_SAVE_CALIB) {  // Save calibration if directed.
                     saveCalibration();
                     blinkNumber[GREEN_LED] = 3;
                 }
 
-                else if (value == 127) {  // Begin auto-calibration if directed.
+                else if (value == MIDI_START_CALIB) {  // Begin auto-calibration if directed.
                     blinkNumber[GREEN_LED] = 0;
                     calibration = 1;
                 }
 
-                else if (value == 126) {  // When communication is established, send all current settings to tool.
+                else if (value == MIDI_ENTER_COMM_MODE) {  // When communication is established, send all current settings to tool.
                     communicationMode = 1;
                     sendSettings();
                 }
 
-                else if (value == 104) {  // Turn off communication mode.
+                else if (value == MIDI_EXIT_COMM_MODE) {  // Turn off communication mode.
                     communicationMode = 0;
                 }
 
 
                 for (byte i = 0; i < 3; i++) {  // Update the three selected fingering patterns if prompted by the tool.
-                    if (value == 30 + i) {
+                    if (value == MIDI_FINGERING_PATTERN_MODE_START + i) {
                         fingeringReceiveMode = i;
                     }
                 }
 
-                if ((value > 32 && value < 60) || (value > 99 && value < 104)) {
-                    modeSelector[fingeringReceiveMode] = value - 33;
+                if ((value >= MIDI_FINGERING_PATTERN_START && value <= MIDI_FINGERING_PATTERN_END) || (value >= MIDI_CUST_FINGERING_PATTERN_START && value <= MIDI_CUST_FINGERING_PATTERN_END)) {
+                    modeSelector[fingeringReceiveMode] = value - MIDI_FINGERING_PATTERN_START;
                     loadPrefs();
                 }
 
 
                 for (byte i = 0; i < 3; i++) {  // Update current mode (instrument) if directed.
-                    if (value == 60 + i) {
+                    if (value == MIDI_CURRENT_MODE_START + i) {
                         mode = i;
                         play = 0;
                         loadPrefs();     // Load the correct user settings based on current instrument.
@@ -1647,7 +1647,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 for (byte i = 0; i < 4; i++) {  // Update current pitchbend mode if directed.
-                    if (value == 70 + i) {
+                    if (value == MIDI_PB_MODE_START + i) {
                         pitchBendModeSelector[mode] = i;
                         loadPrefs();
                         blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
@@ -1655,7 +1655,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 for (byte i = 0; i < 5; i++) {  // Update current breath mode if directed.
-                    if (value == 80 + i) {
+                    if (value == MIDI_BREATH_MODE_START + i) {
                         breathModeSelector[mode] = i;
                         loadPrefs();  // Load the correct user settings based on current instrument.
                         blinkNumber[GREEN_LED] = abs(breathMode) + 1;
@@ -1663,7 +1663,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
                 for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button receive mode (this indicates the row in the button settings for which the next received byte will be).
-                    if (value == 90 + i) {
+                    if (value == MIDI_GESTURE_START + i) {
                         buttonReceiveMode = i;
                         blinkNumber[GREEN_LED] = 0;
                     }
@@ -1671,7 +1671,6 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
                     if (buttonReceiveMode == i) {
-
                         for (byte k = 0; k < 5; k++) {  // Update column 1 (MIDI action).
                             if (value == 112 + k) {
                                 buttonPrefs[mode][i][1] = k;
@@ -1682,29 +1681,29 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 for (byte i = 0; i < 3; i++) {  // Update momentary
                     if (buttonReceiveMode == i) {
-                        if (value == 117) {
+                        if (value == MIDI_MOMENTARY_OFF) {
                             momentary[mode][i] = 0;
                             noteOnOffToggle[i] = 0;
-                        } else if (value == 118) {
+                        } else if (value == MIDI_MOMENTARY_ON) {
                             momentary[mode][i] = 1;
                             noteOnOffToggle[i] = 0;
                         }
                     }
                 }
 
-                if (value == 85) {  // Set current Instrument as default and save default to settings.
+                if (value == MIDI_DEFAULT_MODE_START) {  // Set current Instrument as default and save default to settings.
                     defaultMode = mode;
                     writeEEPROM(EEPROM_DEFAULT_MODE, defaultMode);
                 }
 
 
-                if (value == 123) {  // Save settings as the defaults for the current instrument
+                if (value == MIDI_SAVE_AS_DEFAULTS_CURRENT) {  // Save settings as the defaults for the current instrument
                     saveSettings(mode);
                     blinkNumber[GREEN_LED] = 3;
                 }
 
 
-                else if (value == 124) {  // Save settings as the defaults for all instruments
+                else if (value == MIDI_SAVE_AS_DEFAULTS_ALL) {  // Save settings as the defaults for all instruments
                     for (byte k = 0; k < 3; k++) {
                         saveSettings(k);
                     }
@@ -1715,7 +1714,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
                 }
 
-                else if (value == 125) {  // Restore all factory settings
+                else if (value == MIDI_RESTORE_FACTORY) {  // Restore all factory settings
                     restoreFactorySettings();
                     blinkNumber[GREEN_LED] = 3;
                 }
@@ -1725,12 +1724,12 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
             /////// CC 103
-            else if (number == 103) {
+            else if (number == MIDI_CC_103) {
                 senseDistanceSelector[mode] = value;
                 loadPrefs();
             }
 
-            else if (number == 117) {
+            else if (number == MIDI_CC_117) {
                 unsigned long v = value * 8191UL / 100;
                 vibratoDepthSelector[mode] = v;  // Scale vibrato depth in cents up to pitchbend range of 0-8191.
                 loadPrefs();
@@ -1738,8 +1737,8 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
             for (byte i = 0; i < 3; i++) {  // Update noteshift.
-                if (number == 111 + i) {
-                    if (value == 109) {
+                if (number == MIDI_CC_111 + i) {
+                    if (value == MIDI_STICKS_MODE) {
                         sticksModeTimer = millis();         // We will be toggling hidden "sticks" mode, if "autocalibrate bell sensor only" is clicked within 10 seconds.
                         prevKey = noteShiftSelector[mode];  // Remember the current key because we'll need to reset it if we're entering or exiting sticks mode.
                     }
@@ -1755,62 +1754,62 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
             /////// CC 104
-            if (number == 104) {  // Update receive mode, used for advanced pressure range sliders, switches, and expression and drones panel settings (this indicates the variable for which the next received byte on CC 105 will be).
-                pressureReceiveMode = value - 1;
+            if (number == MIDI_CC_104) {  // Update receive mode, used for advanced pressure range sliders, switches, and expression and drones panel settings (this indicates the variable for which the next received byte on CC 105 will be).
+                pressureReceiveMode = value;
             }
 
 
 
             /////// CC 105
-            else if (number == 105) {
+            else if (number == MIDI_CC_105) {
 
-                if (pressureReceiveMode < 12) {
-                    pressureSelector[mode][pressureReceiveMode] = value;  // Advanced pressure values
+                if (pressureReceiveMode <= MIDI_PRESS_SELECT_VARS_END) {
+                    pressureSelector[mode][pressureReceiveMode - 1] = value;  // Advanced pressure values
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode < 33) {
-                    ED[mode][pressureReceiveMode - 12] = value;  // Expression and drones settings
+                else if (pressureReceiveMode <= MIDI_ED_VARS_END) {
+                    ED[mode][pressureReceiveMode - MIDI_ED_VARS_START] = value;  // Expression and drones settings
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode == 33) {
+                else if (pressureReceiveMode == MIDI_LEARNED_PRESS_LSB) {
                     LSBlearnedPressure = value;
 
                 }
 
-                else if (pressureReceiveMode == 34) {
+                else if (pressureReceiveMode == MIDI_LEARNED_PRESS_MSB) {
                     learnedPressureSelector[mode] = (value << 7) | LSBlearnedPressure;
                     loadPrefs();
                 }
 
 
-                else if (pressureReceiveMode < 53) {
-                    switches[mode][pressureReceiveMode - 39] = value;  // Switches in the slide/vibrato and register control panels.
+                else if (pressureReceiveMode <= MIDI_SWITCHES_VARS_END) {
+                    switches[mode][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode == 60) {
+                else if (pressureReceiveMode == MIDI_BEND_RANGE) {
                     midiBendRangeSelector[mode] = value;
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode == 61) {
+                else if (pressureReceiveMode == MIDI_MIDI_CHANNEL) {
                     midiChannelSelector[mode] = value;
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode < 98) {
-                    ED[mode][pressureReceiveMode - 48] = value;  // More expression and drones settings.
+                else if (pressureReceiveMode <= MIDI_ED_VARS2_END) {
+                    ED[mode][pressureReceiveMode - MIDI_ED_VARS2_OFFSET] = value;  // More expression and drones settings.
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode >= 200 && pressureReceiveMode < (kIMUnVariables + 200)) {
-                    IMUsettings[mode][pressureReceiveMode - 200] = value;  // IMU settings
+                else if (pressureReceiveMode >= MIDI_CC_109_OFFSET && pressureReceiveMode < (kIMUnVariables + MIDI_CC_109_OFFSET)) {
+                    IMUsettings[mode][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
                     loadPrefs();
                 }
 
-                else if (pressureReceiveMode >= 300 && pressureReceiveMode < 304) {  // WARBL2 Custom fingering charts
+                else if (pressureReceiveMode >= MIDI_CUSTOM_CHARTS_OFFSET_START && pressureReceiveMode <= MIDI_CUSTOM_CHARTS_OFFSET_END) {  // WARBL2 Custom fingering charts
                     blinkNumber[GREEN_LED] = 0;
                     WARBL2CustomChart[WARBL2CustomChartReceiveByte] = value;  // Put the value in the custom chart.
                     WARBL2CustomChartReceiveByte++;                           // Increment the location.
@@ -1818,10 +1817,10 @@ void handleControlChange(byte channel, byte number, byte value) {
                     if (WARBL2CustomChartReceiveByte == 256) {
                         WARBL2CustomChartReceiveByte = 0;  // Reset for next time;
                         for (int i = 0; i < 256; i++) {    // Write the chart to EEPROM.
-                            writeEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (pressureReceiveMode - 300))) + i, WARBL2CustomChart[i]);
+                            writeEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (pressureReceiveMode - MIDI_CUSTOM_CHARTS_OFFSET_START))) + i, WARBL2CustomChart[i]);
                         }
                         blinkNumber[GREEN_LED] = 3;
-                        sendMIDI(CONTROL_CHANGE, 7, 109, 100);  // Indicate success.
+                        sendMIDI(MIDI_CUSTOM_CHARTS_RCVD);  // Indicate success.
                         loadPrefs();
                     }
                 }
@@ -1830,46 +1829,46 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
             /////// CC 109
-            if ((number == 109 && value < kIMUnVariables) || (number == 109 && value > 99 && value < 104)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
-                pressureReceiveMode = value + 200;                                                            // Add to the value because lower pressureReceiveModes are used for other variables.
+            if ((number == MIDI_CC_109 && value < kIMUnVariables) 
+                || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
+                pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                            // Add to the value because lower pressureReceiveModes are used for other variables.
                 blinkNumber[GREEN_LED] = 0;
             }
 
 
             /////// CC 106
-            if (number == 106 && value > 15) {
+            if (number == MIDI_CC_106 && value > MIDI_ACTION_MIDI_CHANNEL_END) {
 
-
-                if (value > 19 && value < 29) {  // Update enabled vibrato holes for "universal" vibrato.
-                    bitSet(vibratoHolesSelector[mode], value - 20);
+                if (value >= MIDI_ENA_VIBRATO_HOLES_START && value <= MIDI_ENA_VIBRATO_HOLES_END) {  // Update enabled vibrato holes for "universal" vibrato.
+                    bitSet(vibratoHolesSelector[mode], value - MIDI_ENA_VIBRATO_HOLES_START);
                     loadPrefs();
                 }
 
-                else if (value > 29 && value < 39) {
-                    bitClear(vibratoHolesSelector[mode], value - 30);
+                else if (value >= MIDI_DIS_VIBRATO_HOLES_START && value <= MIDI_DIS_VIBRATO_HOLES_END) {
+                    bitClear(vibratoHolesSelector[mode], value - MIDI_DIS_VIBRATO_HOLES_START);
                     loadPrefs();
                 }
 
-                else if (value == 39) {
+                else if (value == MIDI_STARTUP_CALIB) {
                     useLearnedPressureSelector[mode] = 0;
                     loadPrefs();
                 }
 
-                else if (value == 40) {
+                else if (value == MIDI_USE_LEARNED_CALIB) {
                     useLearnedPressureSelector[mode] = 1;
                     loadPrefs();
                 }
 
-                else if (value == 41) {
+                else if (value == MIDI_LEARN_INITIAL_NOTE_PRESS) {
                     learnedPressureSelector[mode] = sensorValue;
-                    sendMIDI(CONTROL_CHANGE, 7, 104, 34);                                    // Indicate that LSB of learned pressure is about to be sent.
-                    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressureSelector[mode] & 0x7F);  // Send LSB of learned pressure.
-                    sendMIDI(CONTROL_CHANGE, 7, 104, 35);                                    // Indicate that MSB of learned pressure is about to be sent.
-                    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressureSelector[mode] >> 7);    // Send MSB of learned pressure.
+                    sendMIDI(MIDI_SEND_LEARNED_PRESSURE_LSB); // Indicate that LSB of learned pressure is about to be sent.
+                    sendMIDI(MIDI_CC_105_MSG, learnedPressureSelector[mode] & 0x7F);  // Send LSB of learned pressure.
+                    sendMIDI(MIDI_SEND_LEARNED_PRESSURE_MSB); // Indicate that MSB of learned pressure is about to be sent.
+                    sendMIDI(MIDI_CC_105_MSG, learnedPressureSelector[mode] >> 7);    // Send MSB of learned pressure.
                     loadPrefs();
                 }
 
-                else if (value == 42) {  // Autocalibrate bell sensor only, or turn on stick mode using "hidden" Config Tool sequence.
+                else if (value == MIDI_CALIB_BELL_SENSOR) {  // Autocalibrate bell sensor only, or turn on stick mode using "hidden" Config Tool sequence.
                     blinkNumber[GREEN_LED] = 0;
                     if ((millis() - sticksModeTimer) < 10000) {  // Hidden way to turn on sticks mode.
                         IMUsettings[mode][STICKS_MODE] = !IMUsettings[mode][STICKS_MODE];
@@ -1879,7 +1878,7 @@ void handleControlChange(byte channel, byte number, byte value) {
                             blinkNumber[GREEN_LED] = 1;
                         }
                         noteShiftSelector[mode] = prevKey;  // Reset the key to the previous value because it was only changed to toggle sticksMode.
-                        sendMIDI(CONTROL_CHANGE, 7, (111 + mode), noteShiftSelector[mode]);
+                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + mode), noteShiftSelector[mode]);
                         loadPrefs();
                         return;
                     }
@@ -1888,48 +1887,48 @@ void handleControlChange(byte channel, byte number, byte value) {
                 }
 
 
-                else if (value == 43) {
+                else if (value == MIDI_LEARN_DRONES_PRESSURE) {
                     int tempPressure = sensorValue;
                     ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
                     ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
-                    sendMIDI(CONTROL_CHANGE, 7, 104, 32);                                   // Indicate that LSB of learned drones pressure is about to be sent
-                    sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
-                    sendMIDI(CONTROL_CHANGE, 7, 104, 33);                                   // Indicate that MSB of learned drones pressure is about to be sent
-                    sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
+                    sendMIDI(MIDI_SEND_DRONES_PRESSURE_LSB); // Indicate that LSB of learned drones pressure is about to be sent
+                    sendMIDI(MIDI_CC_105_MSG, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
+                    sendMIDI(MIDI_SEND_DRONES_PRESSURE_MSB); // Indicate that MSB of learned drones pressure is about to be sent
+                    sendMIDI(MIDI_CC_105_MSG, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
                 }
 
 
-                else if (value == 45) {  // Save current sensor calibration as factory calibration
-                    for (byte i = 18; i < 38; i++) {
+                else if (value == MIDI_SAVE_CALIB_AS_FACTORY) {  // Save current sensor calibration as factory calibration
+                    for (byte i = EEPROM_SENSOR_CALIB_START; i <= EEPROM_SENSOR_CALIB_SAVED; i++) {
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
-                    for (int i = 1; i < 10; i++) {  // Save baseline calibration as factory baseline
+                    for (int i = EEPROM_BASELINE_CALIB_START; i < 10; i++) {  // Save baseline calibration as factory baseline
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
-                    for (int i = 1975; i < 1987; i++) {  // Save gyroscope calibration as factory calibration
+                    for (int i = EEPROM_XGYRO_CALIB_START; i < EEPROM_RESERVED_TESTING; i++) {  // Save gyroscope calibration as factory calibration
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
                     blinkNumber[GREEN_LED] = 2;
                 }
 
-                else if (value == 54) {
+                else if (value == MIDI_CALIB_IMU) {
                     calibrateIMU();
                 }
 
-                else if (value > 54 && value < (55 + kWARBL2SETTINGSnVariables)) {
-                    WARBL2settingsReceiveMode = value - 55;
+                else if (value >= MIDI_WARBL2_SETTINGS_START && value < (MIDI_WARBL2_SETTINGS_START + kWARBL2SETTINGSnVariables)) {
+                    WARBL2settingsReceiveMode = value - MIDI_WARBL2_SETTINGS_START;
                 }
 
-                else if (value == 60) {  // Recenter IMU heading based on current
+                else if (value == MIDI_CENTER_YAW) {  // Recenter IMU heading based on current
                     centerIMU();
                 }
 
-                else if (value > 99) {
+                else if (value >= MIDI_BUTTON_ACTIONS_START) {
                     for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
                         if (buttonReceiveMode == i) {
 
                             for (byte j = 0; j < 27; j++) {  // Update column 0 (action).
-                                if (value == 100 + j) {
+                                if (value == MIDI_BUTTON_ACTIONS_START + j) {
                                     buttonPrefs[mode][i][0] = j;
                                 }
                             }
@@ -1942,7 +1941,7 @@ void handleControlChange(byte channel, byte number, byte value) {
 
 
             /////// CC 119
-            if (number == 119) {
+            if (number == MIDI_CC_119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
                 for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
                     writeEEPROM(EEPROM_WARBL2_SETTINGS_START + r, WARBL2settings[r]);
@@ -1953,11 +1952,11 @@ void handleControlChange(byte channel, byte number, byte value) {
 
             for (byte i = 0; i < 8; i++) {  // Update channel, byte 2, byte 3 for MIDI message for button MIDI command for row i
                 if (buttonReceiveMode == i) {
-                    if (number == 106 && value < 16) {
+                    if (number == MIDI_CC_106 && value <= MIDI_ACTION_MIDI_CHANNEL_END) {
                         buttonPrefs[mode][i][2] = value;
-                    } else if (number == 107) {
+                    } else if (number == MIDI_CC_107) {
                         buttonPrefs[mode][i][3] = value;
-                    } else if (number == 108) {
+                    } else if (number == MIDI_CC_108) {
                         buttonPrefs[mode][i][4] = value;
                     }
                 }
@@ -2143,8 +2142,8 @@ void performAction(byte action) {
     //Serial.println((buttonPrefs[mode][action][0]));
 
     if (communicationMode) {
-        sendMIDI(CONTROL_CHANGE, 7, 109, 127);
-        sendMIDI(CONTROL_CHANGE, 7, 105, action);
+        sendMIDI(MIDI_SEND_BUTTON_ACTION);
+        sendMIDI(MIDI_CC_105_MSG, action);
     }
 
     switch (buttonPrefs[mode][action][0]) {
@@ -2226,7 +2225,7 @@ void performAction(byte action) {
 
         case MIDI_PANIC:
             for (byte i = 1; i < 17; i++) {
-                sendMIDI(CONTROL_CHANGE, i, 123, 0);
+                sendMIDI(CONTROL_CHANGE, i, MIDI_CC_123, 0);
                 dronesOn = 0;  // Remember that drones are off, because MIDI panic will have most likely turned them off in all apps.
             }
             break;
@@ -2240,7 +2239,7 @@ void performAction(byte action) {
             play = 0;
             blinkNumber[GREEN_LED] = abs(breathMode) + 1;
             if (communicationMode) {
-                sendMIDI(CONTROL_CHANGE, 7, 102, 80 + breathMode);  // Send current breathMode
+                sendMIDI(MIDI_CC_102_MSG, MIDI_BREATH_MODE_START + breathMode);  // Send current breathMode
             }
             break;
 
@@ -2342,7 +2341,7 @@ void changePitchBend() {
     loadPrefs();
     blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
     if (communicationMode) {
-        sendMIDI(CONTROL_CHANGE, 7, 102, 70 + pitchBendMode);  //send current pitchbend mode to configuration tool.
+        sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);  //send current pitchbend mode to configuration tool.
     }
 }
 
@@ -2529,100 +2528,103 @@ void restoreFactorySettings() {
 
 // Send all settings for current instrument to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
 void sendSettings() {
-    sendMIDI(CONTROL_CHANGE, 7, 110, VERSION);  //Send the firmware version.
+    sendMIDI(MIDI_CC_110_MSG, VERSION);  //Send the firmware version.
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDI(CONTROL_CHANGE, 7, 102, 30 + i);                // Indicate that we'll be sending the fingering pattern for instrument i.
-        sendMIDI(CONTROL_CHANGE, 7, 102, 33 + modeSelector[i]);  // Send
+        sendMIDI(MIDI_CC_102_MSG, MIDI_FINGERING_PATTERN_MODE_START + i);                // Indicate that we'll be sending the fingering pattern for instrument i.
+        sendMIDI(MIDI_CC_102_MSG, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  // Send
 
         if (noteShiftSelector[i] >= 0) {
-            sendMIDI(CONTROL_CHANGE, 7, 111 + i, noteShiftSelector[i]);
+            sendMIDI(MIDI_SEND_CC, MIDI_CC_111 + i, noteShiftSelector[i]);
         }  // Send noteShift, with a transformation for sending negative values over MIDI.
         else {
-            sendMIDI(CONTROL_CHANGE, 7, 111 + i, noteShiftSelector[i] + 127);
+            sendMIDI(MIDI_SEND_CC, MIDI_CC_111 + i, noteShiftSelector[i] + 127);
         }
     }
 
-    sendMIDI(CONTROL_CHANGE, 7, 102, 60 + mode);         // Send current instrument.
-    sendMIDI(CONTROL_CHANGE, 7, 102, 85 + defaultMode);  // Send default instrument.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CURRENT_MODE_START + mode);         // Send current instrument.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_DEFAULT_MODE_START + defaultMode);  // Send default instrument.
 
-    sendMIDI(CONTROL_CHANGE, 7, 103, senseDistance);  // Send sense distance
+    sendMIDI(MIDI_CC_103_MSG, senseDistance);  // Send sense distance
 
-    sendMIDI(CONTROL_CHANGE, 7, 117, vibratoDepth * 100UL / 8191);  // Send vibrato depth, scaled down to cents.
-    sendMIDI(CONTROL_CHANGE, 7, 102, 70 + pitchBendMode);           // Send current pitchBend mode.
-    sendMIDI(CONTROL_CHANGE, 7, 102, 80 + breathMode);              // Send current breathMode.
-    sendMIDI(CONTROL_CHANGE, 7, 102, 120 + bellSensor);             // Send bell sensor state.
-    sendMIDI(CONTROL_CHANGE, 7, 106, 39 + useLearnedPressure);      // Send calibration option.
-    sendMIDI(CONTROL_CHANGE, 7, 104, 34);                           // Indicate that LSB of learned pressure is about to be sent.
-    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressure & 0x7F);       // Send LSB of learned pressure.
-    sendMIDI(CONTROL_CHANGE, 7, 104, 35);                           // Indicate that MSB of learned pressure is about to be sent.
-    sendMIDI(CONTROL_CHANGE, 7, 105, learnedPressure >> 7);         // Send MSB of learned pressure.
+    sendMIDI(MIDI_CC_117_MSG, vibratoDepth * 100UL / 8191);  // Send vibrato depth, scaled down to cents.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);           // Send current pitchBend mode.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_BREATH_MODE_START + breathMode);              // Send current breathMode.
 
-    sendMIDI(CONTROL_CHANGE, 7, 104, 61);             // Indicate MIDI bend range is about to be sent.
-    sendMIDI(CONTROL_CHANGE, 7, 105, midiBendRange);  // MIDI bend range
+    //MrMep: is this obsolete?
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_120 + bellSensor);             // Send bell sensor state.
 
-    sendMIDI(CONTROL_CHANGE, 7, 104, 62);               // Indicate MIDI channel is about to be sent.
-    sendMIDI(CONTROL_CHANGE, 7, 105, mainMidiChannel);  // Midi bend range
+    sendMIDI(MIDI_CC_106_MSG, MIDI_STARTUP_CALIB + useLearnedPressure);      // Send calibration option.
+    sendMIDI(MIDI_SEND_LEARNED_PRESSURE_LSB);                           // Indicate that LSB of learned pressure is about to be sent.
+    sendMIDI(MIDI_CC_105_MSG, learnedPressure & 0x7F);       // Send LSB of learned pressure.
+    sendMIDI(MIDI_SEND_LEARNED_PRESSURE_MSB);                           // Indicate that MSB of learned pressure is about to be sent.
+    sendMIDI(MIDI_CC_105_MSG, learnedPressure >> 7);         // Send MSB of learned pressure.
+
+    sendMIDI(MIDI_SEND_BEND_RANGE);             // Indicate MIDI bend range is about to be sent.
+    sendMIDI(MIDI_CC_105_MSG, midiBendRange);  // MIDI bend range
+
+    sendMIDI(MIDI_SEND_MIDI_CHANNEL);               // Indicate MIDI channel is about to be sent.
+    sendMIDI(MIDI_CC_105_MSG, mainMidiChannel);  // Midi bend range
 
 
 
     for (byte i = 0; i < 9; i++) {
-        sendMIDI(CONTROL_CHANGE, 7, 106, 20 + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  // Send enabled vibrato holes.
+        sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  // Send enabled vibrato holes.
     }
 
     for (byte i = 0; i < kGESTURESnVariables; i++) {
-        sendMIDI(CONTROL_CHANGE, 7, 102, 90 + i);                         // Indicate that we'll be sending data for button commands row i (click 1, click 2, etc.).
-        sendMIDI(CONTROL_CHANGE, 7, 106, 100 + buttonPrefs[mode][i][0]);  // Send action (i.e. none, send MIDI message, etc.).
+        sendMIDI(MIDI_CC_102_MSG, MIDI_GESTURE_START + i);                         // Indicate that we'll be sending data for button commands row i (click 1, click 2, etc.).
+        sendMIDI(MIDI_CC_106_MSG, MIDI_BUTTON_ACTIONS_START + buttonPrefs[mode][i][0]);  // Send action (i.e. none, send MIDI message, etc.).
         if (buttonPrefs[mode][i][0] == 1) {                               // If the action is a MIDI command, send the rest of the MIDI info for that row.
-            sendMIDI(CONTROL_CHANGE, 7, 102, 112 + buttonPrefs[mode][i][1]);
-            sendMIDI(CONTROL_CHANGE, 7, 106, buttonPrefs[mode][i][2]);
-            sendMIDI(CONTROL_CHANGE, 7, 107, buttonPrefs[mode][i][3]);
-            sendMIDI(CONTROL_CHANGE, 7, 108, buttonPrefs[mode][i][4]);
+            sendMIDI(MIDI_CC_102_MSG, MIDI_ACTION_MIDI_START + buttonPrefs[mode][i][1]);
+            sendMIDI(MIDI_CC_106_MSG, buttonPrefs[mode][i][2]);
+            sendMIDI(MIDI_CC_107_MSG, buttonPrefs[mode][i][3]);
+            sendMIDI(MIDI_CC_108_MSG, buttonPrefs[mode][i][4]);
         }
     }
 
     for (byte i = 0; i < kSWITCHESnVariables; i++) {  // Send settings for switches in the slide/vibrato and register control panels.
-        sendMIDI(CONTROL_CHANGE, 7, 104, i + 40);
-        sendMIDI(CONTROL_CHANGE, 7, 105, switches[mode][i]);
+        sendMIDI(MIDI_CC_104_MSG, i + MIDI_SWITCHES_VARS_START);
+        sendMIDI(MIDI_CC_105_MSG, switches[mode][i]);
     }
 
-    for (byte i = 0; i < 21; i++) {  // Send settings for expression and drones control panels.
-        sendMIDI(CONTROL_CHANGE, 7, 104, i + 13);
-        sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][i]);
+    for (byte i = 0; i < MIDI_ED_VARS_NUMBER; i++) {  // Send settings for expression and drones control panels.
+        sendMIDI(MIDI_CC_104_MSG, i + MIDI_ED_VARS_START);
+        sendMIDI(MIDI_CC_105_MSG, ED[mode][i]);
     }
 
-    for (byte i = 21; i < 49; i++) {  // More settings for expression and drones control panels.
-        sendMIDI(CONTROL_CHANGE, 7, 104, i + 49);
-        sendMIDI(CONTROL_CHANGE, 7, 105, ED[mode][i]);
+    for (byte i = MIDI_ED_VARS_NUMBER; i < MIDI_ED_VARS2_OFFSET; i++) {  // More settings for expression and drones control panels.
+        sendMIDI(MIDI_CC_104_MSG, i + MIDI_ED_VARS2_OFFSET);
+        sendMIDI(MIDI_CC_105_MSG, ED[mode][i]);
     }
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDI(CONTROL_CHANGE, 7, 102, 90 + i);  // Indicate that we'll be sending data for momentary.
-        sendMIDI(CONTROL_CHANGE, 7, 102, 117 + momentary[mode][i]);
+        sendMIDI(MIDI_CC_102_MSG, MIDI_GESTURE_START + i);  // Indicate that we'll be sending data for momentary.
+        sendMIDI(MIDI_CC_102_MSG, MIDI_MOMENTARY_OFF + momentary[mode][i]);
     }
 
     for (byte i = 0; i < 12; i++) {
-        sendMIDI(CONTROL_CHANGE, 7, 104, i + 1);                      // Indicate which pressure variable we'll be sending.
-        sendMIDI(CONTROL_CHANGE, 7, 105, pressureSelector[mode][i]);  // Send the data.
+        sendMIDI(MIDI_CC_104_MSG, i + MIDI_PRESS_SELECT_VARS_START);  // Indicate which pressure variable we'll be sending.
+        sendMIDI(MIDI_CC_105_MSG, pressureSelector[mode][i]);  // Send the data.
     }
 
-    sendMIDI(CONTROL_CHANGE, 7, 102, 121);  // Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_121);  // Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
 
-    for (byte i = 55; i < 55 + kWARBL2SETTINGSnVariables; i++) {  // Send the WARBL2settings array.
-        sendMIDI(CONTROL_CHANGE, 7, 106, i);
-        sendMIDI(CONTROL_CHANGE, 7, 119, WARBL2settings[i - 55]);
+    for (byte i = MIDI_WARBL2_SETTINGS_START; i < MIDI_WARBL2_SETTINGS_START + kWARBL2SETTINGSnVariables; i++) {  // Send the WARBL2settings array.
+        sendMIDI(MIDI_CC_106_MSG, i);
+        sendMIDI(MIDI_CC_119_MSG, WARBL2settings[i - MIDI_WARBL2_SETTINGS_START]);
     }
 
     manageBattery(true);  // Do this to send voltage and charging status to Config Tool.
 
-    sendMIDI(CONTROL_CHANGE, 7, 106, 72);
-    sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
-    sendMIDI(CONTROL_CHANGE, 7, 106, 73);
-    sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  // Send high byte of the connection interval.
+    sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_LSB);
+    sendMIDI(MIDI_CC_119_MSG, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
+    sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_MSB);
+    sendMIDI(MIDI_CC_119_MSG, (connIntvl * 100) >> 7);  // Send high byte of the connection interval.
 
     for (byte i = 0; i < kIMUnVariables; i++) {  // IMU settings
-        sendMIDI(CONTROL_CHANGE, 7, 109, i);
-        sendMIDI(CONTROL_CHANGE, 7, 105, IMUsettings[mode][i]);
+        sendMIDI(MIDI_CC_109_MSG, i);
+        sendMIDI(MIDI_CC_105_MSG, IMUsettings[mode][i]);
     }
 }
 
@@ -2642,14 +2644,14 @@ void loadFingering() {
         noteShiftSelector[i] = (int8_t)readEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i);
 
         if (communicationMode) {
-            sendMIDI(CONTROL_CHANGE, 7, 102, 30 + i);                // Indicate that we'll be sending the fingering pattern for instrument i
-            sendMIDI(CONTROL_CHANGE, 7, 102, 33 + modeSelector[i]);  // Send
+            sendMIDI(MIDI_CC_102_MSG, MIDI_FINGERING_PATTERN_MODE_START + i);                // Indicate that we'll be sending the fingering pattern for instrument i
+            sendMIDI(MIDI_CC_102_MSG, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  // Send
 
             if (noteShiftSelector[i] >= 0) {
-                sendMIDI(CONTROL_CHANGE, 7, (111 + i), noteShiftSelector[i]);
+                sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + i), noteShiftSelector[i]);
             }  // Send noteShift, with a transformation for sending negative values over MIDI.
             else {
-                sendMIDI(CONTROL_CHANGE, 7, (111 + i), noteShiftSelector[i] + 127);
+                sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + i), noteShiftSelector[i] + 127);
             }
         }
     }
@@ -3325,10 +3327,10 @@ void connect_callback(uint16_t conn_handle) {
     }
 
     if (communicationMode) {
-        sendMIDI(CONTROL_CHANGE, 7, 106, 72);
-        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) & 0x7F);  // Send LSB of the connection interval to Config Tool.
-        sendMIDI(CONTROL_CHANGE, 7, 106, 73);
-        sendMIDI(CONTROL_CHANGE, 7, 119, (connIntvl * 100) >> 7);  // Send MSB of the connection interval to Config Tool.
+        sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_LSB);
+        sendMIDI(MIDI_CC_119_MSG, (connIntvl * 100) & 0x7F);  // Send LSB of the connection interval to Config Tool.
+        sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_MSB);
+        sendMIDI(MIDI_CC_119_MSG, (connIntvl * 100) >> 7);  // Send MSB of the connection interval to Config Tool.
     }
 
     blinkNumber[BLUE_LED] = 2;  // Indicate connection.
@@ -3350,10 +3352,10 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
     connIntvl = 0;
 
     if (communicationMode) {
-        sendMIDI(CONTROL_CHANGE, 7, 106, 72);
-        sendMIDI(CONTROL_CHANGE, 7, 119, 0);  // Send 0 to Config Tool.
-        sendMIDI(CONTROL_CHANGE, 7, 106, 73);
-        sendMIDI(CONTROL_CHANGE, 7, 119, 0);  // Send 0 to Config Tool.
+        sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_LSB);
+        sendMIDI(MIDI_CC_119_MSG, 0);  // Send 0 to Config Tool.
+        sendMIDI(MIDI_CC_106_MSG, MIDI_BLE_INTERVAL_MSB);
+        sendMIDI(MIDI_CC_119_MSG, 0);  // Send 0 to Config Tool.
     }
 }
 
