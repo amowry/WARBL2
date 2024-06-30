@@ -9,7 +9,8 @@
 
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
 
-#define DEBUG_TRANSITION_FILTER 1
+#define DEBUG_TRANSITION_FILTER 0
+#define DEBUG_CONFIG_TOOL 0
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -174,6 +175,7 @@
 #define kGESTURESnVariables 10
 
 // Button/gesture actions
+#define DOUBLE_CLICK_WAIT_INTERVAL  200 //Check button is every 5 ticks, so this hould be about 1 second
 #define NO_ACTION 0
 #define SEND_MIDI_MESSAGE 1
 #define CHANGE_PITCHBEND_MODE 2
@@ -242,6 +244,546 @@
 #define RED_LED 0
 #define GREEN_LED 1
 #define BLUE_LED 2
+
+
+/* MIDI Config Tool Constants */
+/* To be kept in sync with constants.js in Confgi Tool */
+
+//General constants
+#define MIDI_DEFAULT_MAIN_CHANNEL             1 // Default MIDI channel to send notes on
+#define MIDI_CONFIG_TOOL_CHANNEL              7 // Config Tool MIDI channel
+#define MIDI_DEFAULT_VELOCITY               127 // 
+
+//MIDI Human readable constants: see below
+
+/* Numerical constants
+ * Some cc values are reserved from Config Tool or from WARBL
+ * Bidirectional Communication: same commands both ways with same cc/value 
+*/
+#define MIDI_CC_102                         102 // from WARBL & from Config Tool.  Various values as follows:
+    #define MIDI_CC_102_VALUE_0	              0 // unused
+    // sensor calibration messages
+    #define MIDI_CC_102_VALUE_1	              1 //from Config Tool. bell sensor down
+    #define MIDI_CC_102_VALUE_2	              2	//from Config Tool. bell sensor up
+    #define MIDI_CC_102_VALUE_3	              3	//from Config Tool. R4 down
+    #define MIDI_CC_102_VALUE_4	              4	//from Config Tool. R4 up
+    #define MIDI_CC_102_VALUE_5	              5	//from Config Tool. R3 down
+    #define MIDI_CC_102_VALUE_6	              6	//from Config Tool. R3 up
+    #define MIDI_CC_102_VALUE_7	              7	//from Config Tool. R2 down
+    #define MIDI_CC_102_VALUE_8	              8	//from Config Tool. R2 up
+    #define MIDI_CC_102_VALUE_9	              9	//from Config Tool. R1 down
+    #define MIDI_CC_102_VALUE_10	         10	//from Config Tool. R1 up
+    #define MIDI_CC_102_VALUE_11	         11	//from Config Tool. L3 down
+    #define MIDI_CC_102_VALUE_12	         12	//from Config Tool. L3 up
+    #define MIDI_CC_102_VALUE_13	         13	//from Config Tool. L2 down
+    #define MIDI_CC_102_VALUE_14	         14	//from Config Tool. L2 up
+    #define MIDI_CC_102_VALUE_15	         15	//from Config Tool. L1 down
+    #define MIDI_CC_102_VALUE_16	         16	//from Config Tool. L1 up
+    #define MIDI_CC_102_VALUE_17	         17	//from Config Tool. Lthumb down
+    #define MIDI_CC_102_VALUE_18	         18	//from Config Tool. Lthumb up		
+    #define MIDI_CC_102_VALUE_19	         19	//from Config Tool. Save optical sensor calibration
+    #define MIDI_CC_102_VALUE_20	         20	//from WARBL. bell sensor max value reached
+    #define MIDI_CC_102_VALUE_21	         21	//from WARBL. R4 max value reached
+    /* MrMep: I think there's an error in the Google Doc: 22 there is unused, but these values must be continous 
+     * see Functions.ino line 1600
+    */
+    #define MIDI_CC_102_VALUE_22	         22	//from WARBL. R3 max value reached	
+    #define MIDI_CC_102_VALUE_23	         23	//from WARBL. R2 max value reached	
+    #define MIDI_CC_102_VALUE_24	         24	//from WARBL. R1 max value reached
+    #define MIDI_CC_102_VALUE_25	         25	//from WARBL. L3 max value reached
+    #define MIDI_CC_102_VALUE_26	         26	//from WARBL. L2 max value reached
+    #define MIDI_CC_102_VALUE_27	         27	//from WARBL. L1 max value reached
+    #define MIDI_CC_102_VALUE_28	         28	//from WARBL. Lthumb max value reached
+    //
+    /* 29 unused ? */
+    //Send fingering pattern selections:
+    #define MIDI_CC_102_VALUE_30	         30	// Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
+    #define MIDI_CC_102_VALUE_31	         31	// Bidirectional. indicates that the next command will be the fingering pattern for instrument 2
+    #define MIDI_CC_102_VALUE_32	         32	// Bidirectional. indicates that the next command will be the fingering pattern for instrument 3
+    #define MIDI_CC_102_VALUE_33	         33	// Bidirectional. first fingering pattern is tin whistle
+    #define MIDI_CC_102_VALUE_34	         34	// Bidirectional. "" uilleann
+    #define MIDI_CC_102_VALUE_35	         35	// Bidirectional. “” GHB
+    #define MIDI_CC_102_VALUE_36	         36	// Bidirectional. “” Northumbrian
+    #define MIDI_CC_102_VALUE_37	         37	// Bidirectional. ""tin whistle/flute chromatic
+    #define MIDI_CC_102_VALUE_38	         38	// Bidirectional. ""Gaita
+    /* 39 unused ? */
+    #define MIDI_CC_102_VALUE_40	         40	// Bidirectional. NAF
+    #define MIDI_CC_102_VALUE_41	         41	// Bidirectional. Kaval
+    #define MIDI_CC_102_VALUE_42	         42	// Bidirectional. recorder
+    #define MIDI_CC_102_VALUE_43	         43	// Bidirectional. Uilleann regulators
+    #define MIDI_CC_102_VALUE_44	         44	// Bidirectional. Uilleann standard
+    #define MIDI_CC_102_VALUE_45	         45	// Bidirectional. Xiao
+    #define MIDI_CC_102_VALUE_46	         46	// Bidirectional. Sax
+    #define MIDI_CC_102_VALUE_47	         47	// Bidirectional. Gaita extended
+    /* 48-49 unused ? */
+    #define MIDI_CC_102_VALUE_50	         50	// Bidirectional. Saxbasic
+    #define MIDI_CC_102_VALUE_51	         51	// Bidirectional. EVI
+    #define MIDI_CC_102_VALUE_52	         52	// Bidirectional. Shakuhachi
+    #define MIDI_CC_102_VALUE_53	         53	// Bidirectional. Sackpipa major
+    #define MIDI_CC_102_VALUE_54	         54	// Bidirectional. Sackpipa minor
+    #define MIDI_CC_102_VALUE_55	         55	// Bidirectional. Custom
+    #define MIDI_CC_102_VALUE_56	         56	// Bidirectional. Bombarde
+    #define MIDI_CC_102_VALUE_57	         57	// Bidirectional. Baroque flute
+    #define MIDI_CC_102_VALUE_58	         58	// Bidirectional. Medieval bagpipes
+    #define MIDI_CC_102_VALUE_59	         59	// Bidirectional. Bansuri
+    //
+
+    #define MIDI_CC_102_VALUE_60	         60	// Bidirectional. current instrument (mode variable) is  0
+    #define MIDI_CC_102_VALUE_61	         61	// Bidirectional. current instrument is 1
+    #define MIDI_CC_102_VALUE_62	         62	// Bidirectional. current instrument is 2
+    /* 63-69 unused */
+    #define MIDI_CC_102_VALUE_70	         70	// Bidirectional. Settings for current instrument: Pitchbend mode 0
+    #define MIDI_CC_102_VALUE_71	         71	// Bidirectional. Settings for current instrument: Pitchbend mode 1
+    #define MIDI_CC_102_VALUE_72	         72	// Bidirectional. Settings for current instrument: Pitchbend mode 2
+    /* MrMep: this next value is missing from the Google Doc */
+    #define MIDI_CC_102_VALUE_73	         73	// Bidirectional. Settings for current instrument: Pitchbend mode 3
+    /* 74-79 unused */
+    #define MIDI_CC_102_VALUE_80	         80	// Bidirectional. Settings for current instrument: Breath mode 0
+    #define MIDI_CC_102_VALUE_81	         81	// Bidirectional. Settings for current instrument: Breath mode 1
+    #define MIDI_CC_102_VALUE_82	         82	// Bidirectional. Settings for current instrument: Breath mode 2
+    #define MIDI_CC_102_VALUE_83	         83	// Bidirectional. Settings for current instrument: Breath mode 3
+    #define MIDI_CC_102_VALUE_84	         84	// Bidirectional. Settings for current instrument: Breath mode4
+    #define MIDI_CC_102_VALUE_85	         85	// Bidirectional. default instrument is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current instrument as default)
+    #define MIDI_CC_102_VALUE_86	         86	// Bidirectional. default instrument is 1
+    #define MIDI_CC_102_VALUE_87	         87	// Bidirectional. default instrument is 2
+    /* 88-89 unused */
+
+    /* Populate button configuration for current instrument:	
+	 * First indicate button combination to be populated:
+    */
+    #define MIDI_CC_102_VALUE_90	         90	// Bidirectional. Sending data for click 1 (dropdown row 0)
+    #define MIDI_CC_102_VALUE_91	         91	// Bidirectional. click 2
+    #define MIDI_CC_102_VALUE_92	         92	// Bidirectional. click 3
+    #define MIDI_CC_102_VALUE_93	         93	// Bidirectional. hold 2, click 1
+    #define MIDI_CC_102_VALUE_94	         94	// Bidirectional. hold 2, click 3
+    #define MIDI_CC_102_VALUE_95	         95	// Bidirectional. longpress 1
+    #define MIDI_CC_102_VALUE_96	         96	// Bidirectional. longpress 2
+    #define MIDI_CC_102_VALUE_97	         97	// Bidirectional. longpress 3
+    #define MIDI_CC_102_VALUE_98	         98	// unused
+    #define MIDI_CC_102_VALUE_99	         99	// unused (previously disconnect command)
+    /* Follow with data to populate indicated button combination:
+     * CC 106	values 100-127 (see below) 
+     * (was previously CC 102 100-111 but ran out of room here)
+     */
+
+    #define MIDI_CC_102_VALUE_100	        100	// Bidirectional. WARBL2 custom fingering chart 1
+    #define MIDI_CC_102_VALUE_101	        101	// Bidirectional. WARBL2 custom fingering chart 2
+    #define MIDI_CC_102_VALUE_102	        102	// Bidirectional. WARBL2 custom fingering chart 3
+    #define MIDI_CC_102_VALUE_103	        103	// Bidirectional. WARBL2 custom fingering chart 4
+    #define MIDI_CC_102_VALUE_104	        104	//from Config Tool. exit communication mode (previously 102 99)
+    /* 105-111	unused -- can be used for WARBL2 */
+    #define MIDI_CC_102_VALUE_112	        112	// Bidirectional. send midi note on/note off
+    #define MIDI_CC_102_VALUE_113	        113	// Bidirectional. Send midi CC
+    #define MIDI_CC_102_VALUE_114	        114	// Bidirectional. Send MIDI PC
+    #define MIDI_CC_102_VALUE_115	        115	// Bidirectional. Increase PC
+    #define MIDI_CC_102_VALUE_116	        116	// Bidirectional. Decrease PC
+    #define MIDI_CC_102_VALUE_117	        117	// Bidirectional. momentary off
+    #define MIDI_CC_102_VALUE_118	        118	// Bidirectional. momentary on
+    /* 119 unused */
+    #define MIDI_CC_102_VALUE_120	        120	//from WARBL. bell sensor disconnected	
+    #define MIDI_CC_102_VALUE_121	        121	//from WARBL. bell sensor connected	
+    /* 122 unused */
+    #define MIDI_CC_102_VALUE_123	        123	//from Config Tool. save as defaults for current mode
+    #define MIDI_CC_102_VALUE_124	        124	//from Config Tool. save as defaults for all instruments
+    #define MIDI_CC_102_VALUE_125	        125	//from Config Tool. restore factory settings
+    #define MIDI_CC_102_VALUE_126	        126	//from Config Tool. enter communication mode
+                                                // WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
+    #define MIDI_CC_102_VALUE_127	        127	//from Config Tool. begin autocalibration
+
+
+#define MIDI_CC_103                         103 // from WARBL & from Config Tool.  Values 0-127	- Settings for current instrument: finger-sensing distance
+
+#define MIDI_CC_104                         104 // from WARBL & from Config Tool.  Various values as follows:
+    /* 0 unused */
+
+    /* Bag/Breath advanced settings (pressureSelector array) */
+    #define MIDI_CC_104_VALUE_1 	          1	// Bidirectional. Settings for current instrument: indicates "bag threshold" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_2 	          2	// Bidirectional. Settings for current instrument: indicates "bag multiplier" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_3 	          3	// Bidirectional. Settings for current instrument: indicates "bag histeresis" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_4 	          4	// Bidirectional. unused. 
+    #define MIDI_CC_104_VALUE_5 	          5	// Bidirectional. Settings for current instrument: indicates "bag jump time" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_6 	          6	// Bidirectional. Settings for current instrument: indicates "bag drop time" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_7 	          7	// Bidirectional. Settings for current instrument: indicates "breath threshold" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_8 	          8	// Bidirectional. Settings for current instrument: indicates "breath multiplier" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_9 	          9	// Bidirectional. Settings for current instrument: indicates "breath histeresis" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_10 	         10	// Bidirectional. Settings for current instrument: indicates "breath transient filter" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_11	         11	// Bidirectional. Settings for current instrument: indicates "breath jump time" is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_12	         12	// Bidirectional. Settings for current instrument: indicates "breath  drop time" is about to be sent with CC 105.
+    //
+    /* Expression or drones variable (ED array) - see defines above */
+    #define MIDI_CC_104_VALUE_13	         13	// Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_14	         14	// Bidirectional. Settings for current instrument: indicates ED[1] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_15	         15	// Bidirectional. Settings for current instrument: indicates ED[2] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_16	         16	// Bidirectional. Settings for current instrument: indicates ED[3] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_17	         17	// Bidirectional. Settings for current instrument: indicates ED[4] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_18	         18	// Bidirectional. Settings for current instrument: indicates ED[5] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_19	         19	// Bidirectional. Settings for current instrument: indicates ED[6] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_20	         20	// Bidirectional. Settings for current instrument: indicates ED[7] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_21	         21	// Bidirectional. Settings for current instrument: indicates ED[8] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_22	         22	// Bidirectional. Settings for current instrument: indicates ED[9] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_23	         23	// Bidirectional. Settings for current instrument: indicates ED[10] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_24	         24	// Bidirectional. Settings for current instrument: indicates ED[11] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_25	         25	// Bidirectional. Settings for current instrument: indicates ED[12]] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_26	         26	// Bidirectional. Settings for current instrument: indicates ED[13] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_27	         27	// Bidirectional. Settings for current instrument: indicates ED[14] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_28	         28	// Bidirectional. Settings for current instrument: indicates ED[15] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_29	         29	// Bidirectional. Settings for current instrument: indicates ED[16] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_30	         30	// Bidirectional. Settings for current instrument: indicates ED[17] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_31	         31	// Bidirectional. Settings for current instrument: indicates ED[18] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_32	         32	// Bidirectional. Settings for current instrument: indicates ED[19] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_33	         33	// Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
+	//
+    /* MrMep: this could be wrong on the google Doc */
+    #define MIDI_CC_104_VALUE_34	         34	// Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
+    #define MIDI_CC_104_VALUE_35	         35	// Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
+    /* 36-39 unused */
+
+    /* Switches array - see defines above */
+    #define MIDI_CC_104_VALUE_40             40 //  Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_41             41 //  Bidirectional. Settings for current instrument: indicates that switches[1] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_42             42 //  Bidirectional. Settings for current instrument: indicates that switches[2] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_43             43 //  Bidirectional. Settings for current instrument: indicates that switches[3] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_44             44 //  Bidirectional. Settings for current instrument: indicates that switches[4] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_45             45 //  Bidirectional. Settings for current instrument: indicates that switches[5] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_46             46 //  Bidirectional. Settings for current instrument: indicates that switches[6] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_47             47 //  Bidirectional. Settings for current instrument: indicates that switches[7] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_48             48 //  Bidirectional. Settings for current instrument: indicates that switches[8] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_49             49 //  Bidirectional. Settings for current instrument: indicates that switches[9] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_50             50 //  Bidirectional. Settings for current instrument: indicates that switches[10] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_51             51 //  Bidirectional. Settings for current instrument: indicates that switches[11] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_52             52 //  Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_53             53 //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+    //
+    /* 54-60 unused */
+    //MrMep: The following 2 must be wrong on the google doc
+    #define MIDI_CC_104_VALUE_61	         61	//  Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
+    #define MIDI_CC_104_VALUE_62	         62	//  Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
+    /* 62-69 unused */
+
+	/* more expression or drones variables (ED array) 
+     * can be extended to 127  for WARBL2, e.g. IMU functionality. If more variables are needed CC109 can also be used to indicate additional "pressureReceiveMode" options
+     */
+    #define MIDI_CC_104_VALUE_70    	     70	// Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_71    	     71	// Bidirectional. Settings for current instrument: indicates ED[22] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_72    	     72	// Bidirectional. Settings for current instrument: indicates ED[23] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_73    	     73	// Bidirectional. Settings for current instrument: indicates ED[24] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_74    	     74	// Bidirectional. Settings for current instrument: indicates ED[25] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_75    	     75	// Bidirectional. Settings for current instrument: indicates ED[26] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_76    	     76	// Bidirectional. Settings for current instrument: indicates ED[27] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_77    	     77	// Bidirectional. Settings for current instrument: indicates ED[28] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_78    	     78	// Bidirectional. Settings for current instrument: indicates ED[29] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_79    	     79	// Bidirectional. Settings for current instrument: indicates ED[30] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_80    	     80	// Bidirectional. Settings for current instrument: indicates ED[31] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_81    	     81	// Bidirectional. Settings for current instrument: indicates ED[32] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_82    	     82	// Bidirectional. Settings for current instrument: indicates ED[33] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_83    	     83	// Bidirectional. Settings for current instrument: indicates ED[34] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_84    	     84	// Bidirectional. Settings for current instrument: indicates ED[35] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_85    	     85	// Bidirectional. Settings for current instrument: indicates ED[36] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_86    	     86	// Bidirectional. Settings for current instrument: indicates ED[37] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_87    	     87	// Bidirectional. Settings for current instrument: indicates ED[38] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_88    	     88	// Bidirectional. Settings for current instrument: indicates ED[39] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_89    	     89	// Bidirectional. Settings for current instrument: indicates ED[40] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_90    	     90	// Bidirectional. Settings for current instrument: indicates ED[41] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_91    	     91	// Bidirectional. Settings for current instrument: indicates ED[42] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_92    	     92	// Bidirectional. Settings for current instrument: indicates ED[43] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_93    	     93	// Bidirectional. Settings for current instrument: indicates ED[44] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_94    	     94	// Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_95    	     95	// Bidirectional. Settings for current instrument: indicates ED[46] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_96    	     96	// Bidirectional. Settings for current instrument: indicates ED[47] is about to be sent with CC 105. 
+    #define MIDI_CC_104_VALUE_97    	     97	// Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
+    //
+    /* 98-127 unused */
+
+#define MIDI_CC_105                         105 // Bidirectional - From Warbl. Values 0-127. Settings for current instrument: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
+
+#define MIDI_CC_106                         106 // from WARBL & from Config Tool.  Various values as follows:
+    //MIDI Channels
+    #define MIDI_CC_106_VALUE_0	              0	//Bidirectional. MIDI channel 1
+    #define MIDI_CC_106_VALUE_1	              1	//Bidirectional. MIDI channel 2
+    #define MIDI_CC_106_VALUE_2	              2	//Bidirectional. MIDI channel 3
+    #define MIDI_CC_106_VALUE_3	              3	//Bidirectional. MIDI channel 4
+    #define MIDI_CC_106_VALUE_4	              4	//Bidirectional. MIDI channel 5
+    #define MIDI_CC_106_VALUE_5	              5	//Bidirectional. MIDI channel 6
+    #define MIDI_CC_106_VALUE_6	              6	//Bidirectional. MIDI channel 7
+    #define MIDI_CC_106_VALUE_7	              7	//Bidirectional. MIDI channel 8
+    #define MIDI_CC_106_VALUE_8	              8	//Bidirectional. MIDI channel 9
+    #define MIDI_CC_106_VALUE_9	              9	//Bidirectional. MIDI channel 10
+    #define MIDI_CC_106_VALUE_10	         10	//Bidirectional. MIDI channel 11
+    #define MIDI_CC_106_VALUE_11	         11	//Bidirectional. MIDI channel 12
+    #define MIDI_CC_106_VALUE_12	         12	//Bidirectional. MIDI channel 13
+    #define MIDI_CC_106_VALUE_13	         13	//Bidirectional. MIDI channel 14
+    #define MIDI_CC_106_VALUE_14	         14	//Bidirectional. MIDI channel 15
+    #define MIDI_CC_106_VALUE_15	         15	//Bidirectional. MIDI channel 16
+    //
+    #define MIDI_CC_106_VALUE_16	         16	//Bidirectional. custom vibrato off
+    #define MIDI_CC_106_VALUE_17	         17	//Bidirectional. custom vibrato on
+    /* 18-19 unused */
+
+    //Vibrato holes
+    #define MIDI_CC_106_VALUE_20	         20 //Bidirectional. enable vibrato hole, 0	
+    #define MIDI_CC_106_VALUE_21	         21 //Bidirectional. enable vibrato hole, 1	
+    #define MIDI_CC_106_VALUE_22	         22 //Bidirectional. enable vibrato hole, 2	
+    #define MIDI_CC_106_VALUE_23	         23 //Bidirectional. enable vibrato hole, 3	
+    #define MIDI_CC_106_VALUE_24	         24 //Bidirectional. enable vibrato hole, 4	
+    #define MIDI_CC_106_VALUE_25	         25 //Bidirectional. enable vibrato hole, 5	
+    #define MIDI_CC_106_VALUE_26	         26 //Bidirectional. enable vibrato hole, 6	
+    #define MIDI_CC_106_VALUE_27	         27 //Bidirectional. enable vibrato hole, 7	
+    #define MIDI_CC_106_VALUE_28	         28 //Bidirectional. enable vibrato hole, 8	
+    /* 29 unused */
+    #define MIDI_CC_106_VALUE_30	         30 //Bidirectional. disable vibrato hole, 0
+    #define MIDI_CC_106_VALUE_31	         31 //Bidirectional. disable vibrato hole, 1
+    #define MIDI_CC_106_VALUE_32	         32 //Bidirectional. disable vibrato hole, 2
+    #define MIDI_CC_106_VALUE_33	         33 //Bidirectional. disable vibrato hole, 3
+    #define MIDI_CC_106_VALUE_34	         34 //Bidirectional. disable vibrato hole, 4
+    #define MIDI_CC_106_VALUE_35	         35 //Bidirectional. disable vibrato hole, 5
+    #define MIDI_CC_106_VALUE_36	         36 //Bidirectional. disable vibrato hole, 6
+    #define MIDI_CC_106_VALUE_37	         37 //Bidirectional. disable vibrato hole, 7
+    #define MIDI_CC_106_VALUE_38	         38 //Bidirectional. disable vibrato hole, 8
+    //
+    #define MIDI_CC_106_VALUE_39	         39	//Bidirectional. calibrate at startup
+    #define MIDI_CC_106_VALUE_40	         40	//Bidirectional. use learned calibration
+    #define MIDI_CC_106_VALUE_41	         41	// from Config Tool. learn initial note on pressure
+    #define MIDI_CC_106_VALUE_42	         42	// from Config Tool. autocalibrate bell sensor only	
+    #define MIDI_CC_106_VALUE_43	         43	// from Config Tool. learn drones on pressure
+    /* 44 unused */
+    #define MIDI_CC_106_VALUE_45	         45	// from Config Tool. save current sensor calibration as factory calibration (this is on a special webpage for me to use when I first program WARBL)
+    #define MIDI_CC_106_VALUE_46	         46	//Bidirectional.invert off
+    #define MIDI_CC_106_VALUE_47	         47	//Bidirectional.invert on
+	#define MIDI_CC_106_VALUE_48	         48	//from WARBL. next message will be byte 1 of debug message
+	#define MIDI_CC_106_VALUE_49	         49	//from WARBL. next message will be byte 2 of debug message
+	#define MIDI_CC_106_VALUE_50	         50	//from WARBL. next message will be byte 3 of debug message (midi requires three bytes to send/receive an int because MIDI bytes are actually only 7 bits)
+	#define MIDI_CC_106_VALUE_51	         51	//from WARBL. Indicates end of two-byte message 
+	#define MIDI_CC_106_VALUE_52	         52	//from WARBL. Indicates end of three-byte message 
+	#define MIDI_CC_106_VALUE_53	         53	//Bidirectional. Used to tell the Config Tool to include the uilleann regulators fingering pattern (used in a custom version of the code)	
+    #define MIDI_CC_106_VALUE_54	         54	//from Config Tool. WARBL2 calibrate IMU
+    #define MIDI_CC_106_VALUE_55             55 //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+    #define MIDI_CC_106_VALUE_56             56 //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+    #define MIDI_CC_106_VALUE_57             57 //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+    /* 58-59 unused */
+    #define MIDI_CC_106_VALUE_60	         60	// from Config Tool. WARBL2 recenter yaw
+    /* 61-69 unused */
+    #define MIDI_CC_106_VALUE_70	         70	//from WARBL. WARBL2 battery voltage
+	#define MIDI_CC_106_VALUE_71	         71	//from WARBL. WARBL2 charging status
+
+    //MrMep: LSB and MSB are inverted in the Google Doc
+	#define MIDI_CC_106_VALUE_72	         72	//from WARBL. WARBL2 BLE connection interval low byte
+	#define MIDI_CC_106_VALUE_73	         73	//from WARBL. WARBL2 BLE connection interval high byte
+	#define MIDI_CC_106_VALUE_74	         74	//from WARBL. WARBL2 battery percentage
+    /* 75-99	unused -- can be used for WARBL2 */
+
+    //Button Actions, see above 102  90/99
+	#define MIDI_CC_106_VALUE_100	        100	//Bidirectional. button action 0 
+	#define MIDI_CC_106_VALUE_101	        101	//Bidirectional. button action 1
+	#define MIDI_CC_106_VALUE_102	        102	//Bidirectional. button action 2 
+	#define MIDI_CC_106_VALUE_103	        103	//Bidirectional. button action 3 
+	#define MIDI_CC_106_VALUE_104	        104	//Bidirectional. button action 4 
+	#define MIDI_CC_106_VALUE_105	        105	//Bidirectional. button action 5 
+	#define MIDI_CC_106_VALUE_106	        106	//Bidirectional. button action 6 
+	#define MIDI_CC_106_VALUE_107	        107	//Bidirectional. button action 7 
+	#define MIDI_CC_106_VALUE_108	        108	//Bidirectional. button action 8 
+	#define MIDI_CC_106_VALUE_109	        109	//Bidirectional. button action 9 
+	#define MIDI_CC_106_VALUE_110	        110	//Bidirectional. button action 10 
+	#define MIDI_CC_106_VALUE_111	        111	//Bidirectional. button action 11
+	#define MIDI_CC_106_VALUE_112	        112	//Bidirectional. button action 12
+	#define MIDI_CC_106_VALUE_113	        113	//Bidirectional. button action 13
+	#define MIDI_CC_106_VALUE_114	        114	//Bidirectional. button action 14
+	#define MIDI_CC_106_VALUE_115	        115	//Bidirectional. button action 15
+	#define MIDI_CC_106_VALUE_116	        116	//Bidirectional. button action 16
+	#define MIDI_CC_106_VALUE_117	        117	//Bidirectional. button action 17
+	#define MIDI_CC_106_VALUE_118	        118	//Bidirectional. button action 18
+	#define MIDI_CC_106_VALUE_119	        119	//Bidirectional. button action 19
+	#define MIDI_CC_106_VALUE_120	        120	//Bidirectional. button action 20
+	#define MIDI_CC_106_VALUE_121	        121	//Bidirectional. button action 21
+	#define MIDI_CC_106_VALUE_122	        122	//Bidirectional. button action 22
+	#define MIDI_CC_106_VALUE_123	        123	//Bidirectional. button action 23
+	#define MIDI_CC_106_VALUE_124	        124	//Bidirectional. button action 24
+	#define MIDI_CC_106_VALUE_125	        125	//Bidirectional. button action 25
+	#define MIDI_CC_106_VALUE_126	        126	//Bidirectional. button action 26
+	#define MIDI_CC_106_VALUE_127	        127	//Bidirectional. button action 27
+    //
+
+#define MIDI_CC_107                         107 // From WARBL. Values 0-127	- MIDI byte 2
+#define MIDI_CC_108                         108 // From WARBL. Values 0-127	- MIDI byte 3
+
+#define MIDI_CC_109                         109 // From WARBL. Values as follows:
+    #define MIDI_CC_109_OFFSET              200 //Value added to received CC 109, to distinguish them from those from CC_104
+    //IMU Settings Array - see defines above
+    #define MIDI_CC_109_VALUE_0	              0	// Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_1	              1	// Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_2	              2	// Bidirectional. Settings for current instrument: indicates IMUsettings[2] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_3	              3	// Bidirectional. Settings for current instrument: indicates IMUsettings[3] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_4	              4	// Bidirectional. Settings for current instrument: indicates IMUsettings[4] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_5	              5	// Bidirectional. Settings for current instrument: indicates IMUsettings[5] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_6	              6	// Bidirectional. Settings for current instrument: indicates IMUsettings[6] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_7	              7	// Bidirectional. Settings for current instrument: indicates IMUsettings[7] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_8	              8	// Bidirectional. Settings for current instrument: indicates IMUsettings[8] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_9	              9	// Bidirectional. Settings for current instrument: indicates IMUsettings[9] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_10	         10	// Bidirectional. Settings for current instrument: indicates IMUsettings[10] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_11             11	// Bidirectional. Settings for current instrument: indicates IMUsettings[11] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_12             12	// Bidirectional. Settings for current instrument: indicates IMUsettings[12] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_13             13	// Bidirectional. Settings for current instrument: indicates IMUsettings[13] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_14             14	// Bidirectional. Settings for current instrument: indicates IMUsettings[14] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_15             15	// Bidirectional. Settings for current instrument: indicates IMUsettings[15] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_16             16 // Bidirectional. Settings for current instrument: indicates IMUsettings[16] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_17             17	// Bidirectional. Settings for current instrument: indicates IMUsettings[17] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_18             18	// Bidirectional. Settings for current instrument: indicates IMUsettings[18] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_19             19	// Bidirectional. Settings for current instrument: indicates IMUsettings[19] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_20             20	// Bidirectional. Settings for current instrument: indicates IMUsettings[20] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_21             21	// Bidirectional. Settings for current instrument: indicates IMUsettings[21] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_22             22	// Bidirectional. Settings for current instrument: indicates IMUsettings[22] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_23             23	// Bidirectional. Settings for current instrument: indicates IMUsettings[23] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_24             24	// Bidirectional. Settings for current instrument: indicates IMUsettings[24] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_25             25	// Bidirectional. Settings for current instrument: indicates IMUsettings[25] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_26             26	// Bidirectional. Settings for current instrument: indicates IMUsettings[26] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_27	         27 // Bidirectional. Settings for current instrument: indicates IMUsettings[27] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_28             28	// Bidirectional. Settings for current instrument: indicates IMUsettings[28] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_29             29	// Bidirectional. Settings for current instrument: indicates IMUsettings[29] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_30             30	// Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_31             31	// Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105. 
+    #define MIDI_CC_109_VALUE_32             32	// Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    /* 33-99	unused -- can be used to extend above array or for other variables */
+
+    #define MIDI_CC_109_VALUE_100           100 // Bidirectional. Indicates that  WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
+    #define MIDI_CC_109_VALUE_101           101 // Bidirectional. Indicates that  WARBL2 custom fingering chart 2 is about to be sent on CC 105. 
+    #define MIDI_CC_109_VALUE_102           102 // Bidirectional. Indicates that  WARBL2 custom fingering chart 3 is about to be sent on CC 105. 
+    #define MIDI_CC_109_VALUE_103           103 // Bidirectional. Indicates that  WARBL2 custom fingering chart 4 is about to be sent on CC 105. 
+	/* 104-126	unused */
+    #define MIDI_CC_109_VALUE_127	        127	 // From WARBL. Indicates button/gesture action will be sent on CC 105
+
+
+#define MIDI_CC_110                         110 // From WARBL. Values 0-127	- firmware version
+#define MIDI_CC_111                         111 // Bidirectional. Values 0-127	- note shift for mode 0
+    #define MIDI_CC_111_VALUE_109           109 // Bidirectional. Hidden sticks mode - Same for 112 and 113
+#define MIDI_CC_112                         112 // Bidirectional. Values 0-127	- note shift for mode 1
+#define MIDI_CC_113                         113 // Bidirectional. Values 0-127	- note shift for mode 2
+
+#define MIDI_CC_114                         114 // From WARBL. Values 0-127	- highest 2 bytes of holeCovered (int indicating which holes are currently covered)
+#define MIDI_CC_115                         115 // From WARBL. Values 0-127	- lowest 7 bytes of holeCovered
+#define MIDI_CC_116                         116 // From WARBL. Values 0-127	- LSB of pressure
+#define MIDI_CC_117                         117 // Bidirectional. Values 0-100	- vibrato depth (cents)
+#define MIDI_CC_118                         118 // From WARBL. Values 0-127	- MSB of pressure
+#define MIDI_CC_119                         119 // From WARBL. Values 0-127	- value of above variable indicated by CC 106
+
+#define MIDI_CC_123                         123 // MIDI PANIC
+//END of MIDI Numerical constants
+
+//Human readable constants
+/* Commands - VALUES ONLY */
+#define MIDI_SAVE_CALIB                      MIDI_CC_102_VALUE_19  //from Config Tool. Save optical sensor calibration
+#define MIDI_EXIT_COMM_MODE                  MIDI_CC_102_VALUE_104 //from Config Tool. exit communication mode (previously 102 99)
+#define MIDI_SAVE_AS_DEFAULTS_CURRENT        MIDI_CC_102_VALUE_123 //from Config Tool. save as defaults for current mode
+#define MIDI_SAVE_AS_DEFAULTS_ALL            MIDI_CC_102_VALUE_124 //from Config Tool. save as defaults for  all instruments
+#define MIDI_RESTORE_FACTORY                 MIDI_CC_102_VALUE_125 //from Config Tool. restore factory settings
+#define MIDI_ENTER_COMM_MODE                 MIDI_CC_102_VALUE_126 //from Config Tool. enter communication mode
+#define MIDI_START_CALIB                     MIDI_CC_102_VALUE_127 //from Config Tool. begin autocalibration
+
+#define MIDI_STARTUP_CALIB                   MIDI_CC_106_VALUE_39 //Bidirectional. calibrate at startup
+#define MIDI_USE_LEARNED_CALIB               MIDI_CC_106_VALUE_40 //Bidirectional. use learned calibration
+#define MIDI_LEARN_INITIAL_NOTE_PRESS        MIDI_CC_106_VALUE_41 // from Config Tool. learn initial note on pressure
+#define MIDI_CALIB_BELL_SENSOR               MIDI_CC_106_VALUE_42  // from Config Tool. autocalibrate bell sensor only	
+#define MIDI_LEARN_DRONES_PRESSURE           MIDI_CC_106_VALUE_43  // from Config Tool. learn drones on pressure
+#define MIDI_SAVE_CALIB_AS_FACTORY           MIDI_CC_106_VALUE_45 // from Config Tool. save current sensor calibration as factory calibration (this is on a special webpage for me to use when I first program WARBL)
+#define MIDI_CALIB_IMU                       MIDI_CC_106_VALUE_54 //from Config Tool. WARBL2 calibrate IMU
+#define MIDI_CENTER_YAW                      MIDI_CC_106_VALUE_60  // from Config Tool. WARBL2 recenter yaw
+
+#define MIDI_STICKS_MODE                     MIDI_CC_111_VALUE_109 // Bidirectional. Hidden sticks mode - Same for 112 and 113
+
+/* START - END Values */
+#define MIDI_CALIB_MSGS_START                MIDI_CC_102_VALUE_1   // Start of Calibration correction messages
+#define MIDI_CALIB_MSGS_END                  MIDI_CC_102_VALUE_18  // End of Calibration correction messages
+#define MIDI_MAX_CALIB_MSGS_START            MIDI_CC_102_VALUE_20  // Start of Calibration max values reached messages
+#define MIDI_MAX_CALIB_MSGS_END              MIDI_CC_102_VALUE_28  // End of Calibration max values reached messages
+#define MIDI_FINGERING_PATTERN_MODE_START    MIDI_CC_102_VALUE_30  // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
+#define MIDI_FINGERING_PATTERN_START         MIDI_CC_102_VALUE_33  // Bidirectional. first fingering pattern is tin whistle
+#define MIDI_FINGERING_PATTERN_END           MIDI_CC_102_VALUE_59  // Bidirectional. Bansuri
+#define MIDI_CURRENT_MODE_START              MIDI_CC_102_VALUE_60  // Bidirectional. current instrument (mode variable) is  0
+#define MIDI_PB_MODE_START                   MIDI_CC_102_VALUE_70  // Bidirectional. Settings for current instrument: Pitchbend mode 0
+#define MIDI_BREATH_MODE_START               MIDI_CC_102_VALUE_80  // Bidirectional. Settings for current instrument: Breath mode 0
+#define MIDI_DEFAULT_MODE_START              MIDI_CC_102_VALUE_85  // Bidirectional. default instrument is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current instrument as default)
+#define MIDI_GESTURE_START                   MIDI_CC_102_VALUE_90  // Bidirectional. Sending data for click 1 (dropdown row 0)
+#define MIDI_CUST_FINGERING_PATTERN_START    MIDI_CC_102_VALUE_100 // Bidirectional. WARBL2 custom fingering chart 1
+#define MIDI_CUST_FINGERING_PATTERN_END      MIDI_CC_102_VALUE_103 // Bidirectional. WARBL2 custom fingering chart 4
+#define MIDI_ACTION_MIDI_START               MIDI_CC_102_VALUE_112 // Bidirectional. send midi note on/note off
+
+#define MIDI_PRESS_SELECT_VARS_START         MIDI_CC_104_VALUE_1  // Bidirectional. Settings for current instrument: indicates ""bag threshold"" is about to be sent with CC 105.
+#define MIDI_PRESS_SELECT_VARS_END           MIDI_CC_104_VALUE_12  // Bidirectional. Settings for current instrument: indicates "breath  drop time" is about to be sent with CC 105.
+#define MIDI_ED_VARS_START                   MIDI_CC_104_VALUE_13  // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105. 
+#define MIDI_ED_VARS_END                     MIDI_CC_104_VALUE_33  // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
+#define MIDI_SWITCHES_VARS_START             MIDI_CC_104_VALUE_40  // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105. 
+#define MIDI_SWITCHES_VARS_END               MIDI_CC_104_VALUE_53  // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+#define MIDI_ED_VARS2_START                  MIDI_CC_104_VALUE_70  // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105. 
+#define MIDI_ED_VARS2_END                    MIDI_CC_104_VALUE_97  // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
+#define MIDI_ED_VARS_NUMBER                  MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1 //ED array number of vars for the first slot
+#define MIDI_ED_VARS2_OFFSET                 MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER //ED array index for 2nd slot of MIDI Msgs
+
+#define MIDI_ACTION_MIDI_CHANNEL_END         MIDI_CC_106_VALUE_15 //Bidirectional. MIDI channel 16
+
+#define MIDI_ENA_VIBRATO_HOLES_START         MIDI_CC_106_VALUE_20  //Bidirectional. enable vibrato hole, 0	
+#define MIDI_ENA_VIBRATO_HOLES_END           MIDI_CC_106_VALUE_28  //Bidirectional. enable vibrato hole, 8	
+#define MIDI_DIS_VIBRATO_HOLES_START         MIDI_CC_106_VALUE_30  //Bidirectional. disable vibrato hole, 0	
+#define MIDI_DIS_VIBRATO_HOLES_END           MIDI_CC_106_VALUE_38  //Bidirectional. disable vibrato hole, 8	
+#define MIDI_WARBL2_SETTINGS_START           MIDI_CC_106_VALUE_55  //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+#define MIDI_WARBL2_SETTINGS_END             MIDI_CC_106_VALUE_74  //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+#define MIDI_BUTTON_ACTIONS_START            MIDI_CC_106_VALUE_100 //Bidirectional. button action 0 
+
+#define MIDI_CUSTOM_CHARTS_START             MIDI_CC_109_VALUE_100 //Beginning of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_END               MIDI_CC_109_VALUE_103 //End of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_START      MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START //Beginning of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_END        MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END //End of WARBL2 CustomCharts
+
+/* Various single Values */
+#define MIDI_MOMENTARY_OFF                   MIDI_CC_102_VALUE_117 // Bidirectional. momentary off
+#define MIDI_MOMENTARY_ON                    MIDI_CC_102_VALUE_118 // Bidirectional. momentary on
+
+#define MIDI_LEARNED_PRESS_LSB               MIDI_CC_104_VALUE_34  // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_LEARNED_PRESS_MSB               MIDI_CC_104_VALUE_35  // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_BEND_RANGE                      MIDI_CC_104_VALUE_61  // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
+#define MIDI_MIDI_CHANNEL                    MIDI_CC_104_VALUE_62  // Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
+
+#define MIDI_BLE_INTERVAL_LSB                MIDI_CC_106_VALUE_72 //from WARBL. WARBL2 BLE connection interval low byte
+#define MIDI_BLE_INTERVAL_MSB                MIDI_CC_106_VALUE_73 //from WARBL. WARBL2 BLE connection interval high byte
+
+#define MIDI_CUSTOM_CHARTS_START             MIDI_CC_109_VALUE_100 //Beginning of WARBL2 CustomCharts
+
+/* General sendMidi Args - NO VALUE - <CONTROL_CHANGE, MIDI channel, CC Number> */
+#define MIDI_SEND_CC                        CONTROL_CHANGE, MIDI_CONFIG_TOOL_CHANNEL
+
+#define MIDI_CC_102_MSG                     MIDI_SEND_CC, MIDI_CC_102
+#define MIDI_CC_103_MSG                     MIDI_SEND_CC, MIDI_CC_103
+#define MIDI_CC_104_MSG                     MIDI_SEND_CC, MIDI_CC_104
+#define MIDI_CC_105_MSG                     MIDI_SEND_CC, MIDI_CC_105
+#define MIDI_CC_106_MSG                     MIDI_SEND_CC, MIDI_CC_106
+#define MIDI_CC_107_MSG                     MIDI_SEND_CC, MIDI_CC_107
+#define MIDI_CC_108_MSG                     MIDI_SEND_CC, MIDI_CC_108
+#define MIDI_CC_109_MSG                     MIDI_SEND_CC, MIDI_CC_109
+#define MIDI_CC_110_MSG                     MIDI_SEND_CC, MIDI_CC_110
+
+#define MIDI_CC_114_MSG                     MIDI_SEND_CC, MIDI_CC_114
+#define MIDI_CC_115_MSG                     MIDI_SEND_CC, MIDI_CC_115
+#define MIDI_CC_116_MSG                     MIDI_SEND_CC, MIDI_CC_116
+#define MIDI_CC_117_MSG                     MIDI_SEND_CC, MIDI_CC_117
+#define MIDI_CC_118_MSG                     MIDI_SEND_CC, MIDI_CC_118
+#define MIDI_CC_119_MSG                     MIDI_SEND_CC, MIDI_CC_119
+
+/* Full sendMidi Args - WITH VALUES - <CONTROL_CHANGE, MIDI channel, CC Number, CC Value> */
+#define MIDI_SEND_LEARNED_PRESSURE_LSB	    MIDI_CC_104_MSG, MIDI_LEARNED_PRESS_LSB  // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_SEND_LEARNED_PRESSURE_MSB	    MIDI_CC_104_MSG, MIDI_LEARNED_PRESS_MSB  // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_SEND_DRONES_PRESSURE_LSB	    MIDI_CC_104_MSG, MIDI_CC_104_VALUE_32    // Bidirectional. Settings for current instrument: indicates that lsb of drones pressure is about to be sent on CC 105
+#define MIDI_SEND_DRONES_PRESSURE_MSB	    MIDI_CC_104_MSG, MIDI_CC_104_VALUE_33    // Bidirectional. Settings for current instrument: indicates that msb of drones pressure is about to be sent on CC 105
+#define MIDI_SEND_BEND_RANGE                MIDI_CC_104_MSG, MIDI_CC_104_VALUE_61  // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
+#define MIDI_SEND_MIDI_CHANNEL              MIDI_CC_104_MSG, MIDI_CC_104_VALUE_62  // Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
+
+
+#define MIDI_SEND_BATTERY_VOLTAGE           MIDI_CC_106_MSG, MIDI_CC_106_VALUE_70  //from WARBL. WARBL2 battery voltage
+#define MIDI_SEND_BATTERY_CHARGE_STATUS     MIDI_CC_106_MSG, MIDI_CC_106_VALUE_71  //from WARBL. WARBL2 charging status
+#define MIDI_SEND_BATTERY_CHARGE_PERC	    MIDI_CC_106_MSG, MIDI_CC_106_VALUE_74  //from WARBL. WARBL2 battery percentage
+
+#define MIDI_SEND_BUTTON_ACTION             MIDI_CC_109_MSG, MIDI_CC_109_VALUE_127 // From WARBL. Indicates button/gesture action will be sent on CC 105
+
+#define MIDI_CUSTOM_CHARTS_RCVD	            MIDI_CC_109_MSG, MIDI_CC_109_VALUE_100 //from WARBL. WARBL2 Custom fingering charts - indicate success
+
+//END of Human readable constants
+/* END of MIDI Config Tool Constants */
 
 
 /* EEPROM Addresses */

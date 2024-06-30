@@ -791,7 +791,7 @@ function WARBL_Receive(event) {
 
                         if ((data2 > 32 && data2 < 60)) {
                             if (fingeringWrite == i) {
-                                document.getElementById("fingeringSelect" + i).value = data2 - 33;
+                                document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
                             }
                             updateCells(); //update any dependant fields	
                         }
@@ -1132,12 +1132,11 @@ function WARBL_Receive(event) {
                         updateCustom();
                     } //R4 flattens
 
-                    /*
-                    else if (jumpFactorWrite == 53) {
-                        document.getElementById("checkbox19").checked = data2;
-                        updateCustom();
-                    } //R4 Invert
-                    */
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +13) {
+                        document.getElementById("cbDoubleClick").checked = data2;
+						updateDoubleClick();
+                    } //BUTTON_DOUBLE_CLICK
+                    
 
                     else if (jumpFactorWrite == 61) {
                         document.getElementById("midiBendRange").value = data2;
