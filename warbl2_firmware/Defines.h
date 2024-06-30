@@ -195,10 +195,11 @@
 #define kACTIONSnVariables 16
 
 // Variables in the WARBL2settings array (independent of mode)
-#define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both
+#define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
 #define CHARGE_FROM_HOST 1  // Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
 #define kWARBL2SETTINGSnVariables 3
+
 
 // Variables in the IMUsettings array
 #define SEND_ROLL 0       // On/off
@@ -247,12 +248,22 @@
 
 
 /* MIDI Config Tool Constants */
-/* To be kept in sync with constants.js in Confgi Tool */
-
 //General constants
-#define MIDI_DEFAULT_MAIN_CHANNEL             1 // Default MIDI channel to send notes on
-#define MIDI_CONFIG_TOOL_CHANNEL              7 // Config Tool MIDI channel
-#define MIDI_DEFAULT_VELOCITY               127 // 
+#define MIDI_DEFAULT_MAIN_CHANNEL          1 // Default MIDI channel to send notes on
+#define MIDI_CONFIG_TOOL_CHANNEL           7 //  Config Tool MIDI channel 
+#define MIDI_DEFAULT_VELOCITY            127 // 
+
+//WARBL2 MIDI_DESTINATION
+#define MIDI_DESTINATION_USB_ONLY       0
+#define MIDI_DESTINATION_BLE_ONLY       1
+#define MIDI_DESTINATION_BOTH           2
+
+//Source of an incoming CC Message
+#define MIDI_SOURCE_NONE         0 // No source set yes
+#define MIDI_SOURCE_USB          1 // From USB
+#define MIDI_SOURCE_BLE          2 // From BLE
+
+/* To be kept in sync with constants.js in Confgi Tool */
 
 //MIDI Human readable constants: see below
 
@@ -766,22 +777,25 @@
 #define MIDI_CC_119_MSG                     MIDI_SEND_CC, MIDI_CC_119
 
 /* Full sendMidi Args - WITH VALUES - <CONTROL_CHANGE, MIDI channel, CC Number, CC Value> */
-#define MIDI_SEND_LEARNED_PRESSURE_LSB	    MIDI_CC_104_MSG, MIDI_LEARNED_PRESS_LSB  // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
-#define MIDI_SEND_LEARNED_PRESSURE_MSB	    MIDI_CC_104_MSG, MIDI_LEARNED_PRESS_MSB  // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
-#define MIDI_SEND_DRONES_PRESSURE_LSB	    MIDI_CC_104_MSG, MIDI_CC_104_VALUE_32    // Bidirectional. Settings for current instrument: indicates that lsb of drones pressure is about to be sent on CC 105
-#define MIDI_SEND_DRONES_PRESSURE_MSB	    MIDI_CC_104_MSG, MIDI_CC_104_VALUE_33    // Bidirectional. Settings for current instrument: indicates that msb of drones pressure is about to be sent on CC 105
-#define MIDI_SEND_BEND_RANGE                MIDI_CC_104_MSG, MIDI_CC_104_VALUE_61  // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
-#define MIDI_SEND_MIDI_CHANNEL              MIDI_CC_104_MSG, MIDI_CC_104_VALUE_62  // Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
-
-
-#define MIDI_SEND_BATTERY_VOLTAGE           MIDI_CC_106_MSG, MIDI_CC_106_VALUE_70  //from WARBL. WARBL2 battery voltage
-#define MIDI_SEND_BATTERY_CHARGE_STATUS     MIDI_CC_106_MSG, MIDI_CC_106_VALUE_71  //from WARBL. WARBL2 charging status
-#define MIDI_SEND_BATTERY_CHARGE_PERC	    MIDI_CC_106_MSG, MIDI_CC_106_VALUE_74  //from WARBL. WARBL2 battery percentage
-
-#define MIDI_SEND_BUTTON_ACTION             MIDI_CC_109_MSG, MIDI_CC_109_VALUE_127 // From WARBL. Indicates button/gesture action will be sent on CC 105
-
 #define MIDI_CUSTOM_CHARTS_RCVD	            MIDI_CC_109_MSG, MIDI_CC_109_VALUE_100 //from WARBL. WARBL2 Custom fingering charts - indicate success
 
+//sendMIDICouplet *PARTIAL* Arguments
+#define MIDI_SEND_DRONES_PRESSURE_LSB	    MIDI_CC_104, MIDI_CC_104_VALUE_32, MIDI_CC_105    // Bidirectional. Settings for current instrument: indicates that lsb of drones pressure is about to be sent on CC 105
+#define MIDI_SEND_DRONES_PRESSURE_MSB	    MIDI_CC_104, MIDI_CC_104_VALUE_33, MIDI_CC_105    // Bidirectional. Settings for current instrument: indicates that msb of drones pressure is about to be sent on CC 105
+#define MIDI_SEND_LEARNED_PRESSURE_LSB	    MIDI_CC_104, MIDI_LEARNED_PRESS_LSB, MIDI_CC_105  // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_SEND_LEARNED_PRESSURE_MSB	    MIDI_CC_104, MIDI_LEARNED_PRESS_MSB, MIDI_CC_105  // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
+#define MIDI_SEND_BEND_RANGE                MIDI_CC_104, MIDI_CC_104_VALUE_61, MIDI_CC_105    // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
+#define MIDI_SEND_MIDI_CHANNEL              MIDI_CC_104, MIDI_CC_104_VALUE_62, MIDI_CC_105    // Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
+
+#define MIDI_SEND_BATTERY_VOLTAGE           MIDI_CC_106, MIDI_CC_106_VALUE_70, MIDI_CC_119  //from WARBL. WARBL2 battery voltage
+#define MIDI_SEND_BATTERY_CHARGE_STATUS     MIDI_CC_106, MIDI_CC_106_VALUE_71, MIDI_CC_119  //from WARBL. WARBL2 charging status
+#define MIDI_SEND_BATTERY_CHARGE_PERC	    MIDI_CC_106, MIDI_CC_106_VALUE_74, MIDI_CC_119  //from WARBL. WARBL2 battery percentage
+
+#define MIDI_SEND_BUTTON_ACTION             MIDI_CC_109, MIDI_CC_109_VALUE_127, MIDI_CC_105   // From WARBL. Indicates button/gesture action will be sent on CC 105
+
+
+
+//
 //END of Human readable constants
 /* END of MIDI Config Tool Constants */
 

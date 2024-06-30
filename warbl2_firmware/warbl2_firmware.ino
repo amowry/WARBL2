@@ -320,10 +320,14 @@ bool dronesOn = 0;  //used to monitor drones on/off.
 
 // Variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;          // Whether we are currently communicating with the tool.
+byte communicationModeSource = MIDI_SOURCE_NONE;    // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
 byte buttonReceiveMode = 100;        // Which row in the button configuration matrix for which we're currently receiving data.
 int pressureReceiveMode = 100;       // Indicates the variable for which we're currently receiving data
 byte fingeringReceiveMode = 0;       // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
 byte WARBL2settingsReceiveMode = 0;  // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
+
+//Variable to keep as thread-safe as possibile the communication with the Config Tool
+volatile bool midiSendCoupletMutex = false;          // A simple mutex that indicates if a double-message transmission is active
 
 
 unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
@@ -389,7 +393,7 @@ void setup() {
     usb_midi.setStringDescriptor("WARBL USB MIDI");
     MIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
     MIDI.turnThruOff();
-    MIDI.setHandleControlChange(handleControlChange);  // Handle received MIDI CC messages.
+    MIDI.setHandleControlChange(handleControlChangeFromUSB);  // Handle received MIDI CC messages.
 
     //delay(2000); // Makes it so button 3 must be held down for two seconds to power on.
 
@@ -421,7 +425,7 @@ void setup() {
     bledis.begin();
     BLEMIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
     BLEMIDI.turnThruOff();
-    BLEMIDI.setHandleControlChange(handleControlChange);          // Handle received MIDI CC messages.
+    BLEMIDI.setHandleControlChange(handleControlChangeFromBLE);   // Handle received MIDI CC messages.
     Bluefruit.Periph.setConnectCallback(connect_callback);        // Get connection information and handle indication.
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
     startAdv();                                                   // Set up and start advertising. Comment this out for testing without BLE on.
