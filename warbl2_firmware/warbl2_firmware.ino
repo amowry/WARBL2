@@ -48,6 +48,9 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
 
+//Half Hole Detection
+#include "HalfHole.h"
+
 
 // Create instances of library classes.
 BLEDis bledis;
@@ -227,7 +230,7 @@ unsigned long velocityDelayTimer = 0;  // A timer to wait for pressure to build 
 int jumpTime = 15;                     // The amount of time to wait before dropping back down from an octave jump to first octave because of insufficient pressure
 int dropTime = 15;                     // The amount of time to wait (ms) before turning a note back on after dropping directly from second octave to note off
 byte hysteresis = 15;                  // Register hysteresis
-byte soundTriggerOffset = 3;           // The number of 10-bit sensor values above the calibration setting at which a note on will be triggered (first octave)
+byte soundTriggerOffset = 1;           // The number of 10-bit sensor values above the calibration setting at which a note on will be triggered (first octave)
 int learnedPressure = 0;               // The learned pressure reading, used as a base value
 int currentState;                      // These several are used by the new state machine.
 int rateChangeIdx = 0;
@@ -257,9 +260,15 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
+//20231028 GLB
+int toneholeLastRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };       //Last read for confirmed note for the config Tool and debounceFingers
+
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
 bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
+//20240623
+unsigned int currentNoteHoleCovered = 1;                                           //Keeps track of holes for current "valid" note
+
 byte tempNewNote = 127;
 byte prevNote = 127;
 byte newNote = 127;            // The next note to be played, based on the fingering chart (does not include transposition).
@@ -442,6 +451,10 @@ void setup() {
     if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
+
+    //Half Hole Detection
+    hh_init(); //Initializes runtime parameters
+
 
     loadFingering();
     loadSettingsForAllModes();

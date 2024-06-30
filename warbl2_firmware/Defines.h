@@ -1,6 +1,6 @@
 
 
-#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+//#define RELEASE // Uncomment for release version (turns off CDC to make the device USB class compliant).
 
 #define VERSION 41  // Firmware version (without decimal point)
 // #define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
@@ -9,7 +9,7 @@
 
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
 
-#define DEBUG_TRANSITION_FILTER 0
+#define DEBUG_TRANSITION_FILTER 1
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -55,11 +55,13 @@
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
 #define kModeBansuriWARBL 23  // Currently unused
+#define kModeBarbaroEWI 24 //These two are the same
+#define kModeBarbaroRecorder 25
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
 #define kWARBL2Custom4 70
-#define kModeNModes 28
+#define kModeNModes 29
 
 // Pitch bend modes
 #define kPitchBendSlideVibrato 0
