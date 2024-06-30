@@ -1,13 +1,10 @@
 const MIDI_DEBUG = false;
 
 /* MIDI Config Tool Constants */
+//General constants
+const MIDI_CONFIG_TOOL_CHANNEL = 7; // Config Tool MIDI channel
 
 // To Be Sync'd with Defines.h in firmware
-
-//General constants
-const MIDI_DEFAULT_MAIN_CHANNEL = 1; // Default MIDI channel to send notes on
-const MIDI_CONFIG_TOOL_CHANNEL = 7; // Config Tool MIDI channel
-const MIDI_DEFAULT_VELOCITY = 127; // 
 
 //MIDI Human readable constants: see below
 
