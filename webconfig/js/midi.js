@@ -196,10 +196,11 @@ function connect() {
     if (communicationMode && version > 2.0) {
         //sendToAll(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"	
 		if (version < 4.1){	
-        var cc = buildMessage(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
+        var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
 		}
-		else {var cc = buildMessage(102, 104);}
+		else {var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_104);}
         var iter = midiAccess.outputs.values();
+
         for (var o = iter.next(); !o.done; o = iter.next()) {
             o.value.send(cc); //send CC message
         }
@@ -280,7 +281,7 @@ function connect() {
 //
 // Callback when first requesting WebMIDI support
 //
-function onMIDIInit(midi) {
+async function onMIDIInit(midi)  {
 
     //debugger;
 
@@ -316,10 +317,23 @@ function onMIDIInit(midi) {
 
         if (!communicationMode || version < 2.1 || version == "Unknown") {
 
-            sendToAll(102, 126); //tell WARBL to enter communications mode
+            if (version < 2.1 || communicationMode) {
+                sendToAll(MIDI_CC_102, MIDI_ENTER_COMM_MODE); //tell WARBL to enter communications mode
+            } else {
+                //We send a command to all connected devices unless one responds
+                var cc = buildMessage(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
 
+                var iter = midiAccess.outputs.values();
+                for (var o = iter.next(); !o.done; o = iter.next()) {
+                    if (!communicationMode) {
+                        o.value.send(cc); //send CC message to all ports
+                    } else {
+                        break;
+                    }
+                    await sleep(500); //This should be enough even for BLE
+                }
+            }
         }
-
 
     }
     else {
@@ -522,7 +536,7 @@ function WARBL_Receive(event) {
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
-    if ((!WARBLout) && ((data0 & 0x0F) == 6) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
+    if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
 		
 
@@ -707,7 +721,7 @@ function WARBL_Receive(event) {
 
 
 
-    if (!(e == "CC" && ((parseFloat(data0 & 0x0f) == 6)))) { //as long as it's not a CC on channel 7, show in the MIDI console.
+    if (!(e == "CC" && (parseFloat(data0 & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL-1))) { //as long as it's not a CC on channel 7, show in the MIDI console.
         consoleEntries++;
         if (consoleEntries < 301) {
             document.getElementById("console").innerHTML += (e + " " + ((data0 & 0x0f) + 1) + " " + data1 + " " + f);
@@ -742,7 +756,7 @@ function WARBL_Receive(event) {
             if (MIDI_DEBUG) {
                 console.log("From WARBL", data1, data2);
             }
-            if (parseFloat(data0 & 0x0f) == 6) { //if it's channel 7 it's from WARBL 
+            if (parseFloat(data0 & 0x0f) ==  MIDI_CONFIG_TOOL_CHANNEL-1) { //if it's channel 7 it's from WARBL 
 
                 //console.log("WARBL_Receive: "+data0+" "+data1+" "+data2);
 
@@ -1392,6 +1406,7 @@ function WARBL_Receive(event) {
                         document.location.reload(false); //refresh the page without reloading to revert the settings
                     }
 
+                    communicationMode = true; //moved above
                     previousVersion = version;
 
                     if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
@@ -1420,7 +1435,7 @@ function WARBL_Receive(event) {
                     //console.log("connect");
                     document.getElementById("status").innerHTML = "WARBL Connected.";
                     document.getElementById("status").style.color = "#f7c839";
-                    communicationMode = true;
+                    // communicationMode = true; //moved above
                     if (version > 2.0) {
                         document.getElementById("connect").innerHTML = "Disconnect";
                     }
