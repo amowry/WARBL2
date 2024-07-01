@@ -2604,7 +2604,7 @@ void sendSettings() {
     for (byte i = 0; i < kGESTURESnVariables; i++) {
         sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[mode][i][0]); // Send  data for button commands row i (click 1, click 2, etc.).
 
-        //This would require a "quadruplet mutex", but we are protected by the general sendSettings mutex.
+        //This would require a "quadruplet mutex"...
         if (buttonPrefs[mode][i][0] == 1) {                               // If the action is a MIDI command, send the rest of the MIDI info for that row.
             sendMIDI(MIDI_CC_102_MSG, MIDI_ACTION_MIDI_START + buttonPrefs[mode][i][1]);
             sendMIDI(MIDI_CC_106_MSG, buttonPrefs[mode][i][2]);
