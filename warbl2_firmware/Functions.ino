@@ -16,7 +16,7 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-//Serial.println(switches[mode][BUTTON_DOUBLE_CLICK]);
+    //Serial.println(switches[mode][BUTTON_DOUBLE_CLICK]);
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
@@ -3225,8 +3225,9 @@ void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8
 // These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library. ToDo: These could be made shorter/more efficient.
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MIDI event over USB.
 {
+
     m &= 0xF0;
-    c &= 0xF;
+    c = constrain(c, 1, 16);
     d1 &= 0x7F;
     d2 &= 0x7F;
 
@@ -3315,7 +3316,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MI
 // Send a 2-byte MIDI event over USB.
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
     m &= 0xF0;
-    c &= 0xF;
+    c = constrain(c, 1, 16);
     d &= 0x7F;
 
     switch (m) {
