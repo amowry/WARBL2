@@ -10,6 +10,7 @@
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
 
 #define DEBUG_TRANSITION_FILTER 0
+#define DEBUG_CONFIG_TOOL 0
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -104,7 +105,8 @@
 #define OVERRIDE 10
 #define THUMB_AND_OVERBLOW 11
 #define R4_FLATTEN 12
-#define kSWITCHESnVariables 13
+#define BUTTON_DOUBLE_CLICK 13
+#define kSWITCHESnVariables 14
 
 // Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
@@ -172,6 +174,7 @@
 #define kGESTURESnVariables 10
 
 // Button/gesture actions
+#define DOUBLE_CLICK_WAIT_INTERVAL  200 //Check button is every 5 ticks, so this hould be about 1 second
 #define NO_ACTION 0
 #define SEND_MIDI_MESSAGE 1
 #define CHANGE_PITCHBEND_MODE 2

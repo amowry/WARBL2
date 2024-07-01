@@ -446,6 +446,9 @@ function sendToWARBL(byte2, byte3) {
             }
 
             var cc = buildMessage(byte2, byte3);
+            if (MIDI_DEBUG) {
+                console.log("sendToWARBL",byte2, byte3 );
+            }
             sendWARBLoutQueue.push(cc); //add message to queue
             if (!sendWARBLInterval) {
                 sendWARBLInterval = setInterval(sendQueuedWARBLoutMessages, sendDelay); //start interval for sending queued messages
@@ -736,7 +739,9 @@ function WARBL_Receive(event) {
             return;
 
         case 0xB0: //incoming CC from WARBL
-
+            if (MIDI_DEBUG) {
+                console.log("From WARBL", data1, data2);
+            }
             if (parseFloat(data0 & 0x0f) == 6) { //if it's channel 7 it's from WARBL 
 
                 //console.log("WARBL_Receive: "+data0+" "+data1+" "+data2);
@@ -790,6 +795,7 @@ function WARBL_Receive(event) {
                         }
 
                         if ((data2 >= MIDI_FINGERING_PATTERN_START && data2 <= MIDI_FINGERING_PATTERN_END)) {
+
                             if (fingeringWrite == i) {
                                 document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
                             }
@@ -1153,12 +1159,11 @@ function WARBL_Receive(event) {
                         updateCustom();
                     } //R4 flattens
 
-                    /*
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +13) {
-                        document.getElementById("checkbox19").checked = data2;
-                        updateCustom();
-                    } //R4 Invert
-                    */
+                        document.getElementById("cbDoubleClick").checked = data2;
+						updateDoubleClick();
+                    } //BUTTON_DOUBLE_CLICK
+                    
 
                     else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;
@@ -3422,15 +3427,24 @@ function sendR4flatten(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
-/* //curently unused--can be used for an additional switch.
-function sendInvertR4(selection) {
-    selection = +selection;
-    blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +13);
-    sendToWARBL(MIDI_CC_105, selection);
+function updateDoubleClick() {
+	if (document.getElementById("cbDoubleClick").checked) {
+		document.getElementById("gestureLabel0").innerHTML = "Double-click 1";
+		document.getElementById("gestureLabel1").innerHTML = "Double-click 2";
+		document.getElementById("gestureLabel2").innerHTML = "Double-click 3";
+	} else {
+		document.getElementById("gestureLabel0").innerHTML = "Click 1";
+		document.getElementById("gestureLabel1").innerHTML = "Click 2";
+		document.getElementById("gestureLabel2").innerHTML = "Click 3";
+	}
 }
-*/
-
+function sendDoubleClick(selection) {
+	updateDoubleClick();
+	selection = +selection; 
+	blink(1);
+	sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 13);
+	sendToWARBL(MIDI_CC_105, selection);
+}
 
 //end switches
 
