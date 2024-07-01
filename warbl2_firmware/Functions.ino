@@ -17,11 +17,10 @@ void printStuff(void) {
     } 
 */
 
-
-    for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeRead[i]);
-    }
-    //Serial.println(" ");
+    // for (byte i = 0; i < 9; i++) {
+    //     Serial.println(toneholeRead[i]);
+    // }
+    // Serial.println(" ");
 }
 
 
@@ -109,6 +108,16 @@ void getSensors(void) {
         if (toneholeRead[i] < 0) {  // In rare cases the adjusted readings might end up being negative.
             toneholeRead[i] = 0;
         }
+
+        if (!noteon && toneholeBaselineCurrent[i] > toneholeRead[i]) {  //baseline calibration
+            toneholeBaselineCurrent[i] = toneholeRead[i];
+        } 
+    }
+
+    //Autocalibration for half hole detection
+    if (autoCalibrationTimer++ >= BASELINE_AVRG_INTERVAL) {  //check baseline every so often,
+        autoCalibrationTimer = 0;
+        baselineUpdate();
     }
 }
 
@@ -661,13 +670,53 @@ void checkButtons() {
 // Determine which holes are covered.
 void getFingers() {
 
-    for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
-            bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
-        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - 54)) {
-            bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
+
+    byte bitSet = 0;
+
+    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+
+        if (halfHole.enabled[i]) {
+            bool halfHoleNow = isHalfHole(i);
+            int thRead = toneholeRead[i];
+
+            byte bitOffset = 9;    //For forcing a change in holeCovered
+            if ((i == R4_HOLE || i == R3_HOLE)) {
+                bitOffset += i;
+            }
+
+            if (halfHoleNow) {
+                bitWrite(holeCovered, bitOffset, 1);     //To trigger fingering change
+                toneholeHalfCovered[i] = true;                 //for get_note
+                thRead = toneholeCovered[i];    //Force read as covered
+            } else {
+                bitWrite(holeCovered, bitOffset, 0);    //To trigger fingering change
+                toneholeHalfCovered[i] = false;             //for get_note
+            } 
+
+            if (thRead > getHalfHoleUpperBound(i)) {
+                bitSet = 1;
+            } else if (thRead < getHalfHoleLowerBound(i)) {
+                bitSet = 0;
+            }
+
+        } else {
+            if ((toneholeRead[i]) > (toneholeCovered[i] - HOLE_COVERED_OFFSET)) {
+                bitSet = 1;
+            } else if ((toneholeRead[i]) <= (toneholeCovered[i] - HOLE_OPEN_OFFSET)) {
+                bitSet = 0;
+            }
         }
+
+        bitWrite(holeCovered, i, bitSet);    //use the tonehole readings to decide which holes are covered
     }
+    
+    // for (byte i = 0; i < 9; i++) {
+    //     if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
+    //         bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
+    //     } else if ((toneholeRead[i]) <= (toneholeCovered[i] - 54)) {
+    //         bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
+    //     }
+    // }
 }
 
 
@@ -699,9 +748,14 @@ bool isMaybeInTransition() {
 
     if (pendingHoleCovered != holeCovered) {
         // See if the pending is a new note.
-        byte tempNewNote = getNote(holeCovered);
-        byte pendingNote = getNote(pendingHoleCovered);
-        if (pendingNote != 127 && pendingNote != tempNewNote) {
+        int tempNewNote = getNote(holeCovered);
+        int pendingNote = getNote(pendingHoleCovered);
+        if ( (pendingNote >= 0 && pendingNote != tempNewNote) &&
+                (abs(tempNewNote - pendingNote) > 11 //the interval for the current fingered note is an octave or more
+                || __builtin_popcount(pendingHoleCovered ^ holeCovered) >= 4 //the number of changed finger is > 4,
+                || (halfHole.enabled[THUMB_HOLE] && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2)
+                )
+            ) {
 #if DEBUG_TRANSITION_FILTER
             Serial.print(now);
             Serial.print(" : Maybe: ");
@@ -732,6 +786,14 @@ void debounceFingerHoles() {
     static bool timing;
 
     if (prevHoleCovered != holeCovered) {
+        
+    // #ifdef DEBUG_HH
+    //     for (int i = 0; i < 16; i++) {
+    //         Serial.print(bitRead(holeCovered, i) );
+    //     }
+    //     Serial.println(" ");
+    // #endif
+
         prevHoleCovered = holeCovered;
         debounceTimer = now;
         timing = 1;
@@ -739,6 +801,17 @@ void debounceFingerHoles() {
             transitionFilter = transientFilterDelay;  // ms timeout for transition to fail out
         } else {
             transitionFilter = 0;
+        }
+
+        //HalfHole Additional Buffer
+        if ( halfHole.enabled[THUMB_HOLE] && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2) {
+            #ifdef DEBUG_HH
+                Serial.print("Thumb hole in transition\n");
+                Serial.print(toneholeLastRead[THUMB_HOLE]);
+                Serial.print("->");
+                Serial.println(toneholeRead[THUMB_HOLE]);
+            #endif
+            transitionFilter = (pressureSelector[mode][9] + halfHole.buffer) / 1.25;
         }
     }
 
@@ -758,6 +831,12 @@ void debounceFingerHoles() {
         fingersChanged = 1;
         fingeringChangeTimer = millis();     // Start timing after the fingering pattern has changed.
         tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
+
+        //For Halfhole Detection
+        for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+            toneholeLastRead[i] = toneholeRead[i];
+        }
+
         sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
         if (tempNewNote != 127 && newNote != tempNewNote) {  // If a new note has been triggered (127 can be used as a "blank" position that has no effect),
@@ -769,14 +848,17 @@ void debounceFingerHoles() {
                 }
             }
 
-#if DEBUG_TRANSITION_FILTER
+
+    #if DEBUG_TRANSITION_FILTER
             Serial.print(now);
             Serial.print(" : Commit: ");
             Serial.println(tempNewNote);
-#endif
+    #endif
 
             newNote = tempNewNote;
-            getState();  // Get state again if the note has changed.
+            tempNewNote = -1;
+            getState();                       // Get state again if the note has changed.
+            fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
         }
     }
 }
@@ -836,6 +918,7 @@ byte getNote(unsigned int fingerPattern) {
 
     uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
 
+
     // Read the MIDI note for the current fingering (all charts except the custom ones).
     if (modeSelector[mode] < kWARBL2Custom1) {
         ret = charts[modeSelector[mode]][tempCovered];
@@ -850,6 +933,142 @@ byte getNote(unsigned int fingerPattern) {
 
     if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
         vibratoEnable = uilleannVibrato[tempCovered];
+    }
+
+    //HalfHole Detetcion for Barbaro's EWI
+    if (modeSelector[mode] == kModeBarbaroEWI ) {
+
+        // tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
+        tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+
+        ret = charts[modeSelector[mode]][tempCovered];
+        
+        #ifdef DEBUG_FINGERING
+            Serial.print("getNote: ");
+            Serial.println(ret);
+        #endif
+        if (ret == 0) {
+            ret = -1;
+        } else {
+            if ( 
+                ( (tempCovered == 0b1111111)//To capture base position only 
+                    && toneholeHalfCovered[R4_HOLE] //C
+                    ) ||
+                ( (tempCovered == 0b1111110)
+                    && toneholeHalfCovered[R3_HOLE] //D
+                )
+                )
+                {
+                    ret += 1;
+                }
+
+            if (modeSelector[mode] == kModeBarbaroRecorder) {
+                    if (bitRead(holeCovered, 9)) { //thumb hole half covered - 2nd and 3rd register
+                    
+                    switch (tempCovered) {
+                        case 0b1101110: //Bb
+                        case 0b1101111: //Bb
+                            ret = 70;
+                        break;
+
+                        case 0b1101100: //B
+                            ret = 71;
+                        break;
+
+                        case 0b1001100: //C
+                            ret = 72;
+                        break;
+
+                        case 0b1111111: //C#
+                            ret = 73;
+                        break;
+
+                        default:
+                            break;
+                    }
+                } else if (!bitRead(holeCovered, 8)) { //thumb hole uncovered
+                    //Lots of homophonic positions here :)
+                    switch (tempCovered) {
+                        case 0b1111000: //B
+                            ret = 71;
+                        break;
+                        case 0b1101110: //C
+                        case 0b1110000: //C
+                            ret = 72;
+                        break;
+                        case 0b1101000: //C#
+                        case 0b1100100: //C#
+                        case 0b1100010: //C#
+                        case 0b1100001: //C#
+                        case 0b1100110: //C#
+                        case 0b1100111: //C#
+                        case 0b1100011: //C#
+                        case 0b1101100: //C#
+                        case 0b1100000: //C#
+                            ret = 73;
+                        break;
+                        case 0b0101000: //D
+                        case 0b0100100: //D
+                        case 0b0100010: //D
+                        case 0b0100001: //D
+                        case 0b0101100: //D
+                        case 0b0100000: //D
+                        case 0b1111111: //D
+                        case 0b0101111: //D
+                            ret = 74;
+                        break;
+                        case 0b0111110: //D#
+                        case 0b1111110: //D#
+                        case 0b0101110: //D#
+                        case 0b0000000: //D# - trill
+                            ret = 75;
+                        break;
+                        case 0b0111100: //E Trill
+                        case 0b1111011: //E
+                        case 0b1111100: //E
+                            ret = 76;
+                        break;
+                        case 0b1111010: //F
+                            ret = 77;
+                        break;
+                        default:
+                        break;
+                            // ret = -1;
+                    }
+
+                } else if (bitRead(holeCovered, 8)) { //thumb hole covered
+                    switch (tempCovered) {
+                        case 0b1101111: //G trill position
+                            ret = 67;
+                        break;
+                        case 0b1011110: //G# trill position
+                            ret = 68;
+                        break;
+                            case 0b0011000: //C trill position
+                            ret = 72;
+                        break;
+                    }
+                }
+                if (ret > 0) {
+                    ret += 12;
+                }
+                
+            } else {
+                if (bitRead(holeCovered, 9)) { //thumb hole half covered
+                #ifdef DEBUG_HH
+                    Serial.print("Half Hole Detected");
+                    Serial.print(" - getNote: ");
+                    Serial.print(ret);
+                    Serial.print(" + 12");
+                    Serial.println();
+                #endif
+                    ret += 24;
+                } else if (bitRead(holeCovered, 8)) { //thumb hole half covered
+                    ret += 12;
+                }
+            }
+
+        }
     }
 
     return ret;
@@ -3089,6 +3308,19 @@ void calculatePressure(byte pressureOption) {
 
     // Else curve 0 is linear, so no transformation.
 
+    #ifdef PRESSURE_DEBUG
+
+    Serial.print(twelveBitPressure);
+    Serial.print(" - ");
+    Serial.print(smoothed_pressure);
+    Serial.print(" - ");
+    Serial.print(sensorValue);
+    Serial.print(" - ");
+    Serial.print(scaledPressure);
+
+    Serial.println(" ");
+    #endif
+    
     inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
