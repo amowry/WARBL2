@@ -1452,9 +1452,12 @@ function WARBL_Receive(event) {
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
 					
 					
+					if (version < 4.2) {
 					
-					
-
+						document.getElementById("switchDoubleClick").style.display = "none";
+						document.getElementById("doubleClickLabel").style.display = "none";
+						
+					}
 					
 
 
@@ -1534,8 +1537,7 @@ function WARBL_Receive(event) {
                         document.getElementById("1").style.left = "900px";
                         document.getElementById("2").style.left = "900px";
                         document.getElementById("v1").style.left = "900px";
-						document.getElementById("switchDoubleClick").style.display = "none";
-						document.getElementById("doubleClickLabel").style.display = "none";
+
 						
 
                     }
