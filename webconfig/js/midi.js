@@ -1534,6 +1534,9 @@ function WARBL_Receive(event) {
                         document.getElementById("1").style.left = "900px";
                         document.getElementById("2").style.left = "900px";
                         document.getElementById("v1").style.left = "900px";
+						document.getElementById("switchDoubleClick").style.display = "none";
+						document.getElementById("doubleClickLabel").style.display = "none";
+						
 
                     }
 
