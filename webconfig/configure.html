@@ -1276,6 +1276,11 @@
                     <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
                     <span class="slider round"></span>
                   </label>
+                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
+                  <label class="switch" id="switchDoubleClick">
+                    <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
+                    <span class="slider round"></span>
+                  </label>
                   <div class="momentaryLabel noTouch">Momentary</div>
                   <label class="switch" id="switch0">
                   <input type="checkbox" class="checkboxes" id="checkbox0" onChange="sendMomentary(0)" />
@@ -2482,6 +2487,7 @@
    </script>
    <script src='js/WebAudioFontPlayer.js'></script>
    <script src='js/0650_SBLive_sf2.js'></script>
+   <script src="js/constants.js"></script>
    <script src="js/midi.js"></script>
    <script src="js/d3.min.js"></script>
 </html>

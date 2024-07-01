@@ -151,7 +151,7 @@ byte breathMode = kPressureBreath;            // The desired presure sensor beha
 unsigned int vibratoDepth = 1024;             // Vibrato depth from 0 (no vibrato) to 8191 (one semitone)
 bool useLearnedPressure = 0;                  // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
 byte midiBendRange = 2;                       // +/- semitones that the midi bend range represents
-byte mainMidiChannel = 1;                     // Current MIDI channel to send notes on
+byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;                     // Current MIDI channel to send notes on
 
 
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
@@ -171,10 +171,14 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
+//20240629 MrMep - Doublec click Action
+bool waitingSecondClick[3] = { 0, 0, 0};
+unsigned int doubleClickTimer = 0;
+
 byte switches[3][kSWITCHESnVariables] =           // Settings for the switches in various Config Tool panels (see defines)
-  { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },    // Instrument 0
-    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 },    // Instrument 1
-    { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0 } };  // Instrument 2
+  { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 0
+    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
+    { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
 byte IMUsettings[3][kIMUnVariables] =                                                                                      // Settings for mapping and sending IMU readings (see defines above)
   { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 0
@@ -300,7 +304,7 @@ int adjvibdepth;                                                                
 bool noteon = 0;      // Whether a note is currently turned on
 bool shiftState = 0;  // Whether the octave is shifted (could be combined with octaveShift)
 int8_t shift = 0;     // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
-byte velocity = 127;  // MIDI note velocity
+byte velocity = MIDI_DEFAULT_VELOCITY;  // MIDI note velocity
 
 
 // Tonehole calibration variables

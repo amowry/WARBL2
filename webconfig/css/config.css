@@ -1925,6 +1925,10 @@ input:disabled + .vibratoSlider:before {
 	left: 160px;
 }
 
+#switchDoubleClick {
+	top: 27px;
+	left: 55px;
+}
 
 .invertLabel {
 	display: block;
@@ -2428,6 +2432,14 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
+.doubleClickLabel  {
+	display: block;
+	position: absolute;
+	left: 117px;
+	top: 29px;
+	z-index: 99;
+	font-size: 14px;
+}
 /* The slider */
 .slider {
 	position: absolute;

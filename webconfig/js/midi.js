@@ -1247,8 +1247,10 @@ function WARBL_Receive(event) {
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
                         slider3.noUiSlider.set([null, data2]);
-                    }
-                    /* MrMep: Careful: this might break backward compatibility: jumpFactor 87 was CUSTOM_FINGERING_1 in WARBL1 */
+                    }					
+                    else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
+                        document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
+                    }			
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +17) {
 						// slideLimit
 						document.getElementById("slidelimit").value = data2 ;
@@ -1256,10 +1258,7 @@ function WARBL_Receive(event) {
 	                    depth.dispatchEvent(new Event('input'));
 	                    output.innerHTML = data2;
 					}
-                    /* MrMep: 87 is not catched by the following */
-                    else if (jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
-                        document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
-                    }
+
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
 
@@ -1453,9 +1452,12 @@ function WARBL_Receive(event) {
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
 					
 					
+					if (version < 4.2) {
 					
-					
-
+						document.getElementById("switchDoubleClick").style.display = "none";
+						document.getElementById("doubleClickLabel").style.display = "none";
+						
+					}
 					
 
 
@@ -1535,6 +1537,8 @@ function WARBL_Receive(event) {
                         document.getElementById("1").style.left = "900px";
                         document.getElementById("2").style.left = "900px";
                         document.getElementById("v1").style.left = "900px";
+
+						
 
                     }
 

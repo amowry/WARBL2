@@ -16,11 +16,12 @@ void printStuff(void) {
         delay(5000);
     } 
 */
+    //Serial.println(switches[mode][BUTTON_DOUBLE_CLICK]);
 
-    // for (byte i = 0; i < 9; i++) {
-    //     Serial.println(toneholeRead[i]);
-    // }
-    // Serial.println(" ");
+    for (byte i = 0; i < 9; i++) {
+        //Serial.println(toneholeRead[i]);
+    }
+    //Serial.println(" ");
 }
 
 
@@ -592,7 +593,7 @@ void checkButtons() {
     for (byte j = 0; j < 3; j++) {
 
         //20230629 MrMep - Timer for doubleclick
-        if (waitingSecondClick[j] && doubleClickTimer++ > DOUBLE_CLICK_WAIT_INTERVAL) { //We were waiting for a second click, but timer has exipired
+        if (waitingSecondClick[j] && doubleClickTimer++ > DOUBLE_CLICK_WAIT_INTERVAL) {  //We were waiting for a second click, but timer has exipired
             waitingSecondClick[j] = false;
         }
 
@@ -892,8 +893,8 @@ void sendToConfig(bool newPattern, bool newPressure) {
             pressureSendTimer = nowtime;
         }
 
-        if (patternChanged && (nowtime - patternSendTimer) > 25) {  // If some time has past, send the new pattern to the Config Tool.
-            sendMIDICouplet(MIDI_CC_114, holeCovered >> 7, MIDI_CC_115, lowByte(holeCovered)); // Because it's MIDI we have to send it in two 7-bit chunks.
+        if (patternChanged && (nowtime - patternSendTimer) > 25) {                              // If some time has past, send the new pattern to the Config Tool.
+            sendMIDICouplet(MIDI_CC_114, holeCovered >> 7, MIDI_CC_115, lowByte(holeCovered));  // Because it's MIDI we have to send it in two 7-bit chunks.
             patternChanged = false;
         }
 
@@ -1803,7 +1804,6 @@ void handleControlChangeFromUSB(byte channel, byte number, byte value) {
 //Incoming message from BLE
 void handleControlChangeFromBLE(byte channel, byte number, byte value) {
     handleControlChange(MIDI_SOURCE_BLE, channel, number, value);
-
 }
 
 // Check for and handle incoming MIDI messages from the WARBL Configuration Tool.
@@ -1815,13 +1815,13 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
     if (number < 120) {  // Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL) {     // If we're on channel 7, we may be receiving messages from the configuration tool.
-            powerDownTimer = millis();   // Reset the powerDown timer because we've heard from the Config Tool.
-            blinkNumber[GREEN_LED] = 1;  // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+        if ((channel) == MIDI_CONFIG_TOOL_CHANNEL) {  // If we're on channel 7, we may be receiving messages from the configuration tool.
+            powerDownTimer = millis();                       // Reset the powerDown timer because we've heard from the Config Tool.
+            blinkNumber[GREEN_LED] = 1;                      // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
 
             /////// CC 102
-            if (number == MIDI_CC_102) {                 // Many settings are controlled by a value in CC 102 (always channel 7).
+            if (number == MIDI_CC_102) {                                               // Many settings are controlled by a value in CC 102 (always channel 7).
                 if (value >= MIDI_CALIB_MSGS_START && value <= MIDI_CALIB_MSGS_END) {  // Handle sensor calibration commands from the configuration tool.
                     if ((value & 1) == 0) {
                         toneholeCovered[(value >> 1) - 1] -= 5;
@@ -1846,10 +1846,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 else if (value == MIDI_ENTER_COMM_MODE) {  // When communication is established, send all current settings to tool.
                     communicationMode = 1;
                     communicationModeSource = source;
-                    #if DEBUG_CONFIG_TOOL
-                        Serial.print("Entering CommMode from ");
-                        Serial.println(communicationModeSource);
-                    #endif
+#if DEBUG_CONFIG_TOOL
+                    Serial.print("Entering CommMode from ");
+                    Serial.println(communicationModeSource);
+#endif
                     sendSettings();
                 }
 
@@ -1859,11 +1859,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                         communicationMode = 0;
                         communicationModeSource = MIDI_SOURCE_NONE;
                     }
-                    #if DEBUG_CONFIG_TOOL
-                        Serial.print("Exiting CommMode from ");
-                        Serial.println(source);
-                    #endif
-
+#if DEBUG_CONFIG_TOOL
+                    Serial.print("Exiting CommMode from ");
+                    Serial.println(source);
+#endif
                 }
 
 
@@ -2072,9 +2071,9 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
 
             /////// CC 109
-            if ((number == MIDI_CC_109 && value < kIMUnVariables) 
+            if ((number == MIDI_CC_109 && value < kIMUnVariables)
                 || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
-                pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                            // Add to the value because lower pressureReceiveModes are used for other variables.
+                pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                      // Add to the value because lower pressureReceiveModes are used for other variables.
                 blinkNumber[GREEN_LED] = 0;
             }
 
@@ -2103,9 +2102,9 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (value == MIDI_LEARN_INITIAL_NOTE_PRESS) {
-                    learnedPressureSelector[mode] = sensorValue;                      
-                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressureSelector[mode] & 0x7F); // Send LSB of learned pressure.
-                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressureSelector[mode] >> 7); // Send MSB of learned pressure.
+                    learnedPressureSelector[mode] = sensorValue;
+                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressureSelector[mode] & 0x7F);  // Send LSB of learned pressure.
+                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressureSelector[mode] >> 7);    // Send MSB of learned pressure.
                     loadPrefs();
                 }
 
@@ -2133,7 +2132,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
                     ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
 
-                    sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[mode][DRONES_PRESSURE_LOW_BYTE] ); // Send LSB of learned drones pressure
+                    sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
                     sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_MSB, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
                 }
 
@@ -2331,21 +2330,21 @@ void handleButtons() {
 
 
         if (released[i] && (momentary[mode][i] || (pressed[0] + pressed[1] + pressed[2] == 0))) {  // Do action for a button release ("click") NOTE: button array is zero-indexed, so "button 1" in all documentation is button 0 here (same for others).
-            if (!specialPressUsed[i]) {    
+            if (!specialPressUsed[i]) {
                 //20240629 MrMep DoubleClick handling
-                if (switches[mode][BUTTON_DOUBLE_CLICK] && !momentary[mode][i] ) { //Double click is active on buttons, and this button is not in momentary
-                    if (waitingSecondClick[i]) { //We already had a first click
+                if (switches[mode][BUTTON_DOUBLE_CLICK] && !momentary[mode][i]) {  //Double click is active on buttons, and this button is not in momentary
+                    if (waitingSecondClick[i]) {                                   //We already had a first click
                         waitingSecondClick[i] = false;
-                        if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL)  { //Timer has not expired yet, we had second clic
+                        if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL) {  //Timer has not expired yet, we had second clic
                             performAction(i);
-                        } //The else is managed above in checkButtons()
-                    } else { //This is the first click, activate timer
+                        }     //The else is managed above in checkButtons()
+                    } else {  //This is the first click, activate timer
                         waitingSecondClick[i] = true;
                         doubleClickTimer = 0;
                     }
                 } else {
                     performAction(i);
-                }                                                        // We ignore it if the button was just used for a hard-coded command involving a combination of fingerholes.
+                }  // We ignore it if the button was just used for a hard-coded command involving a combination of fingerholes.
             }
             released[i] = 0;
             specialPressUsed[i] = 0;
@@ -2735,14 +2734,14 @@ void saveFactorySettings() {
     }
 
     writeEEPROM(EEPROM_EST_RUNTIME_START, highByte(fullRunTime));  // The initial estimate of the total run time available on a full charge (minutes)
-    writeEEPROM(EEPROM_EST_RUNTIME_START+1, lowByte(fullRunTime));
+    writeEEPROM(EEPROM_EST_RUNTIME_START + 1, lowByte(fullRunTime));
 
     writeEEPROM(EEPROM_RUNTIME_START, highByte(prevRunTime));  // The elapsed run time on the currrent charge (minutes)--from the "factory" we set this to an estimated number of minutes because the battery charge state is unknown.
-    writeEEPROM(EEPROM_RUNTIME_START+1, lowByte(prevRunTime));
+    writeEEPROM(EEPROM_RUNTIME_START + 1, lowByte(prevRunTime));
 
     writeEEPROM(EEPROM_SETTINGS_SAVED, 3);  // Indicates settings have been saved.
 
-    for (int i = 39; i < 1975; i++) {          // Then we read every byte in EEPROM from 39 to 1974 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations).
+    for (int i = 39; i < 1975; i++) {                                   // Then we read every byte in EEPROM from 39 to 1974 (Doesn't include sensor calibrations because we don't want to overwrite factory calibrations).
         writeEEPROM(EEPROM_FACTORY_SETTINGS_START + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
     }
 
@@ -2784,7 +2783,7 @@ void sendSettings() {
     sendMIDI(MIDI_CC_110_MSG, VERSION);  //Send the firmware version.
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]); //Send the fingering pattern for instrument i.
+        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for instrument i.
 
         if (noteShiftSelector[i] >= 0) {
             sendMIDI(MIDI_SEND_CC, MIDI_CC_111 + i, noteShiftSelector[i]);
@@ -2799,21 +2798,21 @@ void sendSettings() {
 
     sendMIDI(MIDI_CC_103_MSG, senseDistance);  // Send sense distance
 
-    sendMIDI(MIDI_CC_117_MSG, vibratoDepth * 100UL / 8191);  // Send vibrato depth, scaled down to cents.
-    sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);           // Send current pitchBend mode.
-    sendMIDI(MIDI_CC_102_MSG, MIDI_BREATH_MODE_START + breathMode);              // Send current breathMode.
+    sendMIDI(MIDI_CC_117_MSG, vibratoDepth * 100UL / 8191);          // Send vibrato depth, scaled down to cents.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);   // Send current pitchBend mode.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_BREATH_MODE_START + breathMode);  // Send current breathMode.
 
     //MrMep: is this obsolete?
-    sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_120 + bellSensor);             // Send bell sensor state.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_120 + bellSensor);  // Send bell sensor state.
 
-    sendMIDI(MIDI_CC_106_MSG, MIDI_STARTUP_CALIB + useLearnedPressure);      // Send calibration option.
-                                            
-    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressure & 0x7F); // Send LSB of learned pressure.
-    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressure >> 7); // Send MSB of learned pressure.
+    sendMIDI(MIDI_CC_106_MSG, MIDI_STARTUP_CALIB + useLearnedPressure);  // Send calibration option.
 
-    sendMIDICouplet(MIDI_SEND_BEND_RANGE, midiBendRange); // Send MIDI bend range
+    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressure & 0x7F);  // Send LSB of learned pressure.
+    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressure >> 7);    // Send MSB of learned pressure.
 
-    sendMIDICouplet(MIDI_SEND_MIDI_CHANNEL, mainMidiChannel); // Send channel
+    sendMIDICouplet(MIDI_SEND_BEND_RANGE, midiBendRange);  // Send MIDI bend range
+
+    sendMIDICouplet(MIDI_SEND_MIDI_CHANNEL, mainMidiChannel);  // Send channel
 
 
     for (byte i = 0; i < 9; i++) {
@@ -2821,10 +2820,10 @@ void sendSettings() {
     }
 
     for (byte i = 0; i < kGESTURESnVariables; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[mode][i][0]); // Send  data for button commands row i (click 1, click 2, etc.).
+        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[mode][i][0]);  // Send  data for button commands row i (click 1, click 2, etc.).
 
-        //This would require a "quadruplet mutex", but we are protected by the general sendSettings mutex.
-        if (buttonPrefs[mode][i][0] == 1) {                               // If the action is a MIDI command, send the rest of the MIDI info for that row.
+        //This would require a "quadruplet mutex"...
+        if (buttonPrefs[mode][i][0] == 1) {  // If the action is a MIDI command, send the rest of the MIDI info for that row.
             sendMIDI(MIDI_CC_102_MSG, MIDI_ACTION_MIDI_START + buttonPrefs[mode][i][1]);
             sendMIDI(MIDI_CC_106_MSG, buttonPrefs[mode][i][2]);
             sendMIDI(MIDI_CC_107_MSG, buttonPrefs[mode][i][3]);
@@ -2845,11 +2844,11 @@ void sendSettings() {
     }
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDICouplet(MIDI_CC_102,  MIDI_GESTURE_START + i, MIDI_CC_102, MIDI_MOMENTARY_OFF + momentary[mode][i]); // Send  data for momentary.
+        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_102, MIDI_MOMENTARY_OFF + momentary[mode][i]);  // Send  data for momentary.
     }
 
     for (byte i = 0; i < 12; i++) {
-        sendMIDICouplet(MIDI_CC_104, i + MIDI_PRESS_SELECT_VARS_START, MIDI_CC_105, pressureSelector[mode][i]); // Send pressure variable
+        sendMIDICouplet(MIDI_CC_104, i + MIDI_PRESS_SELECT_VARS_START, MIDI_CC_105, pressureSelector[mode][i]);  // Send pressure variable
     }
 
     sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_121);  // Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
@@ -2860,8 +2859,8 @@ void sendSettings() {
 
     manageBattery(true);  // Do this to send voltage and charging status to Config Tool.
 
-    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F); // Send low byte of the connection interval.
-    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7); // high low byte of the connection interval.
+    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
+    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7);    // high low byte of the connection interval.
 
     for (byte i = 0; i < kIMUnVariables; i++) {  // IMU settings
         sendMIDICouplet(MIDI_CC_109, i, MIDI_CC_105, IMUsettings[mode][i]);
@@ -2885,7 +2884,7 @@ void loadFingering() {
         noteShiftSelector[i] = (int8_t)readEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i);
 
         if (communicationMode) {
-            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]); //Send the fingering pattern for instrument i.
+            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for instrument i.
 
             if (noteShiftSelector[i] >= 0) {
                 sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + i), noteShiftSelector[i]);
@@ -2917,10 +2916,10 @@ void saveSettings(byte i) {
     }
 
     writeEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2), lowByte(vibratoHolesSelector[mode]));
-    writeEEPROM(EEPROM_VIBRATO_HOLES_START+1 + (i * 2), highByte(vibratoHolesSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2), highByte(vibratoHolesSelector[mode]));
 
     writeEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2), lowByte(vibratoDepthSelector[mode]));
-    writeEEPROM(EEPROM_VIBRATO_DEPTH_START+1 + (i * 2), highByte(vibratoDepthSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2), highByte(vibratoDepthSelector[mode]));
 
     writeEEPROM(EEPROM_USE_LEARNED_PRESS_START + i, useLearnedPressureSelector[mode]);
 
@@ -2939,7 +2938,7 @@ void saveSettings(byte i) {
     }
 
     writeEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2), lowByte(learnedPressureSelector[mode]));
-    writeEEPROM(EEPROM_LEARNED_PRESSURE_START+1 + (i * 2), highByte(learnedPressureSelector[mode]));
+    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + 1 + (i * 2), highByte(learnedPressureSelector[mode]));
 
     writeEEPROM(EEPROM_PB_MODE_START + i, pitchBendModeSelector[mode]);
     writeEEPROM(EEPROM_BREATH_MODE_START + i, breathModeSelector[mode]);
@@ -2974,8 +2973,8 @@ void loadSettingsForAllModes() {
         WARBL2settings[r] = readEEPROM(EEPROM_WARBL2_SETTINGS_START + r);
     }
 
-    fullRunTime = (word(readEEPROM(EEPROM_EST_RUNTIME_START), readEEPROM(EEPROM_EST_RUNTIME_START+1)));  // The total run time available on a full charge (minutes)
-    prevRunTime = (word(readEEPROM(EEPROM_RUNTIME_START), readEEPROM(EEPROM_RUNTIME_START+1)));  // The total run time since the last full charge (minutes)
+    fullRunTime = (word(readEEPROM(EEPROM_EST_RUNTIME_START), readEEPROM(EEPROM_EST_RUNTIME_START + 1)));  // The total run time available on a full charge (minutes)
+    prevRunTime = (word(readEEPROM(EEPROM_RUNTIME_START), readEEPROM(EEPROM_RUNTIME_START + 1)));          // The total run time since the last full charge (minutes)
 
     if (readEEPROM(EEPROM_XGYRO_CALIB_SAVED) == 3) {  // If there has been a gyro calibration saved
         getEEPROM(EEPROM_XGYRO_CALIB_START, gyroXCalibration);
@@ -2991,8 +2990,12 @@ void loadSettingsForAllModes() {
             switches[i][n] = readEEPROM(EEPROM_SWITCHES_START + i + (n * 3));
         }
 
-        vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START+1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
-        vibratoDepthSelector[i] = word(readEEPROM(EEPROM_VIBRATO_DEPTH_START+1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2)));
+        if (switches[mode][BUTTON_DOUBLE_CLICK] > 1) {  // Sanity check in case uninitialized (default to having double-click turned off).
+            switches[mode][BUTTON_DOUBLE_CLICK] = 0;
+        }
+
+        vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
+        vibratoDepthSelector[i] = word(readEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2)));
         useLearnedPressureSelector[i] = readEEPROM(EEPROM_USE_LEARNED_PRESS_START + i);
 
         for (byte j = 0; j < 5; j++) {
@@ -3009,7 +3012,7 @@ void loadSettingsForAllModes() {
             pressureSelector[i][m] = readEEPROM(EEPROM_PRESSURE_SETTINGS_START + m + (i * 20));
         }
 
-        learnedPressureSelector[i] = word(readEEPROM(EEPROM_LEARNED_PRESSURE_START+1 + (i * 2)), readEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2)));
+        learnedPressureSelector[i] = word(readEEPROM(EEPROM_LEARNED_PRESSURE_START + 1 + (i * 2)), readEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2)));
 
 
         pitchBendModeSelector[i] = readEEPROM(EEPROM_PB_MODE_START + i);
@@ -3089,6 +3092,7 @@ void loadPrefs() {
     } else {
         velocity = 64;
     }
+
 
     if (!useLearnedPressure) {
         sensorThreshold[0] = (sensorCalibration + soundTriggerOffset);  // Pressure sensor calibration at startup. We set the on/off threshhold just a bit higher than the reading at startup.
@@ -3232,10 +3236,10 @@ void loadCalibration() {
     // for (byte i = 0; i < 9; i++) {
     //     byte high = readEEPROM((i + 9) * 2);
     //     byte low = readEEPROM(((i + 9) * 2) + 1);
-    for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START+18; i+=2) {
+    for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
-        byte index = (i-EEPROM_SENSOR_CALIB_START)/2;
+        byte index = (i - EEPROM_SENSOR_CALIB_START) / 2;
         toneholeCovered[index] = word(high, low);
         toneholeBaseline[index] = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
     }
@@ -3429,41 +3433,49 @@ void startAdv(void) {
 
 
 
-//This sends a value splitted in two consecutive messages, one containing an index (i.e. "jumpFactor") the other the actual value, on different CCs
-//It takes a mutex so to avoid concurrent transmissions from different threds, say USB and/or BLE callbacks.
+// This sends a value split in two consecutive messages, one containing an index (i.e. "jumpFactor") the other the actual value, on different CCs.
+// It takes a mutex so to avoid concurrent transmissions from different threads, say USB and/or BLE callbacks.
 void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8_t value) {
 
-    while(1) {
+    while (1) {
         if (!midiSendCoupletMutex) {
-            midiSendCoupletMutex = true; //takes the mutex
-            sendMIDI(MIDI_SEND_CC, indexCC, indexValue );
-            sendMIDI(MIDI_SEND_CC, valueCC, value );
-            midiSendCoupletMutex = false; //gives the mutex
+            midiSendCoupletMutex = true;  //takes the mutex
+            sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
+            sendMIDI(MIDI_SEND_CC, valueCC, value);
+            midiSendCoupletMutex = false;  //gives the mutex
             return;
         }
         delay(3);
     }
 }
 
+
+
+
+
+
+
+
 // These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library. ToDo: These could be made shorter/more efficient.
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MIDI event over USB.
 {
+
     m &= 0xF0;
-    c &= 0xF;
+    c = constrain(c, 1, 16);
     d1 &= 0x7F;
     d2 &= 0x7F;
 
-    bool sendUsb = WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_BLE_ONLY || connIntvl == 0; // If we're not only sending BLE or if we're not connected to BLE
-    bool sendBle = WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_USB_ONLY || USBstatus != USB_HOST; // If we're not only sending USB or if we're not connected to USB
+    bool sendUsb = WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_BLE_ONLY || connIntvl == 0;         // If we're not only sending BLE or if we're not connected to BLE
+    bool sendBle = WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_USB_ONLY || USBstatus != USB_HOST;  // If we're not only sending USB or if we're not connected to USB
     switch (m) {
 
         case 0x80:  // Note Off
             {
-                if (sendUsb) {  
-                    MIDI.sendNoteOff(d1, d2, c); // Send USB MIDI.
+                if (sendUsb) {
+                    MIDI.sendNoteOff(d1, d2, c);  // Send USB MIDI.
                 }
-                if (sendBle) {  
-                    BLEMIDI.sendNoteOff(d1, d2, c); // Send BLE MIDI.
+                if (sendBle) {
+                    BLEMIDI.sendNoteOff(d1, d2, c);  // Send BLE MIDI.
                 }
                 break;
             }
@@ -3489,19 +3501,14 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MI
             }
         case 0xB0:  // CC
             {
-                bool isForConfigTool = (c == MIDI_CONFIG_TOOL_CHANNEL && d1 >= 102); //CC is for config tool
+                bool isForConfigTool = (c == MIDI_CONFIG_TOOL_CHANNEL && d1 >= 102);  //CC is for config tool
 
-                if (sendUsb && 
-                    (!isForConfigTool ||   // Always send CC messages within the Config Tool range so user can't get locked out of Config Tool if only BLE or USB is selected (changed by AM 4/11/24).
-                        (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_USB)
-                    )) {
-                    
+                if (sendUsb && (!isForConfigTool ||  // Always send CC messages within the Config Tool range so user can't get locked out of Config Tool if only BLE or USB is selected (changed by AM 4/11/24).
+                                (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_USB))) {
+
                     MIDI.sendControlChange(d1, d2, c);
                 }
-                if (sendBle &&
-                    (!isForConfigTool ||
-                        (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_BLE)
-                    )) {
+                if (sendBle && (!isForConfigTool || (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_BLE))) {
                     BLEMIDI.sendControlChange(d1, d2, c);
                 }
                 break;
@@ -3543,7 +3550,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MI
 // Send a 2-byte MIDI event over USB.
 void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
     m &= 0xF0;
-    c &= 0xF;
+    c = constrain(c, 1, 16);
     d &= 0x7F;
 
     switch (m) {
@@ -3564,10 +3571,10 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
         case 0xC0:  // Program Change
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_BLE_ONLY || connIntvl == 0) {
                     MIDI.sendProgramChange(d, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
+                if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_USB_ONLY || USBstatus != USB_HOST) {
                     BLEMIDI.sendProgramChange(d, c);
                 }
                 break;
@@ -3603,8 +3610,8 @@ void connect_callback(uint16_t conn_handle) {
     }
 
     if (communicationMode) {
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F); // Send low byte of the connection interval.
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7); // high low byte of the connection interval.
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7);    // high low byte of the connection interval.
     }
 
     blinkNumber[BLUE_LED] = 2;  // Indicate connection.
@@ -3626,8 +3633,8 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
     connIntvl = 0;
 
     if (communicationMode) {
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, 0); // Send low byte of the connection interval.
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, 0); // high low byte of the connection interval.
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, 0);  // Send low byte of the connection interval.
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, 0);  // high low byte of the connection interval.
 
         if (communicationModeSource == MIDI_SOURCE_BLE) {
             communicationModeSource = MIDI_SOURCE_NONE;
