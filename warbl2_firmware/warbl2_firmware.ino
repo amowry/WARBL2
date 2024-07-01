@@ -148,7 +148,7 @@ byte breathMode = kPressureBreath;            // The desired presure sensor beha
 unsigned int vibratoDepth = 1024;             // Vibrato depth from 0 (no vibrato) to 8191 (one semitone)
 bool useLearnedPressure = 0;                  // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
 byte midiBendRange = 2;                       // +/- semitones that the midi bend range represents
-byte mainMidiChannel = 1;                     // Current MIDI channel to send notes on
+byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;                     // Current MIDI channel to send notes on
 
 
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
@@ -291,7 +291,7 @@ int adjvibdepth;                                                                
 bool noteon = 0;      // Whether a note is currently turned on
 bool shiftState = 0;  // Whether the octave is shifted (could be combined with octaveShift)
 int8_t shift = 0;     // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
-byte velocity = 127;  // MIDI note velocity
+byte velocity = MIDI_DEFAULT_VELOCITY;  // MIDI note velocity
 
 
 // Tonehole calibration variables

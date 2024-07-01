@@ -65,8 +65,8 @@ void manageBattery(bool send) {
         if (prevTempChargingStatus != tempChargingStatus) {
             statusChanged = 1;
             if (communicationMode) {  // Send the status to the Config Tool if it has changed.
-                sendMIDI(CONTROL_CHANGE, 7, 106, 71);
-                sendMIDI(CONTROL_CHANGE, 7, 119, tempChargingStatus);
+                sendMIDI(MIDI_SEND_BATTERY_CHARGE_STATUS);
+                sendMIDI(MIDI_CC_119_MSG, tempChargingStatus);
             }
             prevTempChargingStatus = tempChargingStatus;
         }
@@ -96,8 +96,8 @@ void manageBattery(bool send) {
 
             prevChargingStatus = chargingStatus;
 
-            sendMIDI(CONTROL_CHANGE, 7, 106, 71);
-            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  // Send charging status again in case a fault was detected.
+            sendMIDI(MIDI_SEND_BATTERY_CHARGE_STATUS);
+            sendMIDI(MIDI_CC_119_MSG, chargingStatus);  // Send charging status again in case a fault was detected.
         }
     }
 
@@ -147,14 +147,14 @@ void manageBattery(bool send) {
     static byte cycles = 40;  // 40 cycles is 30 seconds.
     if (cycles == 40 || send) {
         if (communicationMode) {
-            sendMIDI(CONTROL_CHANGE, 7, 106, 70);
-            sendMIDI(CONTROL_CHANGE, 7, 119, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
+            sendMIDI(MIDI_SEND_BATTERY_VOLTAGE);
+            sendMIDI(MIDI_CC_119_MSG, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
 
-            sendMIDI(CONTROL_CHANGE, 7, 106, 71);
-            sendMIDI(CONTROL_CHANGE, 7, 119, chargingStatus);  // Send charging status.
+            sendMIDI(MIDI_SEND_BATTERY_CHARGE_STATUS);
+            sendMIDI(MIDI_CC_119_MSG, chargingStatus);  // Send charging status.
 
-            sendMIDI(CONTROL_CHANGE, 7, 106, 74);
-            sendMIDI(CONTROL_CHANGE, 7, 119, battLevel);  // Send battery level.
+            sendMIDI(MIDI_SEND_BATTERY_CHARGE_PERC);
+            sendMIDI(MIDI_CC_119_MSG, battLevel);  // Send battery level.
         }
     }
 

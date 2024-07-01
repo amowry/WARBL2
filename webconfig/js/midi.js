@@ -374,12 +374,12 @@ function buildMessage(byte2, byte3) {
 
 
 
-    if (!(byte2 == 102 && byte3 == 127) && !(byte2 == 106 && byte3 == 42)) {
+    if (!(byte2 == MIDI_CC_102 && byte3 == MIDI_START_CALIB) && !(byte2 == MIDI_CC_106 && byte3 == MIDI_CALIB_BELL_SENSOR)) {
         blink(1);
     } //blink once if we aren't doing autocalibration, which requires the LED to be on longer.
 
-    if (byte2 == 102) {
-        if (byte3 == 19) { //send message to save sensor calibration
+    if (byte2 == MIDI_CC_102) {
+        if (byte3 == MIDI_SAVE_CALIB) { //send message to save sensor calibration
             blink(3);
             for (var i = 1; i < 10; i++) {
                 document.getElementById("v" + (i)).innerHTML = "0";
@@ -389,12 +389,12 @@ function buildMessage(byte2, byte3) {
             }
         }
 
-        if (isEven(byte3) && byte3 < 19) { //send sensor calibration values
+        if (isEven(byte3) && byte3 <= MIDI_CALIB_MSGS_END) { //send sensor calibration values
             sensorValue[byte3 - 2]++;
             document.getElementById("v" + (byte3 >> 1)).innerHTML = sensorValue[byte3 - 2];
         }
 
-        if (isOdd(byte3) && byte3 < 19) {
+        if (isOdd(byte3) && byte3 <= MIDI_CALIB_MSGS_END) {
             sensorValue[byte3 - 1]--;
             document.getElementById("v" + ((byte3 + 1) >> 1)).innerHTML = sensorValue[byte3 - 1];
             checkMax((byte3 + 1) >> 1);
@@ -519,7 +519,7 @@ function WARBL_Receive(event) {
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
-    if ((!WARBLout) && ((data0 & 0x0F) == 6) && ((data0 & 0xf0) == 176) && (data1 == 110)) {
+    if ((!WARBLout) && ((data0 & 0x0F) == 6) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
 		
 
@@ -746,7 +746,7 @@ function WARBL_Receive(event) {
 
                 //setPing(); //start checking to make sure WARBL is still connected
 
-                if (data1 == 115) { //hole covered info from WARBL
+                if (data1 == MIDI_CC_115) { //hole covered info from WARBL
 
                     var byteA = data2;
                     for (var m = 0; m < 7; m++) {
@@ -764,7 +764,7 @@ function WARBL_Receive(event) {
                     }
                 }
 
-                if (data1 == 114) { //hole covered info from WARBL
+                if (data1 == MIDI_CC_114) { //hole covered info from WARBL
                     for (var n = 0; n < 2; n++) {
                         var byteB = data2;
                         if (bit_test(byteB, n) == 1) {
@@ -778,27 +778,27 @@ function WARBL_Receive(event) {
                             }
                         }
                     }
-                } else if (data1 == 102) { //parse based on received CC
-                    if (data2 > 19 && data2 < 30) {
-                        document.getElementById("v" + (data2 - 19)).innerHTML = "MAX"; //set sensor value field to max if message is received from WARBL
-                        checkMax((data2 - 19));
+                } else if (data1 == MIDI_CC_102) { //parse based on received CC
+                    if (data2 >= MIDI_MAX_CALIB_MSGS_START && data2 <= MIDI_MAX_CALIB_MSGS_END) {
+                        document.getElementById("v" + (data2 - MIDI_MAX_CALIB_MSGS_START -1)).innerHTML = "MAX"; //set sensor value field to max if message is received from WARBL
+                        checkMax((data2 - MIDI_MAX_CALIB_MSGS_START -1));
                     }
 
                     for (var i = 0; i < 3; i++) { // update the three selected fingering patterns if prompted by the tool.
-                        if (data2 == 30 + i) {
+                        if (data2 == MIDI_FINGERING_PATTERN_MODE_START + i) {
                             fingeringWrite = i;
                         }
 
-                        if ((data2 > 32 && data2 < 60)) {
+                        if ((data2 >= MIDI_FINGERING_PATTERN_START && data2 <= MIDI_FINGERING_PATTERN_END)) {
                             if (fingeringWrite == i) {
-                                document.getElementById("fingeringSelect" + i).value = data2 - 33;
+                                document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
                             }
                             updateCells(); //update any dependant fields	
                         }
 						
-						if((data2 > 99 && data2 < 104) && version > 3.9){
+						if((data2 >= MIDI_CUST_FINGERING_PATTERN_START && data2 <= MIDI_CUST_FINGERING_PATTERN_END) && version > 3.9){
 							if (fingeringWrite == i) {
-                                document.getElementById("fingeringSelect" + i).value = data2 - 33;
+                                document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
                             }
                             updateCells(); //update any dependant fields	
                         }
@@ -807,7 +807,7 @@ function WARBL_Receive(event) {
 
 
 
-                    if (data2 == 60) {
+                    if (data2 == MIDI_CURRENT_MODE_START) {
                         document.getElementById("fingering0").checked = true;
                         instrument = 0;
                         document.getElementById("instrument0").style.display = "block";
@@ -829,7 +829,7 @@ function WARBL_Receive(event) {
                         handleDefault();
                         customFingeringOkay();
                     }
-                    if (data2 == 61) {
+                    if (data2 == MIDI_CURRENT_MODE_START +1) {
                         document.getElementById("fingering1").checked = true;
                         instrument = 1;
                         document.getElementById("instrument0").style.display = "none";
@@ -851,7 +851,7 @@ function WARBL_Receive(event) {
                         handleDefault();
                         customFingeringOkay();
                     }
-                    if (data2 == 62) {
+                    if (data2 == MIDI_CURRENT_MODE_START +2) {
                         document.getElementById("fingering2").checked = true;
                         instrument = 2;
                         document.getElementById("instrument0").style.display = "none";
@@ -874,70 +874,91 @@ function WARBL_Receive(event) {
                         customFingeringOkay();
                     }
 
-
-                    if (data2 == 85) { //receive and handle default instrument settings
-                        defaultInstr = 0;
-                        handleDefault();
-                    }
-                    if (data2 == 86) {
-                        defaultInstr = 1;
-                        handleDefault();
-                    }
-                    if (data2 == 87) {
-                        defaultInstr = 2;
-                        handleDefault();
-                    }
-
-                    if (data2 == 70) {
-                        document.getElementById("pitchbendradio0").checked = true;
-                        updateCustom();
-                        updateCustom();
-                    }
-                    if (data2 == 71) {
-                        document.getElementById("pitchbendradio1").checked = true;
-                        updateCustom();
-                        updateCustom();
-                    }
-                    if (data2 == 72) {
-                        document.getElementById("pitchbendradio2").checked = true;
-                        updateCustom();
-                        updateCustom();
-                    }
-                    if (data2 == 73) {
-                        document.getElementById("pitchbendradio3").checked = true;
-                        updateCustom();
-                        updateCustom();
+                    // if (data2 == MIDI_DEFAULT_MODE_START) { //receive and handle default instrument settings
+                    //     defaultInstr = 0;
+                    //     handleDefault();
+                    // }
+                    // if (data2 == MIDI_DEFAULT_MODE_START +1) {
+                    //     defaultInstr = 1;
+                    //     handleDefault();
+                    // }
+                    // if (data2 == MIDI_DEFAULT_MODE_START+2) {
+                    //     defaultInstr = 2;
+                    //     handleDefault();
+                    // }
+                    for (var i = 0; i < 3; i++)  { //receive and handle default instrument settings
+                        if (data2 == MIDI_DEFAULT_MODE_START +i) {
+                            defaultInstr = i;
+                            handleDefault();
+                        }
                     }
 
-                    if (data2 == 80) {
-                        document.getElementById("sensorradio0").checked = true;
-                    }
-                    if (data2 == 81) {
-                        document.getElementById("sensorradio1").checked = true;
-                    }
-                    if (data2 == 82) {
-                        document.getElementById("sensorradio2").checked = true;
-                    }
-                    if (data2 == 83) {
-                        document.getElementById("sensorradio3").checked = true;
+                    // if (data2 == MIDI_PB_MODE_START) {
+                    //     document.getElementById("pitchbendradio0").checked = true;
+                    //     updateCustom();
+                    //     updateCustom();
+                    // }
+                    // if (data2 == 71) {
+                    //     document.getElementById("pitchbendradio1").checked = true;
+                    //     updateCustom();
+                    //     updateCustom();
+                    // }
+                    // if (data2 == 72) {
+                    //     document.getElementById("pitchbendradio2").checked = true;
+                    //     updateCustom();
+                    //     updateCustom();
+                    // }
+                    // if (data2 == 73) {
+                    //     document.getElementById("pitchbendradio3").checked = true;
+                    //     updateCustom();
+                    //     updateCustom();
+                    // }
+                    for (var i = 0; i < 4; i++)  { //receive and handle Pitchbend mode
+                        if (data2 == MIDI_PB_MODE_START +i) {
+                            document.getElementById("pitchbendradio" + i.toString()).checked = true;
+                            updateCustom();
+                            updateCustom();    
+                        }
                     }
 
-                    if (data2 == 121) {
+
+                    // if (data2 == 80) {
+                    //     document.getElementById("sensorradio0").checked = true;
+                    // }
+                    // if (data2 == 81) {
+                    //     document.getElementById("sensorradio1").checked = true;
+                    // }
+                    // if (data2 == 82) {
+                    //     document.getElementById("sensorradio2").checked = true;
+                    // }
+                    // if (data2 == 83) {
+                    //     document.getElementById("sensorradio3").checked = true;
+                    // }
+                    for (var i = 0; i < 4; i++)  { //receive and handle Breath mode
+                        if (data2 == MIDI_BREATH_MODE_START +i) {
+                            document.getElementById("sensorradio" + i.toString()).checked = true;
+
+                        }
+                    }
+
+
+                    if (data2 == MIDI_CC_102_VALUE_121) { //bell sensor connected	
                         document.getElementById("bellSensor").style.opacity = 1;
                         document.getElementById("1").disabled = false;
                         document.getElementById("2").disabled = false;
                         document.getElementById("v1").classList.add("sensorValueEnabled");
 
                     }
-                    if (data2 == 120) {
+                    if (data2 == MIDI_CC_102_VALUE_120) { //bell sensor disconnected	
                         document.getElementById("bellSensor").style.opacity = 0.1;
                         document.getElementById("1").disabled = true;
                         document.getElementById("2").disabled = true;
                         document.getElementById("v1").classList.remove("sensorValueEnabled");
                     }
 
+
                     for (var i = 0; i < numberOfGestures; i++) { //update button configuration	   
-                        if (data2 == 90 + i) {
+                        if (data2 == MIDI_GESTURE_START + i) {
                             buttonRowWrite = i;
 							//console.log(buttonRowWrite);
                         }
@@ -946,7 +967,7 @@ function WARBL_Receive(event) {
                     for (var j = 0; j < numberOfGestures; j++) { //update button configuration	
                         if (buttonRowWrite == j) {
 
-                            if (data2 == 119) { //special case for initiating autocalibration
+                            if (data2 == 119) { //special case for initiating autocalibration - NOT in WARBL2?
                                 document.getElementById("row" + (buttonRowWrite)).value = 19;
                             }
 
@@ -956,7 +977,7 @@ function WARBL_Receive(event) {
                                     document.getElementById("row" + (buttonRowWrite)).value = k;
                                 }
 
-                                if (k < 7 && data2 == 112 + k) {
+                                if (k < 7 && data2 == MIDI_ACTION_MIDI_START + k) {
                                     document.getElementById("MIDIrow" + (buttonRowWrite)).value = k;
                                     updateCells();
                                 }
@@ -967,379 +988,379 @@ function WARBL_Receive(event) {
 
                     for (var l = 0; l < 3; l++) { //update momentary switches
                         if (buttonRowWrite == l) {
-                            if (data2 == 117) {
+                            if (data2 == MIDI_MOMENTARY_OFF) {
                                 document.getElementById("checkbox" + l).checked = false;
                             }
-                            if (data2 == 118) {
+                            if (data2 == MIDI_MOMENTARY_ON) {
                                 document.getElementById("checkbox" + l).checked = true;
                             }
 
                         }
                     }
 
-                } else if (data1 == 103) {
+                } else if (data1 == MIDI_CC_103) {
                     document.getElementById("senseDistance").value = 0 - data2;
                 } //set sensedistance  
-                else if (data1 == 117) {
+                else if (data1 == MIDI_CC_117) {
                     document.getElementById("depth").value = data2 + 1;
                     var output = document.getElementById("demo14");
                     depth.dispatchEvent(new Event('input'));
                     output.innerHTML = data2 + 1;
                 } //set vibrato depth  
-                else if (data1 == 104) {
+                else if (data1 == MIDI_CC_104) {
                     jumpFactorWrite = data2;
                 } // so we know which pressure setting is going to be received.
-                else if (data1 == 109 && data2 != 100) {
-                    jumpFactorWrite = data2 + 200;
+                else if (data1 == MIDI_CC_109 && data2 != MIDI_CUSTOM_CHARTS_RCVD) {
+                    jumpFactorWrite = data2 + MIDI_CC_109_OFFSET;
                 } // so we know which WARBL2 IMU setting is going to be received.
-                else if (data1 == 109 && data2 == 100) { //Successful WARBL2 Custom chart receipt
+                else if (data1 == MIDI_CC_109 && data2 == MIDI_CUSTOM_CHARTS_RCVD) { //Successful WARBL2 Custom chart receipt
                     document.getElementById("sending").innerHTML = "Success!";
                     document.getElementById("WARBL2CustomSuccessOkay").style.display = "block";
                     document.getElementById('WARBL2customFingeringFill').value = '10';
                     document.getElementById("WARBL2CustomTextArea").value = '';
                 }
-                else if (data1 == 105 && jumpFactorWrite < 13) {
+                else if (data1 == MIDI_CC_105 && jumpFactorWrite <= MIDI_PRESS_SELECT_VARS_END) {
                     document.getElementById("jumpFactor" + jumpFactorWrite).value = data2;
-                    if (jumpFactorWrite == 10) {
+                    if (jumpFactorWrite == MIDI_CC_104_VALUE_10) {
                         document.getElementById("jumpFactor10b").value = data2; //special case for hysteresis			
                     }
-                    for (var i = 1; i < 13; i++) {
+                    for (var i = 1; i <= MIDI_PRESS_SELECT_VARS_END; i++) {
                         var k = document.getElementById("jumpFactor" + (i));
                         k.dispatchEvent(new Event('input'));
-                        if (i == 10) {
+                        if (i == MIDI_CC_104_VALUE_10) {
                             var k = document.getElementById("jumpFactor10b"); //special case for key delay slider
                             k.dispatchEvent(new Event('input'));
                         }
                     }
                 }
 
-                if (data1 == 105) {
+                if (data1 == MIDI_CC_105) {
 
-                    if (jumpFactorWrite == 13) {
+                    if (jumpFactorWrite == MIDI_ED_VARS_START) {
                         document.getElementById("checkbox6").checked = data2;
-                    } else if (jumpFactorWrite == 14) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +1) {
                         document.getElementById("expressionDepth").value = data2;
-                    } else if (jumpFactorWrite == 15) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +2) {
                         document.getElementById("checkbox7").checked = data2;
                         updateCustom();
-                    } else if (jumpFactorWrite == 16) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +3) {
                         curve[0] = data2;
-                    } else if (jumpFactorWrite == 17) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +4) {
                         document.getElementById("pressureChannel").value = data2;
-                    } else if (jumpFactorWrite == 18) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +5) {
                         document.getElementById("pressureCC").value = data2;
-                    } else if (jumpFactorWrite == 19) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +6) {
                         inputSliderMin[0] = data2;
                         slider.noUiSlider.set([data2, null]);
-                    } else if (jumpFactorWrite == 20) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +7) {
                         inputSliderMax[0] = data2;
                         slider.noUiSlider.set([null, data2]);
-                    } else if (jumpFactorWrite == 21) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +8) {
                         outputSliderMin[0] = data2;
                         slider2.noUiSlider.set([data2, null]);
-                    } else if (jumpFactorWrite == 22) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +9) {
                         outputSliderMax[0] = data2;
                         slider2.noUiSlider.set([null, data2]);
-                    } else if (jumpFactorWrite == 23) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +10) {
                         document.getElementById("dronesOnCommand").value = data2;
-                    } else if (jumpFactorWrite == 24) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +11) {
                         document.getElementById("dronesOnChannel").value = data2;
-                    } else if (jumpFactorWrite == 25) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +12) {
                         document.getElementById("dronesOnByte2").value = data2;
-                    } else if (jumpFactorWrite == 26) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +13) {
                         document.getElementById("dronesOnByte3").value = data2;
-                    } else if (jumpFactorWrite == 27) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +14) {
                         document.getElementById("dronesOffCommand").value = data2;
-                    } else if (jumpFactorWrite == 28) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +15) {
                         document.getElementById("dronesOffChannel").value = data2;
-                    } else if (jumpFactorWrite == 29) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +16) {
                         document.getElementById("dronesOffByte2").value = data2;
-                    } else if (jumpFactorWrite == 30) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +17) {
                         document.getElementById("dronesOffByte3").value = data2;
-                    } else if (jumpFactorWrite == 31 && data2 == 0) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +18 && data2 == 0) {
                         document.getElementById("dronesRadio0").checked = true;
-                    } else if (jumpFactorWrite == 31 && data2 == 1) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +18 && data2 == 1) {
                         document.getElementById("dronesRadio1").checked = true;
-                    } else if (jumpFactorWrite == 31 && data2 == 2) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +18 && data2 == 2) {
                         document.getElementById("dronesRadio2").checked = true;
-                    } else if (jumpFactorWrite == 31 && data2 == 3) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +18 && data2 == 3) {
                         document.getElementById("dronesRadio3").checked = true;
-                    } else if (jumpFactorWrite == 32) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +19) {
                         lsb = data2;
-                    } else if (jumpFactorWrite == 33) {
+                    } else if (jumpFactorWrite == MIDI_ED_VARS_START +20) {
                         var x = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
                         x = (x - 100) * 24 / 900; //convert to inches of water. 100 is the approximate minimum sensor value.
                         var p = x.toFixed(1); //round to 1 decimal
                         p = Math.min(Math.max(p, 0), 24); //constrain
                         document.getElementById("dronesPressureInput").value = p;
-                    } else if (jumpFactorWrite == 34) {
+                    } else if (jumpFactorWrite == MIDI_LEARNED_PRESS_LSB) {
                         lsb = data2;
 
-                    } else if (jumpFactorWrite == 35) {
+                    } else if (jumpFactorWrite == MIDI_LEARNED_PRESS_MSB) {
                         var x = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
                         x = (x - 100) * 24 / 900; //convert to inches of water.  100 is the approximate minimum sensor value.
                         var p = x.toFixed(1); //round to 1 decimal
                         p = Math.min(Math.max(p, 0), 24); //constrain
                         document.getElementById("octavePressureInput").value = p;
-                    } else if (jumpFactorWrite == 43) {
+                    } else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +3) {
                         document.getElementById("checkbox9").checked = data2;
                     } //invert											
-                    else if (jumpFactorWrite == 44) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +4) {
                         document.getElementById("checkbox5").checked = data2; //custom
                         updateCustom();
-                    } else if (jumpFactorWrite == 42) {
+                    } else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +2) {
                         document.getElementById("checkbox3").checked = data2;
                     } //secret										
-                    else if (jumpFactorWrite == 40) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START) {
                         updateSelected();
                         document.getElementById("checkbox4").checked = data2;
                         if (data2 == 0) {
                             document.getElementById("bagBreath0").checked = true;
                         } else { document.getElementById("bagBreath1").checked = true; }
                     } //vented							 			
-                    else if (jumpFactorWrite == 41) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +1) {
                         document.getElementById("checkbox8").checked = data2;
                     } //bagless						 	
-                    else if (jumpFactorWrite == 45) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +5) {
                         document.getElementById("checkbox10").checked = data2;
                     } //velocity	
-                    else if (jumpFactorWrite == 46) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +6) {
                         document.getElementById("checkbox11").checked = (data2 & 0x1);
                         document.getElementById("checkbox13").checked = (data2 & 0x2);
                     } //aftertouch	
-                    else if (jumpFactorWrite == 47) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +7) {
                         document.getElementById("checkbox12").checked = data2;
                     } //force max velocity
 
-                    else if (jumpFactorWrite == 48) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +8) {
                         document.getElementById("checkbox14").checked = data2;
                     } //immediate pitchbend
 
-                    else if (jumpFactorWrite == 49) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +9) {
                         document.getElementById("checkbox15").checked = data2;
                     } //legato
 
-                    else if (jumpFactorWrite == 50) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +10) {
                         document.getElementById("checkbox16").checked = data2;
                     } //override expression pressure range
 
-                    else if (jumpFactorWrite == 51) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +11) {
                         document.getElementById("checkbox17").checked = data2;
                     } //both thumb and overblow
 
-                    else if (jumpFactorWrite == 52) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +12) {
                         document.getElementById("checkbox18").checked = data2;
                         updateCustom();
                     } //R4 flattens
 
                     /*
-                    else if (jumpFactorWrite == 53) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +13) {
                         document.getElementById("checkbox19").checked = data2;
                         updateCustom();
                     } //R4 Invert
                     */
 
-                    else if (jumpFactorWrite == 61) {
+                    else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;
                     }
-                    else if (jumpFactorWrite == 62) {
+                    else if (jumpFactorWrite == MIDI_MIDI_CHANNEL) {
                         document.getElementById("noteChannel").value = data2;
                     }
-                    else if (jumpFactorWrite == 70) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START) {
                         inputSliderMin[1] = data2;
                         slider.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 71) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +1) {
                         inputSliderMax[1] = data2;
                         slider.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 72) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +2) {
                         outputSliderMin[1] = data2;
                         slider2.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 73) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +3) {
                         outputSliderMax[1] = data2;
                         slider2.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 74) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +4) {
                         inputSliderMin[2] = data2;
                         slider.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 75) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +5) {
                         inputSliderMax[2] = data2;
                         slider.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 76) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +6) {
                         outputSliderMin[2] = data2;
                         slider2.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 77) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +7) {
                         outputSliderMax[2] = data2;
                         slider2.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 78) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +8) {
                         inputSliderMin[3] = data2;
                         slider.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 79) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +9) {
                         inputSliderMax[3] = data2;
                         slider.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 80) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +10) {
                         outputSliderMin[3] = data2;
                         slider2.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 81) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +11) {
                         outputSliderMax[3] = data2;
                         slider2.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 82) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +12) {
                         curve[1] = data2;
                     }
-                    else if (jumpFactorWrite == 83) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +13) {
                         curve[2] = data2;
                     }
-                    else if (jumpFactorWrite == 84) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +14) {
                         curve[3] = data2;
                     }
-                    else if (jumpFactorWrite == 85) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
                         slider3.noUiSlider.set([data2, null]);
                     }
-                    else if (jumpFactorWrite == 86) {
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
                         slider3.noUiSlider.set([null, data2]);
                     }
-                    else if (jumpFactorWrite == 87) {
+                    /* MrMep: Careful: this might break backward compatibility: jumpFactor 87 was CUSTOM_FINGERING_1 in WARBL1 */
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +17) {
 						// slideLimit
 						document.getElementById("slidelimit").value = data2 ;
 	                    var output = document.getElementById("demo18");
 	                    depth.dispatchEvent(new Event('input'));
 	                    output.innerHTML = data2;
 					}
-
-                    else if (jumpFactorWrite > 86 && jumpFactorWrite < 98) { //custom fingering chart inputs
+                    /* MrMep: 87 is not catched by the following */
+                    else if (jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
                     }
 
-                    else if (jumpFactorWrite >= 200) { //receiving WARBL2 IMU settings
+                    else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
 
-
-                        if (jumpFactorWrite == 200) {
+                        if (jumpFactorWrite == MIDI_CC_109_OFFSET) {
                             document.getElementById("checkbox20").checked = data2;
                         }
-                        else if (jumpFactorWrite == 201) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +1) {
                             document.getElementById("checkbox21").checked = data2;
                         }
-                        else if (jumpFactorWrite == 202) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +2) {
                             document.getElementById("checkbox22").checked = data2;
                         }
-                        else if (jumpFactorWrite == 203) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +3) {
                             center[1] = data2;
                         }
-                        else if (jumpFactorWrite == 204) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +4) {
                             center[3] = data2;
                         }
-                        else if (jumpFactorWrite == 205) { //input (-90 to 90)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +5) { //input (-90 to 90)
                             inputSliderMin[4] = (data2 * 5) - 90;
 							//console.log("roll in min= "); 
 							//console.log(data2); 
                         }
-                        else if (jumpFactorWrite == 206) { //input (-90 to 90)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +6) { //input (-90 to 90)
                             inputSliderMax[4] = (data2 * 5) - 90;
 							//console.log("roll in max= "); 
 							//console.log(data2); 
                         }
-                        else if (jumpFactorWrite == 207) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +7) {
                             outputSliderMin[4] = data2;
 							//console.log("roll out min= "); 
 							//console.log(data2); 
                         }
-                        else if (jumpFactorWrite == 208) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +8) {
                             outputSliderMax[4] = data2;
 							//console.log("roll out max = "); 
 							//console.log(data2);
                         }
-                        else if (jumpFactorWrite == 209) { //input (-90 to 90)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +9) { //input (-90 to 90)
                             inputSliderMin[5] = (data2 * 5) - 90;
                         }
-                        else if (jumpFactorWrite == 210) { //input (-90 to 90)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +10) { //input (-90 to 90)
                             inputSliderMax[5] = (data2 * 5) - 90;
                         }
-                        else if (jumpFactorWrite == 211) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +11) {
                             outputSliderMin[5] = data2;
                         }
-                        else if (jumpFactorWrite == 212) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +12) {
                             outputSliderMax[5] = data2;
                         }
-                        else if (jumpFactorWrite == 213) { //Yaw input min (0-180)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +13) { //Yaw input min (0-180)
                             inputSliderMin[6] = (data2 * 5) - 90;
                         }
-                        else if (jumpFactorWrite == 214) { //Yaw input max (0-180)
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +14) { //Yaw input max (0-180)
                             inputSliderMax[6] = (data2 * 5) - 90;
                         }
-                        else if (jumpFactorWrite == 215) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +15) {
                             outputSliderMin[6] = data2;
                         }
-                        else if (jumpFactorWrite == 216) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +16) {
                             outputSliderMax[6] = data2;
                         }
-                        else if (jumpFactorWrite == 217) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +17) {
                             IMUchannel[0] = data2;
                         }
-                        else if (jumpFactorWrite == 218) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +18) {
                             IMUchannel[1] = data2;
                         }
-                        else if (jumpFactorWrite == 219) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +19) {
                             IMUchannel[2] = data2;
                         }
-                        else if (jumpFactorWrite == 220) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +20) {
                             IMUnumber[0] = data2;
                         }
-                        else if (jumpFactorWrite == 221) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +21) {
                             IMUnumber[1] = data2;
                         }
-                        else if (jumpFactorWrite == 222) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +22) {
                             IMUnumber[2] = data2;
                         }
-                        else if (jumpFactorWrite == 223) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +23) {
                             document.getElementById("checkbox25").checked = data2;
                         }
-                        else if (jumpFactorWrite == 224) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +24) {
                             document.getElementById("checkbox24").checked = data2;
                         }
-                        else if (jumpFactorWrite == 225) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +25) {
                             document.getElementById("autoCenterYawInterval").value = data2;
                             var output = document.getElementById("demo16");
                             autoCenterYawInterval.dispatchEvent(new Event('input'));
                             output.innerHTML = data2 / 4;
                         }
-						else if (jumpFactorWrite == 226) {
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET +26) {
                             document.getElementById("checkbox27").checked = data2;
                         }
-                        else if (jumpFactorWrite == 227) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +27) {
                             document.getElementById("shakeDepth").value = data2;
                             var output = document.getElementById("demo15");
                             shakeDepth.dispatchEvent(new Event('input'));
                             output.innerHTML = data2;
                         }		
-						else if (jumpFactorWrite == 228) { //input (-90 to 90)
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET +28) { //input (-90 to 90)
 							  slider6.noUiSlider.set([(data2 * 5) - 90, null]);
                         }
-						else if (jumpFactorWrite == 229) { //input (-90 to 90)
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET +29) { //input (-90 to 90)
 							  slider6.noUiSlider.set([null, (data2 * 5) - 90]);
                         }
-						else if (jumpFactorWrite == 230) {
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET +30) {
                             document.getElementById("pitchRegisterNumber").value = data2;
                             var output = document.getElementById("demo17");
                             pitchRegisterNumber.dispatchEvent(new Event('input'));
                             output.innerHTML = data2;
                         }
-                        else if (jumpFactorWrite == 231) {
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET +31) {
                             document.getElementById("shakeVibModeCommand").value = data2;
                         }
 						
 						//End of WARBL2 IMU settings
 						
-						else if (jumpFactorWrite == 327) { // Receive button/gesture action
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET + MIDI_CC_109_VALUE_127) { // Receive button/gesture action
 						var gesture = document.getElementById("gestureLabel" + (data2));
 						gesture.style.color = "#f7c839";
 						gesture.style.scale="1.1"					
@@ -1352,16 +1373,14 @@ function WARBL_Receive(event) {
 
 
 
-
-                else if (data1 == 109 && data2 < 23) { //Indicates WARBL2 IMU setting will be received on CC105
-                    jumpFactorWrite = data2 + 200;
+                /* MrMep: Should this be 33 instead of 23? */
+                // else if (data1 == MIDI_CC_109 && data2 < 23) { //Indicates WARBL2 IMU setting will be received on CC105
+                else if (data1 == MIDI_CC_109 && data2 <= MIDI_IMU_SETTINGS_END) { //Indicates WARBL2 IMU setting will be received on CC105
+                    jumpFactorWrite = data2 + MIDI_CC_109_OFFSET;
                 }
 
 
-                else if (data1 == 110) { //receiving firmware version from WARBL
-
-
-
+                else if (data1 == MIDI_CC_110) { //receiving firmware version from WARBL
 
                     version = data2;
 
@@ -1669,15 +1688,15 @@ function WARBL_Receive(event) {
 
 
 
-                } else if (data1 == 111) {
+                } else if (data1 == MIDI_CC_111) {
                     document.getElementById("keySelect0").value = data2;
-                } else if (data1 == 112) {
+                } else if (data1 == MIDI_CC_112) {
                     document.getElementById("keySelect1").value = data2;
-                } else if (data1 == 113) {
+                } else if (data1 == MIDI_CC_113) {
                     document.getElementById("keySelect2").value = data2;
-                } else if (data1 == 116) {
+                } else if (data1 == MIDI_CC_116) {
                     lsb = data2;
-                } else if (data1 == 118) {
+                } else if (data1 == MIDI_CC_118) {
                     var x = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
                     x = (x - 100) * 24 / 900; //convert to inches of water.  105 is the approximate minimum sensor value.
                     p = Math.min(Math.max(p, 0), 24); //constrain
@@ -1698,13 +1717,13 @@ function WARBL_Receive(event) {
 
                 for (var i = 0; i < numberOfGestures; i++) {
                     if (buttonRowWrite == i) {
-                        if (data1 == 106 && data2 < 16) {
+                        if (data1 == MIDI_CC_106 && data2 <= MIDI_ACTION_MIDI_CHANNEL_END) {
                             document.getElementById("channel" + (buttonRowWrite)).value = data2;
                         }
-                        if (data1 == 107) {
+                        if (data1 == MIDI_CC_107) {
                             document.getElementById("byte2_" + (buttonRowWrite)).value = data2;
                         }
-                        if (data1 == 108) {
+                        if (data1 == MIDI_CC_108) {
                             document.getElementById("byte3_" + (buttonRowWrite)).value = data2;
                         }
                     }
@@ -1713,24 +1732,24 @@ function WARBL_Receive(event) {
 
 
 
-                if (data1 == 106 && data2 > 15) {
+                if (data1 == MIDI_CC_106 && data2 > MIDI_ACTION_MIDI_CHANNEL_END) {
 
-                    if (data2 > 19 && data2 < 29) {
-                        document.getElementById("vibratoCheckbox" + (data2 - 20)).checked = false;
+                    if (data2 >= MIDI_ENA_VIBRATO_HOLES_START && data2 <= MIDI_ENA_VIBRATO_HOLES_END) {
+                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_ENA_VIBRATO_HOLES_START)).checked = false;
                     }
 
-                    if (data2 > 29 && data2 < 39) {
-                        document.getElementById("vibratoCheckbox" + (data2 - 30)).checked = true;
+                    if (data2 >= MIDI_DIS_VIBRATO_HOLES_START && data2 <= MIDI_DIS_VIBRATO_HOLES_END) {
+                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_DIS_VIBRATO_HOLES_START)).checked = true;
                     }
 
-                    if (data2 == 39) {
+                    if (data2 == MIDI_STARTUP_CALIB) {
                         document.getElementById("calibrateradio0").checked = true;
                     }
-                    if (data2 == 40) {
+                    if (data2 == MIDI_USE_LEARNED_CALIB) {
                         document.getElementById("calibrateradio1").checked = true;
                     }
 
-                    if (data2 == 53) { //add an option for the uilleann regulators fingering pattern if a message is received indicating that it is supported.
+                    if (data2 == MIDI_CC_106_VALUE_53) { //add an option for the uilleann regulators fingering pattern if a message is received indicating that it is supported.
 
                         for (i = 0; i < document.getElementById("fingeringSelect0").length; ++i) {
                             if (document.getElementById("fingeringSelect0").options[i].value == "9") {
@@ -1761,19 +1780,19 @@ function WARBL_Receive(event) {
                     }
 
 
-                    if (data2 > 54 && data2 < 75) {
-                        WARBL2SettingsReceive = data2 - 55;
+                    if (data2 >= MIDI_WARBL2_SETTINGS_START && data2 <= MIDI_WARBL2_SETTINGS_END) {
+                        WARBL2SettingsReceive = data2 - MIDI_WARBL2_SETTINGS_START;
                     }
 
 
-                    if (data2 > 99 && version > 3.9) {
+                    if (data2 >= MIDI_BUTTON_ACTIONS_START && version > 3.9) {
 						
 						//console.log(buttonRowWrite); 
 
                         for (var j = 0; j < numberOfGestures; j++) { //update button configuration	
                             if (buttonRowWrite == j) {
                                 for (var k = 0; k < 27; k++) {
-                                    if (data2 == 100 + k) {
+                                    if (data2 == MIDI_BUTTON_ACTIONS_START + k) {
                                         document.getElementById("row" + (buttonRowWrite)).value = k;
                                     }
                                 }
@@ -1787,7 +1806,7 @@ function WARBL_Receive(event) {
 
 
 
-                if (data1 == 119) {
+                if (data1 == MIDI_CC_119) {
                     if (WARBL2SettingsReceive == 0) {
                         document.getElementById("WARBL2Radio" + data2).checked = true;
                     }
@@ -1910,7 +1929,8 @@ function turnOffFault(){
 
 
 
-
+// MrMep: I don't think this applies to WARBL2
+// I'm not modifying it
 function sendCustomFingeringFill() {
 
     modalclose(22);
@@ -1920,8 +1940,9 @@ function sendCustomFingeringFill() {
 
         document.getElementById("fingeringInput" + i).value = customFingeringFills[selection][i - 1];
         var x = document.getElementById("fingeringInput" + i).value;
-        sendToWARBL(104, 86 + i);
-        sendToWARBL(105, x);
+
+        sendToWARBL(MIDI_CC_104, 86 + i);
+        sendToWARBL(MIDI_CC_105, x);
 
     }
     document.getElementById("customFingeringFill").value = "12";
@@ -1964,9 +1985,9 @@ function sendWARBL2CustomFingeringFill() {
         }
     }
     //console.log(selection + 100);
-    sendToWARBL(109, (selection + 100));
+    sendToWARBL(MIDI_CC_109, (selection + MIDI_CUSTOM_CHARTS_START));
     for (var k = 0; k < 256; k++) {
-        sendToWARBL(105, lines[k]);
+        sendToWARBL(MIDI_CC_105, lines[k]);
     }
 
 
@@ -1977,7 +1998,8 @@ function sendWARBL2CustomFingeringFill() {
 
 
 
-
+// MrMep: I don't think this applies to WARBL2
+// I'm not modifying it
 function fingeringInput(input, selection) { 	//send the custom fingering input entry
     var x = document.getElementById("fingeringInput" + input).value;
     /*
@@ -1988,8 +2010,8 @@ function fingeringInput(input, selection) { 	//send the custom fingering input e
     else{
         */
 
-    sendToWARBL(104, 86 + input);
-    sendToWARBL(105, x);
+    sendToWARBL(MIDI_CC_104, 86 + input);
+    sendToWARBL(MIDI_CC_105, x);
     //}
 }
 
@@ -2043,8 +2065,8 @@ function sendFingeringSelect(row, selection) {
 	else {key = 0;} // For WARBL2 always revert key (transpose) to 0 when a new fingerin chart is selected
 	document.getElementById("keySelect" + row).value = key; //set key menu
     //send the fingering pattern
-    sendToWARBL(102, 30 + row);
-    sendToWARBL(102, 33 + selection);
+    sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + row);
+    sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_START + selection);
 
     sendKey(row, key);
 }
@@ -2057,7 +2079,7 @@ function defaultInstrument() { //tell WARBL to set the current instrument as the
 
     defaultInstr = instrument;
     handleDefault();
-    sendToWARBL(102, 85);
+    sendToWARBL(MIDI_CC_102, MIDI_DEFAULT_MODE_START);
 
 }
 
@@ -2109,7 +2131,7 @@ function sendKey(row, selection) {
     row = parseFloat(row);
     updateCells();
     blink(1);
-    sendToWARBL(111 + row, selection);
+    sendToWARBL(MIDI_CC_111 + row, selection);
 }
 
 function sendFingeringRadio(tab) { //change instruments, showing the correct tab for each instrument.
@@ -2134,7 +2156,7 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
         document.getElementById("key0").style.display = "block";
         document.getElementById("key1").style.display = "none";
         document.getElementById("key2").style.display = "none";
-        sendToWARBL(102, 60);
+        sendToWARBL(MIDI_CC_102, MIDI_CURRENT_MODE_START);
     } else if (tab == 1) {
         document.getElementById("instrument0").style.display = "none";
         document.getElementById("instrument1").style.display = "block";
@@ -2144,7 +2166,7 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
         document.getElementById("key1").style.display = "block";
         document.getElementById("key2").style.display = "none";
         blink(2);
-        sendToWARBL(102, 61);
+        sendToWARBL(MIDI_CC_102, MIDI_CURRENT_MODE_START +1);
     } else if (tab == 2) {
         document.getElementById("instrument0").style.display = "none";
         document.getElementById("instrument1").style.display = "none";
@@ -2154,7 +2176,7 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
         document.getElementById("key1").style.display = "none";
         document.getElementById("key2").style.display = "block";
         blink(3);
-        sendToWARBL(102, 62);
+        sendToWARBL(MIDI_CC_102, MIDI_CURRENT_MODE_START +2);
     }
     updateCells();
     updateCustom();
@@ -2178,56 +2200,56 @@ function sendSenseDistance(selection) {
     blink(1);
     selection = parseFloat(selection);
     x = 0 - parseFloat(selection);
-    sendToWARBL(103, x);
+    sendToWARBL(MIDI_CC_103, x);
 }
 
 
 function sendDepth(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(117, selection);
+    sendToWARBL(MIDI_CC_117, selection);
 }
 
 function sendSlideLimit(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(104, 87);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SLIDE_LIMIT_MAX);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendShakeDepth(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(109, 27);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_Y_PITCHBEND_DEPTH);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendShakeVibModeOnCommand(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(109, 31);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_Y_PITCHBEND_MODE);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendAutoCenterYawInterval(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(109, 25);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_AUTOCENTER_YAW_INTERVAL);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendpitchRegisterNumber(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(109, 30);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_PITCH_REGISTER_NUMBER);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendExpressionDepth(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(104, 14);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_DEPTH);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendCurveRadio(selection) {
@@ -2235,12 +2257,12 @@ function sendCurveRadio(selection) {
     selection = parseFloat(selection);
     curve[mapSelection] = selection;
     if (mapSelection == 0) {
-        sendToWARBL(104, 16);
+        sendToWARBL(MIDI_CC_104, MIDI_CURVE);
     }
     else {
-        sendToWARBL(104, 81 + mapSelection);
+        sendToWARBL(MIDI_CC_104, MIDI_VELOCITY_CURVE + mapSelection - 1);
     }
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendPressureChannel(selection) {
@@ -2250,16 +2272,16 @@ function sendPressureChannel(selection) {
         alert("Value must be 1-16.");
         document.getElementById("pressureChannel").value = null;
     } else {
-        sendToWARBL(104, 17);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_PRESSURE_CHANNEL);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
 function sendPressureCC(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(104, 18);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_PRESSURE_CC);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendBendRange(selection) {
@@ -2269,8 +2291,8 @@ function sendBendRange(selection) {
         alert("Value must be 1-96.");
         document.getElementById("midiBendRange").value = null;
     } else {
-        sendToWARBL(104, 61);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_BEND_RANGE);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2281,8 +2303,8 @@ function sendNoteChannel(selection) {
         alert("Value must be 1-16.");
         document.getElementById("noteChannel").value = null;
     } else {
-        sendToWARBL(104, 62);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_MIDI_CHANNEL);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2293,18 +2315,18 @@ slider.noUiSlider.on('change', function (values) {
     if (mapSelection == 0) {
         inputSliderMin[0] = parseInt(values[0]);
         inputSliderMax[0] = parseInt(values[1]);
-        sendToWARBL(104, 19);
-        sendToWARBL(105, parseInt(values[0]));
-        sendToWARBL(104, 20);
-        sendToWARBL(105, parseInt(values[1]));
+        sendToWARBL(MIDI_CC_104, MIDI_INPUT_PRESSURE_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_INPUT_PRESSURE_MAX);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     }
     else {
         inputSliderMin[mapSelection] = parseInt(values[0]);
         inputSliderMax[mapSelection] = parseInt(values[1]);
-        sendToWARBL(104, 70 + ((mapSelection - 1) * 4));
-        sendToWARBL(105, parseInt(values[0]));
-        sendToWARBL(104, 71 + ((mapSelection - 1) * 4));
-        sendToWARBL(105, parseInt(values[1]));
+        sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + ((mapSelection - 1) * 4));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 1 + ((mapSelection - 1) * 4));
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     }
 });
 
@@ -2314,28 +2336,28 @@ slider2.noUiSlider.on('change', function (values) {
     if (mapSelection == 0) {
         outputSliderMin[0] = parseInt(values[0]);
         outputSliderMax[0] = parseInt(values[1]);
-        sendToWARBL(104, 21);
-        sendToWARBL(105, parseInt(values[0]));
-        sendToWARBL(104, 22);
-        sendToWARBL(105, parseInt(values[1]));
+        sendToWARBL(MIDI_CC_104, MIDI_OUTPUT_PRESSURE_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_OUTPUT_PRESSURE_MAX);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     }
     else {
         outputSliderMin[mapSelection] = parseInt(values[0]);
         outputSliderMax[mapSelection] = parseInt(values[1]);
-        sendToWARBL(104, 72 + ((mapSelection - 1) * 4));
-        sendToWARBL(105, parseInt(values[0]));
-        sendToWARBL(104, 73 + ((mapSelection - 1) * 4));
-        sendToWARBL(105, parseInt(values[1]));
+        sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +2 + ((mapSelection - 1) * 4));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +3 + ((mapSelection - 1) * 4));
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     }
 });
 
 //expression override slider
 slider3.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(104, 85);
-    sendToWARBL(105, parseInt(values[0]));
-    sendToWARBL(104, 86);
-    sendToWARBL(105, parseInt(values[1]));
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
 });
 
 
@@ -2370,20 +2392,20 @@ slider5.noUiSlider.on('change', function (values, handle) {
 	
 	//console.log(inputSliderMin[IMUmapSelection + 3]); 
 
-    sendToWARBL(109, ((IMUmapSelection) * 4 + 1));
+    sendToWARBL(MIDI_CC_109, ((IMUmapSelection) * 4 + 1));
     if (IMUmapSelection == 3) {
-        sendToWARBL(105, (parseInt(handles[0]) + 90) / 5); //convert to 1-36 steps to send
+        sendToWARBL(MIDI_CC_105, (parseInt(handles[0]) + 90) / 5); //convert to 1-36 steps to send
     }
     else {
-        sendToWARBL(105, (parseInt(handles[0]) + 90) / 5);
+        sendToWARBL(MIDI_CC_105, (parseInt(handles[0]) + 90) / 5);
     }
-    sendToWARBL(109, ((IMUmapSelection) * 4) + 2);
+    sendToWARBL(MIDI_CC_109, ((IMUmapSelection) * 4) + 2);
 
     if (IMUmapSelection == 3) {
-        sendToWARBL(105, (parseInt(handles[1]) + 90) / 5);
+        sendToWARBL(MIDI_CC_105, (parseInt(handles[1]) + 90) / 5);
     }
     else {
-        sendToWARBL(105, (parseInt(handles[1]) + 90) / 5);
+        sendToWARBL(MIDI_CC_105, (parseInt(handles[1]) + 90) / 5);
     }
 
 });
@@ -2395,10 +2417,10 @@ slider4.noUiSlider.on('change', function (values, handle) {
     outputSliderMin[IMUmapSelection + 3] = parseInt(values[0]);
     outputSliderMax[IMUmapSelection + 3] = parseInt(values[1]);
 
-    sendToWARBL(109, ((IMUmapSelection) * 4 + 3));
-    sendToWARBL(105, parseInt(values[0]));
-    sendToWARBL(109, ((IMUmapSelection) * 4 + 4));
-    sendToWARBL(105, parseInt(values[1]));
+    sendToWARBL(MIDI_CC_109, ((IMUmapSelection) * 4 + 3));
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    sendToWARBL(MIDI_CC_109, ((IMUmapSelection) * 4 + 4));
+    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
 
 
 });
@@ -2509,10 +2531,10 @@ slider6.noUiSlider.on('change', function (values, handle) {
 	 var handles = slider6.noUiSlider.get();
     inputSliderMin[IMUmapSelection + 3] = parseInt(handles[0]);
     inputSliderMax[IMUmapSelection + 3] = parseInt(handles[1]);
-    sendToWARBL(109, 28);
-    sendToWARBL(105, (parseInt(handles[0]) + 90) / 5); //convert to 1-36 steps to send
-    sendToWARBL(109, 29);
-    sendToWARBL(105, (parseInt(handles[1]) + 90) / 5); //convert to 1-36 steps to send
+    sendToWARBL(MIDI_CC_109, MIDI_PITCH_REGISTER_INPUT_MIN);
+    sendToWARBL(MIDI_CC_105, (parseInt(handles[0]) + 90) / 5); //convert to 1-36 steps to send
+    sendToWARBL(MIDI_CC_109, MIDI_PITCH_REGISTER_INPUT_MAX);
+    sendToWARBL(MIDI_CC_105, (parseInt(handles[1]) + 90) / 5); //convert to 1-36 steps to send
 });
 
 
@@ -2521,51 +2543,51 @@ slider6.noUiSlider.on('change', function (values, handle) {
 function sendRoll(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 0);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_SEND_ROLL);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendPitch(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 1);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_SEND_PITCH);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendYaw(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 2);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_SEND_YAW);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendShake(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 24);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_Y_SHAKE_PITCHBEND);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendAutoCenterYaw(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 23);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_AUTOCENTER_YAW);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendPitchRegister(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(109, 26);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, MIDI_PITCH_REGISTER);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 
 function sendDronesOnCommand(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(104, 23);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_DRONES_ON_COMMAND);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendDronesOnChannel(selection) {
@@ -2575,8 +2597,8 @@ function sendDronesOnChannel(selection) {
         document.getElementById("dronesOnChannel").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 24);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_ON_CHANNEL);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2587,8 +2609,8 @@ function sendDronesOnByte2(selection) {
         document.getElementById("dronesOnByte2").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 25);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_ON_BYTE2);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2599,16 +2621,16 @@ function sendDronesOnByte3(selection) {
         document.getElementById("dronesOnByte3").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 26);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_ON_BYTE3);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
 function sendDronesOffCommand(selection) {
     blink(1);
     var y = parseFloat(selection);
-    sendToWARBL(104, 27);
-    sendToWARBL(105, y);
+    sendToWARBL(MIDI_CC_104, MIDI_DRONES_OFF_COMMAND);
+    sendToWARBL(MIDI_CC_105, y);
 }
 
 function sendDronesOffChannel(selection) {
@@ -2618,8 +2640,8 @@ function sendDronesOffChannel(selection) {
         document.getElementById("dronesOffChannel").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 28);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_OFF_CHANNEL);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2630,8 +2652,8 @@ function sendDronesOffByte2(selection) {
         document.getElementById("dronesOffByte2").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 29);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_OFF_BYTE2);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
@@ -2642,23 +2664,23 @@ function sendDronesOffByte3(selection) {
         document.getElementById("dronesOffByte3").value = null;
     } else {
         blink(1);
-        sendToWARBL(104, 30);
-        sendToWARBL(105, x);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_OFF_BYTE3);
+        sendToWARBL(MIDI_CC_105, x);
     }
 }
 
 function sendDronesRadio(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(104, 31);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_DRONES_CONTROL_MODE);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function learnDrones() {
     blink(1);
     document.getElementById("dronesPressureInput").style.backgroundColor = "#32CD32";
     setTimeout(blinkDrones, 500);
-    sendToWARBL(106, 43);
+    sendToWARBL(MIDI_CC_106, MIDI_LEARN_DRONES_PRESSURE);
 
 }
 
@@ -2681,10 +2703,10 @@ function sendDronesPressure(selection) {
         blink(1);
         document.getElementById("dronesPressureInput").style.backgroundColor = "#32CD32";
         setTimeout(blinkDrones, 500);
-        sendToWARBL(104, 32);
-        sendToWARBL(105, x & 0x7F);
-        sendToWARBL(104, 33);
-        sendToWARBL(105, x >> 7);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_PRESSURE_LOW_BYTE);
+        sendToWARBL(MIDI_CC_105, x & 0x7F);
+        sendToWARBL(MIDI_CC_104, MIDI_DRONES_PRESSURE_HIGH_BYTE);
+        sendToWARBL(MIDI_CC_105, x >> 7);
     }
 }
 
@@ -2698,10 +2720,10 @@ function sendOctavePressure(selection) {
         blink(1);
         document.getElementById("octavePressureInput").style.backgroundColor = "#32CD32";
         setTimeout(blinkOctave, 500);
-        sendToWARBL(104, 34);
-        sendToWARBL(105, x & 0x7F);
-        sendToWARBL(104, 35);
-        sendToWARBL(105, x >> 7);
+        sendToWARBL(MIDI_CC_104, MIDI_LEARNED_PRESS_LSB);
+        sendToWARBL(MIDI_CC_105, x & 0x7F);
+        sendToWARBL(MIDI_CC_104, MIDI_LEARNED_PRESS_MSB);
+        sendToWARBL(MIDI_CC_105, x >> 7);
     }
 
 }
@@ -2710,13 +2732,13 @@ function learn() {
     blink(1);
     document.getElementById("octavePressureInput").style.backgroundColor = "#32CD32";
     setTimeout(blinkOctave, 500);
-    sendToWARBL(106, 41);
+    sendToWARBL(MIDI_CC_106, MIDI_LEARN_INITIAL_NOTE_PRESS);
 }
 
 function sendCalibrateRadio(selection) {
     selection = parseFloat(selection);
     blink(1);
-    sendToWARBL(106, 39 + selection);
+    sendToWARBL(MIDI_CC_106, MIDI_STARTUP_CALIB + selection);
 }
 
 function sendPitchbendRadio(selection) {
@@ -2726,12 +2748,12 @@ function sendPitchbendRadio(selection) {
     if (selection > 0) {
         blink(selection + 1);
     }
-    sendToWARBL(102, 70 + selection);
+    sendToWARBL(MIDI_CC_102, MIDI_PB_MODE_START + selection);
 }
 
 function sendVibratoHoles(holeNumber, selection) {
     selection = +selection; //convert true/false to 1/0
-    sendToWARBL(106, (30 - (selection * 10)) + holeNumber);
+    sendToWARBL(MIDI_CC_106, (MIDI_DIS_VIBRATO_HOLES_START - (selection * 10)) + holeNumber);
 }
 
 function updateCustom() { //keep correct settings enabled/disabled with respect to the custom vibrato switch and send pressure as CC switches.
@@ -2746,8 +2768,8 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         //document.getElementById("checkbox5").checked = false;
         document.getElementById("checkbox5").disabled = true;
         document.getElementById("switch5").style.cursor = "default";
-        //sendToWARBL(104,44); //if custom is disabled, tell WARBL to turn it off
-        //sendToWARBL(105, 0);
+        //sendToWARBL(MIDI_CC_104,44); //if custom is disabled, tell WARBL to turn it off
+        //sendToWARBL(MIDI_CC_105, 0);
         //blink(1);
     }
     if (document.getElementById("checkbox5").checked == true && document.getElementById("checkbox5").disabled == false) {
@@ -2785,7 +2807,7 @@ function sendBreathmodeRadio(selection) {
     else {
         document.getElementById("checkbox16").disabled = false;
     }
-    sendToWARBL(102, 80 + selection);
+    sendToWARBL(MIDI_CC_102, MIDI_BREATH_MODE_START + selection);
 
 }
 
@@ -3070,28 +3092,28 @@ function sendCenter(selection) {
     center[IMUmapSelection] = selection;
     blink(1);
     if (IMUmapSelection == 1) {
-        sendToWARBL(109, 3);
+        sendToWARBL(MIDI_CC_109, MIDI_SEND_CENTER_ROLL);
     }
     else {
-        sendToWARBL(109, 4);
+        sendToWARBL(MIDI_CC_109, MIDI_SEND_CENTER_YAW);
     }
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendIMUChannel(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
     IMUchannel[IMUmapSelection - 1] = selection;
-    sendToWARBL(109, IMUmapSelection + 16);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, IMUmapSelection - 1 + MIDI_IMU_CHANNEL_START);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendIMUCC(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
     IMUnumber[IMUmapSelection - 1] = selection;
-    sendToWARBL(109, IMUmapSelection + 19);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_109, IMUmapSelection -1 + MIDI_IMU_CC_START);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 
@@ -3208,21 +3230,21 @@ function advancedBagDefaults() {
 function sendJumpFactor(factor, selection) {
     selection = parseFloat(selection);
     blink(1);
-    sendToWARBL(104, factor);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, factor);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 
 function sendRow(rowNum) {
     blink(1);
     updateCells();
-    sendToWARBL(102, 90 + rowNum);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
     var y = (100) + parseFloat(document.getElementById("row" + rowNum).value);
     if (version < 4.0) {
-        sendToWARBL(102, y);
+        sendToWARBL(MIDI_CC_102, y);
         sendMIDIrow(rowNum); //this is just to fix an issue with the LED being stuck on with the old WARBL and this Config Tool version.
     }
-    else sendToWARBL(106, y);
+    else sendToWARBL(MIDI_CC_106, y);
     if (rowNum < 3) {
 		sendMomentary(rowNum);
     }
@@ -3231,10 +3253,10 @@ function sendRow(rowNum) {
 function sendMIDIrow(MIDIrowNum) {
     blink(1);
     updateCells();
-    sendToWARBL(102, 90 + MIDIrowNum);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + MIDIrowNum);
     var y = (112) + parseFloat(document.getElementById("MIDIrow" + MIDIrowNum).value);
 
-    sendToWARBL(102, y);
+    sendToWARBL(MIDI_CC_102, y);
     //sendChannel(MIDIrowNum);
     //sendByte2(MIDIrowNum);
     //sendByte3(MIDIrowNum);
@@ -3249,24 +3271,24 @@ function sendChannel(rowNum) {
     blink(1);
     MIDIvalueChange();
     var y = parseFloat(document.getElementById("channel" + (rowNum)).value);
-    sendToWARBL(102, 90 + rowNum);
-    sendToWARBL(106, y);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
+    sendToWARBL(MIDI_CC_106, y);
 }
 
 function sendByte2(rowNum) {
     blink(1);
     MIDIvalueChange();
-    sendToWARBL(102, 90 + rowNum);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
     var y = parseFloat(document.getElementById("byte2_" + (rowNum)).value);
-    sendToWARBL(107, y);
+    sendToWARBL(MIDI_CC_107, y);
 }
 
 function sendByte3(rowNum) {
     blink(1);
     MIDIvalueChange();
-    sendToWARBL(102, 90 + rowNum);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
     var y = parseFloat(document.getElementById("byte3_" + (rowNum)).value);
-    sendToWARBL(108, y);
+    sendToWARBL(MIDI_CC_108, y);
 }
 
 function sendMomentary(rowNum) { //send momentary
@@ -3274,12 +3296,12 @@ function sendMomentary(rowNum) { //send momentary
     updateCells();
     var y = document.getElementById("checkbox" + rowNum).checked
 
-    sendToWARBL(102, 90 + rowNum);
+    sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
     if (y == false) {
-        sendToWARBL(102, 117);
+        sendToWARBL(MIDI_CC_102, MIDI_MOMENTARY_OFF);
     }
     if (y == true) {
-        sendToWARBL(102, 118);
+        sendToWARBL(MIDI_CC_102, MIDI_MOMENTARY_ON);
     }
 }
 
@@ -3288,38 +3310,38 @@ function sendMomentary(rowNum) { //send momentary
 function sendVented(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(104, 40);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START);
+    sendToWARBL(MIDI_CC_105, selection);
     updateSelected();
 }
 
 function sendBagless(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(104, 41);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +1);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendSecret(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(104, 42);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +2);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendInvert(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(104, 43);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +3);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendCustom(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
     updateCustom();
-    sendToWARBL(104, 44);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +4);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 
@@ -3329,23 +3351,23 @@ function sendExpression(selection) {
     //if (selection == 1) {
     //document.getElementById("overrideExpression").disabled = false;
     //} else (document.getElementById("overrideExpression").disabled = true);
-    sendToWARBL(104, 13);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS_START);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendRawPressure(selection) {
     selection = +selection; //convert true/false to 1/0
     updateCustom();
     blink(1);
-    sendToWARBL(104, 15);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SEND_PRESSURE);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendVelocity(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    sendToWARBL(104, 45);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +5);
+    sendToWARBL(MIDI_CC_105, selection);
     updateCells();
 }
 
@@ -3353,59 +3375,59 @@ function sendAftertouch(selection, polyselection) {
     selection = +selection; //convert true/false to 1/0
     var val = selection | ((+polyselection) << 1);
     blink(1);
-    sendToWARBL(104, 46);
-    sendToWARBL(105, val);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +6);
+    sendToWARBL(MIDI_CC_105, val);
 }
 
 function sendForceVelocity(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 47);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +7);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendHack1(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 48);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +8);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendHack2(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 49);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +9);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendOverride(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 50);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +10);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendBoth(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 51);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +11);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 function sendR4flatten(selection) {
     selection = +selection;
     blink(1);
     updateCustom();
-    sendToWARBL(104, 52);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +12);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 /* //curently unused--can be used for an additional switch.
 function sendInvertR4(selection) {
     selection = +selection;
     blink(1);
-    sendToWARBL(104, 53);
-    sendToWARBL(105, selection);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +13);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 */
 
@@ -3415,20 +3437,20 @@ function sendInvertR4(selection) {
 
 function calibrateIMU() {
     blink(1);
-    sendToWARBL(106, 54);
+    sendToWARBL(MIDI_CC_106, MIDI_CALIB_IMU);
 }
 
 function centerYaw() {
     blink(1);
-    sendToWARBL(106, 60);
+    sendToWARBL(MIDI_CC_106, MIDI_CENTER_YAW);
 }
 
 
 function WARBL2Radio(selection) {
     blink(1);
     selection = parseFloat(selection);
-    sendToWARBL(106, 55);
-    sendToWARBL(119, selection);
+    sendToWARBL(MIDI_CC_106, MIDI_WARBL2_SETTINGS_START);
+    sendToWARBL(MIDI_CC_119, selection);
 }
 
 
@@ -3436,15 +3458,15 @@ function sendHost(selection) {
     blink(1);
 
     selection = +selection; //convert true/false to 1/0
-    sendToWARBL(106, 56);
-    sendToWARBL(119, selection);
+    sendToWARBL(MIDI_CC_106, MIDI_WARBL2_SETTINGS_START +1);
+    sendToWARBL(MIDI_CC_119, selection);
 }
 
 function sendPoweroff(selection) {
     selection = parseFloat(selection);
     blink(1);
-    sendToWARBL(106, 57);
-    sendToWARBL(119, selection);
+    sendToWARBL(MIDI_CC_106, MIDI_WARBL2_SETTINGS_START +2);
+    sendToWARBL(MIDI_CC_119, selection);
 }
 
 
@@ -3452,24 +3474,24 @@ function sendPoweroff(selection) {
 function saveAsDefaults() {
     modalclose(2);
     blink(3);
-    sendToWARBL(102, 123);
+    sendToWARBL(MIDI_CC_102, MIDI_SAVE_AS_DEFAULTS_CURRENT);
 }
 
 function saveCalibAsFactoryDefault() { // Only used for "factory calibtration"
 	modalclose(2);
 	blink(3);
-	sendToWARBL(106,45);}
+	sendToWARBL(MIDI_CC_106, MIDI_SAVE_CALIB_AS_FACTORY);}
 
 function saveAsDefaultsForAll() {
     modalclose(3);
     blink(3);
-    sendToWARBL(102, 124);
+    sendToWARBL(MIDI_CC_102, MIDI_SAVE_AS_DEFAULTS_ALL);
 }
 
 function restoreAll() {
     modalclose(4);
     blink(3);
-    sendToWARBL(102, 125);
+    sendToWARBL(MIDI_CC_102, MIDI_RESTORE_FACTORY);
     communicationMode = 0;
     if (version > 1.9 && version < 4.0) { //WARBL will restart, so try to reconnect to it.
         setTimeout(connect, 3000);
@@ -3481,7 +3503,7 @@ function autoCalibrateBell() {
         LEDon();
     }
     setTimeout(LEDoff, 5000);
-    sendToWARBL(106, 42);
+    sendToWARBL(MIDI_CC_106, MIDI_CALIB_BELL_SENSOR);
 }
 
 function autoCalibrate() {
@@ -3489,7 +3511,7 @@ function autoCalibrate() {
         LEDon();
     }
     setTimeout(LEDoff, 10000);
-    sendToWARBL(102, 127);
+    sendToWARBL(MIDI_CC_102, MIDI_START_CALIB);
 }
 
 function frequencyFromNoteNumber(note) {
@@ -4226,7 +4248,7 @@ function importPreset(context) {
 
                 //console.log("refreshing UI");
 
-                sendToWARBL(102, 126);
+                sendToWARBL(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
 
                 // Show the import complete modal
                 document.getElementById("modal14-title").innerHTML = "Preset Import Complete!";
@@ -4340,7 +4362,7 @@ function exportPreset() {
 
     // Tell WARBL to enter communications mode
     // Received bytes will be forwarded to the export message handler instead
-    sendToWARBL(102, 126);
+    sendToWARBL(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
 
 }
 
