@@ -3332,10 +3332,10 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
         case 0xC0:  // Program Change
             {
-                if (WARBL2settings[MIDI_DESTINATION] != 1 || connIntvl == 0) {
+                if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_BLE_ONLY || connIntvl == 0) {
                     MIDI.sendProgramChange(d, c);
                 }
-                if (WARBL2settings[MIDI_DESTINATION] != 0 || USBstatus != USB_HOST) {
+                if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_USB_ONLY || USBstatus != USB_HOST) {
                     BLEMIDI.sendProgramChange(d, c);
                 }
                 break;
