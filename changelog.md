@@ -18,9 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   
 - Now resetting the ATmega during setup in case only the NRF52840 has been reset.
 
+- Fixed Config Tool connection behavior when WARBL2 is connected by both BLE and USB.
+
   
 
 ### Added
+
+- Added double-click option for button behavior.
 
 - Added a hidden "sticks" mode where WARBL acts as a MIDI drumstick. Turned on by setting transpose to -18 in the Config Tool and then clicking "Auto-calibrate bell sensor only" within 10 seconds. Uses yaw mapping settings to map yaw to MIDI notes.
 
