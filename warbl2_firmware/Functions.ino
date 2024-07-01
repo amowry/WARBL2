@@ -1595,7 +1595,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
     if (number < 120) {  // Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
-        if ((channel & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL) {  // If we're on channel 7, we may be receiving messages from the configuration tool.
+        if ((channel) == MIDI_CONFIG_TOOL_CHANNEL) {  // If we're on channel 7, we may be receiving messages from the configuration tool.
             powerDownTimer = millis();                       // Reset the powerDown timer because we've heard from the Config Tool.
             blinkNumber[GREEN_LED] = 1;                      // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
