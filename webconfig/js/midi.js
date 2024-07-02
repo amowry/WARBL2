@@ -2091,7 +2091,6 @@ function sendFingeringSelect(row, selection) {
     //send the fingering pattern
     sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + row);
     sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_START + selection);
-
     sendKey(row, key);
 }
 

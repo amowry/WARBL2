@@ -36,9 +36,6 @@ const MIDI_CC_102_VALUE_0 = 0; // unused
     const MIDI_CC_102_VALUE_19 = 19; //from Config Tool. Save optical sensor calibration
     const MIDI_CC_102_VALUE_20 = 20; //from WARBL. bell sensor max value reached
     const MIDI_CC_102_VALUE_21 = 21; //from WARBL. R4 max value reached
-    /* MrMep: I think there's an error in the Google Doc: 22 there is unused, but these values must be continous 
-    * see Functions.ino line 1600
-    */
     const MIDI_CC_102_VALUE_22 = 22; //from WARBL. R3 max value reached	
     const MIDI_CC_102_VALUE_23 = 23; //from WARBL. R2 max value reached	
     const MIDI_CC_102_VALUE_24 = 24; //from WARBL. R1 max value reached
@@ -47,39 +44,37 @@ const MIDI_CC_102_VALUE_0 = 0; // unused
     const MIDI_CC_102_VALUE_27 = 27; //from WARBL. L1 max value reached
     const MIDI_CC_102_VALUE_28 = 28; //from WARBL. Lthumb max value reached
 ; //
-    /* 29 unused ? */
-; //Send fingering pattern selections:
-    const MIDI_CC_102_VALUE_30 = 30; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
-    const MIDI_CC_102_VALUE_31 = 31; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 2
-    const MIDI_CC_102_VALUE_32 = 32; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 3
-    const MIDI_CC_102_VALUE_33 = 33; // Bidirectional. first fingering pattern is tin whistle
-    const MIDI_CC_102_VALUE_34 = 34; // Bidirectional. "" uilleann
-    const MIDI_CC_102_VALUE_35 = 35; // Bidirectional. “” GHB
-    const MIDI_CC_102_VALUE_36 = 36; // Bidirectional. “” Northumbrian
-    const MIDI_CC_102_VALUE_37 = 37; // Bidirectional. ""tin whistle/flute chromatic
-    const MIDI_CC_102_VALUE_38 = 38; // Bidirectional. ""Gaita
-    /* 39 unused ? */
-    const MIDI_CC_102_VALUE_40 = 40; // Bidirectional. NAF
-    const MIDI_CC_102_VALUE_41 = 41; // Bidirectional. Kaval
-    const MIDI_CC_102_VALUE_42 = 42; // Bidirectional. recorder
-    const MIDI_CC_102_VALUE_43 = 43; // Bidirectional. Uilleann regulators
-    const MIDI_CC_102_VALUE_44 = 44; // Bidirectional. Uilleann standard
-    const MIDI_CC_102_VALUE_45 = 45; // Bidirectional. Xiao
-    const MIDI_CC_102_VALUE_46 = 46; // Bidirectional. Sax
-    const MIDI_CC_102_VALUE_47 = 47; // Bidirectional. Gaita extended
-    /* 48-49 unused ? */
-    const MIDI_CC_102_VALUE_50 = 50; // Bidirectional. Saxbasic
-    const MIDI_CC_102_VALUE_51 = 51; // Bidirectional. EVI
-    const MIDI_CC_102_VALUE_52 = 52; // Bidirectional. Shakuhachi
-    const MIDI_CC_102_VALUE_53 = 53; // Bidirectional. Sackpipa major
-    const MIDI_CC_102_VALUE_54 = 54; // Bidirectional. Sackpipa minor
-    const MIDI_CC_102_VALUE_55 = 55; // Bidirectional. Custom
-    const MIDI_CC_102_VALUE_56 = 56; // Bidirectional. Bombarde
-    const MIDI_CC_102_VALUE_57 = 57; // Bidirectional. Baroque flute
-    const MIDI_CC_102_VALUE_58 = 58; // Bidirectional. Medieval bagpipes
-    const MIDI_CC_102_VALUE_59 = 59; // Bidirectional. Bansuri
-; //
+    /* 29 unused */
 
+; //Send fingering pattern selections:
+	const MIDI_CC_102_VALUE_30 = 30;  // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
+	const MIDI_CC_102_VALUE_31 = 31;  // Bidirectional. indicates that the next command will be the fingering pattern for instrument 2
+	const MIDI_CC_102_VALUE_32 = 32;  // Bidirectional. indicates that the next command will be the fingering pattern for instrument 3
+	const MIDI_CC_102_VALUE_33 = 33;  // Bidirectional. first fingering pattern is tin whistle
+	const MIDI_CC_102_VALUE_34 = 34;  // Bidirectional. "" uilleann
+	const MIDI_CC_102_VALUE_35 = 35;  // Bidirectional. "" GHB
+	const MIDI_CC_102_VALUE_36 = 36;  // Bidirectional. "" Northumbrian
+	const MIDI_CC_102_VALUE_37 = 37;  // Bidirectional. ""tin whistle/flute chromatic
+	const MIDI_CC_102_VALUE_38 = 38;  // Bidirectional. ""Gaita
+	const MIDI_CC_102_VALUE_39 = 39;  // Bidirectional. NAF
+	const MIDI_CC_102_VALUE_40 = 40;  // Bidirectional. Kaval
+	const MIDI_CC_102_VALUE_41 = 41;  // Bidirectional. recorder
+	const MIDI_CC_102_VALUE_42 = 42;  // Bidirectional. Bansuri
+	const MIDI_CC_102_VALUE_43 = 43;  // Bidirectional. Uilleann standard
+	const MIDI_CC_102_VALUE_44 = 44;  // Bidirectional. Xiao
+	const MIDI_CC_102_VALUE_45 = 45;  // Bidirectional. Sax extended
+	const MIDI_CC_102_VALUE_46 = 46;  // Bidirectional. Gaita extended
+	const MIDI_CC_102_VALUE_47 = 47;  // Bidirectional. Saxbasic
+	const MIDI_CC_102_VALUE_48 = 48;  // Bidirectional. EVI
+	const MIDI_CC_102_VALUE_49 = 49;  // Bidirectional. Shakuhachi
+	const MIDI_CC_102_VALUE_50 = 50;  // Bidirectional. Sackpipa major
+	const MIDI_CC_102_VALUE_51 = 51;  // Bidirectional. Sackpipa minor
+	const MIDI_CC_102_VALUE_52 = 52;  // Bidirectional. Custom (original WARBL only)
+	const MIDI_CC_102_VALUE_53 = 53;  // Bidirectional. Bombarde
+	const MIDI_CC_102_VALUE_54 = 54;  // Bidirectional. Baroque flute
+	const MIDI_CC_102_VALUE_55 = 55;  // Bidirectional. Medieval bagpipes
+; //
+	/* 56-59 unused */
     const MIDI_CC_102_VALUE_60 = 60; // Bidirectional. current instrument (mode variable) is 0
     const MIDI_CC_102_VALUE_61 = 61; // Bidirectional. current instrument is 1
     const MIDI_CC_102_VALUE_62 = 62; // Bidirectional. current instrument is 2
@@ -183,8 +178,6 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_31 = 31; // Bidirectional. Settings for current instrument: indicates ED[18] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_32 = 32; // Bidirectional. Settings for current instrument: indicates ED[19] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_33 = 33; // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
-; //
-    /* MrMep: this could be wrong on the google Doc */
     const MIDI_CC_104_VALUE_34 = 34; // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
     const MIDI_CC_104_VALUE_35 = 35; // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
     /* 36-39 unused */
@@ -206,7 +199,6 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 ; //
     /* 54-60 unused */
-; //MrMep: The following 2 must be wrong on the google doc
     const MIDI_CC_104_VALUE_61 = 61; // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
     const MIDI_CC_104_VALUE_62 = 62; // Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
     /* 62-69 unused */
@@ -315,8 +307,6 @@ const MIDI_CC_106 = 106; // from WARBL & from Config Tool. Various values as fol
     /* 61-69 unused */
     const MIDI_CC_106_VALUE_70 = 70; //from WARBL. WARBL2 battery voltage
 	const MIDI_CC_106_VALUE_71 = 71; //from WARBL. WARBL2 charging status
-
-; //MrMep: LSB and MSB are inverted in the Google Doc
 	const MIDI_CC_106_VALUE_72 = 72; //from WARBL. WARBL2 BLE connection interval low byte
 	const MIDI_CC_106_VALUE_73 = 73; //from WARBL. WARBL2 BLE connection interval high byte
 	const MIDI_CC_106_VALUE_74 = 74; //from WARBL. WARBL2 battery percentage
@@ -444,7 +434,7 @@ const MIDI_MAX_CALIB_MSGS_START = MIDI_CC_102_VALUE_20; // Start of Calibration 
 const MIDI_MAX_CALIB_MSGS_END = MIDI_CC_102_VALUE_28; // End of Calibration max values reached messages
 const MIDI_FINGERING_PATTERN_MODE_START = MIDI_CC_102_VALUE_30; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 const MIDI_FINGERING_PATTERN_START = MIDI_CC_102_VALUE_33; // Bidirectional. first fingering pattern is tin whistle
-const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_59; // Bidirectional. Bansuri
+const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_55; // Bidirectional. Medieval bagpipes
 const MIDI_CURRENT_MODE_START = MIDI_CC_102_VALUE_60; // Bidirectional. current instrument (mode variable) is 0
 const MIDI_PB_MODE_START = MIDI_CC_102_VALUE_70; // Bidirectional. Settings for current instrument: Pitchbend mode 0
 const MIDI_BREATH_MODE_START = MIDI_CC_102_VALUE_80; // Bidirectional. Settings for current instrument: Breath mode 0

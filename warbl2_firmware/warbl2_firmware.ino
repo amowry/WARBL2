@@ -124,8 +124,8 @@ unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the 
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
 int pitchRegisterBounds[6];        // Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
 bool shakeDetected = 0;
-byte yawOutput;                 // This is global because it used by both yaw mapping and sticks mode.
-byte prevKey = 0;               // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
+byte yawOutput;                         // This is global because it used by both yaw mapping and sticks mode.
+byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
 
 // Instrument
@@ -140,15 +140,15 @@ int WARBL2CustomChartReceiveByte = 0;  // The byte in the custom chart currently
 
 
 // Variables that can change according to instrument.
-int8_t octaveShift = 0;                       // Octave transposition
-int8_t noteShift = 0;                         // Note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
-byte pitchBendMode = kPitchBendSlideVibrato;  // 0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
-byte senseDistance = 10;                      // The sensor value above which the finger is sensed for bending notes. Needs to be higher than the baseline sensor readings, otherwise vibrato will be turned on erroneously.
-byte breathMode = kPressureBreath;            // The desired presure sensor behavior: single register, overblow, thumb register control, bell register control.
-unsigned int vibratoDepth = 1024;             // Vibrato depth from 0 (no vibrato) to 8191 (one semitone)
-bool useLearnedPressure = 0;                  // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
-byte midiBendRange = 2;                       // +/- semitones that the midi bend range represents
-byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;                     // Current MIDI channel to send notes on
+int8_t octaveShift = 0;                            // Octave transposition
+int8_t noteShift = 0;                              // Note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
+byte pitchBendMode = kPitchBendSlideVibrato;       // 0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
+byte senseDistance = 10;                           // The sensor value above which the finger is sensed for bending notes. Needs to be higher than the baseline sensor readings, otherwise vibrato will be turned on erroneously.
+byte breathMode = kPressureBreath;                 // The desired presure sensor behavior: single register, overblow, thumb register control, bell register control.
+unsigned int vibratoDepth = 1024;                  // Vibrato depth from 0 (no vibrato) to 8191 (one semitone)
+bool useLearnedPressure = 0;                       // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
+byte midiBendRange = 2;                            // +/- semitones that the midi bend range represents
+byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;  // Current MIDI channel to send notes on
 
 
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
@@ -169,10 +169,10 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
 //20240629 MrMep - Doublec click Action
-bool waitingSecondClick[3] = { 0, 0, 0};
+bool waitingSecondClick[3] = { 0, 0, 0 };
 unsigned int doubleClickTimer = 0;
 
-byte switches[3][kSWITCHESnVariables] =           // Settings for the switches in various Config Tool panels (see defines)
+byte switches[3][kSWITCHESnVariables] =              // Settings for the switches in various Config Tool panels (see defines)
   { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 0
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
@@ -266,7 +266,7 @@ bool fingersChanged = 1;                                                        
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
 byte tempNewNote = 127;
 byte prevNote = 127;
-byte newNote = 127;            // The next note to be played, based on the fingering chart (does not include transposition).
+byte newNote = 127;             // The next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
 unsigned long transitionFilter = 0;
@@ -292,9 +292,9 @@ int adjvibdepth;                                                                
 
 
 // Variables for managing MIDI note output
-bool noteon = 0;      // Whether a note is currently turned on
-bool shiftState = 0;  // Whether the octave is shifted (could be combined with octaveShift)
-int8_t shift = 0;     // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
+bool noteon = 0;                        // Whether a note is currently turned on
+bool shiftState = 0;                    // Whether the octave is shifted (could be combined with octaveShift)
+int8_t shift = 0;                       // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
 byte velocity = MIDI_DEFAULT_VELOCITY;  // MIDI note velocity
 
 
@@ -314,15 +314,13 @@ bool dronesOn = 0;  //used to monitor drones on/off.
 
 
 // Variables for communication with the WARBL Configuration Tool
-bool communicationMode = 0;          // Whether we are currently communicating with the tool.
-byte communicationModeSource = MIDI_SOURCE_NONE;    // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
-byte buttonReceiveMode = 100;        // Which row in the button configuration matrix for which we're currently receiving data.
-int pressureReceiveMode = 100;       // Indicates the variable for which we're currently receiving data
-byte fingeringReceiveMode = 0;       // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
-byte WARBL2settingsReceiveMode = 0;  // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
-
-//Variable to keep as thread-safe as possibile the communication with the Config Tool
-volatile bool midiSendCoupletMutex = false;          // A simple mutex that indicates if a double-message transmission is active
+bool communicationMode = 0;                       // Whether we are currently communicating with the tool.
+byte communicationModeSource = MIDI_SOURCE_NONE;  // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
+byte buttonReceiveMode = 100;                     // Which row in the button configuration matrix for which we're currently receiving data.
+int pressureReceiveMode = 100;                    // Indicates the variable for which we're currently receiving data
+byte fingeringReceiveMode = 0;                    // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;               // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
+volatile bool midiSendCoupletMutex = false;       // Variable to keep as thread-safe as possible the communication with the Config Tool--A simple mutex that indicates if a double-message transmission is active
 
 
 unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
