@@ -3199,20 +3199,17 @@ void startAdv(void) {
 
 
 
-// This sends a value split in two consecutive messages, one containing an index (i.e. "jumpFactor") the other the actual value, on different CCs.
-// It takes a mutex so to avoid concurrent transmissions from different threads, say USB and/or BLE callbacks.
+
+
+
 void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8_t value) {
 
-    while (1) {
-        if (!midiSendCoupletMutex) {
-            midiSendCoupletMutex = true;  //takes the mutex
-            sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
-            sendMIDI(MIDI_SEND_CC, valueCC, value);
-            midiSendCoupletMutex = false;  //gives the mutex
-            return;
-        }
-        delay(3);
-    }
+    xSemaphoreTake(midiSendCoupletMutex, portMAX_DELAY);
+
+    sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
+    sendMIDI(MIDI_SEND_CC, valueCC, value);
+    
+    xSemaphoreGive(midiSendCoupletMutex);
 }
 
 

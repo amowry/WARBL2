@@ -320,8 +320,8 @@ byte buttonReceiveMode = 100;                     // Which row in the button con
 int pressureReceiveMode = 100;                    // Indicates the variable for which we're currently receiving data
 byte fingeringReceiveMode = 0;                    // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
 byte WARBL2settingsReceiveMode = 0;               // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
-volatile bool midiSendCoupletMutex = false;       // Variable to keep as thread-safe as possible the communication with the Config Tool--A simple mutex that indicates if a double-message transmission is active
 
+SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();
 
 unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
 
