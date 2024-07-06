@@ -715,8 +715,8 @@
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
 #define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
-#define MIDI_ED_VARS_NUMBER MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1   // ED array number of vars for the first slot
-#define MIDI_ED_VARS2_OFFSET MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER  // ED array index for 2nd slot of MIDI Msgs
+#define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
+#define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
 #define MIDI_ACTION_MIDI_CHANNEL_END MIDI_CC_106_VALUE_15  // Bidirectional. MIDI channel 16
 
@@ -730,8 +730,8 @@
 
 #define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                 // Beginning of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                   // End of WARBL2 CustomCharts
-#define MIDI_CUSTOM_CHARTS_OFFSET_START MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START  // Beginning of WARBL2 CustomCharts
-#define MIDI_CUSTOM_CHARTS_OFFSET_END MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END      // End of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_START (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START)  // Beginning of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_END (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END)      // End of WARBL2 CustomCharts
 
 /* Various single Values */
 #define MIDI_MOMENTARY_OFF MIDI_CC_102_VALUE_117  // Bidirectional. momentary off
