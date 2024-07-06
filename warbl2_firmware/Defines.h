@@ -3,7 +3,7 @@
 #define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 42  // Firmware version (without decimal point)
-// #define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 48        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
@@ -249,7 +249,7 @@
 /* MIDI Config Tool Constants */
 //General constants
 #define MIDI_DEFAULT_MAIN_CHANNEL 1  // Default MIDI channel to send notes on
-#define MIDI_CONFIG_TOOL_CHANNEL 7   //  Config Tool MIDI channel
+#define MIDI_CONFIG_TOOL_CHANNEL 7   // Config Tool MIDI channel
 #define MIDI_DEFAULT_VELOCITY 127    //
 
 //WARBL2 MIDI_DESTINATION
@@ -334,7 +334,7 @@
 #define MIDI_CC_102_VALUE_55 55  // Bidirectional. Medieval bagpipes
                                  /* 56-59 unused */
 
-#define MIDI_CC_102_VALUE_60 60  // Bidirectional. current instrument (mode variable) is  0
+#define MIDI_CC_102_VALUE_60 60  // Bidirectional. current instrument (mode variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. current instrument is 1
 #define MIDI_CC_102_VALUE_62 62  // Bidirectional. current instrument is 2
 /* 63-69 unused */
@@ -519,7 +519,7 @@
 #define MIDI_CC_106_VALUE_15 15  // Bidirectional. MIDI channel 16
 //
 #define MIDI_CC_106_VALUE_16 16  // Bidirectional. custom vibrato off
-#define MIDI_CC_106_VALUE_17 17  //Bidirectional. custom vibrato on
+#define MIDI_CC_106_VALUE_17 17  // Bidirectional. custom vibrato on
 /* 18-19 unused */
 
 //Vibrato holes
@@ -715,8 +715,8 @@
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
 #define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
-#define MIDI_ED_VARS_NUMBER MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1   // ED array number of vars for the first slot
-#define MIDI_ED_VARS2_OFFSET MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER  // ED array index for 2nd slot of MIDI Msgs
+#define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
+#define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
 #define MIDI_ACTION_MIDI_CHANNEL_END MIDI_CC_106_VALUE_15  // Bidirectional. MIDI channel 16
 
@@ -730,8 +730,8 @@
 
 #define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                 // Beginning of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                   // End of WARBL2 CustomCharts
-#define MIDI_CUSTOM_CHARTS_OFFSET_START MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START  // Beginning of WARBL2 CustomCharts
-#define MIDI_CUSTOM_CHARTS_OFFSET_END MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END      // End of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_START (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START)  // Beginning of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_OFFSET_END (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END)      // End of WARBL2 CustomCharts
 
 /* Various single Values */
 #define MIDI_MOMENTARY_OFF MIDI_CC_102_VALUE_117  // Bidirectional. momentary off
