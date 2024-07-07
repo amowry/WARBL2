@@ -64,6 +64,7 @@ ResponsiveAnalogRead analogPressure(A1, true);
 // Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
+    static const long BaudRate = 31250; //For MIDI Library 5.0.2
 };
 
 // Create instances of the Arduino MIDI Library classes.
