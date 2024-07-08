@@ -64,7 +64,7 @@ ResponsiveAnalogRead analogPressure(A1, true);
 // Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
-    static const long BaudRate = 31250; //For MIDI Library 5.0.2
+    static const long BaudRate = 31250;         //For MIDI Library 5.0.2
 };
 
 // Create instances of the Arduino MIDI Library classes.
@@ -169,10 +169,6 @@ byte midiChannelSelector[] = { 1, 1, 1 };
 
 bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
 
-//20240629 MrMep - Doublec click Action
-bool waitingSecondClick[3] = { 0, 0, 0 };
-unsigned int doubleClickTimer = 0;
-
 byte switches[3][kSWITCHESnVariables] =              // Settings for the switches in various Config Tool panels (see defines)
   { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 0
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
@@ -183,10 +179,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                           // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 } };  // Instrument 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -204,7 +200,6 @@ unsigned long wakeTime = 0;        // When we woke from sleep
 byte blinkNumber[] = { 0, 0, 0 };  // The number of time to blink LEDs R, G, B.
 bool LEDon[] = { 0, 0, 0 };        // Whether each LED is currently on
 bool play = 0;                     // Turns sound off and on (with the use of a button action) when in bagless mode.
-bool bellSensor = 1;               // Whether the bell sensor is plugged in
 byte program = 0;                  // Current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
 bool dronesState = 0;              // Keeps track of whether we're above or below the pressure threshold for turning drones on.
 bool pulseLED[] = { 0, 0, 0 };     // Whether currently pulsing LEDs
@@ -311,7 +306,9 @@ bool longPress[] = { 0, 0, 0 };        // Long button press
 bool noteOnOffToggle[] = { 0, 0, 0 };  // If using a button to toggle a noteOn/noteOff command, keep track of state.
 bool longPressUsed[] = { 0, 0, 0 };    // If we used a long button press, we set a flag so we don't use it again unless the button has been released first.
 bool specialPressUsed[] = { 0, 0, 0 };
-bool dronesOn = 0;  //used to monitor drones on/off.
+bool dronesOn = 0;                         //used to monitor drones on/off.
+bool waitingSecondClick[3] = { 0, 0, 0 };  //20240629 MrMep - Double-click Action
+unsigned int doubleClickTimer = 0;
 
 
 // Variables for communication with the WARBL Configuration Tool
@@ -322,7 +319,7 @@ int pressureReceiveMode = 100;                    // Indicates the variable for 
 byte fingeringReceiveMode = 0;                    // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
 byte WARBL2settingsReceiveMode = 0;               // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
 
-SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();  // Semephore for sending MIDI couplets, in case there are multiple threads sending.
 
 unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
 
@@ -450,6 +447,11 @@ void setup() {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
 
+    checkFirmwareVersion();
+
+    writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
+
+
     loadFingering();
     loadSettingsForAllModes();
     mode = defaultMode;       // Set the startup instrument.
@@ -458,10 +460,6 @@ void setup() {
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
     loadPrefs();                                 // Load the correct user settings based on current instrument.
     powerDownTimer = millis();                   // Reset the powerDown timer.
-
-    //eraseEEPROM(); // Testing
-
-    writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
 
     // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
 #ifndef PROTOTYPE46
