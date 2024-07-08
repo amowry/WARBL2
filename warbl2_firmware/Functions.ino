@@ -16,7 +16,7 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-    //Serial.println(switches[mode][BUTTON_DOUBLE_CLICK]);
+
 
     for (byte i = 0; i < 9; i++) {
         //Serial.println(toneholeRead[i]);
@@ -132,7 +132,7 @@ void getSensors(void) {
 
 void readIMU(void) {
 
-    // Note: Gyro is turned off by default to save power unless using roll/pitch/yaw or elevation register (see loadPrefs()).
+    // Note: Gyro is turned off by default to save power unless using roll/pitch/yaw, elevation register, or sticks mode (see loadPrefs()).
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -153,7 +153,7 @@ void readIMU(void) {
     gyroZ = rawGyroZ - gyroZCalibration;
 
     float deltat = sfusion.deltatUpdate();
-    deltat = constrain(deltat, 0.001f, 0.01f);  // AM 9/16/23 Enabled DWT to make micros() higher resolution for this calculation. Not sure that it matters.
+    deltat = constrain(deltat, 0.001f, 0.01f);
 
     // Serial.println(deltat, 4);
 
@@ -1816,8 +1816,8 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
     if (number < 120) {  // Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
         if ((channel) == MIDI_CONFIG_TOOL_CHANNEL) {  // If we're on channel 7, we may be receiving messages from the configuration tool.
-            powerDownTimer = millis();                       // Reset the powerDown timer because we've heard from the Config Tool.
-            blinkNumber[GREEN_LED] = 1;                      // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
+            powerDownTimer = millis();                // Reset the powerDown timer because we've heard from the Config Tool.
+            blinkNumber[GREEN_LED] = 1;               // Blink once, indicating a received message. Some commands below will change this to three (or zero) blinks.
 
 
             /////// CC 102
@@ -3433,20 +3433,17 @@ void startAdv(void) {
 
 
 
-// This sends a value split in two consecutive messages, one containing an index (i.e. "jumpFactor") the other the actual value, on different CCs.
-// It takes a mutex so to avoid concurrent transmissions from different threads, say USB and/or BLE callbacks.
+
+
+
 void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8_t value) {
 
-    while (1) {
-        if (!midiSendCoupletMutex) {
-            midiSendCoupletMutex = true;  //takes the mutex
-            sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
-            sendMIDI(MIDI_SEND_CC, valueCC, value);
-            midiSendCoupletMutex = false;  //gives the mutex
-            return;
-        }
-        delay(3);
-    }
+    xSemaphoreTake(midiSendCoupletMutex, portMAX_DELAY);
+
+    sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
+    sendMIDI(MIDI_SEND_CC, valueCC, value);
+    
+    xSemaphoreGive(midiSendCoupletMutex);
 }
 
 
