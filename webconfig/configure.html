@@ -672,6 +672,7 @@
                   <input type="checkbox" class="checkboxes" id="checkbox8" onChange="sendBagless(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+                  <button type="button" class="smallbutton noTouch halfhole" id="halfHolePrefsButton" onClick="halfHole()">Half holes...</button>
                   <button type="button" class="smallbutton noTouch advanced" onClick="advanced()">Advanced...</button>
                   <button type="button" class="smallbutton noTouch graph" onClick="pressureGraph()">Graph...</button>
                </div>
@@ -778,6 +779,44 @@
                      <div id="d3PressureGraph"></div>
                      <button type="button" class="smallbutton noTouch pressureOkay" onClick="pressureOkay()">OK</button>
                   </h2>
+               </div>
+               <div class="smallcontrolbox" id="halfholebox">
+                  <h2 class="controlboxtitle noTouch">
+                    Half hole Preferences
+                     <button type="button" class="infocircle" onClick="modal(31)">  <img  class = "info" src="img/info-circle.svg"></img></button>
+                  </h2>
+                     <div class="halfThumbEnabledLabel noTouch">Half Thumb hole Enabled</div>
+                     <label class="switch" id="switch28">
+                     <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendHalfThumbHoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfThumbEnabledExplainLabel noTouch" id="halfThumbEnabledExplainLabel">Raises 1 octave</div>
+                     
+                     <div class="halfR3EnabledLabel noTouch">Half R3 hole Enabled</div>
+                     <label class="switch" id="switch29">
+                     <input type="checkbox" class="checkboxes" id="checkbox29" onChange="sendHalfR3HoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfR3EnabledExplainLabel noTouch" id="halfR3EnabledExplainLabel">Raises base position by 1 semitone</div>
+
+
+                     <div class="halfR4EnabledLabel noTouch">Half R4 hole Enabled</div>
+                     <label class="switch" id="switch30">
+                     <input type="checkbox" class="checkboxes" id="checkbox30" onChange="sendHalfR4HoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfR4EnabledExplainLabel noTouch" id="halfR4EnabledExplainLabel">Raises base position by 1 semitone</div>
+
+
+                     <div hidden=hidden class="slidecontainer" id="halfHoleTransientContainer">
+                        <input type="range" min="0" max="100" value="0" class="ranger" id="halfHoleTransient" onChange="sendHalfHoleTransient(value)" />
+                     </div>
+                     <div id="halfHoleTransientLabel" class="noTouch halfHoleTransientLabel">Dynamic Transient filter (mS)</div>
+                     <div class="noTouch halfHoleTransient">
+                        <p><span id="demo13">1</span></p>
+                     </div>
+
+                     <button type="button" class="smallbutton noTouch halfHoleOkay" onClick="halfHoleOkay()">OK</button>
                </div>
                <div class="smallcontrolbox" id="box5">
                   <h2 class="controlboxtitle noTouch">
@@ -2401,6 +2440,30 @@
             </div>
          </div>
       </div>
+      <div id="open-modal31" onClick="" class="modal-window">
+         <div id="modal-center31">
+           <h2 title="Close" onClick="modalclose(31)" class="modal-close">Close</h2>
+           <h1>Half Hole Detection</h1>
+           <div>
+             <p>
+               For each selected finger, you can switch on and off the half-hole detection.
+             </p>
+             <p>The "Dynamic Transient Filter" slider selects the duration of an additional transient delay activated during octave changes: the lower it is, the more glitches you will hear.
+               If its value is too high, a small delay will become audible during some passages. </p>
+             <p>
+               The calibration of the half-hole detection is automatic and is base on the general hole calibration. You can monitor all the related values trhough the sliders.
+               </p>
+             <p> Please consider that:</p>
+             <p>
+               <ul>
+                 <li>Modified values are saved only once you press the "Save & Exit" button;</li>
+                 <li>The position of the vertical black line is updated only when a fingering change is detected: move your fingers to update its position;</li>
+                 <li>A good dynamic transient value is between 20 and 30;</li>
+               </ul>
+             </p>
+           </div>
+         </div>
+       </div>
       </div>
    </body>
    <script src="js/jquery-3.3.1.min.js"></script>

@@ -24,6 +24,14 @@ void printStuff(void) {
     //Serial.println(" ");
 }
 
+void printFingering(unsigned int fingering) {
+    for (int i = 15; i >= 0; i--) {
+        if (i==8) Serial.print(" ");
+        Serial.print(bitRead(fingering, i));
+    }
+    Serial.println(" "); 
+}
+
 
 
 
@@ -676,11 +684,11 @@ void getFingers() {
 
     for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
 
-        if (halfHole.enabled[i]) {
+        if (isHalfHoleEnabled(i)) {
             bool halfHoleNow = isHalfHole(i);
             int thRead = toneholeRead[i];
 
-            byte bitOffset = 9;    //For forcing a change in holeCovered
+            byte bitOffset = HALF_HOLE_BIT_OFFSET;    //For forcing a change in holeCovered
             if ((i == R4_HOLE || i == R3_HOLE)) {
                 bitOffset += i;
             }
@@ -730,13 +738,26 @@ void getFingers() {
 
 
 // This should be called right after a new hole state change, before sending out any new note.
-bool isMaybeInTransition() {
+/* MrMep: I renamed isMaybeInTransition to this, and changed it so it returns a transitionFilter directly.
+ * This way we can have "dynamic" values based on different conditions
+ */
+unsigned long getTransitionDelay() {
     // Look at all finger hole states to see if there might be other
     // fingers in motion (partial hole covered) which means this
     // might be a multi-finger note transition and we may want to wait
     // a bit to see if the pending fingers land before triggering the new note.
     int pendingHoleCovered = holeCovered;
     unsigned long now = millis();
+    unsigned long result = 0;
+    float multiplier = 0.0;
+
+
+    //Check settings that enable a transient Filter
+    if (transientFilterDelay == 0 
+        || !isHalfHoleEnabled(THUMB_HOLE) 
+        || transientHalfThumbHoleDelay == 0) {
+        return result;
+    }
 
     for (byte i = 0; i < 9; i++) {
         int thresh = senseDistance;  //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
@@ -747,16 +768,12 @@ bool isMaybeInTransition() {
         }
     }
 
-    if (pendingHoleCovered != holeCovered) {
+    if (pendingHoleCovered != holeCovered) { //Here we check from fingering change to fingering change
         // See if the pending is a new note.
-        int tempNewNote = getNote(holeCovered);
-        int pendingNote = getNote(pendingHoleCovered);
-        if ( (pendingNote >= 0 && pendingNote != tempNewNote) &&
-                (abs(tempNewNote - pendingNote) > 11 //the interval for the current fingered note is an octave or more
-                || __builtin_popcount(pendingHoleCovered ^ holeCovered) >= 4 //the number of changed finger is > 4,
-                || (halfHole.enabled[THUMB_HOLE] && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2)
-                )
-            ) {
+        byte tempNewNote = getNote(holeCovered);
+        byte pendingNote = getNote(pendingHoleCovered);
+        if (pendingNote != 127 && pendingNote != tempNewNote) {
+
 #if DEBUG_TRANSITION_FILTER
             Serial.print(now);
             Serial.print(" : Maybe: ");
@@ -764,11 +781,56 @@ bool isMaybeInTransition() {
             Serial.print(" wait on: ");
             Serial.println(tempNewNote);
 #endif
-            return true;
+            result += transientFilterDelay;
+
         }
     }
 
-    return false;
+    if (newNoteHoleCovered != holeCovered) { //Here we check at note level with the current one
+        byte pendingNote = getNote(holeCovered);
+
+        if ( (pendingNote != 127 && (abs(newNote - pendingNote) > 11))) { //the interval for the current fingered note is an octave or more
+            multiplier += 1.0;
+
+#if DEBUG_TRANSITION_FILTER || DEBUG_HH
+            Serial.print(" Interval: ");
+            Serial.println(abs(newNote - pendingNote));
+#endif
+        }
+
+        if (__builtin_popcount(newNoteHoleCovered ^ holeCovered) >= 4)  {//the number of changed finger is > 4,
+            multiplier += 1.0;
+
+#if DEBUG_TRANSITION_FILTER || DEBUG_HH
+            Serial.print(" Fingers: ");
+            Serial.println(__builtin_popcount(newNoteHoleCovered ^ holeCovered));
+#endif
+        }
+        if (isHalfHoleEnabled(THUMB_HOLE) && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2)  {//Thumb moving
+            multiplier += 1.5;
+
+#if DEBUG_TRANSITION_FILTER || DEBUG_HH
+        
+            Serial.print(" TH: ");
+            Serial.print(toneholeLastRead[THUMB_HOLE]);
+            Serial.print("->");
+            Serial.println(toneholeRead[THUMB_HOLE]);
+#endif
+
+        }
+    }
+
+    result += transientHalfThumbHoleDelay * multiplier;
+
+#if DEBUG_TRANSITION_FILTER || DEBUG_HH
+    if (result >0) {
+        Serial.print(now);
+        Serial.print(" Delay: ");
+        Serial.println(result);
+    }
+
+#endif
+    return result;
 }
 
 
@@ -788,7 +850,7 @@ void debounceFingerHoles() {
 
     if (prevHoleCovered != holeCovered) {
         
-    // #ifdef DEBUG_HH
+    // #if DEBUG_HH
     //     for (int i = 0; i < 16; i++) {
     //         Serial.print(bitRead(holeCovered, i) );
     //     }
@@ -798,27 +860,20 @@ void debounceFingerHoles() {
         prevHoleCovered = holeCovered;
         debounceTimer = now;
         timing = 1;
-        if (transientFilterDelay > 0 && isMaybeInTransition()) {
-            transitionFilter = transientFilterDelay;  // ms timeout for transition to fail out
-        } else {
-            transitionFilter = 0;
-        }
 
-        //HalfHole Additional Buffer
-        if ( halfHole.enabled[THUMB_HOLE] && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2) {
-            #ifdef DEBUG_HH
-                Serial.print("Thumb hole in transition\n");
-                Serial.print(toneholeLastRead[THUMB_HOLE]);
-                Serial.print("->");
-                Serial.println(toneholeRead[THUMB_HOLE]);
-            #endif
-            transitionFilter = (pressureSelector[mode][9] + halfHole.buffer) / 1.25;
-        }
+        transitionFilter = getTransitionDelay();
+
+        // if (transientFilterDelay > 0 && isMaybeInTransition()) {
+        //     transitionFilter = transientFilterDelay;  // ms timeout for transition to fail out
+        // } else {
+        //     transitionFilter = 0;
+        // }
+
     }
 
     long debounceDelta = now - debounceTimer;
 
-    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || !isMaybeInTransition())) {  // Reset it if necessary.
+    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || getTransitionDelay() == 0)) {  // Reset it if necessary.
 #if DEBUG_TRANSITION_FILTER
         Serial.print(now);
         Serial.println(" canceltrans");
@@ -857,6 +912,7 @@ void debounceFingerHoles() {
     #endif
 
             newNote = tempNewNote;
+            newNoteHoleCovered = holeCovered;
             tempNewNote = -1;
             getState();                       // Get state again if the note has changed.
             fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
@@ -948,23 +1004,24 @@ byte getNote(unsigned int fingerPattern) {
             Serial.print("getNote: ");
             Serial.println(ret);
         #endif
-        if (ret == 0) {
-            ret = -1;
-        } else {
-            if ( 
-                ( (tempCovered == 0b1111111)//To capture base position only 
-                    && toneholeHalfCovered[R4_HOLE] //C
-                    ) ||
-                ( (tempCovered == 0b1111110)
-                    && toneholeHalfCovered[R3_HOLE] //D
-                )
-                )
-                {
-                    ret += 1;
-                }
+        // if (ret == 0) {
+        //     ret = -1;
+        // } else {
+            //Moved to getShift()
+            // if ( 
+            //     ( (tempCovered == 0b1111111)//To capture base position only 
+            //         && toneholeHalfCovered[R4_HOLE] //C
+            //         ) ||
+            //     ( (tempCovered == 0b1111110)
+            //         && toneholeHalfCovered[R3_HOLE] //D
+            //     )
+            //     )
+            //     {
+            //         ret += 1;
+            //     }
 
             if (modeSelector[mode] == kModeBarbaroRecorder) {
-                    if (bitRead(holeCovered, 9)) { //thumb hole half covered - 2nd and 3rd register
+                if (bitRead(holeCovered, 9)) { //thumb hole half covered - 2nd and 3rd register
                     
                     switch (tempCovered) {
                         case 0b1101110: //Bb
@@ -1055,22 +1112,27 @@ byte getNote(unsigned int fingerPattern) {
                 }
                 
             } else {
-                if (bitRead(holeCovered, 9)) { //thumb hole half covered
-                #ifdef DEBUG_HH
-                    Serial.print("Half Hole Detected");
-                    Serial.print(" - getNote: ");
-                    Serial.print(ret);
-                    Serial.print(" + 12");
-                    Serial.println();
-                #endif
-                    ret += 24;
-                } else if (bitRead(holeCovered, 8)) { //thumb hole half covered
+                // if (bitRead(holeCovered, 9)) { //thumb hole half covered
+                // #if DEBUG_HH
+                //     Serial.print("Half Hole Detected");
+                //     Serial.print(" - getNote: ");
+                //     Serial.print(ret);
+                //     Serial.print(" + 12");
+                //     Serial.println();
+                // #endif
+                //     ret += 24;
+                // } else 
+                if (bitRead(holeCovered, 8)) { //thumb hole covered
                     ret += 12;
                 }
             }
-
-        }
+        // }
     }
+
+    
+    //Half hole raises
+    //This has to stay here, otherwise notes modified by half holing wouldn't be detected by debounceFingerHoles()
+    ret += getHalfHoleShift(fingerPattern);
 
     return ret;
 }
@@ -1118,6 +1180,7 @@ void getShift() {
             shift = shift + 12;  // Add an octave jump to the transposition if necessary.
         }
     }
+
 }
 
 
@@ -2839,6 +2902,7 @@ void sendSettings() {
         sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS_START, MIDI_CC_105, ED[mode][i]);
     }
 
+    // (33-13+1) < 70 - 21 == 49
     for (byte i = MIDI_ED_VARS_NUMBER; i < MIDI_ED_VARS2_OFFSET; i++) {  // More settings for expression and drones control panels.
         sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS2_OFFSET, MIDI_CC_105, ED[mode][i]);
     }
@@ -2990,8 +3054,10 @@ void loadSettingsForAllModes() {
             switches[i][n] = readEEPROM(EEPROM_SWITCHES_START + i + (n * 3));
         }
 
-        if (switches[mode][BUTTON_DOUBLE_CLICK] > 1) {  // Sanity check in case uninitialized (default to having double-click turned off).
-            switches[mode][BUTTON_DOUBLE_CLICK] = 0;
+        for (byte j = BUTTON_DOUBLE_CLICK; j < kSWITCHESnVariables; j++) { //New switches variables in 4.2/3
+            if (switches[mode][j] > 1) {  // Sanity check in case uninitialized (default to having everything here turned off).
+                switches[mode][j] = 0;
+            }
         }
 
         vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
@@ -3057,6 +3123,7 @@ void loadPrefs() {
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
     transientFilterDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    transientHalfThumbHoleDelay = (ED[mode][HALF_HOLE_TRANSIENT] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];

@@ -16,73 +16,96 @@
 */
 
 
-//Initializes runtime parameters
-void hh_init() {
-    halfHole.currentHoleSettings = 99; //disabled
-    resetHalfHoleConfig();
-}
-
-//Resets saved Half Hole Calibration values
-void resetHalfHoleConfig() {
-    halfHole.buffer = HALF_HOLE_BUFFER_SIZE;
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
-        halfHole.enabled[i] = false;
-    }
-    halfHole.enabled[THUMB_HOLE] = true;
-    halfHole.enabled[R3_HOLE] = true;
-    halfHole.enabled[R4_HOLE] = true;
-    
-}
-
-//Loads Half Hole Detection parameters
-void  loadHalfHoleConfig() {
-    halfHole.buffer = readEEPROM(EEPROM_HALF_HOLE_BUFFER_SIZE);
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
-        halfHole.enabled[i] = readEEPROM(EEPROM_HALF_HOLE_ENABLED + i);
-    }
-}
-//Saves Half Hole Detection parameters
-void  saveHalfHoleConfig() {
-    writeEEPROM(EEPROM_HALF_HOLE_BUFFER_SIZE, halfHole.buffer);
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
-        writeEEPROM(EEPROM_HALF_HOLE_ENABLED + i, halfHole.enabled[i]);
-    }
-}
-
 //Always call UpperBound first, to calculate correction
 uint16_t getHalfHoleLowerBound(byte hole) {
-    return getHalfHoleUpperBound(hole) - HALF_HOLE_WINDOW_SIZE;
+    // return getHalfHoleUpperBound(hole) - HALF_HOLE_WINDOW_SIZE;
+    return toneholeCovered[hole] * (1.0f - HALF_HOLE_LOW_WINDOW_PERC) + halfHole.correction*HALF_HOLE_CALIB_OFFSET;
+
 }
 
 uint16_t getHalfHoleUpperBound(byte hole) {
-    if (!halfHole.enabled[hole]) {
+    if (!isHalfHoleEnabled(hole)) {
         return 1024;
     }
     // return toneholeCovered[hole] - HOLE_OPEN_OFFSET + HALF_HOLE_UPPER_OFFSET + halfHole.correction*HALF_HOLE_CALIB_OFFSET;
-    return toneholeCovered[hole] - (HALF_HOLE_UPPER_OFFSET - halfHole.correction*HALF_HOLE_CALIB_OFFSET);
+    // return toneholeCovered[hole] - (HALF_HOLE_UPPER_OFFSET - halfHole.correction*HALF_HOLE_CALIB_OFFSET);
+    return toneholeCovered[hole] * (1.0f - HALF_HOLE_HIGH_WINDOW_PERC) + halfHole.correction*HALF_HOLE_CALIB_OFFSET;
 }
 
+//returns id Half hole is enabled on a hole
+bool isHalfHoleEnabled(int hole) {
+    switch (hole) {
+        case THUMB_HOLE:
+            return switches[mode][HALF_HOLE_THUMB_ENABLED];
+        case R3_HOLE:
+            return switches[mode][HALF_HOLE_R3_ENABLED];
+        case R4_HOLE:
+            return switches[mode][HALF_HOLE_R4_ENABLED];
+        default:
+            return false;
+    }
+}
 //returns if the selected hole is half covered
 bool isHalfHole(int hole) {
-    if (!halfHole.enabled[hole]) return false; //disabled
+    if (!isHalfHoleEnabled(hole)) return false; //disabled
 
     bool result = toneholeRead[hole] <  getHalfHoleUpperBound(hole) && toneholeRead[hole] > getHalfHoleLowerBound(hole);
-    #ifdef DEBUG_HH
+#if DEBUG_HH_
 
-    if (hole == THUMB_HOLE && result) {
+    if (result) {
         Serial.print(getHalfHoleLowerBound(hole));
-        Serial.print(" -> ");
+        Serial.print(" <- ");
         Serial.print(toneholeRead[hole]);
-        Serial.print(" <- C: ");
-        Serial.print(toneholeCovered[hole]);
-        Serial.print(" - UB");
-        Serial.println(getHalfHoleUpperBound(hole));
+        Serial.print(" -> ");
+        Serial.print(getHalfHoleLowerBound(hole));
+        Serial.print(" - Max: ");
+        Serial.println(toneholeCovered[hole]);
     } 
-    #endif
+#endif
 
     return result;
 }
 
+//Calculate the current note shift based on HH settings and current fingering
+int8_t getHalfHoleShift(unsigned int fingerPattern) {
+
+    uint8_t result = 0;
+    uint8_t tempCovered = fingerPattern >> 1; //To store finger holes only
+
+    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+        if (isHalfHoleEnabled(i)) {
+            switch (i) {
+
+                case R3_HOLE: {
+                    if ( (tempCovered & 0x7F) == 0b1111110 //To capture base position only, ignore thumb
+                        && bitRead(fingerPattern, HALF_HOLE_BIT_OFFSET+i) == 1 //set by getFingers()
+                        ) { 
+                        result += 1;   
+                    }
+                    continue;
+                }
+
+                case R4_HOLE: {
+                    if ((tempCovered & 0x7F) == 0b1111111 //To capture base position only, ignore thumb
+                        && bitRead(fingerPattern, HALF_HOLE_BIT_OFFSET+i) == 1) { //set by getFingers()
+                        result += 1;   
+                    }
+                    continue;
+                }
+
+                case THUMB_HOLE: {
+
+                    result += 12 * bitRead(fingerPattern, HALF_HOLE_BIT_OFFSET);
+                    continue;
+                }
+                default:
+                    continue;
+            }
+        }
+    }
+    
+    return result;
+}
 
 //Calculates the baseline moving average for readings in the current time window and applies an eventual correction factor to half hole detection
 void baselineUpdate() {
@@ -107,10 +130,16 @@ void baselineUpdate() {
         diff = sqrt(abs(diff))*diff/diff ;
         halfHole.correction = diff;
 
-        #ifdef DEBUG_HH
+#ifdef DEBUG_AUTO_CALIB
         Serial.print("halfHole.correction: ");
-        Serial.println(halfHole.correction);
-        #endif
+        Serial.print(halfHole.correction);
+        Serial.print(" - thumbhole, window: ");
+        Serial.print(getHalfHoleLowerBound(THUMB_HOLE));
+        Serial.print(" <-> ");
+        Serial.print(getHalfHoleUpperBound(THUMB_HOLE));
+        Serial.print(", calibration: ");
+        Serial.println(toneholeCovered[THUMB_HOLE]);
+#endif
         
         baselinePreviousAverage = baselineCurrentAverage;
         // if (communicationMode) {

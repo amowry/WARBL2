@@ -1266,7 +1266,7 @@ fieldset {
 	padding-top: 0px;
 	padding-bottom: 50px;
 	width: 463px;
-	height: 375px;
+	height: 420px;
 	float: right;
 	position: absolute;
 	top: 440px;
@@ -1976,7 +1976,6 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
-
 .advancedOkay {
 	position: absolute;
 	height: 30px;
@@ -1993,6 +1992,7 @@ input:disabled + .vibratoSlider:before {
 	top: 325px;
 	left: 200px;
 }
+
 
 .advancedDefaults {
 	position: absolute;
@@ -3055,6 +3055,7 @@ h3 {
 	top: 385px;
 	width: 170px;
 }
+
 
 #advancedPBsliders {
 	display: block;
@@ -4531,4 +4532,126 @@ ath {
 	fill: none;
 	stroke:white;
     stroke-width: 1;
+}
+
+
+/* Half Holing */
+#halfholebox {
+	display: none;
+	left: 527px;
+}
+
+.halfhole {
+	position: absolute;
+	height: 40px;
+	width: 110px;
+	top: 400px;
+	left: 200px;
+}
+
+.halfThumbEnabledLabel {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 102px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch28 {
+	top: 98px;
+	left: 210px;
+}
+
+.halfThumbEnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 290px;
+	top: 102px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfR3EnabledLabel {
+	display: block;
+	position: absolute;
+	left: 55px;
+	top: 152px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch29 {
+	top: 148px;
+	left: 210px;
+}
+
+.halfR3EnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 152px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch30 {
+	top: 188px;
+	left: 210px;
+}
+
+.halfR4EnabledLabel {
+	display: block;
+	position: absolute;
+	left: 63px;
+	top: 192px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfR4EnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 192px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+/*transient filter value */
+.halfHoleTransient {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	left: 340px;
+	top: 246px;
+}
+
+/*half hole transient filter slider */
+#halfHoleTransientContainer {
+	display: block;
+	position: absolute;
+	left: 210px;
+	top: 260px;
+	width: 110px;
+	z-index: 99;
+}
+
+/*half hole transient filter label */
+.halfHoleTransientLabel {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	font-size: 14px;
+	left: 10px;
+	top: 260px;
+	width: 170px;
+}
+
+.halfHoleOkay {
+	position: absolute;
+	height: 30px;
+	width: 60px;
+	top: 345px;
+	left: 200px;
 }

@@ -848,6 +848,7 @@ function WARBL_Receive(event) {
                         backPressure();
                         handleDefault();
                         customFingeringOkay();
+                        halfHoleOkay();
                     }
                     if (data2 == MIDI_CURRENT_MODE_START +1) {
                         document.getElementById("fingering1").checked = true;
@@ -870,6 +871,7 @@ function WARBL_Receive(event) {
                         backPressure();
                         handleDefault();
                         customFingeringOkay();
+                        halfHoleOkay();
                     }
                     if (data2 == MIDI_CURRENT_MODE_START +2) {
                         document.getElementById("fingering2").checked = true;
@@ -892,6 +894,7 @@ function WARBL_Receive(event) {
                         backPressure();
                         handleDefault();
                         customFingeringOkay();
+                        halfHoleOkay();
                     }
 
                     // if (data2 == MIDI_DEFAULT_MODE_START) { //receive and handle default instrument settings
@@ -1177,7 +1180,21 @@ function WARBL_Receive(event) {
                         document.getElementById("cbDoubleClick").checked = data2;
 						updateDoubleClick();
                     } //BUTTON_DOUBLE_CLICK
-                    
+
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +14) {
+                        document.getElementById("checkbox28").checked = data2;
+						updateHalfHolePrefs();
+                    } //HALF_HOLE_THUMB_ENABLED
+
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +16) {
+                        document.getElementById("checkbox29").checked = data2;
+						updateHalfHolePrefs();
+                    } //HALF_HOLE_R3_ENABLED
+
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +17) {
+                        document.getElementById("checkbox30").checked = data2;
+						updateHalfHolePrefs();
+                    } //HALF_HOLE_R4_ENABLED
 
                     else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;
@@ -1256,6 +1273,11 @@ function WARBL_Receive(event) {
 						document.getElementById("slidelimit").value = data2 ;
 	                    var output = document.getElementById("demo18");
 	                    depth.dispatchEvent(new Event('input'));
+	                    output.innerHTML = data2;
+					}  else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
+						// Half holing transient
+						document.getElementById("halfHoleTransient").value = data2 ;
+	                    var output = document.getElementById("demo13");
 	                    output.innerHTML = data2;
 					}
 
@@ -1456,6 +1478,9 @@ function WARBL_Receive(event) {
 					
 						document.getElementById("switchDoubleClick").style.display = "none";
 						document.getElementById("doubleClickLabel").style.display = "none";
+
+                        document.getElementById("halfHolePrefsButton").style.display = "none";
+
 						
 					}
 					
@@ -1534,9 +1559,9 @@ function WARBL_Receive(event) {
                         document.getElementById("WARBL2Settings").style.display = "none"; //hide the WARBL2 settings			
                         document.getElementById("bellSensor").style.display = "block"; //show the bell sensor drawing
                         document.getElementById("dot0").style.left = "935px"; //move bell sensor stuff over
-                        document.getElementById("1").style.left = "900px";
-                        document.getElementById("2").style.left = "900px";
-                        document.getElementById("v1").style.left = "900px";
+                        document.getElementById("1").style.left = SMALLCONTROLBOX_2_TOP;
+                        document.getElementById("2").style.left = SMALLCONTROLBOX_2_TOP;
+                        document.getElementById("v1").style.left = SMALLCONTROLBOX_2_TOP;
 
 						
 
@@ -2171,6 +2196,8 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
     backPressure();
     handleDefault(); //display correct default instrument and "set default" buttons	
     customFingeringOkay();
+    halfHoleOkay();
+
     if (tab == 0) {
         document.getElementById("instrument0").style.display = "block";
         document.getElementById("instrument1").style.display = "none";
@@ -2938,19 +2965,19 @@ function customFingeringOkay() {
     document.getElementById("customControls").style.display = "none";
     document.getElementById("WARBL2customControls").style.display = "none";
     document.getElementById("topControls").style.display = "block";
-    document.getElementById("box1").style.top = "440px";
-    document.getElementById("box2").style.top = "440px";
-    document.getElementById("box4").style.top = "440px";
-    document.getElementById("box5").style.top = "440px";
-    document.getElementById("pressuregraph").style.top = "440px";
-    document.getElementById("box3").style.top = "900px";
-    document.getElementById("box6").style.top = "900px";
-    document.getElementById("box9").style.top = "900px";
-    document.getElementById("box10").style.top = "900px";
-    document.getElementById("box7").style.top = "900px";
-    document.getElementById("box8").style.top = "900px";
-    document.getElementById("buttonBox").style.top = "1390px";
-    document.getElementById("topcontrolbox").style.height = "1855px";
+    document.getElementById("box1").style.top = SMALLCONTROLBOX_1_TOP;
+    document.getElementById("box2").style.top = SMALLCONTROLBOX_1_TOP;
+    document.getElementById("box4").style.top = SMALLCONTROLBOX_1_TOP;
+    document.getElementById("box5").style.top = SMALLCONTROLBOX_1_TOP;
+    document.getElementById("pressuregraph").style.top = SMALLCONTROLBOX_1_TOP;
+    document.getElementById("box3").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("box6").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("box9").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("box10").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("box7").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("box8").style.top = SMALLCONTROLBOX_2_TOP;
+    document.getElementById("buttonBox").style.top =BUTTONBOX_TOP;
+    document.getElementById("topcontrolbox").style.height = TOPCONTROLBOX_TOP;
     document.getElementById("customFingeringFill").value = "12";
 }
 
@@ -3161,6 +3188,21 @@ function pressureOkay() {
     document.getElementById("box1").style.display = "block";
 }
 
+function halfHole() {
+
+
+    // Show Half hole prefs box
+    document.getElementById("halfholebox").style.display = "block";
+    document.getElementById("box1").style.display = "none";
+
+}
+
+function halfHoleOkay() {
+
+    // Hide Half hole prefs box
+    document.getElementById("halfholebox").style.display = "none";
+    document.getElementById("box1").style.display = "block";
+}
 function advancedDefaults() {
     if (version > 2.0 || version == "Unknown") {
         document.getElementById("jumpFactor7").value = "3";
@@ -3462,6 +3504,45 @@ function sendDoubleClick(selection) {
 	blink(1);
 	sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 13);
 	sendToWARBL(MIDI_CC_105, selection);
+}
+
+function updateHalfHolePrefs() {
+    var halfThumbHoleEna = document.getElementById("checkbox28").checked;
+    document.getElementById("halfThumbEnabledExplainLabel").style.display = halfThumbHoleEna ? "block" : "none";
+    document.getElementById("halfR3EnabledExplainLabel").style.display = document.getElementById("checkbox29").checked ? "block" : "none";
+    document.getElementById("halfR4EnabledExplainLabel").style.display = document.getElementById("checkbox30").checked ? "block" : "none";
+}
+
+function sendHalfThumbHoleEnabled(selection) {
+    selection = +selection;
+    blink(1);
+    updateHalfHolePrefs();
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 14);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfR3HoleEnabled(selection) {
+    selection = +selection;
+    blink(1);
+    updateHalfHolePrefs();
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 15);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfR4HoleEnabled(selection) {
+    selection = +selection;
+    blink(1);
+    updateHalfHolePrefs();
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 16);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfHoleTransient(selection) {
+    // console.log("sendHalfHoleTransient", selection)
+    selection = parseFloat(selection);
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 18);
+    sendToWARBL(MIDI_CC_105, selection);
 }
 
 //end switches
@@ -3794,6 +3875,13 @@ var jumpSlider12 = document.getElementById('jumpFactor12');
 jumpSlider12.addEventListener('input', slider12Change);
 function slider12Change() {
     output12.innerHTML = jumpSlider12.value;
+}
+
+var output13 = document.getElementById("demo13");
+var jumpSlider13 = document.getElementById('halfHoleTransient');
+jumpSlider13.addEventListener('input', jumpSlider13Change);
+function jumpSlider13Change() {
+    output13.innerHTML = jumpSlider13.value;
 }
 
 var outputPoweroff = document.getElementById("poweroffValue");

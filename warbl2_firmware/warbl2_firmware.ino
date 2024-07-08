@@ -187,9 +187,9 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                           // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -272,13 +272,14 @@ unsigned int holeCovered = 0;                                                   
 bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
 //20240623
-unsigned int currentNoteHoleCovered = 1;                                           //Keeps track of holes for current "valid" note
+unsigned int newNoteHoleCovered = 1;                                           //Keeps track of holes for current "valid" note
 
 byte tempNewNote = 127;
 byte prevNote = 127;
 byte newNote = 127;             // The next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
+byte transientHalfThumbHoleDelay = 0;  // Small delay for filtering out transient movements of thumb
 unsigned long transitionFilter = 0;
 
 
@@ -458,10 +459,6 @@ void setup() {
     if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
-
-    //Half Hole Detection
-    hh_init(); //Initializes runtime parameters
-
 
     loadFingering();
     loadSettingsForAllModes();

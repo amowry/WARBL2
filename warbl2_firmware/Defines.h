@@ -108,7 +108,10 @@
 #define THUMB_AND_OVERBLOW 11
 #define R4_FLATTEN 12
 #define BUTTON_DOUBLE_CLICK 13
-#define kSWITCHESnVariables 14
+#define HALF_HOLE_THUMB_ENABLED 14
+#define HALF_HOLE_R3_ENABLED 15
+#define HALF_HOLE_R4_ENABLED 16
+#define kSWITCHESnVariables 17
 
 // Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
@@ -150,8 +153,8 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-#define CUSTOM_FINGERING_2 39  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_3 40
+#define HALF_HOLE_TRANSIENT 39
+#define CUSTOM_FINGERING_3 40 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_4 41
 #define CUSTOM_FINGERING_5 42
 #define CUSTOM_FINGERING_6 43
