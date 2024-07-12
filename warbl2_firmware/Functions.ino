@@ -1804,7 +1804,7 @@ void sendNote() {
       && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&           // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
       !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
-      !(breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
+      !(breathMode != kPressureBell && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
     {
 
         int notewason = noteon;
@@ -1877,7 +1877,7 @@ void sendNote() {
         if (
           ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && bellSensor && holeCovered == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
+          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
                                                                                                                   // Keep track.
 
@@ -2984,9 +2984,6 @@ void sendSettings() {
     sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);   // Send current pitchBend mode.
     sendMIDI(MIDI_CC_102_MSG, MIDI_BREATH_MODE_START + breathMode);  // Send current breathMode.
 
-    //MrMep: is this obsolete?
-    sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_120 + bellSensor);  // Send bell sensor state.
-
     sendMIDI(MIDI_CC_106_MSG, MIDI_STARTUP_CALIB + useLearnedPressure);  // Send calibration option.
 
     sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressure & 0x7F);  // Send LSB of learned pressure.
@@ -3173,11 +3170,6 @@ void loadSettingsForAllModes() {
             switches[i][n] = readEEPROM(EEPROM_SWITCHES_START + i + (n * 3));
         }
 
-        for (byte j = BUTTON_DOUBLE_CLICK; j < kSWITCHESnVariables; j++) { //New switches variables in 4.2/3
-            if (switches[mode][j] > 1) {  // Sanity check in case uninitialized (default to having everything here turned off).
-                switches[mode][j] = 0;
-            }
-        }
 
         vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
         vibratoDepthSelector[i] = word(readEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2)));
@@ -3198,16 +3190,10 @@ void loadSettingsForAllModes() {
         }
 
         learnedPressureSelector[i] = word(readEEPROM(EEPROM_LEARNED_PRESSURE_START + 1 + (i * 2)), readEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2)));
-
-
         pitchBendModeSelector[i] = readEEPROM(EEPROM_PB_MODE_START + i);
         breathModeSelector[i] = readEEPROM(EEPROM_BREATH_MODE_START + i);
-
         midiBendRangeSelector[i] = readEEPROM(EEPROM_MIDI_BEND_RANGE_START + i);
-        midiBendRangeSelector[i] = midiBendRangeSelector[i] > 96 ? 2 : midiBendRangeSelector[i];  // Sanity check in case uninitialized
-
         midiChannelSelector[i] = readEEPROM(EEPROM_MIDI_CHANNEL_START + i);
-        midiChannelSelector[i] = midiChannelSelector[i] > 16 ? 1 : midiChannelSelector[i];  // Sanity check in case uninitialized
 
 
         for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
@@ -3217,8 +3203,6 @@ void loadSettingsForAllModes() {
         for (byte p = 0; p < kIMUnVariables; p++) {
             IMUsettings[i][p] = readEEPROM(EEPROM_IMU_SETTINGS_START + i + (p * 3));
         }
-
-        IMUsettings[i][32] = IMUsettings[i][32] > 1 ? 0 : IMUsettings[i][32];  // Sanity check for sticks mode in case uninitialized
     }
 }
 
@@ -3367,10 +3351,10 @@ void calibrate() {
                     toneholeBaseline[i] = 255;  // And set baseline high so it can only be reduced.
                 }
             }
-            if (bellSensor) {
-                toneholeCovered[0] = 0;  // Also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
-                toneholeBaseline[0] = 255;
-            }
+
+            toneholeCovered[0] = 0;  // Also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
+            toneholeBaseline[0] = 255;
+
             return;  // We return once to make sure we've gotten some new sensor readings.
         }
 
@@ -3387,10 +3371,10 @@ void calibrate() {
                 }
             }
 
-            if (bellSensor && toneholeCovered[0] < toneholeRead[0]) {
+            if (toneholeCovered[0] < toneholeRead[0]) {
                 toneholeCovered[0] = toneholeRead[0];  // Calibrate the bell sensor too if it's plugged in.
             }
-            if (bellSensor && toneholeBaseline[0] > toneholeRead[0]) {
+            if (toneholeBaseline[0] > toneholeRead[0]) {
                 toneholeBaseline[0] = toneholeRead[0];  // Calibrate the bell sensor too if it's plugged in.
             }
         }
@@ -3638,7 +3622,7 @@ void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8
 
     sendMIDI(MIDI_SEND_CC, indexCC, indexValue);
     sendMIDI(MIDI_SEND_CC, valueCC, value);
-    
+
     xSemaphoreGive(midiSendCoupletMutex);
 }
 
@@ -3868,6 +3852,39 @@ void watchdog_enable(int maxPeriodMS) {
 // Watchdog reset
 void watchdogReset() {
     nrf_wdt_reload_request_set(NRF_WDT, NRF_WDT_RR0);
+}
+
+
+
+
+
+
+
+
+// Make any necessary changes to EEPROM when new firmware is installed.
+void checkFirmwareVersion() {
+    byte currentVersion = readEEPROM(EEPROM_FIRMWARE_VERSION);  // Previous firmware version.
+
+    if (VERSION != currentVersion) {
+
+        if (currentVersion < 42) {  // Manage all changes made in version 42.
+
+            for (byte i = 0; i < 3; i++) {
+                writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                for (byte n = CUSTOM_FINGERING_2; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                    writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
+                    writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
+                }
+
+                writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3), 0);  // Sticks mode
+                writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+            }
+        }
+
+        writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
+    }
 }
 
 

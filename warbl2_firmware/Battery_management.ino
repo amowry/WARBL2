@@ -95,7 +95,7 @@ void manageBattery(bool send) {
 
             prevChargingStatus = chargingStatus;
 
-            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_STATUS, chargingStatus); // Send charging status again in case a fault was detected.
+            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_STATUS, chargingStatus);  // Send charging status again in case a fault was detected.
         }
     }
 
@@ -116,7 +116,7 @@ void manageBattery(bool send) {
         computeCycles++;
         if (computeCycles == 5) {  // Every 5 minutes, update the recorded run time in EEPROM in case the power is cut. The EEPROM can handle more than 4 million write cycles, but don't do this too often. An EEPROM write also takes up to 5 ms.
             writeEEPROM(EEPROM_RUNTIME_START, highByte(prevRunTime));
-            writeEEPROM(EEPROM_RUNTIME_START+1, lowByte(prevRunTime));
+            writeEEPROM(EEPROM_RUNTIME_START + 1, lowByte(prevRunTime));
             computeCycles = 0;
         }
     }
@@ -145,9 +145,9 @@ void manageBattery(bool send) {
     static byte cycles = 40;  // 40 cycles is 30 seconds.
     if (cycles == 40 || send) {
         if (communicationMode) {
-            sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((smoothed_voltage + 0.005) * 100) - 50)); // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
-            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_STATUS, chargingStatus); // Send charging status.
-            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_PERC, battLevel); // Send battery level.
+            sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
+            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_STATUS, chargingStatus);                       // Send charging status.
+            sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_PERC, battLevel);                              // Send battery level.
         }
     }
 
@@ -182,10 +182,10 @@ void manageBattery(bool send) {
                 chargeEnabled = 0;
                 chargeTerminated = 1;  // This tells us not to enable charging again until the power is cycled.
                 //Serial.println("charge terminated by 0 dV");
-                analogWrite(LEDpins[GREEN_LED], 1023);   // Indicate end of charge.
-                writeEEPROM(EEPROM_RUNTIME_START, 0);    // Reset the total run time because we are now fully charged (high byte).
-                writeEEPROM(EEPROM_RUNTIME_START+1, 0);  // Low byte
-                writeEEPROM(EEPROM_LOW_CHARGE, 3);       // Remember that there has been a termination.
+                analogWrite(LEDpins[GREEN_LED], 1023);     // Indicate end of charge.
+                writeEEPROM(EEPROM_RUNTIME_START, 0);      // Reset the total run time because we are now fully charged (high byte).
+                writeEEPROM(EEPROM_RUNTIME_START + 1, 0);  // Low byte
+                writeEEPROM(EEPROM_LOW_CHARGE, 3);         // Remember that there has been a termination.
                 prevRunTime = 0;
                 flatSlopeCounts = 0;
             }
@@ -200,7 +200,10 @@ void manageBattery(bool send) {
 #endif
         }
     }
-    cycles++;
+
+    if (!send) {  // Increment the counter if we haven't only come here to send data to the Config Tool.
+        cycles++;
+    }
 
 
 
@@ -228,7 +231,7 @@ void manageBattery(bool send) {
 
     // Shut down when the battery is low.
     if (nowtime > 2000 && battPower && smoothed_voltage <= 1.0) {  // Give some time to make sure we detect USB power if it's present.
-        analogWrite(LEDpins[RED_LED], 1023);                      // Long red LED to indicate shutdown because of low battery
+        analogWrite(LEDpins[RED_LED], 1023);                       // Long red LED to indicate shutdown because of low battery
         delay(5000);
         powerDown(true);  // Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
     }
@@ -301,16 +304,16 @@ void recordRuntime(bool resetTotalRuntime) {
 
     runTimer = runTimer + prevRunTime;  // Rebuild stored run time.
 
-    if (resetTotalRuntime) {          // Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
+    if (resetTotalRuntime) {                       // Use the elapsed run time to update the total run time available on a full charge, because we have terminated because of a low battery.
         if (readEEPROM(EEPROM_LOW_CHARGE) == 3) {  // If we haven't already recorded the total run time
             writeEEPROM(EEPROM_EST_RUNTIME_START, highByte(runTimer));
-            writeEEPROM(EEPROM_EST_RUNTIME_START+1, lowByte(runTimer));
+            writeEEPROM(EEPROM_EST_RUNTIME_START + 1, lowByte(runTimer));
             writeEEPROM(EEPROM_LOW_CHARGE, 1);  // Record that we've done this so we won't do it again until there has been another full charge.
         }
     }
 
     writeEEPROM(EEPROM_RUNTIME_START, highByte(runTimer));  // Update the recorded run time in EEPROM.
-    writeEEPROM(EEPROM_RUNTIME_START+1, lowByte(runTimer));
+    writeEEPROM(EEPROM_RUNTIME_START + 1, lowByte(runTimer));
 }
 
 
