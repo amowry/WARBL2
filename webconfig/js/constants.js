@@ -1,10 +1,23 @@
 const MIDI_DEBUG = false;
 
+/*
+* CSS constants
+*/
+const SMALLCONTROLBOX_1_TOP = "440px";
+const SMALLCONTROLBOX_2_TOP = "930px"; //"900px";
+const BUTTONBOX_TOP =  "1420px"; // "1390px";
+const TOPCONTROLBOX_TOP = "1890px"; //"1855px";
 /* MIDI Config Tool Constants */
 //General constants
 const MIDI_CONFIG_TOOL_CHANNEL = 7; // Config Tool MIDI channel
 
 // To Be Sync'd with Defines.h in firmware
+
+//Various constants
+var HALF_HOLE_LOW_MIN_PERC = 40; //Min percentage of toneHolecCovered dedicated to lower window (hole open)
+var HALF_HOLE_LOW_MAX_PERC = 60; //Max percentage of toneHolecCovered dedicated to lower window (hole open)
+var HALF_HOLE_HIGH_MIN_PERC = 10; //Min percentage of toneHolecCovered dedicated to upper window (hole closed)
+var HALF_HOLE_HIGH_MAX_PERC = 35; //Max percentage of toneHolecCovered dedicated to upper window (hole closed)
 
 //MIDI Human readable constants: see below
 
@@ -73,6 +86,8 @@ const MIDI_CC_102_VALUE_0 = 0; // unused
 	const MIDI_CC_102_VALUE_53 = 53;  // Bidirectional. Bombarde
 	const MIDI_CC_102_VALUE_54 = 54;  // Bidirectional. Baroque flute
 	const MIDI_CC_102_VALUE_55 = 55;  // Bidirectional. Medieval bagpipes
+	const MIDI_CC_102_VALUE_56 = 56;  // Bidirectional. Mep's EWI
+	const MIDI_CC_102_VALUE_57 = 57;  // Bidirectional. Mep's Recorder
 ; //
 	/* 56-59 unused */
     const MIDI_CC_102_VALUE_60 = 60; // Bidirectional. current instrument (mode variable) is 0
@@ -196,7 +211,13 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_50 = 50; // Bidirectional. Settings for current instrument: indicates that switches[10] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_51 = 51; // Bidirectional. Settings for current instrument: indicates that switches[11] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_52 = 52; // Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105. 
-    const MIDI_CC_104_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+    const MIDI_CC_104_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_54 = 54 //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_55 = 55 //  Bidirectional. Settings for current instrument: indicates that switches[15] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_56 = 56 //  Bidirectional. Settings for current instrument: indicates that switches[16] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_57 = 57 //  Bidirectional. Settings for current instrument: indicates that switches[17] is about to be sent with CC 105.
+    //
+    /* 58-60 unused */
 ; //
     /* 54-60 unused */
     const MIDI_CC_104_VALUE_61 = 61; // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
@@ -310,6 +331,7 @@ const MIDI_CC_106 = 106; // from WARBL & from Config Tool. Various values as fol
 	const MIDI_CC_106_VALUE_72 = 72; //from WARBL. WARBL2 BLE connection interval low byte
 	const MIDI_CC_106_VALUE_73 = 73; //from WARBL. WARBL2 BLE connection interval high byte
 	const MIDI_CC_106_VALUE_74 = 74; //from WARBL. WARBL2 battery percentage
+
     /* 75-99	unused -- can be used for WARBL2 */
 
 ; //Button Actions, see above 102 90/00
@@ -434,7 +456,7 @@ const MIDI_MAX_CALIB_MSGS_START = MIDI_CC_102_VALUE_20; // Start of Calibration 
 const MIDI_MAX_CALIB_MSGS_END = MIDI_CC_102_VALUE_28; // End of Calibration max values reached messages
 const MIDI_FINGERING_PATTERN_MODE_START = MIDI_CC_102_VALUE_30; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 const MIDI_FINGERING_PATTERN_START = MIDI_CC_102_VALUE_33; // Bidirectional. first fingering pattern is tin whistle
-const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_55; // Bidirectional. Medieval bagpipes
+const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_57; // Bidirectional. Mep's Recorder
 const MIDI_CURRENT_MODE_START = MIDI_CC_102_VALUE_60; // Bidirectional. current instrument (mode variable) is 0
 const MIDI_PB_MODE_START = MIDI_CC_102_VALUE_70; // Bidirectional. Settings for current instrument: Pitchbend mode 0
 const MIDI_BREATH_MODE_START = MIDI_CC_102_VALUE_80; // Bidirectional. Settings for current instrument: Breath mode 0
@@ -449,7 +471,7 @@ const MIDI_PRESS_SELECT_VARS_END = MIDI_CC_104_VALUE_12; // Bidirectional. Setti
 const MIDI_ED_VARS_START = MIDI_CC_104_VALUE_13; // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105. 
 const MIDI_ED_VARS_END = MIDI_CC_104_VALUE_33; // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
 const MIDI_SWITCHES_VARS_START = MIDI_CC_104_VALUE_40; // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105. 
-const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_57; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 const MIDI_ED_VARS2_START = MIDI_CC_104_VALUE_70; // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105. 
 const MIDI_ED_VARS2_END = MIDI_CC_104_VALUE_97; // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
 const MIDI_ED_VARS_NUMBER = MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1; //ED array number of vars for the first slot

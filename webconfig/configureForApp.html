@@ -3,7 +3,7 @@
    <script>
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
       var platform = "app";
-     //var platform = "web";
+      //var platform = "web";
    </script>
    <head>
       <meta charset="utf-8" />
@@ -373,6 +373,8 @@
                            <option value="20">Bombarde</option>
                            <option value="21">Baroque flute</option>
                            <option value="22">Medieval bagpipes</option>
+                           <option value="23">Mep's EWI</option>
+                           <option value="24">Mep's Recorder</option>
                            <option value="9">Bansuri</option>
                            <option value="67">Custom 1</option>
                            <option value="68">Custom 2</option>
@@ -403,6 +405,8 @@
                            <option value="20">Bombarde</option>
                            <option value="21">Baroque flute</option>
                            <option value="22">Medieval bagpipes</option>
+                           <option value="23">Mep's EWI</option>
+                           <option value="24">Mep's Recorder</option>
                            <option value="9">Bansuri</option>
                            <option value="67">Custom 1</option>
                            <option value="68">Custom 2</option>
@@ -434,6 +438,8 @@
                            <option value="21">Baroque flute</option>
                            <option value="22">Medieval bagpipes</option>
                            <option value="9">Bansuri</option>
+                           <option value="23">Mep's EWI</option>
+                           <option value="24">Mep's Recorder</option>
                            <option value="67">Custom 1</option>
                            <option value="68">Custom 2</option>
                            <option value="69">Custom 3</option>
@@ -666,6 +672,7 @@
                   <input type="checkbox" class="checkboxes" id="checkbox8" onChange="sendBagless(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+                  <button type="button" class="smallbutton noTouch halfhole" id="halfHolePrefsButton" onClick="halfHole()">Half holes...</button>
                   <button type="button" class="smallbutton noTouch advanced" onClick="advanced()">Advanced...</button>
                   <button type="button" class="smallbutton noTouch graph" onClick="pressureGraph()">Graph...</button>
                </div>
@@ -772,6 +779,68 @@
                      <div id="d3PressureGraph"></div>
                      <button type="button" class="smallbutton noTouch pressureOkay" onClick="pressureOkay()">OK</button>
                   </h2>
+               </div>
+               <div class="smallcontrolbox" id="halfholebox">
+                  <h2 class="controlboxtitle noTouch">
+                    Half hole Preferences
+                     <button type="button" class="infocircle" onClick="modal(31)">  <img  class = "info" src="img/info-circle.svg"></img></button>
+                  </h2>
+                     <div class="halfThumbEnabledLabel noTouch">Half Thumb hole Enabled</div>
+                     <label class="switch" id="switch28">
+                     <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendHalfThumbHoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfThumbEnabledExplainLabel noTouch" id="halfThumbEnabledExplainLabel">Raise 1 octave</div>
+                     
+                     <div class="halfR3EnabledLabel noTouch">Half R3 hole Enabled</div>
+                     <label class="switch" id="switch29">
+                     <input type="checkbox" class="checkboxes" id="checkbox29" onChange="sendHalfR3HoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfR3EnabledExplainLabel noTouch" id="halfR3EnabledExplainLabel">Raise base position by 1 st</div>
+
+
+                     <div class="halfR4EnabledLabel noTouch">Half R4 hole Enabled</div>
+                     <label class="switch" id="switch30">
+                     <input type="checkbox" class="checkboxes" id="checkbox30" onChange="sendHalfR4HoleEnabled(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfR4EnabledExplainLabel noTouch" id="halfR4EnabledExplainLabel">Raise base position by 1 st</div>
+
+                     <div class="halfAdvancedLabel noTouch">Advanced</div>
+                     <label class="switch" id="switch31">
+                     <input type="checkbox" class="checkboxes" id="checkbox31" onChange="halfHoleAdvanced(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+
+                     <div class="halfThumbInvertLabel noTouch" id="halfThumbInvertLabel">Invert Thumb Octave</div>
+                     <label class="switch" id="switch32">
+                     <input type="checkbox" class="checkboxes" id="checkbox32" onChange="sendHalfThumbInvert(this.checked)" />
+                     <span class="slider round"></span>
+                     </label>
+                     <div class="halfThumbInvertExplainLabel noTouch" id="halfThumbInvertExplainLabel">Raise closed hole</div>
+
+
+                     <div hidden=hidden class="slidecontainer" id="halfHoleLowWindowContainer">
+                        <input type="range" min="1" max="100" value="80" class="ranger" id="halfHoleLowWindow" onChange="sendHalfHoleLowWindow(value)" />
+                     </div>
+                     <div id="halfHoleLowWindowLabel" class="noTouch halfHoleLowWindowLabel">Half->Open Sensitivity</div>
+                     <div class="noTouch halfHoleLowWindow" id="halfHoleLowWindowValue">
+                        <p><span id="demo19">80</span>%</p>
+                     </div>
+
+
+                     <div hidden=hidden class="slidecontainer" id="halfHoleHighWindowContainer">
+                        <input type="range" min="1" max="100" value="20" class="ranger" id="halfHoleHighWindow" onChange="sendHalfHoleHighWindow(value)" />
+                     </div>
+                     <div id="halfHoleHighWindowLabel" class="noTouch halfHoleHighWindowLabel">Closed->Half Sensitivity</div>
+                     <div class="noTouch halfHoleHighWindow" id="halfHoleHighWindowValue">
+                        <p><span id="demo20">20</span>%</p>
+                     </div>
+
+                     <button type="button" class="smallbutton noTouch halfHoleReset" id="halfHoleReset" onClick="halfHoleReset()">Defaults</button>
+
+                     <button type="button" class="smallbutton noTouch halfHoleOkay" onClick="halfHoleOkay()">OK</button>
                </div>
                <div class="smallcontrolbox" id="box5">
                   <h2 class="controlboxtitle noTouch">
@@ -1264,6 +1333,11 @@
                   <label class="switch" id="switch3">
                   <input type="checkbox" class="checkboxes" id="checkbox3" onChange="sendSecret(this.checked)" />
                   <span class="slider round"></span>
+                  </label>
+                  <div class="doubleClickLabel noTouch">Use button double clicks</div>
+                  <label class="switch" id="switchDoubleClick">
+                    <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
+                    <span class="slider round"></span>
                   </label>
                   <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
                   <label class="switch" id="switchDoubleClick">
@@ -1832,6 +1906,9 @@
                   <div>
                   </div>
                </fieldset>
+            </div>
+            
+            <div class="poweroffGroup">
                <div class="slidecontainer" id="poweroffContainer">
                   <input type="range" min="1" max="20" value="5" class="ranger" id="poweroffSlider" onChange="sendPoweroff(value)" />
                </div>
@@ -2061,7 +2138,7 @@
                      The <b>Bend Range</b> setting is the number of semitones of pitch bend that the WARBL will allow. This should typically be set to the default value of 2.
                   </p>
                   <p>
-                     The <b>Transient note filter</b> filters out very brief unwanted notes by adding a small delay to the tonehole sensors. This can be particularly useful when using note annotation software to transcribe your playing. Without the filter, there can be very brief notes that you might not necessarily hear but that will be transcribed. The filter can also be used to "clean up" the sound of your playing by removing "crossing noises" that occur while changing from one fingering pattern to another. Be aware, however, that because the filter works by adding a delay, setting it too high will give a "sluggish" feel. Set it to "0" for the fastest possible tonehole response.
+                     The <b>Transient note filter</b> filters out very brief unwanted notes by adding a small dynamic delay to the tonehole sensors. This can be particularly useful when using note annotation software to transcribe your playing. Without the filter, there can be very brief notes that you might not necessarily hear but that will be transcribed. The filter can also be used to "clean up" the sound of your playing by removing "crossing noises" that occur while changing from one fingering pattern to another. Be aware, however, that because the filter works by adding a delay, setting it too high might give a "sluggish" feel. Set it to "0" to disable it and have the fastest possible tonehole response.
                   </p>
                   <p>
                      The Configuration Tool can produce basic sounds if you click the volume icon in the upper-left corner. This is meant for testing purposes only and the sound will not respond to pitch-bend commands or CC messages. On iOS devices it's also usually possible to have other MIDI apps running at the same time as the Configuration Tool, which is preferable and will give you higher-quality sound. 
@@ -2390,6 +2467,31 @@
             </div>
          </div>
       </div>
+      <div id="open-modal31" onClick="" class="modal-window">
+         <div id="modal-center31">
+           <h2 title="Close" onClick="modalclose(31)" class="modal-close">Close</h2>
+           <h1>Half Hole Detection</h1>
+           <div>
+            <p>
+               For each selected finger, you can switch on and off the half-hole detection.
+             </p>
+             <p>
+               By default, the half-thumb position raises by 1 octave the corresponding finger position with an open thumb hole. This behaviour can be modifified in the "Advanced" settings.
+             </p>
+             <p>
+                Half R3 or R4 holes raise by one semitone the "base" position only, the one with all higher holes closed, regardless of the thumb position. It is ignored (the hole is considered open or closed when normally is) in all other finger positions.
+             </p>
+             <p>In the <b>Advanced</b> settings, it is possibile to invert the half-thumb effect. When inverted, the half-thumb will raise by 1 octave the corresponding position with a closed thumb hole.
+             </p>
+             <p>
+               The two sliders in the Advanced settings modify the sensitivity of the half-hole detection, in the two cases when passing from half-hole to open, and from closed to half-hole. These values modify the two setpoints that determine the three different position (open-half-closed).<br />
+               The "Defaults" button resets all advanced settings to their default values.
+             </p>
+             <p>Please consider activating the Transient note filter for a better experience. The filter is dynamic and is capable of auto-sensing some of the player's gestures. In order to minimize the glitches while playing, the suggested transient note filter value is between 20 and 30.
+             </p>
+           </div>
+         </div>
+       </div>
       </div>
    </body>
    <script src="js/jquery-3.3.1.min.js"></script>

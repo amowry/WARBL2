@@ -822,12 +822,20 @@ input {
 }
 
 
+.lightLabel {
+	display: block;
+	position: absolute;
+	left: 0px;
+	top: 36px;
+	z-index: 99;
+	font-size: 14px;
+}
 
 .voltageLabel {
 	display: block;
 	position: absolute;
-	left: 110px;
-	top: 90px;
+	left: 500px;
+	top: 220px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -841,8 +849,8 @@ input {
 	text-align: center;
 	width: 60px;
 	height: 21px;
-	left: 120px;
-	top: 125px;
+	left: 620px;
+	top: 216px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -882,15 +890,15 @@ input {
 .hostLabel {
 	display: block;
 	position: absolute;
-	left: 510px;
-	top: 110px;
+	left: 450px;
+	top: 97px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 #switch19 {
-	top: 107px;
-	left:  670px;
+	top: 92px;
+	left:  615px;
 	z-index:100;
 }
 
@@ -900,9 +908,19 @@ input {
 	position: absolute;
 	width: 300px;
 	top: 85px;
+	left: 80px;
+	padding: 0px;
+}
+
+.poweroffGroup {
+	display: block;
+	position: absolute;
+	width: 300px;
+	top: 60px;
 	left: 280px;
 	padding: 0px;
 }
+
 
 
 /*poweroff slider */
@@ -1266,7 +1284,7 @@ fieldset {
 	padding-top: 0px;
 	padding-bottom: 50px;
 	width: 463px;
-	height: 375px;
+	height: 420px;
 	float: right;
 	position: absolute;
 	top: 440px;
@@ -1976,7 +1994,6 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
-
 .advancedOkay {
 	position: absolute;
 	height: 30px;
@@ -1993,6 +2010,7 @@ input:disabled + .vibratoSlider:before {
 	top: 325px;
 	left: 200px;
 }
+
 
 .advancedDefaults {
 	position: absolute;
@@ -3055,6 +3073,7 @@ h3 {
 	top: 385px;
 	width: 170px;
 }
+
 
 #advancedPBsliders {
 	display: block;
@@ -4531,4 +4550,204 @@ ath {
 	fill: none;
 	stroke:white;
     stroke-width: 1;
+}
+
+
+/* Half Holing */
+#halfholebox {
+	display: none;
+	left: 527px;
+}
+
+.halfhole {
+	position: absolute;
+	height: 40px;
+	width: 110px;
+	top: 400px;
+	left: 200px;
+}
+
+.halfThumbEnabledLabel {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 102px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch28 {
+	top: 98px;
+	left: 210px;
+}
+
+.halfThumbEnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 102px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfR3EnabledLabel {
+	display: block;
+	position: absolute;
+	left: 55px;
+	top: 142px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch29 {
+	top: 138px;
+	left: 210px;
+}
+
+.halfR3EnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 142px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch30 {
+	top: 178px;
+	left: 210px;
+}
+
+.halfR4EnabledLabel {
+	display: block;
+	position: absolute;
+	left: 63px;
+	top: 182px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfR4EnabledExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 182px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+/* Advanced switch */
+#switch31 {
+	top: 400px;
+	left: 150px;
+}
+
+.halfAdvancedLabel {
+	display: block;
+	position: absolute;
+	left: 63px;
+	top: 404px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+/* ThumbInvert switch */
+#switch32 {
+	top: 235px;
+	left: 210px;
+}
+
+.halfThumbInvertLabel {
+	display: block;
+	position: absolute;
+	left: 63px;
+	top: 239px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfThumbInvertExplainLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 239px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+/*Low window percentage value */
+.halfHoleLowWindow {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	left: 340px;
+	top: 270px;
+}
+
+/*Low window slider */
+#halfHoleLowWindowContainer {
+	display: block;
+	position: absolute;
+	left: 210px;
+	top: 290px;
+	width: 110px;
+	z-index: 99;
+}
+
+/*Low window label */
+.halfHoleLowWindowLabel {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	font-size: 14px;
+	left: 10px;
+	top: 290px;
+	width: 170px;
+}
+
+
+/*High window percentage value */
+.halfHoleHighWindow {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	left: 340px;
+	top: 310px;
+}
+
+/*High window slider */
+#halfHoleHighWindowContainer {
+	display: block;
+	position: absolute;
+	left: 210px;
+	top: 330px;
+	width: 110px;
+	z-index: 99;
+}
+
+/*High window label */
+.halfHoleHighWindowLabel {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	font-size: 14px;
+	left: 10px;
+	top: 330px;
+	width: 170px;
+}
+
+.halfHoleReset {
+	position: absolute;
+	height: 30px;
+	width: 80px;
+	top: 400px;
+	left: 240px;
+}
+
+.halfHoleOkay {
+	position: absolute;
+	height: 30px;
+	width: 60px;
+	top: 400px;
+	left: 350px;
 }
