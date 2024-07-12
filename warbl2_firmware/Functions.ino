@@ -3873,13 +3873,38 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_2; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = CUSTOM_FINGERING_4; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }
 
                 writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3), 0);  // Sticks mode
                 writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+            }
+        }
+
+        if (currentVersion < 99) {  // Manage all changes made in version 99. Develop
+
+            for (byte i = 0; i < 3; i++) {
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_ENABLED * 3)), 0);                                  // Initialize half thumb hole preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R3_ENABLED * 3)), 0);                                  // Initialize half r3 hole preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R3_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R4_ENABLED * 3)), 0);                                  // Initialize half r4 hole preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R4_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)), 0);                                  // Initialize half thumb hole invert preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)), HALF_HOLE_LOW_WINDOW_PERC); // Initialize half hole low window preferences at default value for all three modes.
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)) + EEPROM_FACTORY_SETTINGS_START), HALF_HOLE_LOW_WINDOW_PERC);  // Same for factory settings.
+
+                writeEEPROM((EEPROM_ED_VARS_START + i + (HALF_HOLE_HIGH_PERC * 3)), HALF_HOLE_HIGH_WINDOW_PERC); // Initialize half hole high window preferences at default value for all three modes.
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (HALF_HOLE_HIGH_PERC * 3)) + EEPROM_FACTORY_SETTINGS_START), HALF_HOLE_HIGH_WINDOW_PERC);  // Same for factory settings.
+
             }
         }
 

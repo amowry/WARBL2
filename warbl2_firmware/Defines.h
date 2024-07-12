@@ -2,7 +2,7 @@
 
 //#define RELEASE // Uncomment for release version (turns off CDC to make the device USB class compliant).
 
-#define VERSION 42  // Firmware version (without decimal point)
+#define VERSION 99  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 48        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
