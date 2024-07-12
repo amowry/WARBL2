@@ -1,6 +1,18 @@
+/*
+* Debugging Helpers & defines
+*
+*/
+
+#define DEBUG_TRANSITION_FILTER false
+#define DEBUG_CONFIG_TOOL false
+#define DEBUG_HH false
+#define DEBUG_HH_VERBOSE false
+#define DEBUG_VERBOSE false
+#define DEBUG_AUTO_CALIB false
+#define DEBUG_PRESSURE false
+#define DEBUG_FINGERING false
 
 
-// Debug
 void printStuff(void) {
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
@@ -17,23 +29,53 @@ void printStuff(void) {
     } 
 */
 
-
-    for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeRead[i]);
-    }
-    //Serial.println(" ");
 }
 
 void printFingering(unsigned int fingering) {
     for (int i = 15; i >= 0; i--) {
-        if (i==8) Serial.print(" ");
+        if (i==8 || i==7 || i==0) Serial.print(" ");
         Serial.print(bitRead(fingering, i));
     }
-    Serial.println(" "); 
 }
 
+void printHalfHoleSettings() {
+    Serial.println("Half Hole Settings: ");
 
+#if BASELINE_AUTO_CALIBRATION
+    Serial.print("\tCorrection: ");
+    Serial.println(hh.correction);
+#endif
 
+    Serial.print("\tLow Window: ");
+    Serial.println(hh.lowWindowPerc);
+    Serial.print("\tHigh Window: ");
+    Serial.println(hh.highWindowPerc);
+    Serial.print("\tHalf hole enabled on: ");
+    for (byte i = 0; i< TONEHOLE_SENSOR_NUMBER; i++) {
+        if (isHalfHoleEnabled(i)){
+             Serial.print(" ");
+             Serial.print(i);
+        }
+    }
+    Serial.println("");
+    Serial.print("\tThumb hole inverted: ");
+    Serial.println(switches[mode][HALF_HOLE_THUMB_INVERT] ? "true" : "false");
+}
+
+String noteNames[] = { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" };
+
+//Returns the note name (and octave) for the passed MIDI note
+String getNoteName(byte note, bool octave) {
+	
+    note = constrain(note, 0, 127);
+
+	String name = noteNames[note % 12];
+	if (octave) {
+		byte oct = (note / 12) - 1;
+		return name + oct;
+	}
+	return name;
+}
 
 
 
@@ -111,6 +153,14 @@ void getSensors(void) {
 
 
     for (byte i = 0; i < 9; i++) {
+
+#if BASELINE_AUTO_CALIBRATION
+        //For baseline auto-calibration
+        if (!noteon && ac.toneholeBaselineCurrent[i] > toneholeRead[i]) {  //baseline calibration
+            ac.toneholeBaselineCurrent[i] = toneholeRead[i];
+        } 
+#endif
+
         if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
             toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
         }
@@ -118,16 +168,15 @@ void getSensors(void) {
             toneholeRead[i] = 0;
         }
 
-        if (!noteon && toneholeBaselineCurrent[i] > toneholeRead[i]) {  //baseline calibration
-            toneholeBaselineCurrent[i] = toneholeRead[i];
-        } 
     }
 
+#if BASELINE_AUTO_CALIBRATION
     //Autocalibration for half hole detection
-    if (autoCalibrationTimer++ >= BASELINE_AVRG_INTERVAL) {  //check baseline every so often,
-        autoCalibrationTimer = 0;
+    if (ac.timer ++ >= BASELINE_AVRG_INTERVAL) {  //check baseline every so often,
+        ac.timer = 0;
         baselineUpdate();
     }
+#endif
 }
 
 
@@ -678,54 +727,16 @@ void checkButtons() {
 
 // Determine which holes are covered.
 void getFingers() {
-
-
-    byte bitSet = 0;
-
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
-
-        if (isHalfHoleEnabled(i)) {
-            bool halfHoleNow = isHalfHole(i);
-            int thRead = toneholeRead[i];
-
-            byte bitOffset = HALF_HOLE_BIT_OFFSET;    //For forcing a change in holeCovered
-            if ((i == R4_HOLE || i == R3_HOLE)) {
-                bitOffset += i;
-            }
-
-            if (halfHoleNow) {
-                bitWrite(holeCovered, bitOffset, 1);     //To trigger fingering change
-                toneholeHalfCovered[i] = true;                 //for get_note
-                thRead = toneholeCovered[i];    //Force read as covered
-            } else {
-                bitWrite(holeCovered, bitOffset, 0);    //To trigger fingering change
-                toneholeHalfCovered[i] = false;             //for get_note
-            } 
-
-            if (thRead > getHalfHoleUpperBound(i)) {
-                bitSet = 1;
-            } else if (thRead < getHalfHoleLowerBound(i)) {
-                bitSet = 0;
-            }
-
-        } else {
-            if ((toneholeRead[i]) > (toneholeCovered[i] - HOLE_COVERED_OFFSET)) {
-                bitSet = 1;
-            } else if ((toneholeRead[i]) <= (toneholeCovered[i] - HOLE_OPEN_OFFSET)) {
-                bitSet = 0;
-            }
-        }
-
-        bitWrite(holeCovered, i, bitSet);    //use the tonehole readings to decide which holes are covered
-    }
     
-    // for (byte i = 0; i < 9; i++) {
-    //     if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
-    //         bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
-    //     } else if ((toneholeRead[i]) <= (toneholeCovered[i] - 54)) {
-    //         bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
-    //     }
-    // }
+    hh.prevHoleCovered = holeCovered; //For debouncing Half-holing
+
+    for (byte i = 0; i < 9; i++) {
+        if ((toneholeRead[i]) > (toneholeCovered[i] - HOLE_COVERED_OFFSET)) {
+            bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
+        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - HOLE_OPEN_OFFSET)) {
+            bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
+        }
+    }
 }
 
 
@@ -733,102 +744,117 @@ void getFingers() {
 
 
 
+//Resets all variables after a transition debounce
+void resetTransitionFilter() {
+
+    tf.tempNewNote = 127;
+    tf.prevPendingNote = 127;
+    tf.newNoteHoleCovered = holeCovered; //We keep it to detect transitions
+    tf.prevHoleCovered = holeCovered; //We "reset" this trigger
+
+    tf.timer = 0;
+    tf.delta = 0;
+    tf.iterations = 0;
+    tf.timing = false;
+
+    tf.currentDelay = 0;
+    tf.additionalDelay = 0;
+
+    tf.prevPopcount = 0;
+    tf.prevInterval = 0;
+}
+
 
 
 
 
 // This should be called right after a new hole state change, before sending out any new note.
-/* MrMep: I renamed isMaybeInTransition to this, and changed it so it returns a transitionFilter directly.
+/* MrMep: I renamed isMaybeInTransition to this, and changed it so it returns a current delay instead.
  * This way we can have "dynamic" values based on different conditions
+ * NO CHECK on existing values IS performed here: they are already performed in debounceFingers
+ * So, don't call this function outside debounceFingers, or perform checks before.
  */
 unsigned long getTransitionDelay() {
-    // Look at all finger hole states to see if there might be other
-    // fingers in motion (partial hole covered) which means this
-    // might be a multi-finger note transition and we may want to wait
-    // a bit to see if the pending fingers land before triggering the new note.
-    int pendingHoleCovered = holeCovered;
-    unsigned long now = millis();
+
     unsigned long result = 0;
     float multiplier = 0.0;
 
+    //We check current note interval with the current one
+    if (tf.tempNewNote != tf.prevPendingNote) {
+        tf.prevPendingNote = tf.tempNewNote;
+        byte interval = abs(newNote - tf.tempNewNote);
+        if (interval != tf.prevInterval) {
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
+            Serial.print("\tpendingNote: ");
+            Serial.print(getNoteName(tf.tempNewNote));
+            Serial.print(" - Interval: ");
+            Serial.println(interval);
+#endif
+            tf.prevInterval = interval;
+            multiplier += interval * DEBOUNCE_INTERVAL_MULTIPLIER;
+        }
 
-    //Check settings that enable a transient Filter
-    if (transientFilterDelay == 0 
-        || !isHalfHoleEnabled(THUMB_HOLE) 
-        || transientHalfThumbHoleDelay == 0) {
-        return result;
-    }
+        //We check how many fingers have changed
+        byte popcount = 0;
+        if (isHalfHoleEnabled(THUMB_HOLE)) {
+            popcount = __builtin_popcount( ((tf.newNoteHoleCovered >> 1) & 0x7F) ^ ((holeCovered >> 1) & 0x7F)); //We consider the seven front holes only
+        } else {
+            popcount = __builtin_popcount((tf.newNoteHoleCovered >> 1) ^ (holeCovered >> 1)); //We ignore bell
+        }
 
-    for (byte i = 0; i < 9; i++) {
-        int thresh = senseDistance;  //  ((toneholeCovered[i] - 50) - senseDistance) / 2;
-        if (toneholeRead[i] > thresh) {
-            if (bitRead(holeCovered, i) != 1) {
-                bitWrite(pendingHoleCovered, i, 1);
+        if (popcount != tf.prevPopcount) {
+            tf.prevPopcount = popcount;
+            multiplier += popcount * DEBOUNCE_POPCOUNT_MULTIPLIER;
+
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
+                Serial.print("\t");
+                printFingering(holeCovered);
+                Serial.print(" Fingers: ");
+                Serial.println(popcount);
+#endif
+        }
+
+        //We check if an half-hole Status has changed
+        for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+            if (isHalfHoleEnabled(i)) {
+                byte currentHoleStatus = holeStatus(i, holeCovered);
+                if ( currentHoleStatus != tf.prevHoleStatus[i]) {
+#if (DEBUG_TRANSITION_FILTER || DEBUG_HH) && DEBUG_VERBOSE
+                    Serial.print("\tHalf hole ");
+                    Serial.print(i);
+                    Serial.print(" Status: ");
+                    Serial.print(tf.prevHoleStatus[i]);
+                    Serial.print("->");
+                    Serial.println(currentHoleStatus);
+#endif
+                    tf.prevHoleStatus[i] = currentHoleStatus; //Here we store the prev status only for half-hole-enabled holes, the others are stored in debounce
+
+                    if (currentHoleStatus == HOLE_STATUS_HALF) { //We are going to half: it's more probable that it is a glitch
+                        multiplier += DEBOUNCE_HALFHOLE_ENTER_MULTIPLIER;
+                    } else {
+                        multiplier += DEBOUNCE_HALFHOLE_EXIT_MULTIPLIER;
+                    }
+                }
             }
         }
     }
 
-    if (pendingHoleCovered != holeCovered) { //Here we check from fingering change to fingering change
-        // See if the pending is a new note.
-        byte tempNewNote = getNote(holeCovered);
-        byte pendingNote = getNote(pendingHoleCovered);
-        if (pendingNote != 127 && pendingNote != tempNewNote) {
+    result = tf.settingsDelay * multiplier;
 
-#if DEBUG_TRANSITION_FILTER
-            Serial.print(now);
-            Serial.print(" : Maybe: ");
-            Serial.print(pendingNote);
-            Serial.print(" wait on: ");
-            Serial.println(tempNewNote);
-#endif
-            result += transientFilterDelay;
-
-        }
+    //In the first iteration we don't go below settingsDelay
+    if (tf.iterations == 1 && result < tf.settingsDelay) {
+        result = tf.settingsDelay;
     }
 
-    if (newNoteHoleCovered != holeCovered) { //Here we check at note level with the current one
-        byte pendingNote = getNote(holeCovered);
-
-        if ( (pendingNote != 127 && (abs(newNote - pendingNote) > 11))) { //the interval for the current fingered note is an octave or more
-            multiplier += 1.0;
-
-#if DEBUG_TRANSITION_FILTER || DEBUG_HH
-            Serial.print(" Interval: ");
-            Serial.println(abs(newNote - pendingNote));
-#endif
-        }
-
-        if (__builtin_popcount(newNoteHoleCovered ^ holeCovered) >= 4)  {//the number of changed finger is > 4,
-            multiplier += 1.0;
-
-#if DEBUG_TRANSITION_FILTER || DEBUG_HH
-            Serial.print(" Fingers: ");
-            Serial.println(__builtin_popcount(newNoteHoleCovered ^ holeCovered));
-#endif
-        }
-        if (isHalfHoleEnabled(THUMB_HOLE) && abs(toneholeLastRead[THUMB_HOLE] - toneholeRead[THUMB_HOLE]) > HOLE_COVERED_OFFSET/2)  {//Thumb moving
-            multiplier += 1.5;
-
-#if DEBUG_TRANSITION_FILTER || DEBUG_HH
-        
-            Serial.print(" TH: ");
-            Serial.print(toneholeLastRead[THUMB_HOLE]);
-            Serial.print("->");
-            Serial.println(toneholeRead[THUMB_HOLE]);
-#endif
-
-        }
-    }
-
-    result += transientHalfThumbHoleDelay * multiplier;
-
-#if DEBUG_TRANSITION_FILTER || DEBUG_HH
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
     if (result >0) {
-        Serial.print(now);
-        Serial.print(" Delay: ");
+        Serial.print("\titeration: ");
+        Serial.print(tf.iterations);
+        Serial.print(" - Multi: ");
+        Serial.print(multiplier);
+        Serial.print(tf.iterations > 1 ? " - Added Delay: " : " - Delay: ");
         Serial.println(result);
     }
-
 #endif
     return result;
 }
@@ -841,62 +867,180 @@ unsigned long getTransitionDelay() {
 
 
 
-// Detect changes in fingering. Contributions by Louis Barman and Jesse Chappell
+// Detect changes in fingering. Contributions by Louis Barman, Jesse Chappell and  Gianluca Barbaro
 void debounceFingerHoles() {
-
-    static unsigned long debounceTimer;
+    
     unsigned long now = millis();
-    static bool timing;
+    bool timerExpired = false; //We use this to trigger an eventual delay, then as a trigger to commit the new note.
 
-    if (prevHoleCovered != holeCovered) {
-        
-    // #if DEBUG_HH
-    //     for (int i = 0; i < 16; i++) {
-    //         Serial.print(bitRead(holeCovered, i) );
-    //     }
-    //     Serial.println(" ");
-    // #endif
+    debounceHalfHole(); //This has to be called first, it modifies holeCovered
 
-        prevHoleCovered = holeCovered;
-        debounceTimer = now;
-        timing = 1;
+    if (tf.newNoteHoleCovered != holeCovered) { //Current fingering position differs from the one that triggered a note
 
-        transitionFilter = getTransitionDelay();
+        tf.tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the new fingering pattern.
 
-        // if (transientFilterDelay > 0 && isMaybeInTransition()) {
-        //     transitionFilter = transientFilterDelay;  // ms timeout for transition to fail out
-        // } else {
-        //     transitionFilter = 0;
-        // }
+        if (tf.tempNewNote == newNote  //Note hasn't changed despite the change in fingerings. TODO: If we want to trigger a change when passing to an alternate fingering, we have to change this
+            || tf.tempNewNote == 127) { // 127 can be used as a "blank" position that has no effect
 
-    }
-
-    long debounceDelta = now - debounceTimer;
-
-    if (transitionFilter > 0 && (debounceDelta >= transitionFilter || getTransitionDelay() == 0)) {  // Reset it if necessary.
-#if DEBUG_TRANSITION_FILTER
-        Serial.print(now);
-        Serial.println(" canceltrans");
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE && 0
+            Serial.print("Same note - ");
+            printFingering(tf.newNoteHoleCovered);
+            Serial.print(" -> ");
+            printFingering(holeCovered);
+            Serial.print(" -  newNote: ");
+            Serial.print(getNoteName(newNote));
+            Serial.print(" -> ");
+            Serial.println(getNoteName(tf.tempNewNote));
 #endif
-        transitionFilter = 0;
-    }
+            sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
-    if (debounceDelta >= transitionFilter
-        && timing == 1) {  // The fingering pattern has changed.
-        timing = 0;
-        fingersChanged = 1;
-        fingeringChangeTimer = millis();     // Start timing after the fingering pattern has changed.
-        tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the fingering pattern if it has changed. 3us.
-
-        //For Halfhole Detection
-        for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
-            toneholeLastRead[i] = toneholeRead[i];
+            //We reset the trigger. This is for reduntant positions.
+            tf.newNoteHoleCovered = holeCovered;
+            tf.prevHoleCovered = holeCovered;
+            return;
         }
 
-        sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+        //Check if transient Filter is enabled
+        if (tf.settingsDelay == 0) { //transientFilter disabled
+            timerExpired = true;
+        }
 
-        if (tempNewNote != 127 && newNote != tempNewNote) {  // If a new note has been triggered (127 can be used as a "blank" position that has no effect),
+        if (!timerExpired) { //fingering is different from current note and we have transientFilter enabled
+
+            tf.iterations++; //Counts how many times we debounce a change before committing a newNote
+
+            if (!tf.timing) { //It's the first iteration
+                tf.prevHoleCovered = holeCovered; //Store for next iteration
+                tf.prevPendingNote = newNote; //Init the variable
+
+                //We start the timer
+                tf.timer = now;
+                tf.timing = true;
+                tf.currentDelay = getTransitionDelay(); // ms timeout for transition to fail out
+
+#if DEBUG_TRANSITION_FILTER
+                if (tf.currentDelay > 0) {
+                    Serial.print(now);
+                    Serial.print(" Starting delay: ");
+                    Serial.println(tf.currentDelay); 
+                    Serial.println(" "); 
+                }
+#endif
+            } else {  //We are in the middle of a delay
+                if (tf.prevHoleCovered != holeCovered && tf.prevHoleCovered != tf.newNoteHoleCovered) { //The fingering has changed from the previous iteration
+                    
+                    tf.prevHoleCovered = holeCovered; //Store for next iteration†
+
+                    unsigned long additionDelay = getTransitionDelay(); //calculates an additional delay
+                    tf.additionalDelay += additionDelay;
+                    tf.currentDelay += additionDelay;
+
+#if DEBUG_TRANSITION_FILTER  && DEBUG_VERBOSE
+                if (additionDelay > 0) {
+                    Serial.print(now);
+                    Serial.print(" iteration: ");
+                    Serial.print(tf.iterations); 
+                    Serial.print(" delay: ");
+                    Serial.print(tf.currentDelay);
+                    Serial.print(" augmented by: ");
+                    Serial.println(additionDelay);
+                    Serial.println(" ");
+                }
+#endif
+                } else if (tf.timing && tf.prevHoleCovered == holeCovered) { //No changes from previous iteration, let's abbreviate the delay - the conditions here might be redundant
+                    
+                    if (tf.iterations > 1) { //Sanity check against division by 0, just in case...
+
+                        unsigned long delayDelta = 0;
+
+                        if (tf.additionalDelay > 0) { //We already had an extended delay
+
+                            delayDelta =  tf.additionalDelay/(tf.iterations - 1); 
+
+                        } else { //Probably first iteration without an additionalDelay 
+
+                            delayDelta = tf.iterations*DEBOUNCE_DELAY_REDUCE; //We subtract a minimum time that grows with iterations
+
+                        }
+
+                        if (tf.currentDelay >= delayDelta) { //Sanity check against negative values stored in an unsigned
+
+                            tf.currentDelay -= delayDelta; //Reduces current delay 
+
+                            if (tf.additionalDelay > 0) tf.additionalDelay += delayDelta; //In the next iterations the reducing delta will be consistent, but only if we alredy had one
+
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
+
+                            if (delayDelta > 0) {
+                                Serial.print(now);
+                                Serial.print(" iterations: ");
+                                Serial.print(tf.iterations);
+                                Serial.print(" delay: ");
+                                Serial.print(tf.currentDelay);
+                                Serial.print(" reduced by: ");
+                                Serial.println(delayDelta);
+                                Serial.println(" ");
+                            }
+#endif
+                        } else { //We have consumed all current delay
+
+                            tf.currentDelay = 0; 
+                            tf.additionalDelay = 0;
+
+#if DEBUG_TRANSITION_FILTER
+                            Serial.print(now);
+                            Serial.print(" iterations: ");
+                            Serial.print(tf.iterations);
+                            Serial.println(" delay to 0");
+                            Serial.println(" ");
+#endif
+                        }
+                    }
+                }
+
+                //Now we check if the timer has expired
+                tf.delta = now - tf.timer;
+                timerExpired = tf.delta >= tf.currentDelay;
+            
+#if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
+                if (timerExpired) {
+                    Serial.print(now);
+                    Serial.print(" iterations: ");
+                    Serial.print(tf.iterations);
+                    Serial.print(" delta: ");
+                    Serial.print(tf.delta);
+                    Serial.print(" delay: ");
+                    Serial.print(tf.currentDelay);
+                    Serial.println(" timerExpired");
+                    Serial.println(" ");
+                }
+#endif
+            }
+        }
+        
+        if (timerExpired) { //The fingering pattern has changed and the (eventual) delay is done
+
+            fingersChanged = 1;
+
+            sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
+
+#if DEBUG_TRANSITION_FILTER
+            Serial.print(now);
+            Serial.print(" iterations: ");
+            Serial.print(tf.iterations);
+            Serial.print(" delta: ");
+            Serial.print(tf.delta);
+            Serial.print(" new note: ");
+            Serial.print(getNoteName(newNote));
+            Serial.print(" -> ");
+            Serial.println(getNoteName(tf.tempNewNote));
+            Serial.println(" ");
+            Serial.println("---------------");
+            Serial.println(" ");
+#endif
+
             if (pitchBendMode != kPitchBendNone) {
+                //TODO holeLatched could be replaced by tf.newNoteHoleCovered
                 holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
@@ -904,19 +1048,13 @@ void debounceFingerHoles() {
                 }
             }
 
-
-    #if DEBUG_TRANSITION_FILTER
-            Serial.print(now);
-            Serial.print(" : Commit: ");
-            Serial.println(tempNewNote);
-    #endif
-
-            newNote = tempNewNote;
-            newNoteHoleCovered = holeCovered;
-            tempNewNote = -1;
+            newNote = tf.tempNewNote;
+            resetTransitionFilter();
             getState();                       // Get state again if the note has changed.
             fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
         }
+    } else { //No change, we reset the timer. This could be in the middle of a debouncing.
+        tf.timing = false;
     }
 }
 
@@ -992,36 +1130,19 @@ byte getNote(unsigned int fingerPattern) {
         vibratoEnable = uilleannVibrato[tempCovered];
     }
 
-    //HalfHole Detetcion for Barbaro's EWI
-    if (modeSelector[mode] == kModeBarbaroEWI ) {
+    // Mep's EWI/Recorder
+    if (modeSelector[mode] == kModeMepEWI || modeSelector[mode] == kModeMepRecorder ) {
 
-        // tempCovered = fingerPattern >> 1;  //bitshift once to ignore bell sensor reading
         tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
 
-        ret = charts[modeSelector[mode]][tempCovered];
+        ret = charts[kModeMepEWI][tempCovered];
         
-        #ifdef DEBUG_FINGERING
+        #if DEBUG_FINGERING
             Serial.print("getNote: ");
             Serial.println(ret);
         #endif
-        // if (ret == 0) {
-        //     ret = -1;
-        // } else {
-            //Moved to getShift()
-            // if ( 
-            //     ( (tempCovered == 0b1111111)//To capture base position only 
-            //         && toneholeHalfCovered[R4_HOLE] //C
-            //         ) ||
-            //     ( (tempCovered == 0b1111110)
-            //         && toneholeHalfCovered[R3_HOLE] //D
-            //     )
-            //     )
-            //     {
-            //         ret += 1;
-            //     }
-
-            if (modeSelector[mode] == kModeBarbaroRecorder) {
-                if (bitRead(holeCovered, 9)) { //thumb hole half covered - 2nd and 3rd register
+            if (modeSelector[mode] == kModeMepRecorder) {
+                if (holeStatus(THUMB_HOLE, holeCovered) == HOLE_STATUS_HALF) { //thumb hole half covered - 2nd and 3rd register
                     
                     switch (tempCovered) {
                         case 0b1101110: //Bb
@@ -1044,7 +1165,7 @@ byte getNote(unsigned int fingerPattern) {
                         default:
                             break;
                     }
-                } else if (!bitRead(holeCovered, 8)) { //thumb hole uncovered
+                } else if (!bitRead(holeCovered, THUMB_HOLE)) { //thumb hole uncovered
                     //Lots of homophonic positions here :)
                     switch (tempCovered) {
                         case 0b1111000: //B
@@ -1094,7 +1215,7 @@ byte getNote(unsigned int fingerPattern) {
                             // ret = -1;
                     }
 
-                } else if (bitRead(holeCovered, 8)) { //thumb hole covered
+                } else if (bitRead(holeCovered, THUMB_HOLE)) { //thumb hole covered
                     switch (tempCovered) {
                         case 0b1101111: //G trill position
                             ret = 67;
@@ -1107,22 +1228,12 @@ byte getNote(unsigned int fingerPattern) {
                         break;
                     }
                 }
-                if (ret > 0) {
+                if (ret > 0 && ret != 127) {
                     ret += 12;
                 }
                 
             } else {
-                // if (bitRead(holeCovered, 9)) { //thumb hole half covered
-                // #if DEBUG_HH
-                //     Serial.print("Half Hole Detected");
-                //     Serial.print(" - getNote: ");
-                //     Serial.print(ret);
-                //     Serial.print(" + 12");
-                //     Serial.println();
-                // #endif
-                //     ret += 24;
-                // } else 
-                if (bitRead(holeCovered, 8)) { //thumb hole covered
+                if (ret != 127 && bitRead(holeCovered, THUMB_HOLE)) { //thumb hole covered
                     ret += 12;
                 }
             }
@@ -1130,9 +1241,11 @@ byte getNote(unsigned int fingerPattern) {
     }
 
     
-    //Half hole raises
+    //Half hole shifts
     //This has to stay here, otherwise notes modified by half holing wouldn't be detected by debounceFingerHoles()
-    ret += getHalfHoleShift(fingerPattern);
+    if (ret != 0 && ret != 127) {
+        ret += getHalfHoleShift(fingerPattern);
+    }
 
     return ret;
 }
@@ -1581,7 +1694,7 @@ void handlePitchBend() {
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
-        if (toneholeRead[i] > senseDistance && transitionFilter == 0) {
+        if (toneholeRead[i] > senseDistance && tf.currentDelay == 0) {
             const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
@@ -2090,6 +2203,12 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
 
                 else if (pressureReceiveMode <= MIDI_SWITCHES_VARS_END) {
+#if DEBUG_HH
+    Serial.print("Switches recv: ");
+    Serial.print((pressureReceiveMode - MIDI_SWITCHES_VARS_START));
+    Serial.print(" value: ");
+    Serial.println(value);
+#endif
                     switches[mode][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
                     loadPrefs();
                 }
@@ -3122,8 +3241,8 @@ void loadPrefs() {
     breathMode = breathModeSelector[mode];
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
-    transientFilterDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
-    transientHalfThumbHoleDelay = (ED[mode][HALF_HOLE_TRANSIENT] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    tf.settingsDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    // tf.transientHalfThumbHoleDelay = (ED[mode][HALF_HOLE_TRANSIENT] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
@@ -3213,6 +3332,16 @@ void loadPrefs() {
     for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
         pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
     }
+
+    //Half Hole Prefs    
+    //Window size params
+    hh.lowWindowPerc = ((float) ED[mode][HALF_HOLE_LOW_PERC])/100.0f;
+    hh.highWindowPerc = ((float) ED[mode][HALF_HOLE_HIGH_PERC])/100.0f;
+
+#if DEBUG_HH
+    printHalfHoleSettings();
+#endif
+    
 }
 
 
@@ -3379,7 +3508,7 @@ void calculatePressure(byte pressureOption) {
 
     // Else curve 0 is linear, so no transformation.
 
-    #ifdef PRESSURE_DEBUG
+    #if DEBUG_PRESSURE
 
     Serial.print(twelveBitPressure);
     Serial.print(" - ");

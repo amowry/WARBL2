@@ -9,9 +9,6 @@
 
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
 
-#define DEBUG_TRANSITION_FILTER 0
-#define DEBUG_CONFIG_TOOL 0
-
 #define EEPROM_I2C_ADDRESS 0x50
 
 #define DEBOUNCE_TIME 0.02                          // Button debounce time, in seconds
@@ -55,9 +52,9 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeBansuriWARBL 23  // Currently unused
-#define kModeBarbaroEWI 24 //These two are the same
-#define kModeBarbaroRecorder 25
+#define kModeMepEWI 23 //These two are the same
+#define kModeMepRecorder 24 //When validated, can replace kModeRecorder, to save space
+
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
@@ -111,7 +108,8 @@
 #define HALF_HOLE_THUMB_ENABLED 14
 #define HALF_HOLE_R3_ENABLED 15
 #define HALF_HOLE_R4_ENABLED 16
-#define kSWITCHESnVariables 17
+#define HALF_HOLE_THUMB_INVERT 17
+#define kSWITCHESnVariables 18
 
 // Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
@@ -153,9 +151,9 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-#define HALF_HOLE_TRANSIENT 39
-#define CUSTOM_FINGERING_3 40 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_4 41
+#define HALF_HOLE_LOW_PERC 39
+#define HALF_HOLE_HIGH_PERC 40 
+#define CUSTOM_FINGERING_4 41 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_5 42
 #define CUSTOM_FINGERING_6 43
 #define CUSTOM_FINGERING_7 44
@@ -337,7 +335,9 @@
 #define MIDI_CC_102_VALUE_53 53  // Bidirectional. Bombarde
 #define MIDI_CC_102_VALUE_54 54  // Bidirectional. Baroque flute
 #define MIDI_CC_102_VALUE_55 55  // Bidirectional. Medieval bagpipes
-                                 /* 56-59 unused */
+#define MIDI_CC_102_VALUE_56 56  // Bidirectional. Mep's EWI
+#define MIDI_CC_102_VALUE_57 57  // Bidirectional. Mep's Recorder
+                                 /* 58-59 unused */
 
 #define MIDI_CC_102_VALUE_60 60  // Bidirectional. current instrument (mode variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. current instrument is 1
@@ -462,8 +462,12 @@
 #define MIDI_CC_104_VALUE_51 51  //  Bidirectional. Settings for current instrument: indicates that switches[11] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_52 52  //  Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_53 53  //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_54 54  //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_55 55  //  Bidirectional. Settings for current instrument: indicates that switches[15] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_56 56  //  Bidirectional. Settings for current instrument: indicates that switches[16] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_57 57  //  Bidirectional. Settings for current instrument: indicates that switches[17] is about to be sent with CC 105.
 //
-/* 54-60 unused */
+/* 58-60 unused */
 #define MIDI_CC_104_VALUE_61 61  //  Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
 #define MIDI_CC_104_VALUE_62 62  //  Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
 /* 62-69 unused */
@@ -576,7 +580,7 @@
 #define MIDI_CC_106_VALUE_72 72  // from WARBL. WARBL2 BLE connection interval low byte
 #define MIDI_CC_106_VALUE_73 73  // from WARBL. WARBL2 BLE connection interval high byte
 #define MIDI_CC_106_VALUE_74 74  // from WARBL. WARBL2 battery percentage
-                                 /* 75-99	unused -- can be used for WARBL2 */
+/* 75-99	unused -- can be used for WARBL2 */
 
 //Button Actions, see above 102  90/99
 #define MIDI_CC_106_VALUE_100 100  // Bidirectional. button action 0
@@ -702,7 +706,7 @@
 #define MIDI_MAX_CALIB_MSGS_END MIDI_CC_102_VALUE_28             // End of Calibration max values reached messages
 #define MIDI_FINGERING_PATTERN_MODE_START MIDI_CC_102_VALUE_30   // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 #define MIDI_FINGERING_PATTERN_START MIDI_CC_102_VALUE_33        // Bidirectional. first fingering pattern is tin whistle
-#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_55          // Bidirectional. Medieval bagpipes
+#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_57          // Bidirectional. Mep's recorder
 #define MIDI_CURRENT_MODE_START MIDI_CC_102_VALUE_60             // Bidirectional. current instrument (mode variable) is  0
 #define MIDI_PB_MODE_START MIDI_CC_102_VALUE_70                  // Bidirectional. Settings for current instrument: Pitchbend mode 0
 #define MIDI_BREATH_MODE_START MIDI_CC_102_VALUE_80              // Bidirectional. Settings for current instrument: Breath mode 0
@@ -717,7 +721,7 @@
 #define MIDI_ED_VARS_START MIDI_CC_104_VALUE_13                         // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105.
 #define MIDI_ED_VARS_END MIDI_CC_104_VALUE_33                           // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                   // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
-#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_57                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
 #define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot

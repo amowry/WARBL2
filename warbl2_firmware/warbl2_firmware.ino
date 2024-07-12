@@ -187,9 +187,9 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                           // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_BUFFER_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 0, 0, 0, 0, 0, 0, 0, 0 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 0, 0, 0, 0, 0, 0, 0, 0 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -265,23 +265,21 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
-//20231028 GLB
-int toneholeLastRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };       //Last read for confirmed note for the config Tool and debounceFingers
 
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
-bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
-unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
-//20240623
-unsigned int newNoteHoleCovered = 1;                                           //Keeps track of holes for current "valid" note
+bool fingersChanged = 1;  
 
-byte tempNewNote = 127;
-byte prevNote = 127;
+byte prevNote = 127; //UNUSED?
+
 byte newNote = 127;             // The next note to be played, based on the fingering chart (does not include transposition).
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
-byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
-byte transientHalfThumbHoleDelay = 0;  // Small delay for filtering out transient movements of thumb
-unsigned long transitionFilter = 0;
 
+transition_filter_t tf;
+half_hole_detection_t hh;  //Half-Hole Detecion
+
+#if BASELINE_AUTO_CALIBRATION
+auto_calibration_t ac; //Baseline Autocalibration
+#endif
 
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
@@ -485,6 +483,12 @@ void setup() {
         }
     }
 #endif
+
+#if BASELINE_AUTO_CALIBRATION
+    //Baseline auto-calibration
+    baselineInit();
+#endif
+
 }
 
 

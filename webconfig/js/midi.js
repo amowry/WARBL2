@@ -52,6 +52,9 @@ var volume = 0;
 
 var currentNote = 62;
 
+var holeCoveredByteA = 0; //value received on CC 115
+var holeCoveredByteB = 0; //value received on CC 114
+
 var sendAllQueue = []; //queue for outgoing messages to WARBL port
 var sendWARBLoutQueue = []; //queue for outgoing messages to all ports
 var sendWARBLInterval = setInterval(sendQueuedWARBLoutMessages, sendDelay); //start sending any queued messages 
@@ -767,14 +770,26 @@ function WARBL_Receive(event) {
 
                 if (data1 == MIDI_CC_115) { //hole covered info from WARBL
 
-                    var byteA = data2;
+                    holeCoveredByteA = data2;
                     for (var m = 0; m < 7; m++) {
-                        if (bit_test(byteA, m) == 1) {
-                            document.getElementById("dot" + m).style.backgroundColor = "blue";
+                        if (bit_test(holeCoveredByteA, m) == 1) {
+                            if (m == 1 || m == 2) { //R4-R3
+                                if (bit_test(holeCoveredByteB, m + 2) == 1) { //Half R4 hole
+                                    document.getElementById("dot" + m).style.background = "linear-gradient( 35deg, blue, blue 49%, #181818 51% )";
+                                } else {
+                                    document.getElementById("dot" + m).style.background = "";
+                                    document.getElementById("dot" + m).style.backgroundColor = "blue";
+                                }
+                            } else {
+                                document.getElementById("dot" + m).style.backgroundColor = "blue";
+                            }
                             if (m == 0) {
                                 document.getElementById("dot0").style.opacity = "0.8";
                             }
                         } else {
+                            if (m == 1 || m == 2) { //R4-R3
+                                document.getElementById("dot" + m).style.background = "";
+                            }
                             document.getElementById("dot" + m).style.backgroundColor = "#333";
                             if (m == 0) {
                                 document.getElementById("dot0").style.opacity = "0";
@@ -784,12 +799,23 @@ function WARBL_Receive(event) {
                 }
 
                 if (data1 == MIDI_CC_114) { //hole covered info from WARBL
+
+                    holeCoveredByteB = data2;
                     for (var n = 0; n < 2; n++) {
-                        var byteB = data2;
-                        if (bit_test(byteB, n) == 1) {
-                            document.getElementById("dot" + (7 + n)).style.backgroundColor = "blue";
+                        if (bit_test(holeCoveredByteB, n) == 1) {
+                            if (n == 1) { //Thumb hole
+                                if (bit_test(holeCoveredByteB, 2) == 1) { //Half thumb hole
+                                    document.getElementById("dot" + (7 + n)).style.background = "linear-gradient( -90deg, blue, blue 49%, #181818 51% )";
+                                } else {
+                                    document.getElementById("dot" + (7 + n)).style.background = "";
+                                    document.getElementById("dot" + (7 + n)).style.backgroundColor = "blue";
+                                }
+                            } else {
+                                document.getElementById("dot" + (7 + n)).style.backgroundColor = "blue";
+                            }
                         } else {
                             if (n == 1) {
+                                document.getElementById("dot" + (7 + n)).style.background = "";
                                 document.getElementById("dot" + (7 + n)).style.backgroundColor = "#181818";
                             }
                             if (n == 0) {
@@ -1186,15 +1212,20 @@ function WARBL_Receive(event) {
 						updateHalfHolePrefs();
                     } //HALF_HOLE_THUMB_ENABLED
 
-                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +16) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +15) {
                         document.getElementById("checkbox29").checked = data2;
 						updateHalfHolePrefs();
                     } //HALF_HOLE_R3_ENABLED
 
-                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +17) {
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +16) {
                         document.getElementById("checkbox30").checked = data2;
 						updateHalfHolePrefs();
                     } //HALF_HOLE_R4_ENABLED
+
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +17) {
+                        document.getElementById("checkbox32").checked = data2;
+						updateHalfHolePrefs();
+                    } //HALF_HOLE_THUMB_INVERT
 
                     else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;
@@ -1275,10 +1306,19 @@ function WARBL_Receive(event) {
 	                    depth.dispatchEvent(new Event('input'));
 	                    output.innerHTML = data2;
 					}  else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
-						// Half holing transient
-						document.getElementById("halfHoleTransient").value = data2 ;
-	                    var output = document.getElementById("demo13");
-	                    output.innerHTML = data2;
+						// Half holing low window - needs conversion
+                        var newValue = (HALF_HOLE_LOW_MAX_PERC-data2)*100/(HALF_HOLE_LOW_MAX_PERC-HALF_HOLE_LOW_MIN_PERC)+1;
+                        // console.log("halfHole low Window, recv:", data2, "conv:", newValue);
+						document.getElementById("halfHoleLowWindow").value = newValue ;
+	                    var output = document.getElementById("demo19");
+	                    output.innerHTML = newValue;
+					} else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
+						// Half holing high window -needs conversion
+                        var newValue = (HALF_HOLE_HIGH_MAX_PERC-data2)*100/(HALF_HOLE_HIGH_MAX_PERC-HALF_HOLE_HIGH_MIN_PERC)+1;
+                        // console.log("halfHole high Window, recv:", data2, "conv:", newValue);
+						document.getElementById("halfHoleHighWindow").value = newValue ;
+	                    var output = document.getElementById("demo20");
+	                    output.innerHTML = newValue;
 					}
 
 
@@ -1939,14 +1979,7 @@ function WARBL_Receive(event) {
                             document.getElementById("battery25").style.display = "none";
                             document.getElementById("battery0").style.display = "block";
                         }
-
-
-                    }
-
-
-
-
-
+                    }  
                 }
             }
     }
@@ -2071,6 +2104,7 @@ function fingeringInput(input, selection) { 	//send the custom fingering input e
 function sendFingeringSelect(row, selection) {
     selection = parseFloat(selection);
     updateCells();
+    applyModeDefaults();
     updateCustom();
     blink(1);
     //default keys for original WARBL
@@ -2806,8 +2840,60 @@ function sendVibratoHoles(holeNumber, selection) {
     sendToWARBL(MIDI_CC_106, (MIDI_DIS_VIBRATO_HOLES_START - (selection * 10)) + holeNumber);
 }
 
-function updateCustom() { //keep correct settings enabled/disabled with respect to the custom vibrato switch and send pressure as CC switches.
 
+/*
+//This applies settings default for selected instrument.
+It's similar to updateCustom, but it triggers events that then invoke updateCustom, 
+so this has to be kept separate to avoid infinite loops
+*/
+function applyModeDefaults() {
+
+    var a = document.getElementById("fingeringSelect" + instrument).value;
+
+    //Mep's fingerings
+    var thumbHalfCb = document.getElementById("checkbox28");
+    var r3HalfCb = document.getElementById("checkbox29");
+    var r4HalfCb = document.getElementById("checkbox30");
+    var invertCb = document.getElementById("checkbox32");
+
+    halfHoleReset();
+
+    if (a == 23 || a == 24) {
+        //Activates Half-holing - transient filter and disables slide/vibrato
+        var transientFilter = document.getElementById("jumpFactor10b");
+        transientFilter.value = 30;
+        transientFilter.dispatchEvent(new Event('input'));
+        transientFilter.dispatchEvent(new Event('change'));
+
+        thumbHalfCb.checked = true;
+        invertCb.checked = (a == 23); //On Mep's EWI only, we need to invert the thumb switch
+        r3HalfCb.checked = (a == 24); //Only on recorder
+        r4HalfCb.checked = (a == 24); //Only on recorder
+
+
+        var pbNone = document.getElementById("pitchbendradio2")
+        pbNone.checked = true;
+        pbNone.dispatchEvent(new Event('input'));
+        pbNone.dispatchEvent(new Event('change'));
+
+    } else { //We disable Half-holing by default. TBD
+        thumbHalfCb.checked = false;
+        r3HalfCb.checked = false;
+        r4HalfCb.checked = false;
+    }
+
+    //We trigger a MIDI send to WARBL for new settings
+    thumbHalfCb.dispatchEvent(new Event('input'));
+    thumbHalfCb.dispatchEvent(new Event('change'));
+    invertCb.dispatchEvent(new Event('input'));
+    invertCb.dispatchEvent(new Event('change'));
+    r3HalfCb.dispatchEvent(new Event('input'));
+    r3HalfCb.dispatchEvent(new Event('change'));
+    r4HalfCb.dispatchEvent(new Event('input'));
+    r4HalfCb.dispatchEvent(new Event('change'));
+
+}
+function updateCustom() { //keep correct settings enabled/disabled with respect to the custom vibrato switch and send pressure as CC switches.
 
     var a = document.getElementById("fingeringSelect" + instrument).value;
 
@@ -2844,6 +2930,7 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         document.getElementById("fingeringInput11").style.cursor = "pointer";
 
     }
+
 }
 
 function sendBreathmodeRadio(selection) {
@@ -3194,6 +3281,7 @@ function halfHole() {
     // Show Half hole prefs box
     document.getElementById("halfholebox").style.display = "block";
     document.getElementById("box1").style.display = "none";
+    halfHoleAdvanced(false);
 
 }
 
@@ -3202,6 +3290,7 @@ function halfHoleOkay() {
     // Hide Half hole prefs box
     document.getElementById("halfholebox").style.display = "none";
     document.getElementById("box1").style.display = "block";
+
 }
 function advancedDefaults() {
     if (version > 2.0 || version == "Unknown") {
@@ -3511,6 +3600,9 @@ function updateHalfHolePrefs() {
     document.getElementById("halfThumbEnabledExplainLabel").style.display = halfThumbHoleEna ? "block" : "none";
     document.getElementById("halfR3EnabledExplainLabel").style.display = document.getElementById("checkbox29").checked ? "block" : "none";
     document.getElementById("halfR4EnabledExplainLabel").style.display = document.getElementById("checkbox30").checked ? "block" : "none";
+
+    document.getElementById("halfThumbInvertExplainLabel").innerHTML = document.getElementById("checkbox32").checked ? "Raise Closed Octave" : "Raise Open Octave";
+
 }
 
 function sendHalfThumbHoleEnabled(selection) {
@@ -3537,12 +3629,71 @@ function sendHalfR4HoleEnabled(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
-function sendHalfHoleTransient(selection) {
-    // console.log("sendHalfHoleTransient", selection)
+function sendHalfThumbInvert(selection) {
+    selection = +selection;
+    blink(1);
+    updateHalfHolePrefs();
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 17);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function halfHoleAdvanced(selection) {
+    
+    document.getElementById("checkbox31").checked = selection;
+
+    document.getElementById("halfThumbInvertLabel").style.display = selection ? "block" : "none";
+    document.getElementById("switch32").style.display = selection ? "block" : "none";
+    document.getElementById("halfThumbInvertExplainLabel").style.display = selection ? "block" : "none";
+
+    
+    document.getElementById("halfHoleLowWindowContainer").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleLowWindow").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleLowWindowLabel").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleLowWindowValue").style.display = selection ? "block" : "none";
+    
+    document.getElementById("halfHoleHighWindowContainer").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleHighWindow").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleHighWindowLabel").style.display = selection ? "block" : "none";
+    document.getElementById("halfHoleHighWindowValue").style.display = selection ? "block" : "none"; 
+    
+    document.getElementById("halfHoleReset").style.display = selection ? "block" : "none"; 
+
+    
+}
+function halfHoleReset() {
+    var lowSlider = document.getElementById("halfHoleLowWindow");
+    var highSlider = document.getElementById("halfHoleHighWindow");
+    var invertCb = document.getElementById("checkbox32");
+
+    lowSlider.value = 21;
+    highSlider.value = 81;
+    lowSlider.dispatchEvent(new Event('input'));
+    lowSlider.dispatchEvent(new Event('change'));
+    highSlider.dispatchEvent(new Event('input'));
+    highSlider.dispatchEvent(new Event('change'));
+
+    invertCb.checked = false;
+    invertCb.dispatchEvent(new Event('input'));
+    invertCb.dispatchEvent(new Event('change'));
+
+
+}
+function sendHalfHoleLowWindow(selection) {
     selection = parseFloat(selection);
+    //need conversion to percentage
+    var newValue = Math.ceil(HALF_HOLE_LOW_MAX_PERC-(HALF_HOLE_LOW_MAX_PERC-HALF_HOLE_LOW_MIN_PERC)/100*(selection+1));
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 18);
-    sendToWARBL(MIDI_CC_105, selection);
+    sendToWARBL(MIDI_CC_105, newValue);
+}
+
+function sendHalfHoleHighWindow(selection) {
+    selection = parseFloat(selection);
+    //need conversion to percentage
+    var newValue = Math.ceil(HALF_HOLE_HIGH_MAX_PERC-(HALF_HOLE_HIGH_MAX_PERC-HALF_HOLE_HIGH_MIN_PERC)/100*(selection+1));
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 19);
+    sendToWARBL(MIDI_CC_105, newValue);
 }
 
 //end switches
@@ -3877,11 +4028,18 @@ function slider12Change() {
     output12.innerHTML = jumpSlider12.value;
 }
 
-var output13 = document.getElementById("demo13");
-var jumpSlider13 = document.getElementById('halfHoleTransient');
-jumpSlider13.addEventListener('input', jumpSlider13Change);
-function jumpSlider13Change() {
-    output13.innerHTML = jumpSlider13.value;
+var output19 = document.getElementById("demo19");
+var jumpSlider19 = document.getElementById('halfHoleLowWindow');
+jumpSlider19.addEventListener('input', jumpSlider19Change);
+function jumpSlider19Change() {
+    output19.innerHTML = jumpSlider19.value;
+}
+
+var output20 = document.getElementById("demo20");
+var jumpSlider20 = document.getElementById('halfHoleHighWindow');
+jumpSlider20.addEventListener('input', jumpSlider20Change);
+function jumpSlider20Change() {
+    output20.innerHTML = jumpSlider20.value;
 }
 
 var outputPoweroff = document.getElementById("poweroffValue");
