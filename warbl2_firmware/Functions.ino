@@ -31,20 +31,24 @@ void printStuff(void) {
 
 }
 
-void printFingering(unsigned int fingering) {
+void print16bit(uint16_t value) {
     for (int i = 15; i >= 0; i--) {
-        if (i==8 || i==7 || i==0) Serial.print(" ");
-        Serial.print(bitRead(fingering, i));
+        Serial.print(bitRead(value, i));
+    }
+
+}
+void printFingering(fingering_pattern_union_t fingering) {
+    for (int i = 31; i >= 0; i--) {
+        if (i==23  || i==16 || i==7 || i==0) Serial.print(" ");
+        if (i==15 ) Serial.print(" - (");
+        if (i == 31) Serial.print(" (");
+        Serial.print(bitRead(fingering.holeCovered, i));
+        if (i==9 || i== 25) Serial.print(") ");
     }
 }
 
 void printHalfHoleSettings() {
     Serial.println("Half Hole Settings: ");
-
-#if BASELINE_AUTO_CALIBRATION
-    Serial.print("\tCorrection: ");
-    Serial.println(hh.correction);
-#endif
 
     Serial.print("\tLow Window: ");
     Serial.println(hh.lowWindowPerc);
@@ -65,7 +69,7 @@ void printHalfHoleSettings() {
 String noteNames[] = { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" };
 
 //Returns the note name (and octave) for the passed MIDI note
-String getNoteName(byte note, bool octave) {
+String getNoteName(byte note, bool octave = true) {
 	
     note = constrain(note, 0, 127);
 
@@ -154,13 +158,6 @@ void getSensors(void) {
 
     for (byte i = 0; i < 9; i++) {
 
-#if BASELINE_AUTO_CALIBRATION
-        //For baseline auto-calibration
-        if (!noteon && ac.toneholeBaselineCurrent[i] > toneholeRead[i]) {  //baseline calibration
-            ac.toneholeBaselineCurrent[i] = toneholeRead[i];
-        } 
-#endif
-
         if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
             toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
         }
@@ -168,15 +165,18 @@ void getSensors(void) {
             toneholeRead[i] = 0;
         }
 
+        //for toneholeCovered auto-calibration 
+        if (ac.enabled && noteon && holeStatus(i) == HOLE_STATUS_CLOSED) { //Calculate mean value in the sampling window, only when playing
+            ac.toneholeCoveredCurrentMean[i] += toneholeRead[i];
+            ac.toneholeCoveredSampleCounter[i]++;
+        }
     }
 
-#if BASELINE_AUTO_CALIBRATION
-    //Autocalibration for half hole detection
-    if (ac.timer ++ >= BASELINE_AVRG_INTERVAL) {  //check baseline every so often,
+    //Autocalibration
+    if (ac.enabled && ac.timer ++ >= AUTO_CALIB_INTERVAL) {  //check baseline every so often,
         ac.timer = 0;
-        baselineUpdate();
+        calibrationUpdate();
     }
-#endif
 }
 
 
@@ -728,14 +728,13 @@ void checkButtons() {
 // Determine which holes are covered.
 void getFingers() {
     
-    hh.prevHoleCovered = holeCovered; //For debouncing Half-holing
+    hh.prevHoleCovered = currentFP; //holeCovered; //For debouncing Half-holing
 
     for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i]) > (toneholeCovered[i] - HOLE_COVERED_OFFSET)) {
-            bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
-        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - HOLE_OPEN_OFFSET)) {
-            bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
-        }
+        byte status = holeBaseStatus(i);
+        if (status == HOLE_STATUS_CLOSED || status == HOLE_STATUS_OPEN) { //It could be ND
+            bitWrite(currentFP.fp.holes, i, status);  // Use the tonehole readings to decide which holes are covered
+        } 
     }
 }
 
@@ -749,8 +748,8 @@ void resetTransitionFilter() {
 
     tf.tempNewNote = 127;
     tf.prevPendingNote = 127;
-    tf.newNoteHoleCovered = holeCovered; //We keep it to detect transitions
-    tf.prevHoleCovered = holeCovered; //We "reset" this trigger
+    tf.newNoteHoleCovered = currentFP; //We keep it to detect transitions
+    tf.prevHoleCovered = currentFP; //We "reset" this trigger
 
     tf.timer = 0;
     tf.delta = 0;
@@ -797,9 +796,9 @@ unsigned long getTransitionDelay() {
         //We check how many fingers have changed
         byte popcount = 0;
         if (isHalfHoleEnabled(THUMB_HOLE)) {
-            popcount = __builtin_popcount( ((tf.newNoteHoleCovered >> 1) & 0x7F) ^ ((holeCovered >> 1) & 0x7F)); //We consider the seven front holes only
+            popcount = __builtin_popcount( ((tf.newNoteHoleCovered.fp.holes >> 1) & 0x7F) ^ ((currentFP.fp.holes >> 1) & 0x7F)); //We consider the seven front holes only
         } else {
-            popcount = __builtin_popcount((tf.newNoteHoleCovered >> 1) ^ (holeCovered >> 1)); //We ignore bell
+            popcount = __builtin_popcount((tf.newNoteHoleCovered.fp.holes >> 1) ^ (currentFP.fp.holes >> 1)); //We ignore bell
         }
 
         if (popcount != tf.prevPopcount) {
@@ -808,7 +807,7 @@ unsigned long getTransitionDelay() {
 
 #if DEBUG_TRANSITION_FILTER && DEBUG_VERBOSE
                 Serial.print("\t");
-                printFingering(holeCovered);
+                printFingering(currentFP);
                 Serial.print(" Fingers: ");
                 Serial.println(popcount);
 #endif
@@ -817,7 +816,7 @@ unsigned long getTransitionDelay() {
         //We check if an half-hole Status has changed
         for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
             if (isHalfHoleEnabled(i)) {
-                byte currentHoleStatus = holeStatus(i, holeCovered);
+                byte currentHoleStatus = holeStatus(i, currentFP);
                 if ( currentHoleStatus != tf.prevHoleStatus[i]) {
 #if (DEBUG_TRANSITION_FILTER || DEBUG_HH) && DEBUG_VERBOSE
                     Serial.print("\tHalf hole ");
@@ -875,9 +874,9 @@ void debounceFingerHoles() {
 
     debounceHalfHole(); //This has to be called first, it modifies holeCovered
 
-    if (tf.newNoteHoleCovered != holeCovered) { //Current fingering position differs from the one that triggered a note
+    if (tf.newNoteHoleCovered.holeCovered != currentFP.holeCovered) { //Current fingering position differs from the one that triggered a note
 
-        tf.tempNewNote = getNote(holeCovered);  // Get the next MIDI note from the new fingering pattern.
+        tf.tempNewNote = getNote(currentFP);  // Get the next MIDI note from the new fingering pattern.
 
         if (tf.tempNewNote == newNote  //Note hasn't changed despite the change in fingerings. TODO: If we want to trigger a change when passing to an alternate fingering, we have to change this
             || tf.tempNewNote == 127) { // 127 can be used as a "blank" position that has no effect
@@ -895,8 +894,8 @@ void debounceFingerHoles() {
             sendToConfig(true, false);           // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
             //We reset the trigger. This is for reduntant positions.
-            tf.newNoteHoleCovered = holeCovered;
-            tf.prevHoleCovered = holeCovered;
+            tf.newNoteHoleCovered = currentFP;
+            tf.prevHoleCovered = currentFP;
             return;
         }
 
@@ -910,7 +909,7 @@ void debounceFingerHoles() {
             tf.iterations++; //Counts how many times we debounce a change before committing a newNote
 
             if (!tf.timing) { //It's the first iteration
-                tf.prevHoleCovered = holeCovered; //Store for next iteration
+                tf.prevHoleCovered = currentFP; //Store for next iteration
                 tf.prevPendingNote = newNote; //Init the variable
 
                 //We start the timer
@@ -927,9 +926,9 @@ void debounceFingerHoles() {
                 }
 #endif
             } else {  //We are in the middle of a delay
-                if (tf.prevHoleCovered != holeCovered && tf.prevHoleCovered != tf.newNoteHoleCovered) { //The fingering has changed from the previous iteration
+                if (tf.prevHoleCovered.holeCovered != currentFP.holeCovered && tf.prevHoleCovered.holeCovered != tf.newNoteHoleCovered.holeCovered) { //The fingering has changed from the previous iteration
                     
-                    tf.prevHoleCovered = holeCovered; //Store for next iteration†
+                    tf.prevHoleCovered = currentFP; //Store for next iteration†
 
                     unsigned long additionDelay = getTransitionDelay(); //calculates an additional delay
                     tf.additionalDelay += additionDelay;
@@ -947,7 +946,7 @@ void debounceFingerHoles() {
                     Serial.println(" ");
                 }
 #endif
-                } else if (tf.timing && tf.prevHoleCovered == holeCovered) { //No changes from previous iteration, let's abbreviate the delay - the conditions here might be redundant
+                } else if (tf.timing && tf.prevHoleCovered.holeCovered == currentFP.holeCovered) { //No changes from previous iteration, let's abbreviate the delay - the conditions here might be redundant
                     
                     if (tf.iterations > 1) { //Sanity check against division by 0, just in case...
 
@@ -1041,7 +1040,7 @@ void debounceFingerHoles() {
 
             if (pitchBendMode != kPitchBendNone) {
                 //TODO holeLatched could be replaced by tf.newNoteHoleCovered
-                holeLatched = holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = currentFP.fp.holes;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;
@@ -1088,7 +1087,10 @@ void sendToConfig(bool newPattern, bool newPressure) {
         }
 
         if (patternChanged && (nowtime - patternSendTimer) > 25) {                              // If some time has past, send the new pattern to the Config Tool.
-            sendMIDICouplet(MIDI_CC_114, holeCovered >> 7, MIDI_CC_115, lowByte(holeCovered));  // Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDI(MIDI_SEND_HOLES_MSG);
+            sendMIDICouplet(MIDI_CC_114, currentFP.fp.holes >> 7, MIDI_CC_115, lowByte(currentFP.fp.holes));  // Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDI(MIDI_SEND_HALF_HOLES_MSG);
+            sendMIDICouplet(MIDI_CC_114, currentFP.fp.halfHoles >> 7, MIDI_CC_115, lowByte(currentFP.fp.halfHoles));  // Because it's MIDI we have to send it in two 7-bit chunks.
             patternChanged = false;
         }
 
@@ -1108,10 +1110,10 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 // Return a MIDI note number (0-127) based on the current fingering.
-byte getNote(unsigned int fingerPattern) {
+byte getNote(fingering_pattern_union_t fingerPattern) {
     byte ret = 127;  // Default (blank position)
 
-    uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
+    uint8_t tempCovered = fingerPattern.fp.holes >> 1;  // Bitshift once to ignore bell sensor reading.
 
 
     // Read the MIDI note for the current fingering (all charts except the custom ones).
@@ -1133,7 +1135,7 @@ byte getNote(unsigned int fingerPattern) {
     // Mep's EWI/Recorder
     if (modeSelector[mode] == kModeMepEWI || modeSelector[mode] == kModeMepRecorder ) {
 
-        tempCovered = (0b011111110 & fingerPattern) >> 1;  //ignore thumb hole and bell sensor
+        tempCovered = (0b011111110 & fingerPattern.fp.holes) >> 1;  //ignore thumb hole and bell sensor
 
         ret = charts[kModeMepEWI][tempCovered];
         
@@ -1142,7 +1144,7 @@ byte getNote(unsigned int fingerPattern) {
             Serial.println(ret);
         #endif
             if (modeSelector[mode] == kModeMepRecorder) {
-                if (holeStatus(THUMB_HOLE, holeCovered) == HOLE_STATUS_HALF) { //thumb hole half covered - 2nd and 3rd register
+                if (holeStatus(THUMB_HOLE, fingerPattern) == HOLE_STATUS_HALF) { //thumb hole half covered - 2nd and 3rd register
                     
                     switch (tempCovered) {
                         case 0b1101110: //Bb
@@ -1165,7 +1167,7 @@ byte getNote(unsigned int fingerPattern) {
                         default:
                             break;
                     }
-                } else if (!bitRead(holeCovered, THUMB_HOLE)) { //thumb hole uncovered
+                } else if (!bitRead(fingerPattern.fp.holes, THUMB_HOLE)) { //thumb hole uncovered
                     //Lots of homophonic positions here :)
                     switch (tempCovered) {
                         case 0b1111000: //B
@@ -1215,7 +1217,7 @@ byte getNote(unsigned int fingerPattern) {
                             // ret = -1;
                     }
 
-                } else if (bitRead(holeCovered, THUMB_HOLE)) { //thumb hole covered
+                } else if (bitRead(fingerPattern.fp.holes, THUMB_HOLE)) { //thumb hole covered
                     switch (tempCovered) {
                         case 0b1101111: //G trill position
                             ret = 67;
@@ -1233,7 +1235,7 @@ byte getNote(unsigned int fingerPattern) {
                 }
                 
             } else {
-                if (ret != 127 && bitRead(holeCovered, THUMB_HOLE)) { //thumb hole covered
+                if (ret != 127 && bitRead(fingerPattern.fp.holes, THUMB_HOLE)) { //thumb hole covered
                     ret += 12;
                 }
             }
@@ -1279,7 +1281,7 @@ void getShift() {
     }
     // Use the bell sensor to control register if desired.
     if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {
-        if (bitRead(holeCovered, 0) == switches[mode][INVERT]) {
+        if (bitRead(currentFP.fp.holes, 0) == switches[mode][INVERT]) {
             shift = shift + 12;
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
@@ -1289,7 +1291,7 @@ void getShift() {
 
     // ToDo: Are there any others that don't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
     else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-        if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
+        if (bitRead(currentFP.fp.holes, 8) == switches[mode][INVERT]) {
             shift = shift + 12;  // Add an octave jump to the transposition if necessary.
         }
     }
@@ -1309,7 +1311,7 @@ void getShift() {
 void getState() {
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
-    unsigned int tempHoleCovered = holeCovered;
+    unsigned int tempHoleCovered = currentFP.fp.holes;
     bitSet(tempHoleCovered, 8);                                  // Ignore thumb hole.
     scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate.
     if (scalePosition > 69) {
@@ -1521,8 +1523,8 @@ void getExpression() {
 
 // For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
-    unsigned int closedHolePattern = holeCovered;
-    bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole.
+    fingering_pattern_union_t closedHolePattern = currentFP;
+    bitSet(closedHolePattern.fp.holes, hole);  // Figure out what the fingering pattern would be if we closed the hole.
     int stepsOffset = getNote(closedHolePattern) - newNote;
     return stepsOffset;
 }
@@ -1564,7 +1566,7 @@ void handleCustomPitchBend() {
 
             if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
                 for (byte i = 2; i < 4; i++) {
-                    if ((toneholeRead[i] > senseDistance) && (bitRead(holeCovered, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
+                    if ((toneholeRead[i] > senseDistance) && (bitRead(currentFP.fp.holes, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
                         iPitchBend[i] = (int)((toneholeRead[i] - senseDistance) * vibratoScale[i]);
                     } else if (i != slideHoleIndex) {
                         iPitchBend[i] = 0;
@@ -1578,8 +1580,8 @@ void handleCustomPitchBend() {
 
             else if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
 
-                if ((holeCovered & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
-                    if (bitRead(holeCovered, 3) == 1) {
+                if ((currentFP.fp.holes & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
+                    if (bitRead(currentFP.fp.holes, 3) == 1) {
                         iPitchBend[3] = 0;
                     } else {  // Otherwise, bend down proportional to distance
                         if (toneholeRead[3] > senseDistance) {
@@ -1590,11 +1592,11 @@ void handleCustomPitchBend() {
                     }
                 } else {
 
-                    if ((toneholeRead[3] > senseDistance) && (bitRead(holeCovered, 3) != 1) && 3 != slideHoleIndex) {
+                    if ((toneholeRead[3] > senseDistance) && (bitRead(currentFP.fp.holes, 3) != 1) && 3 != slideHoleIndex) {
                         iPitchBend[3] = (int)((toneholeRead[3] - senseDistance) * vibratoScale[3]);
                     }
 
-                    else if ((toneholeRead[3] < senseDistance) || (bitRead(holeCovered, 3) == 1)) {
+                    else if ((toneholeRead[3] < senseDistance) || (bitRead(currentFP.fp.holes, 3) == 1)) {
                         iPitchBend[3] = 0;  // If the finger is removed or the hole is fully covered, there's no pitchbend contributed by that hole.
                     }
                 }
@@ -1606,11 +1608,13 @@ void handleCustomPitchBend() {
 
     else if (modeSelector[mode] == kModeGHB || modeSelector[mode] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
         for (byte i = 2; i < 4; i++) {                                                     // Use holes 2 and 3 for vibrato.
-            if (i != slideHoleIndex || (holeCovered & 0b100000000) == 0) {
+            if (i != slideHoleIndex || (currentFP.fp.holes & 0b100000000) == 0) {
                 static unsigned int testNote;                        // The hypothetical note that would be played if a finger were lowered all the way.
-                if (bitRead(holeCovered, i) != 1) {                  // If the hole is not fully covered
+                if (bitRead(currentFP.fp.holes, i) != 1) {                  // If the hole is not fully covered
                     if (fingersChanged) {                            // If the fingering pattern has changed
-                        testNote = getNote(bitSet(holeCovered, i));  // Check to see what the new note would be.
+                        fingering_pattern_union_t testPattern = currentFP;
+                        bitSet(testPattern.fp.holes, i);
+                        testNote = getNote(testPattern);  // Check to see what the new note would be.
                         fingersChanged = 0;
                     }
                     if (testNote == newNote) {  // If the hole is uncovered and covering the hole wouldn't change the current note (or the left thumb hole is uncovered, because that case isn't included in the fingering chart).
@@ -1625,7 +1629,7 @@ void handleCustomPitchBend() {
                 }
             }
         }
-        if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (holeCovered & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
+        if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (currentFP.fp.holes & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
             iPitchBend[2] = 0 - adjvibdepth;                                                                                                                 // Assign max vibrato depth to a hole that isn't being used for sliding.
             iPitchBend[3] = 0;
         }
@@ -1662,18 +1666,18 @@ void handlePitchBend() {
         if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0
             && (pitchBendMode == kPitchBendVibrato || (iPitchBend[i] == 0))) {
             if (toneholeRead[i] > senseDistance) {
-                if (bitRead(holeCovered, i) != 1) {
+                if (bitRead(currentFP.fp.holes, i) != 1) {
                     iPitchBend[i] = (int)(((toneholeRead[i] - senseDistance) * vibratoScale[i]));  //bend downward
                     pitchBendOn[i] = 1;
                 }
             } else {
                 pitchBendOn[i] = 0;
-                if (bitRead(holeCovered, i) == 1) {
+                if (bitRead(currentFP.fp.holes, i) == 1) {
                     iPitchBend[i] = 0;
                 }
             }
 
-            if (bitRead(holeCovered, i) == 1) {
+            if (bitRead(currentFP.fp.holes, i) == 1) {
                 iPitchBend[i] = adjvibdepth;  // Set vibrato to max downward bend if a hole was being used to bend down and now is covered
             }
         }
@@ -1704,7 +1708,7 @@ void getSlide() {
             }
 
             if (offsetSteps != 0
-                && bitRead(holeCovered, i) != 1
+                && bitRead(currentFP.fp.holes, i) != 1
                 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
                 iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // scale
                 /*
@@ -1804,7 +1808,7 @@ void sendNote() {
       && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&           // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
       !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
-      !(breathMode != kPressureBell && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
+      !(breathMode != kPressureBell && currentFP.fp.holes == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
     {
 
         int notewason = noteon;
@@ -1877,7 +1881,7 @@ void sendNote() {
         if (
           ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
+          (breathMode != kPressureBell && currentFP.fp.holes == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
                                                                                                                   // Keep track.
 
@@ -2203,14 +2207,16 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
 
                 else if (pressureReceiveMode <= MIDI_SWITCHES_VARS_END) {
-#if DEBUG_HH
-    Serial.print("Switches recv: ");
-    Serial.print((pressureReceiveMode - MIDI_SWITCHES_VARS_START));
-    Serial.print(" value: ");
-    Serial.println(value);
-#endif
+
                     switches[mode][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
+
                     loadPrefs();
+
+                    if ((pressureReceiveMode - MIDI_SWITCHES_VARS_START) == AUTO_OPTICAL_CALIBRATION) { //Saves immediately
+                        for (byte i = 0; i < 3; i++) { 
+                            writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)), switches[mode][AUTO_OPTICAL_CALIBRATION]);
+                        }
+                    }
                 }
 
                 else if (pressureReceiveMode == MIDI_BEND_RANGE) {
@@ -2254,11 +2260,20 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
             /////// CC 109
             if ((number == MIDI_CC_109 && value < kIMUnVariables)
-                || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
+                || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)
+                ) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
                 pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                      // Add to the value because lower pressureReceiveModes are used for other variables.
                 blinkNumber[GREEN_LED] = 0;
+            } else if (number == MIDI_CC_109 && value >= MIDI_HALF_HOLE_ENABLED_START && value <= MIDI_HALF_HOLE_ENABLED_END) {
+                bitSet(halfHoleSelector[mode], value - MIDI_HALF_HOLE_ENABLED_START);
+                loadPrefs();
             }
-
+            else if (number == MIDI_CC_109 && value >= MIDI_HALF_HOLE_DISABLED_START && value <= MIDI_HALF_HOLE_DISABLED_END) {
+                bitClear(halfHoleSelector[mode], value - MIDI_HALF_HOLE_DISABLED_START);
+                bitClear(currentFP.fp.halfHoles, value - MIDI_HALF_HOLE_DISABLED_START);
+                loadPrefs();
+            }
+            
 
             /////// CC 106
             if (number == MIDI_CC_106 && value > MIDI_ACTION_MIDI_CHANNEL_END) {
@@ -2477,7 +2492,7 @@ void handleButtons() {
 
     if (justPressed[0] && !pressed[2] && !pressed[1]) {
         if (ED[mode][DRONES_CONTROL_MODE] == 1) {
-            if (holeCovered >> 1 == 0b00001000) {  // Turn drones on/off if button 0 is pressed and fingering pattern is 0 0001000.
+            if (currentFP.fp.holes >> 1 == 0b00001000) {  // Turn drones on/off if button 0 is pressed and fingering pattern is 0 0001000.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 if (!dronesOn) {
@@ -2489,13 +2504,13 @@ void handleButtons() {
         }
 
         if (switches[mode][SECRET]) {
-            if (holeCovered >> 1 == 0b00010000) {  // Change pitchbend mode if button 0 is pressed and fingering pattern is 0 0000010.
+            if (currentFP.fp.holes >> 1 == 0b00010000) {  // Change pitchbend mode if button 0 is pressed and fingering pattern is 0 0000010.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 changePitchBend();
             }
 
-            else if (holeCovered >> 1 == 0b00000010) {  // Change instrument if button 0 is pressed and fingering pattern is 0 0000001.
+            else if (currentFP.fp.holes >> 1 == 0b00000010) {  // Change instrument if button 0 is pressed and fingering pattern is 0 0000001.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 changeInstrument();
@@ -2729,6 +2744,26 @@ void performAction(byte action) {
                 } else {
                     blinkNumber[RED_LED] = 1;
                 }
+                break;
+            }
+
+        case TOGGLE_AUTO_OPTICAL_CALIBRATION:
+            {
+                if (switches[mode][AUTO_OPTICAL_CALIBRATION] == 0) {
+                    switches[mode][AUTO_OPTICAL_CALIBRATION] = 1;
+                } else {
+                    switches[mode][AUTO_OPTICAL_CALIBRATION] = 0;
+                }
+                loadPrefs();
+
+                if (ac.enabled) {
+                    blinkNumber[GREEN_LED] = 1;
+                } else { 
+                    blinkNumber[RED_LED] = 1;
+                }
+
+                sendMIDICouplet(MIDI_CC_104, AUTO_OPTICAL_CALIBRATION + MIDI_SWITCHES_VARS_START, MIDI_CC_105, switches[mode][AUTO_OPTICAL_CALIBRATION]);
+
                 break;
             }
 
@@ -3046,6 +3081,11 @@ void sendSettings() {
         sendMIDICouplet(MIDI_CC_109, i, MIDI_CC_105, IMUsettings[mode][i]);
     }
 
+    //Half-holing
+    for (byte i = 0; i < 9; i++) {
+        sendMIDI(MIDI_CC_109_MSG, MIDI_HALF_HOLE_ENABLED_START + i + (10 * (bitRead(halfHoleSelector[mode], i))));  // Send enabled vibrato holes.
+    }
+
 }
 
 
@@ -3094,6 +3134,9 @@ void saveSettings(byte i) {
     for (byte n = 0; n < kSWITCHESnVariables; n++) {  // Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
         writeEEPROM((EEPROM_SWITCHES_START + i + (n * 3)), switches[mode][n]);
     }
+
+    writeEEPROM(EEPROM_HALF_HOLES_START + (i * 2), lowByte(halfHoleSelector[mode]));
+    writeEEPROM(EEPROM_HALF_HOLES_START + 1 + (i * 2), highByte(halfHoleSelector[mode]));
 
     writeEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2), lowByte(vibratoHolesSelector[mode]));
     writeEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2), highByte(vibratoHolesSelector[mode]));
@@ -3170,6 +3213,7 @@ void loadSettingsForAllModes() {
             switches[i][n] = readEEPROM(EEPROM_SWITCHES_START + i + (n * 3));
         }
 
+        halfHoleSelector[i] = word(readEEPROM(EEPROM_HALF_HOLES_START + 1 + (i * 2)), readEEPROM(EEPROM_HALF_HOLES_START + (i * 2)));
 
         vibratoHolesSelector[i] = word(readEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2)));
         vibratoDepthSelector[i] = word(readEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2)), readEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2)));
@@ -3226,7 +3270,6 @@ void loadPrefs() {
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
     tf.settingsDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
-    // tf.transientHalfThumbHoleDelay = (ED[mode][HALF_HOLE_TRANSIENT] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
@@ -3317,7 +3360,8 @@ void loadPrefs() {
         pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
     }
 
-    //Half Hole Prefs    
+    //Half Hole Prefs
+    hh.halfHoleSelector = halfHoleSelector[mode]; //Enabled holes
     //Window size params
     hh.lowWindowPerc = ((float) ED[mode][HALF_HOLE_LOW_PERC])/100.0f;
     hh.highWindowPerc = ((float) ED[mode][HALF_HOLE_HIGH_PERC])/100.0f;
@@ -3325,6 +3369,21 @@ void loadPrefs() {
 #if DEBUG_HH
     printHalfHoleSettings();
 #endif
+
+    //Auto calibration
+    if (ac.enabled != switches[mode][AUTO_OPTICAL_CALIBRATION]) {
+        ac.enabled = switches[mode][AUTO_OPTICAL_CALIBRATION];
+        if (!ac.enabled) {
+            loadCalibration(); //Reloads saved settings
+        }
+#if DEBUG_AUTO_CALIB
+    Serial.print("Auto calibration enabled: ");
+    Serial.println(ac.enabled);
+#endif
+    }
+
+
+
     
 }
 
@@ -3413,9 +3472,7 @@ void saveCalibration() {
 
 // Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
-    // for (byte i = 0; i < 9; i++) {
-    //     byte high = readEEPROM((i + 9) * 2);
-    //     byte low = readEEPROM(((i + 9) * 2) + 1);
+
     for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
@@ -3423,6 +3480,7 @@ void loadCalibration() {
         toneholeCovered[index] = word(high, low);
         toneholeBaseline[index] = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
     }
+
 }
 
 
@@ -3887,17 +3945,16 @@ void checkFirmwareVersion() {
 
             for (byte i = 0; i < 3; i++) {
 
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_ENABLED * 3)), 0);                                  // Initialize half thumb hole preferences as false (0) for all three modes.
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
-
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R3_ENABLED * 3)), 0);                                  // Initialize half r3 hole preferences as false (0) for all three modes.
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R3_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
-
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R4_ENABLED * 3)), 0);                                  // Initialize half r4 hole preferences as false (0) for all three modes.
-                writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_R4_ENABLED * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+                writeEEPROM(EEPROM_HALF_HOLES_START + (i * 2), 0); //Initialize half hole selector.
+                writeEEPROM(EEPROM_HALF_HOLES_START + 1 + (i * 2), 0);
+                writeEEPROM(EEPROM_HALF_HOLES_START + (i * 2) + EEPROM_FACTORY_SETTINGS_START, 0); //Same for factory settings.
+                writeEEPROM(EEPROM_HALF_HOLES_START + 1 + (i * 2) + EEPROM_FACTORY_SETTINGS_START, 0);
 
                 writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)), 0);                                  // Initialize half thumb hole invert preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)), 0);                                  // Initialize auto calibration preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
                 writeEEPROM((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)), HALF_HOLE_LOW_WINDOW_PERC); // Initialize half hole low window preferences at default value for all three modes.
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)) + EEPROM_FACTORY_SETTINGS_START), HALF_HOLE_LOW_WINDOW_PERC);  // Same for factory settings.

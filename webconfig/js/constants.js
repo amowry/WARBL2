@@ -213,11 +213,9 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_52 = 52; // Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
     const MIDI_CC_104_VALUE_54 = 54 //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
-    const MIDI_CC_104_VALUE_55 = 55 //  Bidirectional. Settings for current instrument: indicates that switches[15] is about to be sent with CC 105.
-    const MIDI_CC_104_VALUE_56 = 56 //  Bidirectional. Settings for current instrument: indicates that switches[16] is about to be sent with CC 105.
-    const MIDI_CC_104_VALUE_57 = 57 //  Bidirectional. Settings for current instrument: indicates that switches[17] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_55 = 55 //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
     //
-    /* 58-60 unused */
+    /* 55-60 unused */
 ; //
     /* 54-60 unused */
     const MIDI_CC_104_VALUE_61 = 61; // Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
@@ -404,7 +402,33 @@ const MIDI_CC_109 = 109; // From WARBL. Values as follows:
     const MIDI_CC_109_VALUE_30 = 30; // Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_31 = 31; // Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_32 = 32; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
-    /* 33-99	unused -- can be used to extend above array or for other variables */
+    /* 33-49	unused */
+
+    //Half-holing 
+    const MIDI_CC_109_VALUE_50 = 50  // Bidirectional. enable half-holing, 1
+    const MIDI_CC_109_VALUE_51 = 51  // Bidirectional. enable half-holing, 1
+    const MIDI_CC_109_VALUE_52 = 52  // Bidirectional. enable half-holing, 2
+    const MIDI_CC_109_VALUE_53 = 53  // Bidirectional. enable half-holing, 3
+    const MIDI_CC_109_VALUE_54 = 54  // Bidirectional. enable half-holing, 4
+    const MIDI_CC_109_VALUE_55 = 55  // Bidirectional. enable half-holing, 5
+    const MIDI_CC_109_VALUE_56 = 56  // Bidirectional. enable half-holing, 6
+    const MIDI_CC_109_VALUE_57 = 57  // Bidirectional. enable half-holing, 7
+    const MIDI_CC_109_VALUE_58 = 58  // Bidirectional. enable half-holing, 8
+    /* 59	unused */
+    const MIDI_CC_109_VALUE_60 = 60  // Bidirectional. disable half-holing, 1
+    const MIDI_CC_109_VALUE_61 = 61  // Bidirectional. disable half-holing, 1
+    const MIDI_CC_109_VALUE_62 = 62  // Bidirectional. disable half-holing, 2
+    const MIDI_CC_109_VALUE_63 = 63  // Bidirectional. disable half-holing, 3
+    const MIDI_CC_109_VALUE_64 = 64  // Bidirectional. disable half-holing, 4
+    const MIDI_CC_109_VALUE_65 = 65  // Bidirectional. disable half-holing, 5
+    const MIDI_CC_109_VALUE_66 = 66  // Bidirectional. disable half-holing, 6
+    const MIDI_CC_109_VALUE_67 = 67  // Bidirectional. disable half-holing, 7
+    const MIDI_CC_109_VALUE_68 = 68  // Bidirectional. disable half-holing, 8
+
+
+    const MIDI_CC_109_VALUE_69 = 69  // From WARBL. send holes on MIDI_CC_114 / 115
+    const MIDI_CC_109_VALUE_70 = 70  // From WARBL. send half-holes on MIDI_CC_114 / 115
+/* 71-99	unused -- can be used to extend above array or for other variables */
 
     const MIDI_CC_109_VALUE_100 = 100; // Bidirectional. Indicates that WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
     const MIDI_CC_109_VALUE_101 = 101; // Bidirectional. Indicates that WARBL2 custom fingering chart 2 is about to be sent on CC 105. 
@@ -471,7 +495,7 @@ const MIDI_PRESS_SELECT_VARS_END = MIDI_CC_104_VALUE_12; // Bidirectional. Setti
 const MIDI_ED_VARS_START = MIDI_CC_104_VALUE_13; // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105. 
 const MIDI_ED_VARS_END = MIDI_CC_104_VALUE_33; // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
 const MIDI_SWITCHES_VARS_START = MIDI_CC_104_VALUE_40; // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105. 
-const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_57; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_55; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 const MIDI_ED_VARS2_START = MIDI_CC_104_VALUE_70; // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105. 
 const MIDI_ED_VARS2_END = MIDI_CC_104_VALUE_97; // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
 const MIDI_ED_VARS_NUMBER = MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1; //ED array number of vars for the first slot
@@ -486,6 +510,17 @@ const MIDI_DIS_VIBRATO_HOLES_END = MIDI_CC_106_VALUE_38; //Bidirectional. disabl
 const MIDI_WARBL2_SETTINGS_START = MIDI_CC_106_VALUE_55; //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 const MIDI_WARBL2_SETTINGS_END = MIDI_CC_106_VALUE_74; //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 const MIDI_BUTTON_ACTIONS_START = MIDI_CC_106_VALUE_100; //Bidirectional. button action 0 
+
+const MIDI_HALF_HOLE_ENABLED_START = MIDI_CC_109_VALUE_50                                 // Beginning of half-hole enabled
+const MIDI_HALF_HOLE_ENABLED_END = MIDI_CC_109_VALUE_58                                   // End of half-hole enabled
+const MIDI_HALF_HOLE_ENABLED_OFFSET_START =  (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_ENABLED_START)  // Beginning of half-hole enabled
+const MIDI_HALF_HOLE_ENABLED_OFFSET_END =  (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_ENABLED_END)      // End of half-hole enabled
+
+const MIDI_HALF_HOLE_DISABLED_START = MIDI_CC_109_VALUE_60                                 // Beginning of half-hole enabled
+const MIDI_HALF_HOLE_DISABLED_END = MIDI_CC_109_VALUE_68                                   // End of half-hole enabled
+const MIDI_HALF_HOLE_DISABLED_OFFSET_START =  (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_DISABLED_START)  // Beginning of half-hole enabled
+const MIDI_HALF_HOLE_DISABLED_OFFSET_END =  (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_DISABLED_END)      // End of half-hole enabled
+
 
 const MIDI_CUSTOM_CHARTS_START = MIDI_CC_109_VALUE_100; //Beginning of WARBL2 CustomCharts
 const MIDI_CUSTOM_CHARTS_END = MIDI_CC_109_VALUE_103; //End of WARBL2 CustomCharts
@@ -506,6 +541,8 @@ const MIDI_USE_LEARNED_CALIB = MIDI_CC_106_VALUE_40; //Bidirectional. use learne
 const MIDI_BLE_INTERVAL_LSB = MIDI_CC_106_VALUE_72; //from WARBL. WARBL2 BLE connection interval low byte
 const MIDI_BLE_INTERVAL_MSB = MIDI_CC_106_VALUE_73; //from WARBL. WARBL2 BLE connection interval high byte
 
+const MIDI_SEND_HOLES = MIDI_CC_109_VALUE_69                // from Config Tool. WARBL2 send holes on 114 / 115
+const MIDI_SEND_HALF_HOLES = MIDI_CC_109_VALUE_70           // from Config Tool. WARBL2 send half-holes on 114 / 115
 //END of Human readable constants
 //END of constants To Be Sync'd with Defines.h in firmware
 

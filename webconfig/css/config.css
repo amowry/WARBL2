@@ -757,8 +757,8 @@ input {
 	position: absolute;
 	height: 40px !important;
 	width: 140px !important;
-	top: 120px;
-	left: 820px;
+	top: 90px;
+	left: 430px;
 }
 
 .centerYawbutton {
@@ -766,8 +766,8 @@ input {
 	position: absolute;
 	height: 40px !important;
 	width: 140px !important;
-	top: 180px;
-	left: 820px;
+	top: 160px;
+	left: 430px;
 }
 
 .battery {
@@ -775,8 +775,8 @@ input {
 	position: absolute;
 	height: 40px;
 	width: 140px;
-	top: 28px;
-	left: 780px;
+	top: 0px;
+	left: 810px;
 }
 
 
@@ -815,8 +815,8 @@ input {
 .percentage {
 	display: block;
 	position: absolute;
-	left: 900px;
-	top: 62px;
+	left: 930px;
+	top: 35px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -834,8 +834,8 @@ input {
 .voltageLabel {
 	display: block;
 	position: absolute;
-	left: 500px;
-	top: 220px;
+	left: 810px;
+	top: 105px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -849,8 +849,8 @@ input {
 	text-align: center;
 	width: 60px;
 	height: 21px;
-	left: 620px;
-	top: 216px;
+	left: 910px;
+	top: 100px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -866,8 +866,8 @@ input {
 .chargingLabel {
 	display: none;
 	position: absolute;
-	left: 90px;
-	top: 170px;
+	left: 760px;
+	top: 34px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -879,26 +879,40 @@ input {
 	display: block;
 	position: absolute;
 	left: 112px;
-	top: 220px;
+	top: 40px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 
+.autoCalibLabel {
+	display: block;
+	position: absolute;
+	left: 400px;
+	top: 245px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch28 {
+	top: 240px;
+	left:  550px;
+	z-index:100;
+}
 
 
 .hostLabel {
 	display: block;
 	position: absolute;
-	left: 450px;
-	top: 97px;
+	left: 755px;
+	top: 175px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 #switch19 {
-	top: 92px;
-	left:  615px;
+	top: 170px;
+	left:  920px;
 	z-index:100;
 }
 
@@ -907,8 +921,8 @@ input {
 	display: block;
 	position: absolute;
 	width: 300px;
-	top: 85px;
-	left: 80px;
+	top: 105px;
+	left: 40px;
 	padding: 0px;
 }
 
@@ -916,8 +930,8 @@ input {
 	display: block;
 	position: absolute;
 	width: 300px;
-	top: 60px;
-	left: 280px;
+	top: 145px;
+	left: 498px;
 	padding: 0px;
 }
 
@@ -4567,75 +4581,136 @@ ath {
 	left: 200px;
 }
 
-.halfThumbEnabledLabel {
+
+.halfHolesLabel {
 	display: block;
 	position: absolute;
+	left: 150px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHolesLT {
+	display: block;
+	position: absolute;
+	left: 30px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHolesR4 {
+	display: block;
+	position: absolute;
+	left: 400px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHoleSwitch {
+	position: absolute;
+	display: inline-block;
+	width: 50px;
+	height: 50px;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.halfHoleSwitch input {
+	display: none;
+}
+
+.halfHoleSlider {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--switch-bg-color);
+}
+
+.halfHoleSlider:before {
+	display: none;
+}
+
+input:checked + .halfHoleSlider {
+	background: var(--primary-color);
+}
+
+input:focus + .halfHoleSlider {
+	box-shadow: 0 0 1px var(--secondary-color);
+}
+
+input:checked + .halfHoleSlider:before {
+	display: none;
+}
+
+/* Rounded sliders */
+.halfHoleSlider.round {
+	border-radius: 30px;
+}
+
+.halfHoleSlider.round:before {
+	border-radius: 50%;
+}
+
+input:disabled + .halfHoleSlider {
+	background-color: #444;
+}
+
+input:disabled {
+	background-color: #444;
+}
+
+
+input:disabled + .halfHoleSlider:before {
+	border: solid 2px #444;
+}
+
+.halfHoles {
+	position: absolute;
+	display: block;
+	top: 120px;
+	height: 18px;
+	width: 18px;
+	background-color: var(--secondary-color);
+	border-radius: 50%;
+	z-index: 10;
+}
+
+
+.halfHole8 {
 	left: 40px;
-	top: 102px;
-	z-index: 99;
-	font-size: 14px;
 }
 
-#switch28 {
-	top: 98px;
-	left: 210px;
+.halfHole7 {
+	left: 91px;
 }
 
-.halfThumbEnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 102px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole6 {
+	left: 142px;
 }
 
-.halfR3EnabledLabel {
-	display: block;
-	position: absolute;
-	left: 55px;
-	top: 142px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole5 {
+	left: 193px;
 }
 
-#switch29 {
-	top: 138px;
-	left: 210px;
+.halfHole4 {
+	left: 244px;
 }
 
-.halfR3EnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 142px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole3 {
+	left: 295px;
 }
 
-#switch30 {
-	top: 178px;
-	left: 210px;
+.halfHole2 {
+	left: 346px;
 }
 
-.halfR4EnabledLabel {
-	display: block;
-	position: absolute;
-	left: 63px;
-	top: 182px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole1 {
+	left: 397px;
 }
-
-.halfR4EnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 182px;
-	z-index: 99;
-	font-size: 14px;
-}
-
 /* Advanced switch */
 #switch31 {
 	top: 400px;

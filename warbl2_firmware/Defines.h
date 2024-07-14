@@ -105,11 +105,9 @@
 #define THUMB_AND_OVERBLOW 11
 #define R4_FLATTEN 12
 #define BUTTON_DOUBLE_CLICK 13
-#define HALF_HOLE_THUMB_ENABLED 14
-#define HALF_HOLE_R3_ENABLED 15
-#define HALF_HOLE_R4_ENABLED 16
-#define HALF_HOLE_THUMB_INVERT 17
-#define kSWITCHESnVariables 18
+#define HALF_HOLE_THUMB_INVERT 14
+#define AUTO_OPTICAL_CALIBRATION 15
+#define kSWITCHESnVariables 16
 
 // Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
@@ -194,7 +192,8 @@
 #define POWER_DOWN 13
 #define RECENTER_YAW 14
 #define SHOW_BATTERY_LEVEL 15
-#define kACTIONSnVariables 16
+#define TOGGLE_AUTO_OPTICAL_CALIBRATION 16
+#define kACTIONSnVariables 17
 
 // Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
@@ -464,10 +463,8 @@
 #define MIDI_CC_104_VALUE_53 53  //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_54 54  //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_55 55  //  Bidirectional. Settings for current instrument: indicates that switches[15] is about to be sent with CC 105.
-#define MIDI_CC_104_VALUE_56 56  //  Bidirectional. Settings for current instrument: indicates that switches[16] is about to be sent with CC 105.
-#define MIDI_CC_104_VALUE_57 57  //  Bidirectional. Settings for current instrument: indicates that switches[17] is about to be sent with CC 105.
 //
-/* 58-60 unused */
+/* 55-60 unused */
 #define MIDI_CC_104_VALUE_61 61  //  Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
 #define MIDI_CC_104_VALUE_62 62  //  Bidirectional. Settings for current instrument: MIDI channel is about to be sent on CC 105
 /* 62-69 unused */
@@ -652,7 +649,33 @@
 #define MIDI_CC_109_VALUE_30 30  // Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105.
 #define MIDI_CC_109_VALUE_31 31  // Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105.
 #define MIDI_CC_109_VALUE_32 32  // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
-/* 33-99	unused -- can be used to extend above array or for other variables */
+/* 33-49	unused -- can be used to extend above array or for other variables */
+
+//Half-holing 
+#define MIDI_CC_109_VALUE_50 50  // Bidirectional. enable half-holing, 1
+#define MIDI_CC_109_VALUE_51 51  // Bidirectional. enable half-holing, 1
+#define MIDI_CC_109_VALUE_52 52  // Bidirectional. enable half-holing, 2
+#define MIDI_CC_109_VALUE_53 53  // Bidirectional. enable half-holing, 3
+#define MIDI_CC_109_VALUE_54 54  // Bidirectional. enable half-holing, 4
+#define MIDI_CC_109_VALUE_55 55  // Bidirectional. enable half-holing, 5
+#define MIDI_CC_109_VALUE_56 56  // Bidirectional. enable half-holing, 6
+#define MIDI_CC_109_VALUE_57 57  // Bidirectional. enable half-holing, 7
+#define MIDI_CC_109_VALUE_58 58  // Bidirectional. enable half-holing, 8
+/* 59	unused */
+#define MIDI_CC_109_VALUE_60 60  // Bidirectional. disable half-holing, 1
+#define MIDI_CC_109_VALUE_61 61  // Bidirectional. disable half-holing, 1
+#define MIDI_CC_109_VALUE_62 62  // Bidirectional. disable half-holing, 2
+#define MIDI_CC_109_VALUE_63 63  // Bidirectional. disable half-holing, 3
+#define MIDI_CC_109_VALUE_64 64  // Bidirectional. disable half-holing, 4
+#define MIDI_CC_109_VALUE_65 65  // Bidirectional. disable half-holing, 5
+#define MIDI_CC_109_VALUE_66 66  // Bidirectional. disable half-holing, 6
+#define MIDI_CC_109_VALUE_67 67  // Bidirectional. disable half-holing, 7
+#define MIDI_CC_109_VALUE_68 68  // Bidirectional. disable half-holing, 8
+
+#define MIDI_CC_109_VALUE_69 69  // From WARBL. send holes on MIDI_CC_114 / 115
+#define MIDI_CC_109_VALUE_70 70  // From WARBL. send half.holes on MIDI_CC_114 /115
+
+/* 71-99	unused */
 
 #define MIDI_CC_109_VALUE_100 100  // Bidirectional. Indicates that  WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
 #define MIDI_CC_109_VALUE_101 101  // Bidirectional. Indicates that  WARBL2 custom fingering chart 2 is about to be sent on CC 105.
@@ -697,6 +720,9 @@
 #define MIDI_CALIB_IMU MIDI_CC_106_VALUE_54                 // from Config Tool. WARBL2 calibrate IMU
 #define MIDI_CENTER_YAW MIDI_CC_106_VALUE_60                // from Config Tool. WARBL2 recenter yaw
 
+#define MIDI_SEND_HOLES MIDI_CC_109_VALUE_69                // from Config Tool. WARBL2 send holes on 114 / 115
+#define MIDI_SEND_HALF_HOLES MIDI_CC_109_VALUE_70           // from Config Tool. WARBL2 send half-holes on 114 / 115
+
 #define MIDI_STICKS_MODE MIDI_CC_111_VALUE_109  // Bidirectional. Hidden sticks mode - Same for 112 and 113
 
 /* START - END Values */
@@ -721,7 +747,7 @@
 #define MIDI_ED_VARS_START MIDI_CC_104_VALUE_13                         // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105.
 #define MIDI_ED_VARS_END MIDI_CC_104_VALUE_33                           // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                   // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
-#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_57                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_55                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
 #define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
@@ -736,6 +762,15 @@
 #define MIDI_WARBL2_SETTINGS_START MIDI_CC_106_VALUE_55    // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 #define MIDI_WARBL2_SETTINGS_END MIDI_CC_106_VALUE_74      // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 #define MIDI_BUTTON_ACTIONS_START MIDI_CC_106_VALUE_100    // Bidirectional. Button action 0
+
+#define MIDI_HALF_HOLE_ENABLED_START MIDI_CC_109_VALUE_50                                 // Beginning of half-hole enabled
+#define MIDI_HALF_HOLE_ENABLED_END MIDI_CC_109_VALUE_58                                   // End of half-hole enabled
+
+#define MIDI_HALF_HOLE_DISABLED_START MIDI_CC_109_VALUE_60                                 // Beginning of half-hole enabled
+#define MIDI_HALF_HOLE_DISABLED_END MIDI_CC_109_VALUE_68                                   // End of half-hole enabled
+#define MIDI_HALF_HOLE_DISABLED_OFFSET_START (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_DISABLED_START)  // Beginning of half-hole enabled
+#define MIDI_HALF_HOLE_DISABLED_OFFSET_END (MIDI_CC_109_OFFSET + MIDI_HALF_HOLE_DISABLED_END)      // End of half-hole enabled
+
 
 #define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                 // Beginning of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                   // End of WARBL2 CustomCharts
@@ -778,6 +813,10 @@
 
 /* Full sendMidi Args - WITH VALUES - <CONTROL_CHANGE, MIDI channel, CC Number, CC Value> */
 #define MIDI_CUSTOM_CHARTS_RCVD MIDI_CC_109_MSG, MIDI_CC_109_VALUE_100  //from WARBL. WARBL2 Custom fingering charts - indicate success
+#define MIDI_SEND_HOLES_MSG MIDI_CC_109_MSG, MIDI_SEND_HOLES  //from WARBL. Sends holeCovered
+#define MIDI_SEND_HALF_HOLES_MSG MIDI_CC_109_MSG, MIDI_SEND_HALF_HOLES  //from WARBL. Sends halfHoles
+
+
 
 //sendMIDICouplet *PARTIAL* Arguments
 #define MIDI_SEND_DRONES_PRESSURE_LSB MIDI_CC_104, MIDI_CC_104_VALUE_32, MIDI_CC_105     // Bidirectional. Settings for current instrument: Indicates that lsb of drones pressure is about to be sent on CC 105
@@ -791,7 +830,7 @@
 #define MIDI_SEND_BATTERY_CHARGE_STATUS MIDI_CC_106, MIDI_CC_106_VALUE_71, MIDI_CC_119  // from WARBL. WARBL2 charging status
 #define MIDI_SEND_BATTERY_CHARGE_PERC MIDI_CC_106, MIDI_CC_106_VALUE_74, MIDI_CC_119    // from WARBL. WARBL2 battery percentage
 
-#define MIDI_SEND_BUTTON_ACTION MIDI_CC_109, MIDI_CC_109_VALUE_127, MIDI_CC_105  // From WARBL. Indicates button/gesture action will be sent on CC 105
+#define MIDI_SEND_BUTTON_ACTION MIDI_CC_109, MIDI_CC_109_VALUE_127, MIDI_CC_105         // From WARBL. Indicates button/gesture action will be sent on CC 105
 
 
 
@@ -837,7 +876,13 @@
 #define EEPROM_BREATH_MODE_START 316      // breath mode - 3 bytes 316-318
 #define EEPROM_MIDI_BEND_RANGE_START 319  // MIDI bend range - 3 bytes 319-321
 #define EEPROM_MIDI_CHANNEL_START 322     // MIDI channel - 3 bytes 322-324
-/* 325-332 unused */
+
+#define EEPROM_HALF_HOLES_START 325     // values 0-1 low byte of enabled half holes for mode 0 (326 high byte) \
+                                        // 327 low byte of enabled vibrato holes for mode 1 (328 high byte) \
+                                        // 329 low byte of enabled vibrato holes for mode 2 (330 high byte)
+
+/* 331-332 unused */
+
 #define EEPROM_VIBRATO_HOLES_START 333      // values 0-1 low byte of enabled vibrato holes for mode 0 (334 high byte) \
                                             // 335 low byte of enabled vibrato holes for mode 1 (336 high byte) \
                                             // 337 low byte of enabled vibrato holes for mode 2 (338 high byte)

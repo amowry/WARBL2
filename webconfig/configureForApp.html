@@ -4,7 +4,7 @@
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
       var platform = "app";
       //var platform = "web";
-   </script>
+      </script>
    <head>
       <meta charset="utf-8" />
       <title>WARBL Configuration</title>
@@ -785,27 +785,42 @@
                     Half hole Preferences
                      <button type="button" class="infocircle" onClick="modal(31)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
-                     <div class="halfThumbEnabledLabel noTouch">Half Thumb hole Enabled</div>
-                     <label class="switch" id="switch28">
-                     <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendHalfThumbHoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfThumbEnabledExplainLabel noTouch" id="halfThumbEnabledExplainLabel">Raise 1 octave</div>
-                     
-                     <div class="halfR3EnabledLabel noTouch">Half R3 hole Enabled</div>
-                     <label class="switch" id="switch29">
-                     <input type="checkbox" class="checkboxes" id="checkbox29" onChange="sendHalfR3HoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfR3EnabledExplainLabel noTouch" id="halfR3EnabledExplainLabel">Raise base position by 1 st</div>
+                  <div class="halfHolesLabel noTouch">Select half-holing holes:</div>
+                  <div class="halfHolesLT noTouch">L thumb</div>
+                  <div class="halfHolesR4 noTouch">R4</div>
+                  <label class="halfHoleSwitch halfHoles halfHole8" id="halfHole8">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox8" onChange="sendHalfHoles(8, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole7" id="halfHole7">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox7" onChange="sendHalfHoles(7, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole6" id="halfHole6">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox6" onChange="sendHalfHoles(6, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole5" id="halfHole5">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox5" onChange="sendHalfHoles(5, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole4" id="halfHole4">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox4" onChange="sendHalfHoles(4, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole3" id="halfHole3">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox3" onChange="sendHalfHoles(3, this.checked)"/>
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole2" id="halfHole2">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox2" onChange="sendHalfHoles(2, this.checked)"/>
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole1" id="halfHole1">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox1" onChange="sendHalfHoles(1, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
 
-
-                     <div class="halfR4EnabledLabel noTouch">Half R4 hole Enabled</div>
-                     <label class="switch" id="switch30">
-                     <input type="checkbox" class="checkboxes" id="checkbox30" onChange="sendHalfR4HoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfR4EnabledExplainLabel noTouch" id="halfR4EnabledExplainLabel">Raise base position by 1 st</div>
 
                      <div class="halfAdvancedLabel noTouch">Advanced</div>
                      <label class="switch" id="switch31">
@@ -1339,11 +1354,6 @@
                     <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
                     <span class="slider round"></span>
                   </label>
-                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
-                  <label class="switch" id="switchDoubleClick">
-                    <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
-                    <span class="slider round"></span>
-                  </label>
                   <div class="momentaryLabel noTouch">Momentary</div>
                   <label class="switch" id="switch0">
                   <input type="checkbox" class="checkboxes" id="checkbox0" onChange="sendMomentary(0)" />
@@ -1390,6 +1400,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1410,6 +1421,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1430,6 +1442,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1450,6 +1463,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1470,6 +1484,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1490,6 +1505,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1510,6 +1526,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1530,6 +1547,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="WARBL2Elements">
@@ -1551,6 +1569,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Toggle Optical Auto Calibration</option>
                            </select>
                         </div>
                         <div class="styled-select blue semi-square">
@@ -1571,6 +1590,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Toggle Optical Auto Calibration</option>
                            </select>
                         </div>
                      </div>
@@ -1757,7 +1777,7 @@
             <div id="dot3" class="dots dot6"></div>
             <div id="dot2" class="dots dot7"></div>
             <div id="dot1" class="dots dot8"></div>
-            <button type="button" class="smallbutton noTouch submitcalibration" id="19" onClick="sendToWARBL(102,19)">Save fine calibration</button>
+            <button type="button" class="smallbutton noTouch submitcalibration" id="19" onClick="saveCalibration()">Save fine calibration</button>
             <button type="button" class="smallbutton noTouch autoCalibrate" id="autoCalibrate" onClick="autoCalibrate()">Auto-calibrate all sensors</button>
             <button type="button" class="smallbutton noTouch autoCalibrateBell" id="autoCalibrateBell" onClick="autoCalibrateBell()">Auto-calibrate bell sensor only</button>
             <button type="button" class="toprowbuttons button b1" id="18" onClick="sendToWARBL(102,18)"><img class = "info" src="img/angle-up.svg"></img></button>
@@ -1882,6 +1902,12 @@
                      57.83,49.544 65.126,34.935 60.58,34.935 62.917,23.453 55.617,38.063 59.945,38.063 57.609,49.544 " />
                </svg>
             </div>
+            <div class="autoCalibLabel noTouch" id="autoCalibLabel">Auto optical calibration</div>
+            <label class="switch" id="switch28">
+            <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendAutoCalib(this.checked)" />
+            <span class="slider round"></span>
+            </label>
+
             <button type="button" class="calibrateIMUbutton smallbutton noTouch" id="calibrateIMU" onClick="calibrateIMU()">Calibrate Gyro</button>
             <button type="button" class="centerYawbutton smallbutton noTouch" id="centerYaw" onClick="centerYaw()">Recenter Yaw</button>
             <div class="hostLabel noTouch">Charge from USB hosts</div>
@@ -2350,7 +2376,7 @@
                      The <b>battery voltage</b> is shown as a convenience, but the <b>percentage monitor</b> on the far right is usually a more reliable indicator of charge level. As mentioned previously, it is an estimate and becomes more accurate after letting the battery run all the way down (until the WARBL2 powers off) and then charging fully. When charging, a charging icon is shown next to the percentage monitor. If the charging icon is blinking, it may be an indicator of a battery fault such as very low or high temperatures or a battery that is too old to charge.           
                   </p>
                   <p>
-                     The BLE status is shown in the bottom left. When connected by BLE it will show the connection interval in milliseconds. 
+                     The BLE status is shown in the top left. When connected by BLE it will show the connection interval in milliseconds. 
                   </p>
                   <p>
                      If the WARBL2 is connected to both BLE and USB, you can choose whether to send MIDI data over either or both connections. If only one connection is available, that connection will be used regardless of this setting. The WARBL2 will also communicate with the Configuration Tool by all available connections regardless of this setting.
@@ -2363,6 +2389,10 @@
                   </p>
                   <p>
                      The gyroscope is calibrated when the WARBL2 is made, but you may wish to calibrate it again occasionally (especially if the roll and elevation seem to drift slightly when the WARBL2 is stationary). To do this, set the WARBL2 on a stationary surface and click <b>Calibrate Gyro</b> . If you are using IMU yaw to send MIDI data, you can recenter the yaw by clicking the button. You can also assign a button action to recentering the yaw in the Button Behavior panel, and there is also an option in the Yaw Mapping panel to automatically recenter the yaw when there is a break in notes.
+                  </p>
+                  <p>
+                     <b>Auto optical calibration</b> adjusts the sensitivity of the optical sensors to the player's playing style and grip on the instrument. Sensors calibration values are continously updated while playing, but they are not saved.<br />
+                     It is possibile to save the current auto-calibration by clicking on the "Save fine calibration" button.
                   </p>
                </div>
             </div>
@@ -2473,25 +2503,35 @@
            <h1>Half Hole Detection</h1>
            <div>
             <p>
-               For each selected finger, you can switch on and off the half-hole detection.
+               You can switch on and off the half-hole detection for each tonehole.
              </p>
              <p>
-               By default, the half-thumb position raises by 1 octave the corresponding finger position with an open thumb hole. This behaviour can be modifified in the "Advanced" settings.
+               By default, the half-thumb position raises by 1 octave the corresponding finger position with an open thumb hole. This behaviour can be inverted in the "Advanced" settings.
              </p>
              <p>
-                Half R3 or R4 holes raise by one semitone the "base" position only, the one with all higher holes closed, regardless of the thumb position. It is ignored (the hole is considered open or closed when normally is) in all other finger positions.
+                Half holes from L1 to R4 raise by one semitone the "base" position only, the one with all higher holes closed and the lower holes open, regardless of the thumb position. It is ignored (the hole is considered open or closed when normally is) in all other finger positions.
              </p>
-             <p>In the <b>Advanced</b> settings, it is possibile to invert the half-thumb effect. When inverted, the half-thumb will raise by 1 octave the corresponding position with a closed thumb hole.
+             <p>In the <b>Advanced</b> settings, it is possibile to invert the half-thumb effect: in this case the half-thumb will raise by 1 octave the corresponding position with a closed thumb hole.
              </p>
              <p>
                The two sliders in the Advanced settings modify the sensitivity of the half-hole detection, in the two cases when passing from half-hole to open, and from closed to half-hole. These values modify the two setpoints that determine the three different position (open-half-closed).<br />
                The "Defaults" button resets all advanced settings to their default values.
              </p>
-             <p>Please consider activating the Transient note filter for a better experience. The filter is dynamic and is capable of auto-sensing some of the player's gestures. In order to minimize the glitches while playing, the suggested transient note filter value is between 20 and 30.
+             <p>Please consider activating the Transient note filter for a better experience. The filter is dynamic and is capable of auto-sensing some of the player's gestures. In order to minimize the glitches while playing, the suggested transient note filter value is between 15 and 30.
              </p>
            </div>
          </div>
        </div>
+       <div id="open-modal32" onClick="" class="modal-window">
+         <div id="modal-center32">
+            <h1></h1>
+            <div>Auto optical calibration is active. <br />Are you sure you want to save current calibration values?</div>
+            <div class="modal-footer">
+               <button type="submit" class="smallbutton noTouch okay" onClick="sendToWARBL(MIDI_CC_102, MIDI_SAVE_CALIB);modalclose(32);">OK</button>
+               <button type="button" class="smallbutton noTouch cancel" onClick="modalclose(32);">Cancel</button>
+            </div>
+         </div>
+      </div>
       </div>
    </body>
    <script src="js/jquery-3.3.1.min.js"></script>
