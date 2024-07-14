@@ -156,6 +156,11 @@ void getSensors(void) {
 
 
 
+
+    if (ac.enabled) {
+        xSemaphoreTake(ac.mutex, portMAX_DELAY);
+    }
+
     for (byte i = 0; i < 9; i++) {
 
         if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
@@ -171,6 +176,8 @@ void getSensors(void) {
             ac.toneholeCoveredSampleCounter[i]++;
         }
     }
+
+    xSemaphoreGive(ac.mutex);
 
     //Autocalibration
     if (ac.enabled && ac.timer ++ >= AUTO_CALIB_INTERVAL) {  //check baseline every so often,
