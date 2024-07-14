@@ -526,7 +526,7 @@ const MIDI_SEND_CENTER_ROLL = MIDI_CC_109_VALUE_3; // Bidirectional. Settings fo
 const MIDI_SEND_CENTER_YAW = MIDI_CC_109_VALUE_4; // Bidirectional. Settings for current instrument: indicates IMUsettings[4] is about to be sent with CC 105. 
 
 const MIDI_IMU_CHANNEL_START = MIDI_CC_109_VALUE_17; // Bidirectional. Settings for current instrument: indicates IMUsettings[17] is about to be sent with CC 105. 
-const MIDI_IMU_CC_START = MIDI_CC_109_VALUE_19; // Bidirectional. Settings for current instrument: indicates IMUsettings[19] is about to be sent with CC 105. 
+const MIDI_IMU_CC_START = MIDI_CC_109_VALUE_20; // Bidirectional. Settings for current instrument: indicates IMUsettings[20] is about to be sent with CC 105. 
 
 const MIDI_AUTOCENTER_YAW = MIDI_CC_109_VALUE_23; // Bidirectional. Settings for current instrument: indicates IMUsettings[23] is about to be sent with CC 105. 
 const MIDI_Y_SHAKE_PITCHBEND = MIDI_CC_109_VALUE_24; // Bidirectional. Settings for current instrument: indicates IMUsettings[24] is about to be sent with CC 105. 
