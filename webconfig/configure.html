@@ -785,27 +785,42 @@
                     Half hole Preferences
                      <button type="button" class="infocircle" onClick="modal(31)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
-                     <div class="halfThumbEnabledLabel noTouch">Half Thumb hole Enabled</div>
-                     <label class="switch" id="switch28">
-                     <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendHalfThumbHoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfThumbEnabledExplainLabel noTouch" id="halfThumbEnabledExplainLabel">Raise 1 octave</div>
-                     
-                     <div class="halfR3EnabledLabel noTouch">Half R3 hole Enabled</div>
-                     <label class="switch" id="switch29">
-                     <input type="checkbox" class="checkboxes" id="checkbox29" onChange="sendHalfR3HoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfR3EnabledExplainLabel noTouch" id="halfR3EnabledExplainLabel">Raise base position by 1 st</div>
+                  <div class="halfHolesLabel noTouch">Select half-holing holes:</div>
+                  <div class="halfHolesLT noTouch">L thumb</div>
+                  <div class="halfHolesR4 noTouch">R4</div>
+                  <label class="halfHoleSwitch halfHoles halfHole8" id="halfHole8">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox8" onChange="sendHalfHoles(8, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole7" id="halfHole7">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox7" onChange="sendHalfHoles(7, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole6" id="halfHole6">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox6" onChange="sendHalfHoles(6, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole5" id="halfHole5">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox5" onChange="sendHalfHoles(5, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole4" id="halfHole4">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox4" onChange="sendHalfHoles(4, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole3" id="halfHole3">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox3" onChange="sendHalfHoles(3, this.checked)"/>
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole2" id="halfHole2">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox2" onChange="sendHalfHoles(2, this.checked)"/>
+                  <span class="halfHoleSlider round"></span>
+                  </label>
+                  <label class="halfHoleSwitch halfHoles halfHole1" id="halfHole1">
+                  <input type="checkbox" class="halfHoleCheckboxes" id="halfHoleCheckbox1" onChange="sendHalfHoles(1, this.checked)" />
+                  <span class="halfHoleSlider round"></span>
+                  </label>
 
-
-                     <div class="halfR4EnabledLabel noTouch">Half R4 hole Enabled</div>
-                     <label class="switch" id="switch30">
-                     <input type="checkbox" class="checkboxes" id="checkbox30" onChange="sendHalfR4HoleEnabled(this.checked)" />
-                     <span class="slider round"></span>
-                     </label>
-                     <div class="halfR4EnabledExplainLabel noTouch" id="halfR4EnabledExplainLabel">Raise base position by 1 st</div>
 
                      <div class="halfAdvancedLabel noTouch">Advanced</div>
                      <label class="switch" id="switch31">
@@ -2473,21 +2488,21 @@
            <h1>Half Hole Detection</h1>
            <div>
             <p>
-               For each selected finger, you can switch on and off the half-hole detection.
+               You can switch on and off the half-hole detection for each tonehole.
              </p>
              <p>
-               By default, the half-thumb position raises by 1 octave the corresponding finger position with an open thumb hole. This behaviour can be modifified in the "Advanced" settings.
+               By default, the half-thumb position raises by 1 octave the corresponding finger position with an open thumb hole. This behaviour can be inverted in the "Advanced" settings.
              </p>
              <p>
-                Half R3 or R4 holes raise by one semitone the "base" position only, the one with all higher holes closed, regardless of the thumb position. It is ignored (the hole is considered open or closed when normally is) in all other finger positions.
+                Half holes from L1 to R4 raise by one semitone the "base" position only, the one with all higher holes closed and the lower holes open, regardless of the thumb position. It is ignored (the hole is considered open or closed when normally is) in all other finger positions.
              </p>
-             <p>In the <b>Advanced</b> settings, it is possibile to invert the half-thumb effect. When inverted, the half-thumb will raise by 1 octave the corresponding position with a closed thumb hole.
+             <p>In the <b>Advanced</b> settings, it is possibile to invert the half-thumb effect: in this case the half-thumb will raise by 1 octave the corresponding position with a closed thumb hole.
              </p>
              <p>
                The two sliders in the Advanced settings modify the sensitivity of the half-hole detection, in the two cases when passing from half-hole to open, and from closed to half-hole. These values modify the two setpoints that determine the three different position (open-half-closed).<br />
                The "Defaults" button resets all advanced settings to their default values.
              </p>
-             <p>Please consider activating the Transient note filter for a better experience. The filter is dynamic and is capable of auto-sensing some of the player's gestures. In order to minimize the glitches while playing, the suggested transient note filter value is between 20 and 30.
+             <p>Please consider activating the Transient note filter for a better experience. The filter is dynamic and is capable of auto-sensing some of the player's gestures. In order to minimize the glitches while playing, the suggested transient note filter value is between 15 and 30.
              </p>
            </div>
          </div>

@@ -261,7 +261,7 @@ unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 }
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
 
-unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
+fingering_pattern_union_t currentFP = {0};                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
 bool fingersChanged = 1;  
 
 byte prevNote = 127; //UNUSED?
@@ -270,7 +270,9 @@ byte newNote = 127;             // The next note to be played, based on the fing
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 
 transition_filter_t tf;
-half_hole_detection_t hh;  //Half-Hole Detecion
+half_hole_detection_t hh;  //Half-Hole Detection
+unsigned int halfHoleSelector[] = { 0, 0, 0 };
+
 
 #if BASELINE_AUTO_CALIBRATION
 auto_calibration_t ac; //Baseline Autocalibration

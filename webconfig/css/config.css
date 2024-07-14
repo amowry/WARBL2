@@ -4567,75 +4567,136 @@ ath {
 	left: 200px;
 }
 
-.halfThumbEnabledLabel {
+
+.halfHolesLabel {
 	display: block;
 	position: absolute;
+	left: 150px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHolesLT {
+	display: block;
+	position: absolute;
+	left: 30px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHolesR4 {
+	display: block;
+	position: absolute;
+	left: 400px;
+	top: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfHoleSwitch {
+	position: absolute;
+	display: inline-block;
+	width: 50px;
+	height: 50px;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.halfHoleSwitch input {
+	display: none;
+}
+
+.halfHoleSlider {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--switch-bg-color);
+}
+
+.halfHoleSlider:before {
+	display: none;
+}
+
+input:checked + .halfHoleSlider {
+	background: var(--primary-color);
+}
+
+input:focus + .halfHoleSlider {
+	box-shadow: 0 0 1px var(--secondary-color);
+}
+
+input:checked + .halfHoleSlider:before {
+	display: none;
+}
+
+/* Rounded sliders */
+.halfHoleSlider.round {
+	border-radius: 30px;
+}
+
+.halfHoleSlider.round:before {
+	border-radius: 50%;
+}
+
+input:disabled + .halfHoleSlider {
+	background-color: #444;
+}
+
+input:disabled {
+	background-color: #444;
+}
+
+
+input:disabled + .halfHoleSlider:before {
+	border: solid 2px #444;
+}
+
+.halfHoles {
+	position: absolute;
+	display: block;
+	top: 120px;
+	height: 18px;
+	width: 18px;
+	background-color: var(--secondary-color);
+	border-radius: 50%;
+	z-index: 10;
+}
+
+
+.halfHole8 {
 	left: 40px;
-	top: 102px;
-	z-index: 99;
-	font-size: 14px;
 }
 
-#switch28 {
-	top: 98px;
-	left: 210px;
+.halfHole7 {
+	left: 91px;
 }
 
-.halfThumbEnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 102px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole6 {
+	left: 142px;
 }
 
-.halfR3EnabledLabel {
-	display: block;
-	position: absolute;
-	left: 55px;
-	top: 142px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole5 {
+	left: 193px;
 }
 
-#switch29 {
-	top: 138px;
-	left: 210px;
+.halfHole4 {
+	left: 244px;
 }
 
-.halfR3EnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 142px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole3 {
+	left: 295px;
 }
 
-#switch30 {
-	top: 178px;
-	left: 210px;
+.halfHole2 {
+	left: 346px;
 }
 
-.halfR4EnabledLabel {
-	display: block;
-	position: absolute;
-	left: 63px;
-	top: 182px;
-	z-index: 99;
-	font-size: 14px;
+.halfHole1 {
+	left: 397px;
 }
-
-.halfR4EnabledExplainLabel {
-	display: block;
-	position: absolute;
-	left: 275px;
-	top: 182px;
-	z-index: 99;
-	font-size: 14px;
-}
-
 /* Advanced switch */
 #switch31 {
 	top: 400px;

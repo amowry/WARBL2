@@ -1,3 +1,4 @@
+#include <stdint.h>
 
 /*
 * Temp half holing definitions and globals
@@ -10,8 +11,8 @@
 #define DEBOUNCE_INTERVAL_MULTIPLIER 0.1f // Portion of transient note delay to be added for each semitone interval
 #define DEBOUNCE_POPCOUNT_MULTIPLIER 0.25f // Portion of transient note delay to be added for each changed finger
 #define DEBOUNCE_HALFHOLE_ENTER_MULTIPLIER 2.0f // Portion of transient note delay to be added when a tonehole is going to half-hole position
-#define DEBOUNCE_HALFHOLE_EXIT_MULTIPLIER 1.5f // Portion of transient note delay to be added when a tonehole is leaving half-hole position
-#define DEBOUNCE_DELAY_REDUCE 0.25f // Factor that determines how much delay we subtract from current debounce timer, if no change is seen
+#define DEBOUNCE_HALFHOLE_EXIT_MULTIPLIER 2.0f // Portion of transient note delay to be added when a tonehole is leaving half-hole position
+#define DEBOUNCE_DELAY_REDUCE 0.20f // Factor that determines how much delay we subtract from current debounce timer, if no change is seen
 
 
 //Hole status for holeStatus()
@@ -20,10 +21,14 @@
 #define HOLE_STATUS_HALF 2
 
 #define THUMB_HOLE                8
-#define R4_HOLE                   1
+#define L1_HOLE                   7
+#define L2_HOLE                   6
+#define L3_HOLE                   5
+#define R1_HOLE                   4
+#define R2_HOLE                   3
 #define R3_HOLE                   2
+#define R4_HOLE                   1
 
-#define HALF_HOLE_BIT_OFFSET      TONEHOLE_SENSOR_NUMBER //The initial bit for setting the bit of half hole in holeCovered. See getFingers() and getHalfHoleShift();
 
 #define HOLE_COVERED_OFFSET      50 //For determining hole closed // from original firmware
 #define HOLE_OPEN_OFFSET         54  //For determining hole open // from original firmware
@@ -61,14 +66,24 @@ struct auto_calibration_t {
 };
 #endif
 
+struct fingering_pattern_t {
+    uint16_t holes = 0; //Use this for toneHoles open/closed
+    uint16_t halfHoles = 0; //Use this for thoneHoles half-covered
+};
+
+union fingering_pattern_union_t {
+    uint32_t holeCovered; //Use this for generic fingering change trigger
+    fingering_pattern_t fp; //Contains fingering Pattern
+};
+
 //Struct to contains all the variables related to debounceFingers
 struct transition_filter_t {
 
     byte tempNewNote = 127; //Holds the pending note during a fingering transition
     byte prevPendingNote = 127; //Holds the pending note during a fingering transition
     
-    unsigned int prevHoleCovered = 1; // So we can track changes.
-    unsigned int newNoteHoleCovered = 1; //Keeps track of holes for currently debounced note - newNote
+    fingering_pattern_union_t prevHoleCovered = {0}; // So we can track changes.
+    fingering_pattern_union_t newNoteHoleCovered = {0}; //Keeps track of holes for currently debounced note - newNote
 
     unsigned long timer = 0; //Starting timestamp of transition timer
     unsigned long delta = 0; //Time elapsed since timer started
@@ -88,7 +103,9 @@ struct transition_filter_t {
 //HALF HOLE DETECTION
 struct half_hole_detection_t {
 
-    unsigned int prevHoleCovered = 1; // So we can track changes.
+    unsigned int halfHoleSelector = 0; //toneHole with enabled half-holing
+    
+    fingering_pattern_union_t prevHoleCovered = {0}; // So we can track changes.
     byte prevHoleStatus[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  //This stores previous hole status for Half-hole detection
 
     float lowWindowPerc = (float) HALF_HOLE_LOW_WINDOW_PERC / 100.0f; //Percentage of toneHoleCovered dedicated to open hole
@@ -106,6 +123,7 @@ struct half_hole_detection_t {
  * If finger pattern is provided, it bases its return value on it
  * otherwise, it is based on current sensor readings
  */
-byte holeStatus(byte hole, unsigned int fingerPattern = 0xFFFFFFFF);
+
+byte holeStatus(byte hole, fingering_pattern_union_t fingerPattern = {0xFFFFFFFF});
 
 
