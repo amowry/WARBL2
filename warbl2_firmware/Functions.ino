@@ -50,11 +50,6 @@ void printFingering(fingering_pattern_union_t fingering) {
 void printHalfHoleSettings() {
     Serial.println("Half Hole Settings: ");
 
-#if BASELINE_AUTO_CALIBRATION
-    Serial.print("\tCorrection: ");
-    Serial.println(hh.correction);
-#endif
-
     Serial.print("\tLow Window: ");
     Serial.println(hh.lowWindowPerc);
     Serial.print("\tHigh Window: ");
@@ -163,13 +158,6 @@ void getSensors(void) {
 
     for (byte i = 0; i < 9; i++) {
 
-#if BASELINE_AUTO_CALIBRATION
-        //For baseline auto-calibration
-        if (!noteon && ac.toneholeBaselineCurrent[i] > toneholeRead[i]) {  //baseline calibration
-            ac.toneholeBaselineCurrent[i] = toneholeRead[i];
-        } 
-#endif
-
         if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
             toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
         }
@@ -177,15 +165,18 @@ void getSensors(void) {
             toneholeRead[i] = 0;
         }
 
+        //for toneholeCovered auto-calibration 
+        if (ac.enabled && noteon && holeStatus(i) == HOLE_STATUS_CLOSED) { //Calculate mean value in the sampling window, only when playing
+            ac.toneholeCoveredCurrentMean[i] += toneholeRead[i];
+            ac.toneholeCoveredSampleCounter[i]++;
+        }
     }
 
-#if BASELINE_AUTO_CALIBRATION
-    //Autocalibration for half hole detection
-    if (ac.timer ++ >= BASELINE_AVRG_INTERVAL) {  //check baseline every so often,
+    //Autocalibration
+    if (ac.enabled && ac.timer ++ >= AUTO_CALIB_INTERVAL) {  //check baseline every so often,
         ac.timer = 0;
-        baselineUpdate();
+        calibrationUpdate();
     }
-#endif
 }
 
 
@@ -740,11 +731,10 @@ void getFingers() {
     hh.prevHoleCovered = currentFP; //holeCovered; //For debouncing Half-holing
 
     for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i]) > (toneholeCovered[i] - HOLE_COVERED_OFFSET)) {
-            bitWrite(currentFP.fp.holes, i, 1);  // Use the tonehole readings to decide which holes are covered
-        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - HOLE_OPEN_OFFSET)) {
-            bitWrite(currentFP.fp.holes, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
-        }
+        byte status = holeBaseStatus(i);
+        if (status == HOLE_STATUS_CLOSED || status == HOLE_STATUS_OPEN) { //It could be ND
+            bitWrite(currentFP.fp.holes, i, status);  // Use the tonehole readings to decide which holes are covered
+        } 
     }
 }
 
@@ -2217,14 +2207,16 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
 
                 else if (pressureReceiveMode <= MIDI_SWITCHES_VARS_END) {
-#if DEBUG_HH
-    Serial.print("Switches recv: ");
-    Serial.print((pressureReceiveMode - MIDI_SWITCHES_VARS_START));
-    Serial.print(" value: ");
-    Serial.println(value);
-#endif
+
                     switches[mode][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
+
                     loadPrefs();
+
+                    if ((pressureReceiveMode - MIDI_SWITCHES_VARS_START) == AUTO_OPTICAL_CALIBRATION) { //Saves immediately
+                        for (byte i = 0; i < 3; i++) { 
+                            writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)), switches[mode][AUTO_OPTICAL_CALIBRATION]);
+                        }
+                    }
                 }
 
                 else if (pressureReceiveMode == MIDI_BEND_RANGE) {
@@ -2755,6 +2747,26 @@ void performAction(byte action) {
                 break;
             }
 
+        case TOGGLE_AUTO_OPTICAL_CALIBRATION:
+            {
+                if (switches[mode][AUTO_OPTICAL_CALIBRATION] == 0) {
+                    switches[mode][AUTO_OPTICAL_CALIBRATION] = 1;
+                } else {
+                    switches[mode][AUTO_OPTICAL_CALIBRATION] = 0;
+                }
+                loadPrefs();
+
+                if (ac.enabled) {
+                    blinkNumber[GREEN_LED] = 1;
+                } else { 
+                    blinkNumber[RED_LED] = 1;
+                }
+
+                sendMIDICouplet(MIDI_CC_104, AUTO_OPTICAL_CALIBRATION + MIDI_SWITCHES_VARS_START, MIDI_CC_105, switches[mode][AUTO_OPTICAL_CALIBRATION]);
+
+                break;
+            }
+
         default:
             return;
     }
@@ -3258,7 +3270,6 @@ void loadPrefs() {
     midiBendRange = midiBendRangeSelector[mode];
     mainMidiChannel = midiChannelSelector[mode];
     tf.settingsDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
-    // tf.transientHalfThumbHoleDelay = (ED[mode][HALF_HOLE_TRANSIENT] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
     offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
@@ -3358,6 +3369,21 @@ void loadPrefs() {
 #if DEBUG_HH
     printHalfHoleSettings();
 #endif
+
+    //Auto calibration
+    if (ac.enabled != switches[mode][AUTO_OPTICAL_CALIBRATION]) {
+        ac.enabled = switches[mode][AUTO_OPTICAL_CALIBRATION];
+        if (!ac.enabled) {
+            loadCalibration(); //Reloads saved settings
+        }
+#if DEBUG_AUTO_CALIB
+    Serial.print("Auto calibration enabled: ");
+    Serial.println(ac.enabled);
+#endif
+    }
+
+
+
     
 }
 
@@ -3446,9 +3472,7 @@ void saveCalibration() {
 
 // Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
-    // for (byte i = 0; i < 9; i++) {
-    //     byte high = readEEPROM((i + 9) * 2);
-    //     byte low = readEEPROM(((i + 9) * 2) + 1);
+
     for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
@@ -3456,6 +3480,7 @@ void loadCalibration() {
         toneholeCovered[index] = word(high, low);
         toneholeBaseline[index] = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
     }
+
 }
 
 
@@ -3927,6 +3952,9 @@ void checkFirmwareVersion() {
 
                 writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)), 0);                                  // Initialize half thumb hole invert preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (HALF_HOLE_THUMB_INVERT * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
+
+                writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)), 0);                                  // Initialize auto calibration preferences as false (0) for all three modes.
+                writeEEPROM((EEPROM_SWITCHES_START + i + (AUTO_OPTICAL_CALIBRATION * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
                 writeEEPROM((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)), HALF_HOLE_LOW_WINDOW_PERC); // Initialize half hole low window preferences at default value for all three modes.
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (HALF_HOLE_LOW_PERC * 3)) + EEPROM_FACTORY_SETTINGS_START), HALF_HOLE_LOW_WINDOW_PERC);  // Same for factory settings.

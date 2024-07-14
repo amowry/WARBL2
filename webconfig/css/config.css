@@ -757,8 +757,8 @@ input {
 	position: absolute;
 	height: 40px !important;
 	width: 140px !important;
-	top: 120px;
-	left: 820px;
+	top: 90px;
+	left: 430px;
 }
 
 .centerYawbutton {
@@ -766,8 +766,8 @@ input {
 	position: absolute;
 	height: 40px !important;
 	width: 140px !important;
-	top: 180px;
-	left: 820px;
+	top: 160px;
+	left: 430px;
 }
 
 .battery {
@@ -775,8 +775,8 @@ input {
 	position: absolute;
 	height: 40px;
 	width: 140px;
-	top: 28px;
-	left: 780px;
+	top: 0px;
+	left: 810px;
 }
 
 
@@ -815,8 +815,8 @@ input {
 .percentage {
 	display: block;
 	position: absolute;
-	left: 900px;
-	top: 62px;
+	left: 930px;
+	top: 35px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -834,8 +834,8 @@ input {
 .voltageLabel {
 	display: block;
 	position: absolute;
-	left: 500px;
-	top: 220px;
+	left: 810px;
+	top: 105px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -849,8 +849,8 @@ input {
 	text-align: center;
 	width: 60px;
 	height: 21px;
-	left: 620px;
-	top: 216px;
+	left: 910px;
+	top: 100px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -866,8 +866,8 @@ input {
 .chargingLabel {
 	display: none;
 	position: absolute;
-	left: 90px;
-	top: 170px;
+	left: 760px;
+	top: 34px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -879,26 +879,40 @@ input {
 	display: block;
 	position: absolute;
 	left: 112px;
-	top: 220px;
+	top: 40px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 
+.autoCalibLabel {
+	display: block;
+	position: absolute;
+	left: 400px;
+	top: 245px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switch28 {
+	top: 240px;
+	left:  550px;
+	z-index:100;
+}
 
 
 .hostLabel {
 	display: block;
 	position: absolute;
-	left: 450px;
-	top: 97px;
+	left: 755px;
+	top: 175px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 #switch19 {
-	top: 92px;
-	left:  615px;
+	top: 170px;
+	left:  920px;
 	z-index:100;
 }
 
@@ -907,8 +921,8 @@ input {
 	display: block;
 	position: absolute;
 	width: 300px;
-	top: 85px;
-	left: 80px;
+	top: 105px;
+	left: 40px;
 	padding: 0px;
 }
 
@@ -916,8 +930,8 @@ input {
 	display: block;
 	position: absolute;
 	width: 300px;
-	top: 60px;
-	left: 280px;
+	top: 145px;
+	left: 498px;
 	padding: 0px;
 }
 

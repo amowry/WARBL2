@@ -1234,6 +1234,12 @@ function WARBL_Receive(event) {
 						updateHalfHolePrefs();
                     } //HALF_HOLE_THUMB_INVERT
 
+                    else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +15) {
+                        document.getElementById("checkbox28").checked = data2;
+						updateHalfHolePrefs();
+                    } //AUTO_OPTICAL_CALIBRATION
+
+
                     else if (jumpFactorWrite == MIDI_BEND_RANGE) {
                         document.getElementById("midiBendRange").value = data2;
                     }
@@ -1594,9 +1600,10 @@ function WARBL_Receive(event) {
 
                         for (i = 0; i < 8; ++i) {
 
-                            document.getElementById("row" + i).options[13].disabled = true; //disable Power down, recenter yaw, batt level options
+                            document.getElementById("row" + i).options[13].disabled = true; //disable Power down, recenter yaw, batt level options and auto calib
                             document.getElementById("row" + i).options[14].disabled = true;
 							document.getElementById("row" + i).options[15].disabled = true;
+							document.getElementById("row" + i).options[16].disabled = true;
 
                             var opt = document.getElementById("autoCal" + i); //Change autocalibrate option value to 19 to work with original WARBL firmware
                             opt.value = '19';
@@ -1618,9 +1625,10 @@ function WARBL_Receive(event) {
 
                         for (i = 0; i < 8; ++i) {
 
-                            document.getElementById("row" + i).options[13].disabled = false; //disable Power down and recenter yaw options
+                            document.getElementById("row" + i).options[13].disabled = false; //enable Power down, recenter yaw  and auto caliboptions
                             document.getElementById("row" + i).options[14].disabled = false;
 							document.getElementById("row" + i).options[15].disabled = false;
+							document.getElementById("row" + i).options[16].disabled = false;
                             var opt = document.getElementById("autoCal" + i); //Change autocalibrate option value to 19 to work with original WARBL firmware
                             opt.value = '12';
                         }
@@ -3502,6 +3510,7 @@ function sendInvert(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+
 function sendCustom(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
@@ -3621,6 +3630,13 @@ function sendHalfThumbInvert(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function sendAutoCalib(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START + 15);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
 function halfHoleAdvanced(selection) {
     
     document.getElementById("checkbox31").checked = selection;
@@ -3689,6 +3705,13 @@ function sendHalfHoleHighWindow(selection) {
 //end switches
 
 
+function saveCalibration() {
+    if (document.getElementById("checkbox28").checked) {
+        modal(32);
+    } else {
+        sendToWARBL(MIDI_CC_102, MIDI_SAVE_CALIB);
+    }
+}
 function calibrateIMU() {
     blink(1);
     sendToWARBL(MIDI_CC_106, MIDI_CALIB_IMU);

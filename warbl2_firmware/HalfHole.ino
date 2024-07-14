@@ -23,11 +23,7 @@
 */
 uint16_t getHalfHoleLowerBound(byte hole) {
 
-#if BASELINE_AUTO_CALIBRATION
-    return toneholeCovered[hole] * (1.0f - hh.lowWindowPerc) + hh.correction*HALF_HOLE_CALIB_OFFSET;
-#else
     return toneholeCovered[hole] * (1.0f - hh.lowWindowPerc);
-#endif
 
 }
 
@@ -40,11 +36,8 @@ uint16_t getHalfHoleUpperBound(byte hole) {
     if (!isHalfHoleEnabled(hole)) {
         return 1024;
     }
-#if BASELINE_AUTO_CALIBRATION
-    return toneholeCovered[hole] * (1.0f - hh.highWindowPerc) + hh.correction*HALF_HOLE_CALIB_OFFSET;
-#else
+
     return toneholeCovered[hole] * (1.0f - hh.highWindowPerc);
-#endif
 }
 
 
@@ -136,7 +129,21 @@ void debounceHalfHole() {
     }
 }
 
-
+/* 
+ * Returns open/closed base status for the hole, base in toneholeRead
+ * it is the one previuosly used in getFingers
+ * now we call it from three different places
+ */
+byte holeBaseStatus(byte hole) {
+    
+    if (toneholeRead[hole] > (toneholeCovered[hole] - HOLE_COVERED_OFFSET)) {
+        return HOLE_STATUS_CLOSED;
+    } else if (toneholeRead[hole] <= (toneholeCovered[hole] - HOLE_OPEN_OFFSET)) {
+        return HOLE_STATUS_OPEN;
+    } else {  // the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations. In this case, we return a N.D. status
+        return HOLE_STATUS_ND;
+    }
+}
 
 
 /* 
@@ -184,11 +191,10 @@ byte holeStatus(byte hole, fingering_pattern_union_t fingerPattern) {
         }
 
         // "Regular" tonehole - it's the same as in getFingers()
-        if (toneholeRead[hole] > (toneholeCovered[hole] - HOLE_COVERED_OFFSET)) {
-            return HOLE_STATUS_CLOSED;
-        } else if (toneholeRead[hole] <= (toneholeCovered[hole] - HOLE_OPEN_OFFSET)) {
-            return HOLE_STATUS_OPEN;
-        } else {  // the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations. In case, we just read the bit in current holeCovered
+        byte status = holeBaseStatus(hole);
+        if (status < HOLE_STATUS_HALF) {
+            return status;
+        } else { //In case of HOLE_STATUS_ND, we just read the bit in current holeCovered
             return holeStatus(hole, currentFP);
         }
     }
@@ -285,103 +291,37 @@ int8_t getHalfHoleShift(fingering_pattern_union_t fingerPattern) {
 
 
 
-
-#if BASELINE_AUTO_CALIBRATION
-/*
-* Inits baseline calibration data for auto calibration
-*/
-void baselineInit() {
-#if DEBUG_AUTO_CALIB
-        Serial.println("BL init. ");
-#endif
-    ac.baselineAverage = 0;
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) { 
-
-#if DEBUG_AUTO_CALIB
-        Serial.print("hole: ");
-        Serial.print(i);
-        Serial.print(" value: ");
-        Serial.println(toneholeBaseline[i]);
-#endif
-        ac.baselineAverage += toneholeBaseline[i];    //Calculates baseline Average
-
-        if (toneholeBaseline[i] > ac.maxBaseline) { 
-            ac.maxBaseline = toneholeBaseline[i];
-        }
-    }
-    ac.baselineAverage = (ac.baselineAverage / (float)(TONEHOLE_SENSOR_NUMBER-1));
-
-#if DEBUG_AUTO_CALIB
-        Serial.print("BL init end. Average: ");
-        Serial.print(ac.baselineAverage);
-        Serial.print(" maxBaseline: ");
-        Serial.println(ac.maxBaseline);
-#endif
-}
-
-
-
 /*
 * Calculates the baseline moving average for readings in the current time window and applies an eventual correction factor to half hole detection
 */
-void baselineUpdate() {
-    byte counter = 0;
-    ac.baselineCurrentAverage = 0;
+void calibrationUpdate() {
+
+#if DEBUG_AUTO_CALIB
+    Serial.print("---");
+    Serial.println(millis());
+#endif
     for (byte i = 0; i<TONEHOLE_SENSOR_NUMBER; i++) {
 
-        if (ac.toneholeBaselineCurrent[i] >= 0 && ac.toneholeBaselineCurrent[i] <= ac.maxBaseline)  { //LPF
+        if (ac.toneholeCoveredSampleCounter[i] >= AUTO_CALIB_MIN_SAMPLES && ac.toneholeCoveredCurrentMean[i] > 0) {
+
+            ac.toneholeCoveredCurrentMean[i] = ac.toneholeCoveredCurrentMean[i]/ac.toneholeCoveredSampleCounter[i];
+
+            if (ac.toneholeCoveredCurrentMean[i] != toneholeCovered[i])  { 
 #if DEBUG_AUTO_CALIB
-        Serial.print("hole: ");
-        Serial.print(i);
-        Serial.print(" value: ");
-        Serial.println(ac.toneholeBaselineCurrent[i]);
+                Serial.print(" hole: ");
+                Serial.print(i);
+                Serial.print(" - samples: ");
+                Serial.print(ac.toneholeCoveredSampleCounter[i]);
+                Serial.print(" - ");
+                Serial.print(toneholeCovered[i]);
+                Serial.print(" -> ");
+                Serial.println(ac.toneholeCoveredCurrentMean[i]);
 #endif
-            ac.baselineCurrentAverage += ac.toneholeBaselineCurrent[i];
-            counter++;
-        }
-        ac.toneholeBaselineCurrent[i] = 1024; //Resets for next run
-
-        //Updates baseline too with previous average - Useful for PB
-        // toneholeBaseline[i] = ((float) toneholeBaseline[i] * ac.baselinePreviousAverage/ac.baselineAverage);
-    }
-    if (counter > 0 ) { //Found usable values
-        //Calculates current (quasi)autoregressive moving average - baseLine Average. It measures the current ambient light, more or less
-        ac.baselineCurrentAverage = (BASELINE_AVRG_SPEED*((ac.baselineCurrentAverage / (float) counter)) + (1.0-BASELINE_AVRG_SPEED)*ac.baselinePreviousAverage);
-        
-        float diff = ac.baselineCurrentAverage  - ac.baselineAverage;
-        hh.correction = sqrt(abs(diff)); //We don't want a linear reaction
-        if (diff < 0)  hh.correction *= -1;
-
-#if DEBUG_AUTO_CALIB
-        Serial.print("BL - Average: ");
-        Serial.print(ac.baselineAverage);
-        Serial.print(" - CurrentAverage: ");
-        Serial.print(ac.baselineCurrentAverage);       
-        Serial.print(" - diff: ");
-        Serial.print(diff);       
-        Serial.print(" - hh.correction: ");
-        Serial.print(hh.correction);
-        Serial.print(" - thumbhole, BL: ");
-        Serial.print(toneholeBaseline[THUMB_HOLE]);
-        Serial.print(" - window: ");
-        Serial.print(getHalfHoleLowerBound(THUMB_HOLE));
-        Serial.print(" <-> ");
-        Serial.print(getHalfHoleUpperBound(THUMB_HOLE));
-        Serial.print(", covered: ");
-        Serial.println(toneholeCovered[THUMB_HOLE]);
-#endif
-        
-        ac.baselinePreviousAverage = ac.baselineCurrentAverage;
-
-        //In the config tool, this value che be used to show current light conditions with respect to light conditions at the time of calibration
-        //the relative code from config Tool has been removed
-        if (communicationMode) {
-            byte lightCondition = 1; //Within baseline initial calibration
-            if (hh.correction < -0.10) lightCondition = 0; //Darker
-            else if (hh.correction > 1.0) lightCondition = 2; //Lighter
-
-            // sendMIDICouplet(MIDI_SEND_LIGHT_CONDITION, lightCondition); // Send current correction.
+                toneholeCovered[i] = ac.toneholeCoveredCurrentMean[i];
+            }
+            ac.toneholeCoveredCurrentMean[i] = 0; //Resets for next run
+            ac.toneholeCoveredSampleCounter[i] = 0;  //Resets for next run
         }
     }
 }
-#endif
+

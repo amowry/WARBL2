@@ -106,7 +106,8 @@
 #define R4_FLATTEN 12
 #define BUTTON_DOUBLE_CLICK 13
 #define HALF_HOLE_THUMB_INVERT 14
-#define kSWITCHESnVariables 15
+#define AUTO_OPTICAL_CALIBRATION 15
+#define kSWITCHESnVariables 16
 
 // Variables in the ED array (settings for expression and drones panels, and misc. other Config Tool settings)
 #define EXPRESSION_ON 0
@@ -191,7 +192,8 @@
 #define POWER_DOWN 13
 #define RECENTER_YAW 14
 #define SHOW_BATTERY_LEVEL 15
-#define kACTIONSnVariables 16
+#define TOGGLE_AUTO_OPTICAL_CALIBRATION 16
+#define kACTIONSnVariables 17
 
 // Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
@@ -460,6 +462,7 @@
 #define MIDI_CC_104_VALUE_52 52  //  Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_53 53  //  Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_54 54  //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_55 55  //  Bidirectional. Settings for current instrument: indicates that switches[15] is about to be sent with CC 105.
 //
 /* 55-60 unused */
 #define MIDI_CC_104_VALUE_61 61  //  Bidirectional. Settings for current instrument: MIDI bend range is about to be sent on CC 105
@@ -744,7 +747,7 @@
 #define MIDI_ED_VARS_START MIDI_CC_104_VALUE_13                         // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105.
 #define MIDI_ED_VARS_END MIDI_CC_104_VALUE_33                           // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                   // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
-#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_54                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_55                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
 #define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
@@ -827,7 +830,7 @@
 #define MIDI_SEND_BATTERY_CHARGE_STATUS MIDI_CC_106, MIDI_CC_106_VALUE_71, MIDI_CC_119  // from WARBL. WARBL2 charging status
 #define MIDI_SEND_BATTERY_CHARGE_PERC MIDI_CC_106, MIDI_CC_106_VALUE_74, MIDI_CC_119    // from WARBL. WARBL2 battery percentage
 
-#define MIDI_SEND_BUTTON_ACTION MIDI_CC_109, MIDI_CC_109_VALUE_127, MIDI_CC_105  // From WARBL. Indicates button/gesture action will be sent on CC 105
+#define MIDI_SEND_BUTTON_ACTION MIDI_CC_109, MIDI_CC_109_VALUE_127, MIDI_CC_105         // From WARBL. Indicates button/gesture action will be sent on CC 105
 
 
 

@@ -213,6 +213,7 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_52 = 52; // Bidirectional. Settings for current instrument: indicates that switches[12] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105.
     const MIDI_CC_104_VALUE_54 = 54 //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
+    const MIDI_CC_104_VALUE_55 = 55 //  Bidirectional. Settings for current instrument: indicates that switches[14] is about to be sent with CC 105.
     //
     /* 55-60 unused */
 ; //
@@ -494,7 +495,7 @@ const MIDI_PRESS_SELECT_VARS_END = MIDI_CC_104_VALUE_12; // Bidirectional. Setti
 const MIDI_ED_VARS_START = MIDI_CC_104_VALUE_13; // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105. 
 const MIDI_ED_VARS_END = MIDI_CC_104_VALUE_33; // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105. 
 const MIDI_SWITCHES_VARS_START = MIDI_CC_104_VALUE_40; // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105. 
-const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_54; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+const MIDI_SWITCHES_VARS_END = MIDI_CC_104_VALUE_55; // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 const MIDI_ED_VARS2_START = MIDI_CC_104_VALUE_70; // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105. 
 const MIDI_ED_VARS2_END = MIDI_CC_104_VALUE_97; // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
 const MIDI_ED_VARS_NUMBER = MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1; //ED array number of vars for the first slot

@@ -19,6 +19,7 @@
 #define HOLE_STATUS_OPEN 0
 #define HOLE_STATUS_CLOSED 1
 #define HOLE_STATUS_HALF 2
+#define HOLE_STATUS_ND 3
 
 #define THUMB_HOLE                8
 #define L1_HOLE                   7
@@ -45,26 +46,19 @@
 #define HALF_HOLE_HIGH_MAX_PERC 35//Max percentage of toneHolecCovered dedicated to upper window (hole closed)
 
 
-//Baseline auto-calibration was switched off because it seems redundant on WARBL2: light conditions are successfully filtered out by ATMega fw
-#define BASELINE_AUTO_CALIBRATION   false
-#if BASELINE_AUTO_CALIBRATION
-#define HALF_HOLE_CALIB_OFFSET  3.0 //Correction factor based on baseline moving average difference with calibration baseline average
-#define BASELINE_AVRG_INTERVAL  750 //ms/ticks for calculating baseline moving average / Window size
-#define BASELINE_AVRG_SPEED     0.2 //0-1 the lower the slower the moving average is
-#define BASELINE_MACRO_FACTOR  10.0 //Number of decimals to be sent to the Config tool - Debug
-#endif
 
-#if BASELINE_AUTO_CALIBRATION
+
+//Tonehole autocalibration
+#define AUTO_CALIB_INTERVAL  500 //ms/ticks for calculating baseline moving average / Window size
+#define AUTO_CALIB_MIN_SAMPLES  400 //number of samples to calculate the new average value
+
 //Baseline Auto calibration
 struct auto_calibration_t {
+    bool enabled = false; //If it's active
     unsigned long timer = 0;   //to keep track of the last time we sent a baseline message
-    int toneholeBaselineCurrent[TONEHOLE_SENSOR_NUMBER] = { 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024 };            //baseline (uncovered) hole tonehole sensor readings
-    float baselineAverage = 0;
-    float baselineCurrentAverage = 0;
-    float baselinePreviousAverage = 0;
-    int maxBaseline = 30;
+    unsigned long toneholeCoveredCurrentMean[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //mean value when hole is considered closed
+    unsigned long toneholeCoveredSampleCounter[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //count # of samles taken in the interval
 };
-#endif
 
 struct fingering_pattern_t {
     uint16_t holes = 0; //Use this for toneHoles open/closed
@@ -110,10 +104,6 @@ struct half_hole_detection_t {
 
     float lowWindowPerc = (float) HALF_HOLE_LOW_WINDOW_PERC / 100.0f; //Percentage of toneHoleCovered dedicated to open hole
     float highWindowPerc = (float) HALF_HOLE_HIGH_WINDOW_PERC / 100.0f; //Percentage of toneHoleCovered dedicated to closed hole
-
-#if BASELINE_AUTO_CALIBRATION
-    float correction = 0.8;
-#endif
 
 };
 

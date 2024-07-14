@@ -274,9 +274,7 @@ half_hole_detection_t hh;  //Half-Hole Detection
 unsigned int halfHoleSelector[] = { 0, 0, 0 };
 
 
-#if BASELINE_AUTO_CALIBRATION
-auto_calibration_t ac; //Baseline Autocalibration
-#endif
+auto_calibration_t ac; //optical Autocalibration
 
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
@@ -482,11 +480,6 @@ void setup() {
             writeEEPROM(EEPROM_ATMEGA_FIRMWARE_VERSION, ATMEGA_FIRMWARE_VERSION);  // Update the stored ATmega version after burning.
         }
     }
-#endif
-
-#if BASELINE_AUTO_CALIBRATION
-    //Baseline auto-calibration
-    baselineInit();
 #endif
 
 }

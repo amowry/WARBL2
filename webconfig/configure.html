@@ -1354,11 +1354,6 @@
                     <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
                     <span class="slider round"></span>
                   </label>
-                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
-                  <label class="switch" id="switchDoubleClick">
-                    <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
-                    <span class="slider round"></span>
-                  </label>
                   <div class="momentaryLabel noTouch">Momentary</div>
                   <label class="switch" id="switch0">
                   <input type="checkbox" class="checkboxes" id="checkbox0" onChange="sendMomentary(0)" />
@@ -1405,6 +1400,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1425,6 +1421,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1445,6 +1442,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1465,6 +1463,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1485,6 +1484,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1505,6 +1505,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1525,6 +1526,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1545,6 +1547,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Toggle Optical Auto Calibration</option>
                         </select>
                      </div>
                      <div class="WARBL2Elements">
@@ -1566,6 +1569,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Toggle Optical Auto Calibration</option>
                            </select>
                         </div>
                         <div class="styled-select blue semi-square">
@@ -1586,6 +1590,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Toggle Optical Auto Calibration</option>
                            </select>
                         </div>
                      </div>
@@ -1772,7 +1777,7 @@
             <div id="dot3" class="dots dot6"></div>
             <div id="dot2" class="dots dot7"></div>
             <div id="dot1" class="dots dot8"></div>
-            <button type="button" class="smallbutton noTouch submitcalibration" id="19" onClick="sendToWARBL(102,19)">Save fine calibration</button>
+            <button type="button" class="smallbutton noTouch submitcalibration" id="19" onClick="saveCalibration()">Save fine calibration</button>
             <button type="button" class="smallbutton noTouch autoCalibrate" id="autoCalibrate" onClick="autoCalibrate()">Auto-calibrate all sensors</button>
             <button type="button" class="smallbutton noTouch autoCalibrateBell" id="autoCalibrateBell" onClick="autoCalibrateBell()">Auto-calibrate bell sensor only</button>
             <button type="button" class="toprowbuttons button b1" id="18" onClick="sendToWARBL(102,18)"><img class = "info" src="img/angle-up.svg"></img></button>
@@ -1897,6 +1902,12 @@
                      57.83,49.544 65.126,34.935 60.58,34.935 62.917,23.453 55.617,38.063 59.945,38.063 57.609,49.544 " />
                </svg>
             </div>
+            <div class="autoCalibLabel noTouch" id="autoCalibLabel">Auto optical calibration</div>
+            <label class="switch" id="switch28">
+            <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendAutoCalib(this.checked)" />
+            <span class="slider round"></span>
+            </label>
+
             <button type="button" class="calibrateIMUbutton smallbutton noTouch" id="calibrateIMU" onClick="calibrateIMU()">Calibrate Gyro</button>
             <button type="button" class="centerYawbutton smallbutton noTouch" id="centerYaw" onClick="centerYaw()">Recenter Yaw</button>
             <div class="hostLabel noTouch">Charge from USB hosts</div>
@@ -2365,7 +2376,7 @@
                      The <b>battery voltage</b> is shown as a convenience, but the <b>percentage monitor</b> on the far right is usually a more reliable indicator of charge level. As mentioned previously, it is an estimate and becomes more accurate after letting the battery run all the way down (until the WARBL2 powers off) and then charging fully. When charging, a charging icon is shown next to the percentage monitor. If the charging icon is blinking, it may be an indicator of a battery fault such as very low or high temperatures or a battery that is too old to charge.           
                   </p>
                   <p>
-                     The BLE status is shown in the bottom left. When connected by BLE it will show the connection interval in milliseconds. 
+                     The BLE status is shown in the top left. When connected by BLE it will show the connection interval in milliseconds. 
                   </p>
                   <p>
                      If the WARBL2 is connected to both BLE and USB, you can choose whether to send MIDI data over either or both connections. If only one connection is available, that connection will be used regardless of this setting. The WARBL2 will also communicate with the Configuration Tool by all available connections regardless of this setting.
@@ -2378,6 +2389,10 @@
                   </p>
                   <p>
                      The gyroscope is calibrated when the WARBL2 is made, but you may wish to calibrate it again occasionally (especially if the roll and elevation seem to drift slightly when the WARBL2 is stationary). To do this, set the WARBL2 on a stationary surface and click <b>Calibrate Gyro</b> . If you are using IMU yaw to send MIDI data, you can recenter the yaw by clicking the button. You can also assign a button action to recentering the yaw in the Button Behavior panel, and there is also an option in the Yaw Mapping panel to automatically recenter the yaw when there is a break in notes.
+                  </p>
+                  <p>
+                     <b>Auto optical calibration</b> adjusts the sensitivity of the optical sensors to the player's playing style and grip on the instrument. Sensors calibration values are continously updated while playing, but they are not saved.<br />
+                     It is possibile to save the current auto-calibration by clicking on the "Save fine calibration" button.
                   </p>
                </div>
             </div>
@@ -2507,6 +2522,16 @@
            </div>
          </div>
        </div>
+       <div id="open-modal32" onClick="" class="modal-window">
+         <div id="modal-center32">
+            <h1></h1>
+            <div>Auto optical calibration is active. <br />Are you sure you want to save current calibration values?</div>
+            <div class="modal-footer">
+               <button type="submit" class="smallbutton noTouch okay" onClick="sendToWARBL(MIDI_CC_102, MIDI_SAVE_CALIB);modalclose(32);">OK</button>
+               <button type="button" class="smallbutton noTouch cancel" onClick="modalclose(32);">Cancel</button>
+            </div>
+         </div>
+      </div>
       </div>
    </body>
    <script src="js/jquery-3.3.1.min.js"></script>
