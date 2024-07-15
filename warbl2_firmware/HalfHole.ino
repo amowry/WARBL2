@@ -48,6 +48,8 @@ uint16_t getHalfHoleUpperBound(byte hole) {
 */
 bool isHalfHoleEnabled(int hole) {
 
+    if (hole == BELL_HOLE) return false;
+
     return bitRead(hh.halfHoleSelector, hole) == 1;
 
 }
@@ -62,7 +64,7 @@ bool isHalfHoleEnabled(int hole) {
 */
 void debounceHalfHole() {
 
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+    for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
 
         byte currentStatus = holeStatus(i); //Based on current sensor readings
 
@@ -220,7 +222,7 @@ int8_t getHalfHoleShift(fingering_pattern_union_t fingerPattern) {
     uint8_t result = 0;
     uint16_t tempCovered = fingerPattern.fp.holes >> 1; //To store finger holes only
 
-    for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+    for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
         if (isHalfHoleEnabled(i)) {
             switch (i) {
 
@@ -292,6 +294,16 @@ int8_t getHalfHoleShift(fingering_pattern_union_t fingerPattern) {
 
 
 /*
+* Inits auto calibration data 
+*/
+void autoCalibrationInit() {
+    for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) { 
+        ac.currentAverage[i] = toneholeCovered[i];
+        ac.previousAverage[i] = ac.currentAverage[i];
+    }
+}
+
+/*
 * Calculates the baseline moving average for readings in the current time window and applies an eventual correction factor to half hole detection
 */
 void calibrationUpdate() {
@@ -303,26 +315,33 @@ void calibrationUpdate() {
 
     xSemaphoreTake(ac.mutex, portMAX_DELAY);
 
-    for (byte i = 0; i<TONEHOLE_SENSOR_NUMBER; i++) {
+    for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
 
-        if (ac.toneholeCoveredSampleCounter[i] >= AUTO_CALIB_MIN_SAMPLES && ac.toneholeCoveredCurrentMean[i] > 0) {
+        if (ac.toneholeCoveredSampleCounter[i] >= AUTO_CALIB_MIN_SAMPLES && ac.toneholeCoveredCurrentSum[i] > 0) {
+            float currentAverage = ac.toneholeCoveredCurrentSum[i] / (float) ac.toneholeCoveredSampleCounter[i];
+            
+            //Calculates current (quasi)autoregressive moving average.
+            ac.currentAverage[i] = (AUTO_CALIB_AVRG_SPEED*currentAverage + (1.0f-AUTO_CALIB_AVRG_SPEED)*ac.previousAverage[i]);
+        
 
-            ac.toneholeCoveredCurrentMean[i] = ac.toneholeCoveredCurrentMean[i]/ac.toneholeCoveredSampleCounter[i];
-
-            if (ac.toneholeCoveredCurrentMean[i] != toneholeCovered[i])  { 
 #if DEBUG_AUTO_CALIB
-                Serial.print(" hole: ");
-                Serial.print(i);
-                Serial.print(" - samples: ");
-                Serial.print(ac.toneholeCoveredSampleCounter[i]);
-                Serial.print(" - ");
-                Serial.print(toneholeCovered[i]);
-                Serial.print(" -> ");
-                Serial.println(ac.toneholeCoveredCurrentMean[i]);
+            float diff = ac.currentAverage[i]  - toneholeCovered[i];
+            Serial.print(" hole: ");
+            Serial.print(i);
+            Serial.print(" - samples: ");
+            Serial.print(ac.toneholeCoveredSampleCounter[i]);
+            Serial.print(" - ");
+            Serial.print(toneholeCovered[i]);
+            Serial.print(" -> ");
+            Serial.print(currentAverage);
+            Serial.print(" - ");
+            Serial.print(ac.currentAverage[i]);
+            Serial.print(" d: ");
+            Serial.println(diff);
 #endif
-                toneholeCovered[i] = ac.toneholeCoveredCurrentMean[i];
-            }
-            ac.toneholeCoveredCurrentMean[i] = 0; //Resets for next run
+            toneholeCovered[i] = ac.currentAverage[i];
+
+            ac.toneholeCoveredCurrentSum[i] = 0; //Resets for next run
             ac.toneholeCoveredSampleCounter[i] = 0;  //Resets for next run
         }
     }
