@@ -300,6 +300,9 @@ void calibrationUpdate() {
     Serial.print("---");
     Serial.println(millis());
 #endif
+
+    xSemaphoreTake(ac.mutex, portMAX_DELAY);
+
     for (byte i = 0; i<TONEHOLE_SENSOR_NUMBER; i++) {
 
         if (ac.toneholeCoveredSampleCounter[i] >= AUTO_CALIB_MIN_SAMPLES && ac.toneholeCoveredCurrentMean[i] > 0) {
@@ -323,5 +326,6 @@ void calibrationUpdate() {
             ac.toneholeCoveredSampleCounter[i] = 0;  //Resets for next run
         }
     }
+    xSemaphoreGive(ac.mutex);
 }
 

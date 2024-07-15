@@ -58,6 +58,8 @@ struct auto_calibration_t {
     unsigned long timer = 0;   //to keep track of the last time we sent a baseline message
     unsigned long toneholeCoveredCurrentMean[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //mean value when hole is considered closed
     unsigned long toneholeCoveredSampleCounter[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //count # of samles taken in the interval
+    SemaphoreHandle_t mutex = xSemaphoreCreateMutex();  // Semephore for sending MIDI couplets, in case there are multiple threads sending.
+
 };
 
 struct fingering_pattern_t {
