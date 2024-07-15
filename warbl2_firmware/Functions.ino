@@ -11,6 +11,7 @@
 #define DEBUG_AUTO_CALIB false
 #define DEBUG_PRESSURE false
 #define DEBUG_FINGERING false
+#define DEBUG_MIDI false
 
 
 void printStuff(void) {
@@ -55,7 +56,7 @@ void printHalfHoleSettings() {
     Serial.print("\tHigh Window: ");
     Serial.println(hh.highWindowPerc);
     Serial.print("\tHalf hole enabled on: ");
-    for (byte i = 0; i< TONEHOLE_SENSOR_NUMBER; i++) {
+    for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
         if (isHalfHoleEnabled(i)){
              Serial.print(" ");
              Serial.print(i);
@@ -157,7 +158,7 @@ void getSensors(void) {
 
 
 
-    if (ac.enabled) {
+    if (ac.enabled && calibration == 0) {
         xSemaphoreTake(ac.mutex, portMAX_DELAY);
     }
 
@@ -171,8 +172,8 @@ void getSensors(void) {
         }
 
         //for toneholeCovered auto-calibration 
-        if (ac.enabled && noteon && holeStatus(i) == HOLE_STATUS_CLOSED) { //Calculate mean value in the sampling window, only when playing
-            ac.toneholeCoveredCurrentMean[i] += toneholeRead[i];
+        if (ac.enabled && calibration == 0 && i > 0 && noteon && holeStatus(i) == HOLE_STATUS_CLOSED) { //Calculate mean value in the sampling window, only when playing
+            ac.toneholeCoveredCurrentSum[i] += toneholeRead[i];
             ac.toneholeCoveredSampleCounter[i]++;
         }
     }
@@ -180,7 +181,7 @@ void getSensors(void) {
     xSemaphoreGive(ac.mutex);
 
     //Autocalibration
-    if (ac.enabled && ac.timer ++ >= AUTO_CALIB_INTERVAL) {  //check baseline every so often,
+    if (ac.enabled && calibration == 0 && ac.timer ++ >= AUTO_CALIB_INTERVAL) {  //check baseline every so often,
         ac.timer = 0;
         calibrationUpdate();
     }
@@ -821,7 +822,7 @@ unsigned long getTransitionDelay() {
         }
 
         //We check if an half-hole Status has changed
-        for (byte i = 0; i < TONEHOLE_SENSOR_NUMBER; i++) {
+        for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
             if (isHalfHoleEnabled(i)) {
                 byte currentHoleStatus = holeStatus(i, currentFP);
                 if ( currentHoleStatus != tf.prevHoleStatus[i]) {
@@ -1995,10 +1996,16 @@ void handleControlChangeFromBLE(byte channel, byte number, byte value) {
 
 // Check for and handle incoming MIDI messages from the WARBL Configuration Tool.
 void handleControlChange(byte source, byte channel, byte number, byte value) {
-    //Serial.println(channel);
-    //Serial.println(number);
-    //Serial.println(value);
-    //Serial.println("");
+
+#if DEBUG_MIDI
+    Serial.print("MIDI RECV: ");
+    Serial.print(channel);
+    Serial.print(" ");
+    Serial.print(number);
+    Serial.print(" ");
+    Serial.print(value);
+    Serial.println(" ");
+#endif
 
     if (number < 120) {  // Chrome sends CC 121 and 123 on all channels when it connects, so ignore these.
 
@@ -2327,7 +2334,6 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                         return;
                     }
                     calibration = 2;
-
                 }
 
 

@@ -482,6 +482,8 @@ void setup() {
     }
 #endif
 
+    //Auto calibration init
+    autoCalibrationInit();
 }
 
 

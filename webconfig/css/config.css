@@ -888,7 +888,7 @@ input {
 .autoCalibLabel {
 	display: block;
 	position: absolute;
-	left: 400px;
+	left: 375px;
 	top: 245px;
 	z-index: 99;
 	font-size: 14px;
@@ -896,7 +896,7 @@ input {
 
 #switch28 {
 	top: 240px;
-	left:  550px;
+	left:  560px;
 	z-index:100;
 }
 

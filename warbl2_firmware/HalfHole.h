@@ -29,6 +29,7 @@
 #define R2_HOLE                   3
 #define R3_HOLE                   2
 #define R4_HOLE                   1
+#define BELL_HOLE                 0
 
 
 #define HOLE_COVERED_OFFSET      50 //For determining hole closed // from original firmware
@@ -49,6 +50,7 @@
 
 
 //Tonehole autocalibration
+#define AUTO_CALIB_AVRG_SPEED     0.15f //0-1 the lower the slower the moving average is
 #define AUTO_CALIB_INTERVAL  500 //ms/ticks for calculating baseline moving average / Window size
 #define AUTO_CALIB_MIN_SAMPLES  400 //number of samples to calculate the new average value
 
@@ -56,7 +58,9 @@
 struct auto_calibration_t {
     bool enabled = false; //If it's active
     unsigned long timer = 0;   //to keep track of the last time we sent a baseline message
-    unsigned long toneholeCoveredCurrentMean[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //mean value when hole is considered closed
+    float currentAverage[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };;
+    float previousAverage[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };;
+    unsigned long toneholeCoveredCurrentSum[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //mean value when hole is considered closed
     unsigned long toneholeCoveredSampleCounter[TONEHOLE_SENSOR_NUMBER] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //count # of samles taken in the interval
     SemaphoreHandle_t mutex = xSemaphoreCreateMutex();  // Semephore for sending MIDI couplets, in case there are multiple threads sending.
 

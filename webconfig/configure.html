@@ -1902,7 +1902,7 @@
                      57.83,49.544 65.126,34.935 60.58,34.935 62.917,23.453 55.617,38.063 59.945,38.063 57.609,49.544 " />
                </svg>
             </div>
-            <div class="autoCalibLabel noTouch" id="autoCalibLabel">Auto optical calibration</div>
+            <div class="autoCalibLabel noTouch" id="autoCalibLabel">Continuous optical calibration</div>
             <label class="switch" id="switch28">
             <input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendAutoCalib(this.checked)" />
             <span class="slider round"></span>
@@ -2391,7 +2391,7 @@
                      The gyroscope is calibrated when the WARBL2 is made, but you may wish to calibrate it again occasionally (especially if the roll and elevation seem to drift slightly when the WARBL2 is stationary). To do this, set the WARBL2 on a stationary surface and click <b>Calibrate Gyro</b> . If you are using IMU yaw to send MIDI data, you can recenter the yaw by clicking the button. You can also assign a button action to recentering the yaw in the Button Behavior panel, and there is also an option in the Yaw Mapping panel to automatically recenter the yaw when there is a break in notes.
                   </p>
                   <p>
-                     <b>Auto optical calibration</b> adjusts the sensitivity of the optical sensors to the player's playing style and grip on the instrument. Sensors calibration values are continously updated while playing, but they are not saved.<br />
+                     <b>Continuous optical calibration</b> adjusts the sensitivity of the optical sensors to the player's playing style and grip on the instrument. Sensors calibration values are Continuously updated while playing, but they are not saved.<br />
                      It is possibile to save the current auto-calibration by clicking on the "Save fine calibration" button.
                   </p>
                </div>
@@ -2525,7 +2525,7 @@
        <div id="open-modal32" onClick="" class="modal-window">
          <div id="modal-center32">
             <h1></h1>
-            <div>Auto optical calibration is active. <br />Are you sure you want to save current calibration values?</div>
+            <div>Continuous optical calibration is active. <br />Are you sure you want to save current calibration values?</div>
             <div class="modal-footer">
                <button type="submit" class="smallbutton noTouch okay" onClick="sendToWARBL(MIDI_CC_102, MIDI_SAVE_CALIB);modalclose(32);">OK</button>
                <button type="button" class="smallbutton noTouch cancel" onClick="modalclose(32);">Cancel</button>
