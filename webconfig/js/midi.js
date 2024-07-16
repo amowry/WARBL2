@@ -516,7 +516,6 @@ function WARBL_Receive(event) {
 
     //debugger;
 
-    //alert("received");
 
     var data0 = event.data[0];
     var data1 = event.data[1];
@@ -533,12 +532,19 @@ function WARBL_Receive(event) {
     //console.log("WARBL_Receive");
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
+	
+	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
+	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
+	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
+	if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
+		connect();
+	}
+	
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
     if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
-		
 
         if (platform == "web") {
             
