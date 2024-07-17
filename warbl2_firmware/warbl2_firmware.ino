@@ -293,7 +293,7 @@ float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 int expression = 0;                                                                // Pitchbend up or down from current note based on pressure
 bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
-byte slideHole;                                                                    // Which hole is currently being used for slide
+bool slideDisabled = false;                                                                // We disable slide if any hole other than the thumb is being used for half holing.
 
 // Variables for managing MIDI note output
 bool noteon = 0;                        // Whether a note is currently turned on

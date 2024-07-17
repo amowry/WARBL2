@@ -29,7 +29,7 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-    Serial.println(pitchBendMode);
+    Serial.println(slideDisabled);
 }
 
 void print16bit(uint16_t value) {
@@ -1551,7 +1551,7 @@ void handleCustomPitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {  // Calculate slide if necessary.
+    if ((pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) && !slideDisabled) {  // Calculate slide if necessary.
         getSlide();
     }
 
@@ -1662,7 +1662,7 @@ void handlePitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) {  // Calculate slide if necessary.
+    if ((pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato) && !slideDisabled) {  // Calculate slide if necessary.
         getSlide();
     }
 
@@ -1814,8 +1814,8 @@ void sendNote() {
 
     if (        // Several conditions to tell if we need to turn on a new note.
       (!noteon  // If there wasn't any note playing or the current note is different than the previous one
-       || (pitchBendMode != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
-       || (pitchBendMode == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
+       || (((pitchBendMode != kPitchBendLegatoSlideVibrato) || slideDisabled) && newNote != (notePlaying - shift))
+       || (((pitchBendMode == kPitchBendLegatoSlideVibrato) && !slideDisabled) && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
       && newNote != 0                                                                                 // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
       && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&         // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
@@ -3377,14 +3377,10 @@ void loadPrefs() {
     hh.lowWindowPerc = ((float)ED[mode][HALF_HOLE_LOW_PERC]) / 100.0f;
     hh.highWindowPerc = ((float)ED[mode][HALF_HOLE_HIGH_PERC]) / 100.0f;
 
+    slideDisabled = false;
     for (byte i = 0; i < 8; i++) {
         if (isHalfHoleEnabled(i)) {  // Turn off slide if any hole is enabled for half holing.
-            if (pitchBendMode == kPitchBendLegatoSlideVibrato || pitchBendMode == kPitchBendSlideVibrato) {
-                pitchBendMode = kPitchBendVibrato;
-                if (communicationMode) {
-                    sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);  // Send current pitchbend mode to Configuration Tool.
-                }
-            }
+            slideDisabled = true;
         }
     }
 
