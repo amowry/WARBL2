@@ -29,7 +29,6 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-    Serial.println(slideDisabled);
 }
 
 void print16bit(uint16_t value) {
