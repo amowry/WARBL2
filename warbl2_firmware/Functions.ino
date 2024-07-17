@@ -12,6 +12,7 @@
 #define DEBUG_PRESSURE false
 #define DEBUG_FINGERING false
 #define DEBUG_MIDI false
+#define DEBUG_PB false
 
 
 void printStuff(void) {
@@ -906,7 +907,7 @@ void debounceFingerHoles() {
         }
 
         //Check if transient Filter is enabled
-        if (tf.settingsDelay == 0) {  //transientFilter disabled
+        if (tf.settingsDelay == 0 ||  tf.tempNewNote == 0 || newNote == 0) {  //transientFilter disabled or Silent note (to/from)
             timerExpired = true;
         }
 
@@ -1687,12 +1688,19 @@ void handlePitchBend() {
                 }
             }
 
-            if (bitRead(currentFP.fp.holes, i) == 1) {
+            if (bitRead(currentFP.fp.holes, i) == 1 && !tf.timing ) {
                 iPitchBend[i] = adjvibdepth;  // Set vibrato to max downward bend if a hole was being used to bend down and now is covered
             }
+#if DEBUG_PB
+    if (iPitchBend[i]>0) {
+        Serial.print("handlePitchBend - hole: ");
+        Serial.print(i);
+        Serial.print(" pb: ");
+        Serial.println(iPitchBend[i]);
+    }
+#endif
         }
     }
-
 
     sendPitchbend();
 }
@@ -1722,14 +1730,14 @@ void getSlide() {
                 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
                 iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // scale
 
-                /*
+#if DEBUG_PB
                 Serial.print("offs: ");
                 Serial.print(offsetSteps);
                 Serial.print(" tscale: ");
                 Serial.print(toneholeScale[i]);
                 Serial.print(" bend: ");
                 Serial.println(iPitchBend[i]);
-                */
+#endif
             } else {
                 iPitchBend[i] = 0;
             }
