@@ -182,7 +182,7 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                  // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
   { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 255, 255, 255, 255, 255, 255, 255, 255 },    // Instrument 0
     { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 255, 255, 255, 255, 255, 255, 255, 255 },    // Instrument 1
     { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 100, 2, HALF_HOLE_LOW_WINDOW_PERC, HALF_HOLE_HIGH_WINDOW_PERC, 255, 255, 255, 255, 255, 255, 255, 255 } };  // Instrument 2
@@ -261,20 +261,20 @@ unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 }
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
 
-fingering_pattern_union_t currentFP = {0};                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
-bool fingersChanged = 1;  
+fingering_pattern_union_t currentFP = { 0 };  // Whether each hole is covered-- each bit corresponds to a tonehole.
+bool fingersChanged = 1;
 
-byte prevNote = 127; //UNUSED?
+byte prevNote = 127;  //UNUSED?
 
-byte newNote = 127;             // The next note to be played, based on the fingering chart (does not include transposition).
-byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
+byte newNote = 127;  // The next note to be played, based on the fingering chart (does not include transposition).
+byte notePlaying;    // The actual MIDI note being played, which we remember so we can turn it off again.
 
 transition_filter_t tf;
 half_hole_detection_t hh;  //Half-Hole Detection
 unsigned int halfHoleSelector[] = { 0, 0, 0 };
 
 
-auto_calibration_t ac; //optical Autocalibration
+auto_calibration_t ac;  //optical Autocalibration
 
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
@@ -293,7 +293,7 @@ float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 int expression = 0;                                                                // Pitchbend up or down from current note based on pressure
 bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
-
+byte slideHole;                                                                    // Which hole is currently being used for slide
 
 // Variables for managing MIDI note output
 bool noteon = 0;                        // Whether a note is currently turned on
