@@ -67,7 +67,7 @@ struct auto_calibration_t {
 };
 
 struct fingering_pattern_t {
-    uint16_t holes = 0; //Use this for toneHoles open/closed
+    uint16_t holeCovered = 0; //Use this for toneHoles open/closed
     uint16_t halfHoles = 0; //Use this for thoneHoles half-covered
 };
 

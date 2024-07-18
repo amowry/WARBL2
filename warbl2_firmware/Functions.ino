@@ -740,7 +740,7 @@ void getFingers() {
     for (byte i = 0; i < 9; i++) {
         byte status = holeBaseStatus(i);
         if (status == HOLE_STATUS_CLOSED || status == HOLE_STATUS_OPEN) {  //It could be ND
-            bitWrite(currentFP.fp.holes, i, status);                       // Use the tonehole readings to decide which holes are covered
+            bitWrite(currentFP.fp.holeCovered, i, status);                       // Use the tonehole readings to decide which holes are covered
         }
     }
 }
@@ -803,9 +803,9 @@ unsigned long getTransitionDelay() {
         //We check how many fingers have changed
         byte popcount = 0;
         if (isHalfHoleEnabled(THUMB_HOLE)) {
-            popcount = __builtin_popcount(((tf.newNoteHoleCovered.fp.holes >> 1) & 0x7F) ^ ((currentFP.fp.holes >> 1) & 0x7F));  //We consider the seven front holes only
+            popcount = __builtin_popcount(((tf.newNoteHoleCovered.fp.holeCovered >> 1) & 0x7F) ^ ((currentFP.fp.holeCovered >> 1) & 0x7F));  //We consider the seven front holes only
         } else {
-            popcount = __builtin_popcount((tf.newNoteHoleCovered.fp.holes >> 1) ^ (currentFP.fp.holes >> 1));  //We ignore bell
+            popcount = __builtin_popcount((tf.newNoteHoleCovered.fp.holeCovered >> 1) ^ (currentFP.fp.holeCovered >> 1));  //We ignore bell
         }
 
         if (popcount != tf.prevPopcount) {
@@ -1026,7 +1026,7 @@ void debounceFingerHoles() {
         if (timerExpired) {  //The fingering pattern has changed and the (eventual) delay is done
 
             fingersChanged = 1;
-
+            fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
             sendToConfig(true, false);  // Put the new pattern into a queue to be sent later so that it's not sent during the same connection interval as a new note (to decrease BLE payload size).
 
 #if DEBUG_TRANSITION_FILTER
@@ -1046,7 +1046,7 @@ void debounceFingerHoles() {
 
             if (pitchBendMode != kPitchBendNone) {
                 //TODO holeLatched could be replaced by tf.newNoteHoleCovered
-                holeLatched = currentFP.fp.holes;  // Remember the pattern that triggered it (it will be used later for vibrato).
+                holeLatched = currentFP.fp.holeCovered;  // Remember the pattern that triggered it (it will be used later for vibrato).
                 for (byte i = 0; i < 9; i++) {
                     iPitchBend[i] = 0;  // Reset pitchbend.
                     pitchBendOn[i] = 0;
@@ -1056,7 +1056,6 @@ void debounceFingerHoles() {
             newNote = tf.tempNewNote;
             resetTransitionFilter();
             getState();                       // Get state again if the note has changed.
-            fingeringChangeTimer = millis();  // Start timing after the fingering pattern has changed.
         }
     } else {  //No change, we reset the timer. This could be in the middle of a debouncing.
         tf.timing = false;
@@ -1094,7 +1093,7 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
         if (patternChanged && (nowtime - patternSendTimer) > 25) {  // If some time has past, send the new pattern to the Config Tool.
             sendMIDI(MIDI_SEND_HOLES_MSG);
-            sendMIDICouplet(MIDI_CC_114, currentFP.fp.holes >> 7, MIDI_CC_115, lowByte(currentFP.fp.holes));  // Because it's MIDI we have to send it in two 7-bit chunks.
+            sendMIDICouplet(MIDI_CC_114, currentFP.fp.holeCovered >> 7, MIDI_CC_115, lowByte(currentFP.fp.holeCovered));  // Because it's MIDI we have to send it in two 7-bit chunks.
             sendMIDI(MIDI_SEND_HALF_HOLES_MSG);
             sendMIDICouplet(MIDI_CC_114, currentFP.fp.halfHoles >> 7, MIDI_CC_115, lowByte(currentFP.fp.halfHoles));  // Because it's MIDI we have to send it in two 7-bit chunks.
             patternChanged = false;
@@ -1119,7 +1118,7 @@ void sendToConfig(bool newPattern, bool newPressure) {
 byte getNote(fingering_pattern_union_t fingerPattern) {
     byte ret = 127;  // Default (blank position)
 
-    uint8_t tempCovered = fingerPattern.fp.holes >> 1;  // Bitshift once to ignore bell sensor reading.
+    uint8_t tempCovered = fingerPattern.fp.holeCovered >> 1;  // Bitshift once to ignore bell sensor reading.
 
 
     // Read the MIDI note for the current fingering (all charts except the custom ones).
@@ -1141,14 +1140,10 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
     // Mep's EWI/Recorder
     if (modeSelector[mode] == kModeMepEWI || modeSelector[mode] == kModeMepRecorder) {
 
-        tempCovered = (0b011111110 & fingerPattern.fp.holes) >> 1;  //ignore thumb hole and bell sensor
+        tempCovered = (0b011111110 & fingerPattern.fp.holeCovered) >> 1;  //ignore thumb hole and bell sensor
 
         ret = charts[kModeMepEWI][tempCovered];
 
-#if DEBUG_FINGERING
-        Serial.print("getNote: ");
-        Serial.println(ret);
-#endif
         if (modeSelector[mode] == kModeMepRecorder) {
             if (holeStatus(THUMB_HOLE, fingerPattern) == HOLE_STATUS_HALF) {  //thumb hole half covered - 2nd and 3rd register
 
@@ -1173,7 +1168,7 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
                     default:
                         break;
                 }
-            } else if (!bitRead(fingerPattern.fp.holes, THUMB_HOLE)) {  //thumb hole uncovered
+            } else if (!bitRead(fingerPattern.fp.holeCovered, THUMB_HOLE)) {  //thumb hole uncovered
                 //Lots of homophonic positions here :)
                 switch (tempCovered) {
                     case 0b1111000:  //B
@@ -1223,7 +1218,7 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
                         // ret = -1;
                 }
 
-            } else if (bitRead(fingerPattern.fp.holes, THUMB_HOLE)) {  //thumb hole covered
+            } else if (bitRead(fingerPattern.fp.holeCovered, THUMB_HOLE)) {  //thumb hole covered
                 switch (tempCovered) {
                     case 0b1101111:  //G trill position
                         ret = 67;
@@ -1241,7 +1236,7 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
             }
 
         } else {
-            if (ret != 127 && bitRead(fingerPattern.fp.holes, THUMB_HOLE)) {  //thumb hole covered
+            if (ret != 127 && bitRead(fingerPattern.fp.holeCovered, THUMB_HOLE)) {  //thumb hole covered
                 ret += 12;
             }
         }
@@ -1249,14 +1244,73 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
     }
 
 
+#if DEBUG_FINGERING
+        if (noteon) Serial.print("getNote: ");
+        if (noteon) Serial.println(ret);
+#endif
+
     //Half hole shifts
+    /* Octave Matrix
+
+    THUMB REGISTER ON
+    HALF THUMB ON
+    _________________________________________________________________________________________________
+    |   Invert Thumb/Bell	|   Invert Half Thumb	|   1st octave	|   2nd octave	|   3rd octave  |
+    _________________________________________________________________________________________________
+    |         off	        |         off	        |     closed	|      open	    |      half     |
+    |         on	        |         off	        |      open	    |     closed	|      half     |
+    |         off	        |         on	        |     closed	|      half	    |      open     |
+    |         on	        |         on	        |      open	    |      half	    |     closed    |
+    _________________________________________________________________________________________________
+
+    */
+
     //This has to stay here, otherwise notes modified by half holing wouldn't be detected by debounceFingerHoles()
     if (ret != 0 && ret != 127) {
-        ret += getHalfHoleShift(fingerPattern);
+        if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
+            if (bitRead(currentFP.fp.holeCovered, THUMB_HOLE) == switches[mode][INVERT]) { //Otherwise it is managed below
+                if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][HALF_HOLE_THUMB_INVERT] && !switches[mode][INVERT]) {
+#if DEBUG_FINGERING
+                    if (noteon) Serial.println("Case 1 - raising 24...");
+#endif
+                    ret += 24;  // Add two octaves
+                } else if (! (switches[mode][HALF_HOLE_THUMB_INVERT] && switches[mode][INVERT])) {
+#if DEBUG_FINGERING
+                    if (noteon) Serial.println("Case 2 - raising 12...");
+#endif
+                    ret += 12;  // Add an octave jump to the transposition if necessary.
+                }
+            }
+
+            if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][INVERT] == 1) { //Both enabled and thumb/bell invert on - Last two rows of the table above
+                byte thumbHoleStatus = holeStatus(THUMB_HOLE, fingerPattern);
+                if (switches[mode][HALF_HOLE_THUMB_INVERT] == 0) {
+                    if (thumbHoleStatus == HOLE_STATUS_HALF) {
+    #if DEBUG_FINGERING
+                        if (noteon) Serial.println("Case 3 - raising 12...");
+    #endif
+                        ret += 12;  // Add one octave.
+                    } 
+                } else {
+                    if (thumbHoleStatus == HOLE_STATUS_CLOSED) {
+    #if DEBUG_FINGERING
+                        if (noteon) Serial.println("Case 4 - raising 24...");
+    #endif
+                        ret += 24;  // Add two octaves.
+                    } 
+                }
+            }
+        }  
+         //First two rows of the table above and other cases not included in the table
+            byte hhShift = getHalfHoleShift(fingerPattern);  //Usual half-hole switch, takes care of half thumb disabled or inverted
+#if DEBUG_FINGERING
+                    if (noteon) Serial.print("Case 6 - raising ");
+                    if (noteon) Serial.println(hhShift);
+#endif
+            ret += hhShift;
     }
 
-
-    if ((modeSelector[mode] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && currentFP.fp.holes == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
+    if ((modeSelector[mode] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && currentFP.fp.holeCovered == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
     {
         ret = 0;  // Silence
     }
@@ -1293,18 +1347,11 @@ void getShift() {
     }
     // Use the bell sensor to control register if desired.
     if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {
-        if (bitRead(currentFP.fp.holes, 0) == switches[mode][INVERT]) {
+        if (bitRead(currentFP.fp.holeCovered, 0) == switches[mode][INVERT]) {
             shift = shift + 12;
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
             }
-        }
-    }
-
-    // ToDo: Are there any others that don't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
-    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-        if (bitRead(currentFP.fp.holes, 8) == switches[mode][INVERT]) {
-            shift = shift + 12;  // Add an octave jump to the transposition if necessary.
         }
     }
 }
@@ -1322,7 +1369,7 @@ void getShift() {
 void getState() {
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
-    unsigned int tempHoleCovered = currentFP.fp.holes;
+    unsigned int tempHoleCovered = currentFP.fp.holeCovered;
     bitSet(tempHoleCovered, 8);                                  // Ignore thumb hole.
     scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate.
     if (scalePosition > 69) {
@@ -1534,8 +1581,8 @@ void getExpression() {
 
 // For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
-    fingering_pattern_union_t closedHolePattern = currentFP;
-    bitSet(closedHolePattern.fp.holes, hole);  // Figure out what the fingering pattern would be if we closed the hole.
+    fingering_pattern_union_t closedHolePattern = tf.newNoteHoleCovered;
+    bitSet(closedHolePattern.fp.holeCovered, hole);  // Figure out what the fingering pattern would be if we closed the hole.
     int stepsOffset = getNote(closedHolePattern) - newNote;
     return stepsOffset;
 }
@@ -1577,7 +1624,7 @@ void handleCustomPitchBend() {
 
             if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
                 for (byte i = 2; i < 4; i++) {
-                    if ((toneholeRead[i] > senseDistance) && (bitRead(currentFP.fp.holes, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
+                    if ((toneholeRead[i] > senseDistance) && (bitRead(tf.newNoteHoleCovered.fp.holeCovered, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
                         iPitchBend[i] = (int)((toneholeRead[i] - senseDistance) * vibratoScale[i]);
                     } else if (i != slideHoleIndex) {
                         iPitchBend[i] = 0;
@@ -1591,8 +1638,8 @@ void handleCustomPitchBend() {
 
             else if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
 
-                if ((currentFP.fp.holes & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
-                    if (bitRead(currentFP.fp.holes, 3) == 1) {
+                if ((currentFP.fp.holeCovered & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
+                    if (bitRead(currentFP.fp.holeCovered, 3) == 1) {
                         iPitchBend[3] = 0;
                     } else {  // Otherwise, bend down proportional to distance
                         if (toneholeRead[3] > senseDistance) {
@@ -1603,11 +1650,11 @@ void handleCustomPitchBend() {
                     }
                 } else {
 
-                    if ((toneholeRead[3] > senseDistance) && (bitRead(currentFP.fp.holes, 3) != 1) && 3 != slideHoleIndex) {
+                    if ((toneholeRead[3] > senseDistance) && (bitRead(currentFP.fp.holeCovered, 3) != 1) && 3 != slideHoleIndex) {
                         iPitchBend[3] = (int)((toneholeRead[3] - senseDistance) * vibratoScale[3]);
                     }
 
-                    else if ((toneholeRead[3] < senseDistance) || (bitRead(currentFP.fp.holes, 3) == 1)) {
+                    else if ((toneholeRead[3] < senseDistance) || (bitRead(currentFP.fp.holeCovered, 3) == 1)) {
                         iPitchBend[3] = 0;  // If the finger is removed or the hole is fully covered, there's no pitchbend contributed by that hole.
                     }
                 }
@@ -1619,12 +1666,12 @@ void handleCustomPitchBend() {
 
     else if (modeSelector[mode] == kModeGHB || modeSelector[mode] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
         for (byte i = 2; i < 4; i++) {                                                     // Use holes 2 and 3 for vibrato.
-            if (i != slideHoleIndex || (currentFP.fp.holes & 0b100000000) == 0) {
+            if (i != slideHoleIndex || (currentFP.fp.holeCovered & 0b100000000) == 0) {
                 static unsigned int testNote;               // The hypothetical note that would be played if a finger were lowered all the way.
-                if (bitRead(currentFP.fp.holes, i) != 1) {  // If the hole is not fully covered
+                if (bitRead(currentFP.fp.holeCovered, i) != 1) {  // If the hole is not fully covered
                     if (fingersChanged) {                   // If the fingering pattern has changed
                         fingering_pattern_union_t testPattern = currentFP;
-                        bitSet(testPattern.fp.holes, i);
+                        bitSet(testPattern.fp.holeCovered, i);
                         testNote = getNote(testPattern);  // Check to see what the new note would be.
                         fingersChanged = 0;
                     }
@@ -1640,7 +1687,7 @@ void handleCustomPitchBend() {
                 }
             }
         }
-        if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (currentFP.fp.holes & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
+        if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (currentFP.fp.holeCovered & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
             iPitchBend[2] = 0 - adjvibdepth;                                                                                                                        // Assign max vibrato depth to a hole that isn't being used for sliding.
             iPitchBend[3] = 0;
         }
@@ -1677,18 +1724,18 @@ void handlePitchBend() {
         if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0
             && (pitchBendMode == kPitchBendVibrato || (iPitchBend[i] == 0))) {
             if (toneholeRead[i] > senseDistance) {
-                if (bitRead(currentFP.fp.holes, i) != 1) {
+                if (bitRead(currentFP.fp.holeCovered, i) != 1) {
                     iPitchBend[i] = (int)(((toneholeRead[i] - senseDistance) * vibratoScale[i]));  //bend downward
                     pitchBendOn[i] = 1;
                 }
             } else {
                 pitchBendOn[i] = 0;
-                if (bitRead(currentFP.fp.holes, i) == 1) {
+                if (bitRead(currentFP.fp.holeCovered, i) == 1) {
                     iPitchBend[i] = 0;
                 }
             }
 
-            if (bitRead(currentFP.fp.holes, i) == 1 && !tf.timing ) {
+            if (bitRead(currentFP.fp.holeCovered, i) == 1 ) {
                 iPitchBend[i] = adjvibdepth;  // Set vibrato to max downward bend if a hole was being used to bend down and now is covered
             }
 #if DEBUG_PB
@@ -1716,7 +1763,7 @@ void handlePitchBend() {
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
     for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i] > senseDistance && tf.currentDelay == 0)) {
+        if ((toneholeRead[i] > senseDistance)) { // && !tf.timing)) {
             const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
@@ -1726,7 +1773,7 @@ void getSlide() {
             }
 
             if (offsetSteps != 0
-                && bitRead(currentFP.fp.holes, i) != 1
+                && bitRead(tf.newNoteHoleCovered.fp.holeCovered, i) != 1
                 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
                 iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // scale
 
@@ -2511,7 +2558,7 @@ void handleButtons() {
 
     if (justPressed[0] && !pressed[2] && !pressed[1]) {
         if (ED[mode][DRONES_CONTROL_MODE] == 1) {
-            if (currentFP.fp.holes >> 1 == 0b00001000) {  // Turn drones on/off if button 0 is pressed and fingering pattern is 0 0001000.
+            if (currentFP.fp.holeCovered >> 1 == 0b00001000) {  // Turn drones on/off if button 0 is pressed and fingering pattern is 0 0001000.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 if (!dronesOn) {
@@ -2523,13 +2570,13 @@ void handleButtons() {
         }
 
         if (switches[mode][SECRET]) {
-            if (currentFP.fp.holes >> 1 == 0b00010000) {  // Change pitchbend mode if button 0 is pressed and fingering pattern is 0 0000010.
+            if (currentFP.fp.holeCovered >> 1 == 0b00010000) {  // Change pitchbend mode if button 0 is pressed and fingering pattern is 0 0000010.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 changePitchBend();
             }
 
-            else if (currentFP.fp.holes >> 1 == 0b00000010) {  // Change instrument if button 0 is pressed and fingering pattern is 0 0000001.
+            else if (currentFP.fp.holeCovered >> 1 == 0b00000010) {  // Change instrument if button 0 is pressed and fingering pattern is 0 0000001.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
                 changeInstrument();
