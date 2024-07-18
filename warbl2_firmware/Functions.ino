@@ -1267,47 +1267,14 @@ byte getNote(fingering_pattern_union_t fingerPattern) {
 
     //This has to stay here, otherwise notes modified by half holing wouldn't be detected by debounceFingerHoles()
     if (ret != 0 && ret != 127) {
-        if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-            if (bitRead(currentFP.fp.holeCovered, THUMB_HOLE) == switches[mode][INVERT]) { //Otherwise it is managed below
-                if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][HALF_HOLE_THUMB_INVERT] && !switches[mode][INVERT]) {
+        
+        //First two rows of the table above and other cases not included in the table
+        byte hhShift = getHalfHoleShift(fingerPattern);  //Usual half-hole switch, takes care of half thumb disabled or inverted
 #if DEBUG_FINGERING
-                    if (noteon) Serial.println("Case 1 - raising 24...");
+        if (noteon) Serial.print("Case 6 - raising ");
+        if (noteon) Serial.println(hhShift);
 #endif
-                    ret += 24;  // Add two octaves
-                } else if (! (switches[mode][HALF_HOLE_THUMB_INVERT] && switches[mode][INVERT])) {
-#if DEBUG_FINGERING
-                    if (noteon) Serial.println("Case 2 - raising 12...");
-#endif
-                    ret += 12;  // Add an octave jump to the transposition if necessary.
-                }
-            }
-
-            if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][INVERT] == 1) { //Both enabled and thumb/bell invert on - Last two rows of the table above
-                byte thumbHoleStatus = holeStatus(THUMB_HOLE, fingerPattern);
-                if (switches[mode][HALF_HOLE_THUMB_INVERT] == 0) {
-                    if (thumbHoleStatus == HOLE_STATUS_HALF) {
-    #if DEBUG_FINGERING
-                        if (noteon) Serial.println("Case 3 - raising 12...");
-    #endif
-                        ret += 12;  // Add one octave.
-                    } 
-                } else {
-                    if (thumbHoleStatus == HOLE_STATUS_CLOSED) {
-    #if DEBUG_FINGERING
-                        if (noteon) Serial.println("Case 4 - raising 24...");
-    #endif
-                        ret += 24;  // Add two octaves.
-                    } 
-                }
-            }
-        }  
-         //First two rows of the table above and other cases not included in the table
-            byte hhShift = getHalfHoleShift(fingerPattern);  //Usual half-hole switch, takes care of half thumb disabled or inverted
-#if DEBUG_FINGERING
-                    if (noteon) Serial.print("Case 6 - raising ");
-                    if (noteon) Serial.println(hhShift);
-#endif
-            ret += hhShift;
+        ret += hhShift;
     }
 
     if ((modeSelector[mode] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && currentFP.fp.holeCovered == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
@@ -1351,6 +1318,40 @@ void getShift() {
             shift = shift + 12;
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
+            }
+        }
+    } else 
+    //See octave matrix in getNote
+    if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
+        if (bitRead(currentFP.fp.holeCovered, THUMB_HOLE) == switches[mode][INVERT]) { //Otherwise it is managed below
+            if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][HALF_HOLE_THUMB_INVERT] && !switches[mode][INVERT]) {
+#if DEBUG_FINGERING
+                if (noteon) Serial.println("Case 1 - raising 24...");
+#endif
+                shift += 24;  // Add two octaves
+            } else if (! (switches[mode][HALF_HOLE_THUMB_INVERT] && switches[mode][INVERT])) {
+#if DEBUG_FINGERING
+                if (noteon) Serial.println("Case 2 - raising 12...");
+#endif
+                shift += 12;  // Add an octave jump to the transposition if necessary.
+            }
+        }
+        if (isHalfHoleEnabled(THUMB_HOLE) && switches[mode][INVERT] == 1) { //Both enabled and thumb/bell invert on - Last two rows of the table above
+            byte thumbHoleStatus = holeStatus(THUMB_HOLE, tf.newNoteHoleCovered);
+            if (switches[mode][HALF_HOLE_THUMB_INVERT] == 0) {
+                if (thumbHoleStatus == HOLE_STATUS_HALF) {
+#if DEBUG_FINGERING
+                    if (noteon) Serial.println("Case 3 - raising 12...");
+#endif
+                    shift += 12;  // Add one octave.
+                } 
+            } else {
+                if (thumbHoleStatus == HOLE_STATUS_CLOSED) {
+#if DEBUG_FINGERING
+                    if (noteon) Serial.println("Case 4 - raising 24...");
+#endif
+                    shift += 24;  // Add two octaves.
+                } 
             }
         }
     }
