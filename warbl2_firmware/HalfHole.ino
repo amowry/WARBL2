@@ -91,14 +91,14 @@ void debounceHalfHole() {
 
         if (halfHoleNow) {
             if (i == THUMB_HOLE) {
-                bitWrite(currentFP.fp.holes, i, switches[mode][HALF_HOLE_THUMB_INVERT]); //This decides the base note to be raised by an octave
+                bitWrite(currentFP.fp.holeCovered, i, switches[mode][HALF_HOLE_THUMB_INVERT]); //This decides the base note to be raised by an octave
             } else {
-                bitWrite(currentFP.fp.holes, i, 1); //Otherwise Half-hole is always considered closed
+                bitWrite(currentFP.fp.holeCovered, i, 1); //Otherwise Half-hole is always considered closed
             }
             bitWrite(currentFP.fp.halfHoles, i, 1); //To trigger fingering change
 
         } else {
-            bitWrite(currentFP.fp.holes, i, currentStatus);  //Confirm open or closed
+            bitWrite(currentFP.fp.holeCovered, i, currentStatus);  //Confirm open or closed
             bitWrite(currentFP.fp.halfHoles, i, 0);    //No half hole bit set
         }
 
@@ -220,7 +220,7 @@ bool isHalfHole(int hole) {
 int8_t getHalfHoleShift(fingering_pattern_union_t fingerPattern) {
 
     uint8_t result = 0;
-    uint16_t tempCovered = fingerPattern.fp.holes >> 1; //To store finger holes only
+    uint16_t tempCovered = fingerPattern.fp.holeCovered >> 1; //To store finger holes only
 
     for (byte i = R4_HOLE; i <= THUMB_HOLE; i++) {
         if (isHalfHoleEnabled(i)) {
