@@ -69,6 +69,8 @@ var WARBL2SettingsReceive; //indicatees which WARBL2 setting is about to be rece
 
 var version = "Unknown";
 
+var WARBL2messageReceived = 0; // changed to 1 whenever a message is received from WARBL2, so we know to stay connected.
+
 var instrument = 0; //currently selected instrument tab
 
 var ping = 0;
@@ -353,20 +355,33 @@ function onMIDIReject(err) {
 
 }
 
+ // Use statechange to disconnect the original WARBL (doesn't work as well with BLE)
 function midiOnStateChange(event) {
 
     //console.log("state change");
 
-    if (ping == 1) {
-
+    if (ping == 1 && version < 4.0) {
         showWARBLNotDetected();
         showWARBLUnknown();
         WARBLout = null;
         document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text
-
     }
 
 }
+
+// Disconnect WARBL2 if messages haven't been received for a while.
+function timedDisconnect() {
+	
+	if (WARBL2messageReceived == 0 && version >= 4.1) { //use statechange to disconnect the original WARBL (doesn't work as well with BLE)
+        showWARBLNotDetected();
+        showWARBLUnknown();
+        WARBLout = null;
+        document.getElementById("connect").innerHTML = "Connect to WARBL";
+    }
+	
+	WARBL2messageReceived = 0; // Reset
+}
+
 
 function setPing() {
 
@@ -536,9 +551,9 @@ function WARBL_Receive(event) {
 	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
 	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
 	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
-	if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
-		connect();
-	}
+	//if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
+	//	connect();
+	//}
 	
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
@@ -770,6 +785,7 @@ function WARBL_Receive(event) {
                 $('#importPreset').removeAttr('disabled')
 
                 //setPing(); //start checking to make sure WARBL is still connected
+				WARBL2messageReceived = 1; // Set this any time we receive a message from a WARBL, so we know not to disconnect the WARBL2 based on a timer.
 
                 if (data1 == MIDI_CC_115) { //hole covered info from WARBL
 
@@ -1414,6 +1430,11 @@ function WARBL_Receive(event) {
 
                     communicationMode = true; //moved above
                     previousVersion = version;
+					
+					if (version >= 40) { // With WARBL2, disconnect after 40 seconds if no messages have been received. This is because statechange doesn't work reliably with BLE on iOS.
+						setInterval(timedDisconnect, 40000);
+					}
+					
 
                     if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
                         document.getElementById("current").innerHTML = "Your firmware is up to date.";
