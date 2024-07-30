@@ -1056,8 +1056,6 @@ int pressureRateChange(int pressure) {
 
 
 
-
-
 // Calculate the upper boundary for the register when hysteresis is applied, from Louis Barman.
 int calcHysteresis(int currentUpperBound, bool high) {
     if (hysteresis == 0) {
@@ -1109,14 +1107,19 @@ void getExpression() {
     }
 
     if (sensorValue < halfway) {
-        byte scale = (((halfway - sensorValue) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));  // Should maybe figure out how to do this without dividing.
+        byte scale = (((halfway - sensorValue) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
         expression = -((scale * scale) >> 3);
     } else {
-        expression = (sensorValue - halfway) * ED[mode][EXPRESSION_DEPTH];
+        byte scale = (((sensorValue - halfway) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
+        expression = ((scale * scale) >> 3);
     }
 
-    if (expression > ED[mode][EXPRESSION_DEPTH] * 200) {
-        expression = ED[mode][EXPRESSION_DEPTH] * 200;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
+    // Calculate lowest possible pitchbend. This will be used to put an analogous cap on the upper and of the range.
+    byte maxScale = (((halfway - lowerBound) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
+    int maxExpression = ((maxScale * maxScale) >> 3);
+
+    if (sensorValue > (halfway + (halfway - lowerBound))) {
+        expression = maxExpression;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
     }
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
@@ -1128,6 +1131,10 @@ void getExpression() {
 
 
 
+
+
+
+
 // For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
     unsigned int closedHolePattern = holeCovered;
@@ -1135,6 +1142,8 @@ int findStepsOffsetFor(int hole) {
     int stepsOffset = getNote(closedHolePattern) - newNote;
     return stepsOffset;
 }
+
+
 
 
 
