@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed Config Tool connection behavior when WARBL2 is connected by both BLE and USB.
 
+- Changed Gaita and Gaita extended note for 1 101 0001 from 71 to 68.
+
+- Fixed bug in transient delay for closed pipe (all holes and bell sensor covered).
+
   
 
 ### Added
