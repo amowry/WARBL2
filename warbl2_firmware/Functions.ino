@@ -1114,16 +1114,16 @@ void getExpression() {
         expression = ((scale * scale) >> 3);
     }
 
-    // Calculate lowest possible pitchbend. This will be used to put positive and negative caps on the range.
+    // Calculate lowest possible pitchbend. This will be used to constrain the range.
     byte maxScale = (((halfway - lowerBound) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
     int maxExpression = ((maxScale * maxScale) >> 3);
 
     if (sensorValue > (halfway + (halfway - lowerBound))) {
-        expression = maxExpression;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
+        expression = maxExpression;
     }
 
     if (sensorValue < lowerBound) {
-        expression = -maxExpression;  // Put a cap on it, because in the upper register or in single-register mode, there's no upper limit
+        expression = -maxExpression; 
     }
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
