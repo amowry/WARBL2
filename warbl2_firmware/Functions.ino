@@ -852,6 +852,11 @@ byte getNote(unsigned int fingerPattern) {
         vibratoEnable = uilleannVibrato[tempCovered];
     }
 
+    if ((modeSelector[mode] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && holeCovered == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
+    {
+        ret = 0;  // Silence
+    }
+
     return ret;
 }
 
@@ -1404,11 +1409,9 @@ void sendNote() {
       (!noteon  // If there wasn't any note playing or the current note is different than the previous one
        || (pitchBendModeSelector[mode] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
        || (pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
-      && newNote != 0                                                                                   // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
-      && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&           // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
-      !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)) &&  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
-      !(modeSelector[mode] == kModeNorthumbrian && newNote == 63) &&                                    // And if we're in Northumbrian mode don't play a note if all holes are covered. That simulates the closed pipe.
-      !(breathMode != kPressureBell && holeCovered == 0b111111111))                       // Don't play a note if the bell sensor and all other holes are covered, and we're not in "bell register" mode. Again, simulating a closed pipe.
+      && newNote != 0                                                                                 // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
+      && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&         // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
+      !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
     {
 
         int notewason = noteon;
@@ -1481,7 +1484,7 @@ void sendNote() {
         if (
           ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                            // Or completely closed pipe with any fingering chart.
+          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                          // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
                                                                                                                   // Keep track.
 
