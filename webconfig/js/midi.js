@@ -65,11 +65,11 @@ var jumpFactorWrite; //to indicate which pressure variable is going to be sent o
 
 var fingeringWrite; //indicates the instrument for which a fingering pattern is being sent.
 
-var WARBL2SettingsReceive; //indicatees which WARBL2 setting is about to be received on CC119
+var WARBL2SettingsReceive; //indicates which WARBL2 setting is about to be received on CC119
 
 var version = "Unknown";
 
-var WARBL2messageReceived = 0; // changed to 1 whenever a message is received from WARBL2, so we know to stay connected.
+var timedDisconnectInterval = null; // interval for checking to see whether to stay connected to the WARBL2
 
 var instrument = 0; //currently selected instrument tab
 
@@ -207,7 +207,7 @@ function connect() {
             o.value.send(cc); //send CC message
         }
 
-
+		clearInterval(timedDisconnectInterval); // Clear timer for disconnecting WARBL2
         communicationMode = false;
         showWARBLNotDetected();
         showWARBLUnknown();
@@ -268,7 +268,7 @@ function connect() {
         showWARBLNotDetected();
         showWARBLUnknown();
 
-        // If availabe in the browser, request MIDI access with sysex support
+        // If available in the browser, request MIDI access with sysex support
         if (navigator.requestMIDIAccess)
             navigator.requestMIDIAccess({
                 sysex: false
@@ -364,22 +364,21 @@ function midiOnStateChange(event) {
         showWARBLNotDetected();
         showWARBLUnknown();
         WARBLout = null;
-        document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text
-    }
-
+        document.getElementById("connect").innerHTML = "Connect to WARBL";
+	}
 }
+
 
 // Disconnect WARBL2 if messages haven't been received for a while.
 function timedDisconnect() {
 	
-	if (WARBL2messageReceived == 0 && version >= 4.1) { //use statechange to disconnect the original WARBL (doesn't work as well with BLE)
+	if (version >= 4.1) {
         showWARBLNotDetected();
         showWARBLUnknown();
         WARBLout = null;
         document.getElementById("connect").innerHTML = "Connect to WARBL";
+		clearInterval(timedDisconnectInterval);
     }
-	
-	WARBL2messageReceived = 0; // Reset
 }
 
 
@@ -785,7 +784,9 @@ function WARBL_Receive(event) {
                 $('#importPreset').removeAttr('disabled')
 
                 //setPing(); //start checking to make sure WARBL is still connected
-				WARBL2messageReceived = 1; // Set this any time we receive a message from a WARBL, so we know not to disconnect the WARBL2 based on a timer.
+				
+				clearInterval(timedDisconnectInterval); // Also reset the timer
+				timedDisconnectInterval = setInterval(timedDisconnect, 50000);
 
                 if (data1 == MIDI_CC_115) { //hole covered info from WARBL
 
@@ -1430,10 +1431,6 @@ function WARBL_Receive(event) {
 
                     communicationMode = true; //moved above
                     previousVersion = version;
-					
-					if (version >= 40) { // With WARBL2, disconnect after 40 seconds if no messages have been received. This is because statechange doesn't work reliably with BLE on iOS.
-						setInterval(timedDisconnect, 40000);
-					}
 					
 
                     if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
