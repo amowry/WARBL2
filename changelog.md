@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed bug in transient delay for closed pipe (all holes and bell sensor covered).
 
+- Fixed bugs with pitch expression (the pitch range was not centered on the pressure range for each note).
+
   
 
 ### Added
