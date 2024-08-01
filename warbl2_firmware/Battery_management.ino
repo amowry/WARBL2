@@ -142,7 +142,7 @@ void manageBattery(bool send) {
 
     static byte cycles = 40;  // 40 cycles is 30 seconds.
     // Send voltage and charging status to Config Tool. This also tells the Config Tool to stay connected because it's the only message sent at a regular interval.
-    if ((cycles % 2) == 0 || send) {
+    if (cycles == 40 || send) {
         if (communicationMode) {
             sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((smoothed_voltage + 0.005) * 100) - 50));  // Convert to 0-127 for sending to Config Tool as 7 bits (possible range of 0.5 - 1.77 V in this format).
             sendMIDICouplet(MIDI_SEND_BATTERY_CHARGE_STATUS, chargingStatus);                       // Send charging status.
