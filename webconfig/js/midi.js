@@ -107,6 +107,7 @@ window.onclick = function (event) {
 }
 
 
+//console.log('Initially ' + (window.navigator.onLine ? 'on' : 'off') + 'line'); // Detect if there's a connection-- can be used for refreshing the app version if a connection is available?
 
 
 window.addEventListener('load', function () {
