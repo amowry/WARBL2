@@ -69,11 +69,7 @@ var WARBL2SettingsReceive; //indicates which WARBL2 setting is about to be recei
 
 var version = "Unknown";
 
-var timedDisconnectInterval = null; // interval for checking to see whether to stay connected to the WARBL2
-
 var instrument = 0; //currently selected instrument tab
-
-var ping = 0;
 
 var lsb = 0; //used for reassembling pressure bytes from WARBL
 
@@ -196,7 +192,6 @@ function connect() {
     //console.log("connect function");
 
     if (communicationMode && version > 2.0) {
-        //sendToAll(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"	
 		if (version < 4.1){	
         var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
 		}
@@ -207,7 +202,6 @@ function connect() {
             o.value.send(cc); //send CC message
         }
 
-		clearInterval(timedDisconnectInterval); // Clear timer for disconnecting WARBL2
         communicationMode = false;
         showWARBLNotDetected();
         showWARBLUnknown();
@@ -221,9 +215,7 @@ function connect() {
             var inputs = midiAccess.inputs.values();
 
             for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-
                 input.value.onmidimessage = null;
-
             }
         }
 
@@ -238,14 +230,8 @@ function connect() {
 
     else {
 
-        //debugger;
-
-        //console.log("connect");
-        //alert("connect");
         // Clear the midiAccess object callbacks
         if (midiAccess) {
-
-            //console.log("connect: Have a midiAccess, clearing the receive callbacks");
 
             // Walk the inputs and clear any receive callbacks
             var inputs = midiAccess.inputs.values();
@@ -261,8 +247,6 @@ function connect() {
 
         // Clear the WARBL output port
         WARBLout = null;
-
-        ping = 0;
 
         // Setup initial detection and version messages
         showWARBLNotDetected();
@@ -284,11 +268,9 @@ function connect() {
 // Callback when first requesting WebMIDI support
 //
 async function onMIDIInit(midi)  {
+	
+	//console.log("onMIDIInit function");
 
-    //debugger;
-
-    //console.log("onMIDIInit");
-    //alert("onMiDIInitl");
     // Save off the MIDI access object
     midiAccess = midi;
 
@@ -296,6 +278,31 @@ async function onMIDIInit(midi)  {
     WARBLout = null;
 
     var foundMIDIInputDevice = false;
+	
+	
+	
+	
+	// Use onstatechange to detect when a WARBL is disconnected
+	     var iter = midiAccess.inputs.values();
+            var inputs = [];        
+            for (var o = iter.next(); !o.done; o = iter.next()) {
+                inputs.push(o.value);
+            }
+            for (var port = 0; port < inputs.length; port++) {
+                inputs[port].onstatechange = function (event) {
+                    var port = event.port;
+                    //console.log("MIDIInputPort onstatechange name:" + port.name + " connection:" + port.connection + " state:" + port.state);
+					if(port.state == "disconnected"){ // Assume the WARBL has been disconnected if any port state changes to "disconnected".
+						showWARBLNotDetected();
+        				showWARBLUnknown();
+        				WARBLout = null;
+        				document.getElementById("connect").innerHTML = "Connect to WARBL";					
+					}
+                };
+            }
+	
+	
+	
 
     // Walk the inputs and see if a WARBL is connected
     var inputs = midiAccess.inputs.values();
@@ -303,14 +310,9 @@ async function onMIDIInit(midi)  {
     for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
 
         foundMIDIInputDevice = true;
-
         deviceName = input.value.name;
-
         //console.log("midiinit deviceName = "+deviceName + "   id: " + input.value.id);
         //alert("deviceName = "+deviceName);
-
-        setPing(); //start checking to make sure WARBL is still connected   
-
         input.value.onmidimessage = WARBL_Receive;
 
     }
@@ -342,11 +344,8 @@ async function onMIDIInit(midi)  {
 
         showWARBLNotDetected();
 
-
     }
-
-    midi.onstatechange = midiOnStateChange;
-
+	
 }
 
 function onMIDIReject(err) {
@@ -355,42 +354,7 @@ function onMIDIReject(err) {
 
 }
 
- // Use statechange to disconnect the original WARBL (doesn't work as well with BLE)
-function midiOnStateChange(event) {
 
-    //console.log("state change");
-
-    if (ping == 1 && version < 4.0) {
-        showWARBLNotDetected();
-        showWARBLUnknown();
-        WARBLout = null;
-        document.getElementById("connect").innerHTML = "Connect to WARBL";
-	}
-}
-
-
-// Disconnect WARBL2 if messages haven't been received for a while.
-function timedDisconnect() {
-	
-	if (version >= 4.1) {
-        showWARBLNotDetected();
-        showWARBLUnknown();
-        WARBLout = null;
-        document.getElementById("connect").innerHTML = "Connect to WARBL";
-		clearInterval(timedDisconnectInterval);
-    }
-}
-
-
-function setPing() {
-
-    //change ping to 1 after 3 seconds, after which we'll show a disconnnect if the MIDI state changes.
-    setTimeout(function () {
-
-        ping = 1;
-
-    }, 3000);
-}
 
 
 
@@ -547,13 +511,6 @@ function WARBL_Receive(event) {
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
 	
-	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
-	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
-	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
-	//if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
-	//	connect();
-	//}
-	
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
@@ -602,7 +559,7 @@ function WARBL_Receive(event) {
 
 					
                 if (outputName == inputName) {
-                    // console.log("Found the matching WARBL output port!")
+                     //console.log("Found the matching WARBL output port!")
 
                     WARBLout = o.value;
                     break;
@@ -620,7 +577,7 @@ function WARBL_Receive(event) {
 
             if (!WARBLout) {
 
-                //console.error("Failed to find the WARBL output port!")
+                console.error("Failed to find the WARBL output port!")
 
                 showWARBLNotDetected();
 
@@ -783,10 +740,11 @@ function WARBL_Receive(event) {
                 // Enable the import preset button
                 $('#importPreset').removeAttr('disabled')
 
-                //setPing(); //start checking to make sure WARBL is still connected
-				
-				clearInterval(timedDisconnectInterval); // Also reset the timer
-				timedDisconnectInterval = setInterval(timedDisconnect, 50000);
+				/*
+				if (communicationMode == false){ // If we think we're disconnected but receive a message from the WARBL, try to reconnect.
+					connect();
+				}
+				*/
 
                 if (data1 == MIDI_CC_115) { //hole covered info from WARBL
 
