@@ -21,7 +21,7 @@ var communicationMode = false; //if we're communicating with WARBL
 var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
 var noteNamesforKeySelect = ["G#","A","Bb","B","C3","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C4","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C5","C#","D","Eb","F","F#","G","G#","A"];
 
-var notesPlaying = 0; //Number of MIDI notes currently playing
+var notePlaying = 0; //MIDI note most recently turned on, used for small note display
 var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
@@ -224,8 +224,6 @@ function connect() {
 
         // Clear the WARBL output port
         WARBLout = null;
-
-        ping = 0;
 
     }
 
@@ -717,7 +715,7 @@ function WARBL_Receive(event) {
         case 0x90:
             if (data2 != 0) { // if velocity != 0, this is a note-on message
                 noteOn(data1);
-				if(notesPlaying < 2) {notesPlaying ++;} //keep track of many notes are currently playing so we know when to turn off the note display.
+				notePlaying = data1; //keep track of most recent note so we know when to turn off the display.
                 logKeys;
 				document.getElementById("tinyConsole").value = noteNames[data1 - 1] + " " + data1;
                 return;
@@ -725,9 +723,8 @@ function WARBL_Receive(event) {
         // if velocity == 0, fall thru: it's a note-off.
         case 0x80:
             noteOff(data1);
-			notesPlaying --;
             logKeys;
-			if (notesPlaying == 0) {document.getElementById("tinyConsole").value = "";}
+			if (notePlaying == data1) {document.getElementById("tinyConsole").value = "";}
             return;
 
         case 0xB0: //incoming CC from WARBL
