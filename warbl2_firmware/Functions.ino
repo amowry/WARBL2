@@ -2856,6 +2856,7 @@ void loadPrefs() {
     pitchBend = 8192;
     expression = 0;
     shakeVibrato = 0;
+    prevHoleCovered = 1; // Necessary so we know to call getNote() again if the fingerin chart has been changed.
 
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
 
