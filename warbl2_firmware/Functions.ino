@@ -1123,7 +1123,7 @@ void getExpression() {
     }
 
     if (sensorValue < lowerBound) {
-        expression = -maxExpression; 
+        expression = -maxExpression;
     }
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
@@ -2210,8 +2210,13 @@ void performAction(byte action) {
                 }
             }
 
+
             if (buttonPrefs[mode][action][1] == 1) {
-                sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+                if (!momentary[mode][action]) {
+                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+                } else {
+                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0); // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
+                }
             }
 
             if (buttonPrefs[mode][action][1] == 2) {
@@ -2312,9 +2317,9 @@ void performAction(byte action) {
 
         case SEMI_SHIFT_DOWN:
             if (!momentary[mode][action]) {
-                noteShift--;  // Shift up if we're not in momentary mode
+                noteShift--;  // Shift down if we're not in momentary mode
             } else {
-                noteShift++;  // Shift down if we're in momentary mode, because the button is being released and a previous press has shifted up.
+                noteShift++;  // Shift up if we're in momentary mode, because the button is being released and a previous press has shifted down.
             }
             break;
 
@@ -2421,6 +2426,10 @@ void handleMomentary(byte button) {
         if (buttonPrefs[mode][button][0] == 1 && buttonPrefs[mode][button][1] == 0) {  // Handle momentary press if we're sending a MIDI message
             sendMIDI(NOTE_ON, buttonPrefs[mode][button][2], buttonPrefs[mode][button][3], buttonPrefs[mode][button][4]);
             noteOnOffToggle[button] = 1;
+        }
+
+        if (buttonPrefs[mode][button][0] == 1 && buttonPrefs[mode][button][1] == 1) {
+            sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][button][2], buttonPrefs[mode][button][3], buttonPrefs[mode][button][4]);
         }
 
         // Handle presses for shifting the octave or semitone up or down
@@ -2856,7 +2865,7 @@ void loadPrefs() {
     pitchBend = 8192;
     expression = 0;
     shakeVibrato = 0;
-    prevHoleCovered = 1; // Necessary so we know to call getNote() again if the fingerin chart has been changed.
+    prevHoleCovered = 1;  // Necessary so we know to call getNote() again if the fingerin chart has been changed.
 
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
 

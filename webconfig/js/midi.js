@@ -2072,6 +2072,7 @@ function sendFingeringSelect(row, selection) {
     sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + row);
     sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_START + selection);
     sendKey(row, key);
+
 }
 
 
@@ -3867,13 +3868,13 @@ function updateCells() {
         }
 
         var z = document.getElementById("row" + i).value;
-
-        if ((y == 0 && i < 3 && x == 1) || ((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
+		
+        if (((y == 0 || (version > 4.1 && y == 1)) && i < 3 && x == 1) || ((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
             document.getElementById("checkbox" + i).disabled = false;
             document.getElementById("switch" + i).style.cursor = "pointer";
         }
 
-        if (((y != 0 && i < 3) || (i < 3 && (x == 0 || x > 1))) && !((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
+        if (((((y != 0 && version <= 4.1) || (version > 4.1 && y > 1)) && i < 3) || (i < 3 && (x == 0 || x > 1))) && !((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
             document.getElementById("checkbox" + i).disabled = true;
             document.getElementById("switch" + i).style.cursor = "default";
             document.getElementById("checkbox" + i).checked = false;
