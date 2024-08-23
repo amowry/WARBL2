@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added a hidden "sticks" mode where WARBL acts as a MIDI drumstick. Turned on by setting transpose to -18 in the Config Tool and then clicking "Auto-calibrate bell sensor only" within 10 seconds. Uses yaw mapping settings to map yaw to MIDI notes.
 
+- Momentary button behavior is now enabled for sending CC messages with a button click. If the momentary switch is turned on, the button will send a CC with a value of 0 when released, for controlling CC on/off "switches", e.g. CC 64-69. When pressed, the button will send whatever CC value is currently set for the behavior.
+
 
 ## [Released]
 
