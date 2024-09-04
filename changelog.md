@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 
-##[4.2] - 2024-5-17
+## [Released]
+
+##[4.2] - 2024-9-4
 
 
 ### Changed
@@ -37,7 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Momentary button behavior is now enabled for sending CC messages with a button click. If the momentary switch is turned on, the button will send a CC with a value of 0 when released, for controlling CC on/off "switches", e.g. CC 64-69. When pressed, the button will send whatever CC value is currently set for the behavior.
 
 
-## [Released]
 
 ##[4.1] - 2024-5-1
 
