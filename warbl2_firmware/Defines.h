@@ -4,7 +4,7 @@
 
 #define VERSION 42  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
-#define HARDWARE_REVISION 48        // Not currently used. Can be written to EEPROM 1992 to store revision number.
+#define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
 #define WATCHDOG_TIMEOUT_SECS 5  // The timeout needs to be set longer than any task that might interrupt the loop().
@@ -341,7 +341,6 @@
 #define MIDI_CC_102_VALUE_70 70  // Bidirectional. Settings for current instrument: Pitchbend mode 0
 #define MIDI_CC_102_VALUE_71 71  // Bidirectional. Settings for current instrument: Pitchbend mode 1
 #define MIDI_CC_102_VALUE_72 72  // Bidirectional. Settings for current instrument: Pitchbend mode 2
-/* MrMep: this next value is missing from the Google Doc */
 #define MIDI_CC_102_VALUE_73 73  // Bidirectional. Settings for current instrument: Pitchbend mode 3
 /* 74-79 unused */
 #define MIDI_CC_102_VALUE_80 80  // Bidirectional. Settings for current instrument: Breath mode 0
