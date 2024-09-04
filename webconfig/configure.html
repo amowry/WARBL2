@@ -1265,7 +1265,7 @@
                   <input type="checkbox" class="checkboxes" id="checkbox3" onChange="sendSecret(this.checked)" />
                   <span class="slider round"></span>
                   </label>
-                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
+                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double-clicks</div>
                   <label class="switch" id="switchDoubleClick">
                     <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
                     <span class="slider round"></span>
@@ -1976,10 +1976,16 @@
                      If a button click is configured to send MIDI Note On/Note Off messages, the normal behavior is to alternate between sending Note On and Note Off messages each time the button is "clicked" (the action actually occurs when the button is released). There is also the option to choose <b>momentary</b> behavior, meaning that the button will send a Note On message when pressed and a Note Off message when released. This is useful if you only want a note to be on when the button is held down, for example for mimicking uilleann pipe regulators. Note: If <b>momentary</b> is selected, other actions using that same button will be disabled, because it's not possible to differentiate other intentions from a momentary press.
                   </p>
                   <p>
+                  New in firmware version 4.2 (WARBL2 only), you can turn on the <b>Use button double-clicks</b> switch to require double-clicks instead of single-clicks for all three buttons. This can help prevent accidentally clicking the buttons. If a <b>Momentary</b> switch is turned on for a particular button, then the Use button double-clicks switch is ignored for that button.
+                  </p>
+                  <p>
                      If you are sending Note On/Note Off messages, <b>byte 2</b> is the MIDI note number, and <b>byte 3</b> is velocity. If you are sending CC messages, <b>byte 2</b> is the CC number and <b>byte 3</b> is the value.
                   </p>
                   <p>
                      Please note that CC messages 102-119 on channel 7 are reserved for the Configuration Tool, so WARBL cannot be programmed to send additional messages in this range.
+                  </p>
+                  <p>
+                  If you are sending a CC message and the <b>momentary</b> switch is turned on, a CC message with a value of 0 will be sent when the button is released. When initially clicked, a message with the value that you entered for Byte 3 will be sent. This behavior can be used for on/off CC messages like CC 64-69. 
                   </p>
                   <p>
                      Selecting <b>Send PC</b> will send a Program Change message to the selected channel. This would be useful, for example, to select a particular instrument in a MIDI host app. <b>Increase PC</b> and <b>Decrease PC</b> are different in that they assume a Program Change value of 1 when WARBl is started, and then increase or decrease it from there. For example, clicking a button assigned to <b>Increase PC</b> after starting WARBL will send a PC message of 2 on the selected channel. These commands are useful for consecutively stepping through the available sounds in a MIDI app.
