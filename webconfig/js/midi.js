@@ -33,6 +33,8 @@ var previousVersion = 0; //Used to keep track of which version of WARBL is conne
 var midiAccess = null; // the MIDIAccess object.
 
 var WARBLout = null; // WARBL output port
+var midiInitializing = false;
+var midiScanningOutId = 0;
 
 var gExportProxy = null; // Export received message proxy
 
@@ -320,25 +322,36 @@ async function onMIDIInit(midi)  {
 
     if (foundMIDIInputDevice) {
 
+        midiInitializing = true;
         if (!communicationMode || version < 2.1 || version == "Unknown") {
 
             if (version < 2.1 || communicationMode) {
+                //console.log("Sending enter comm mode to all")
                 sendToAll(MIDI_CC_102, MIDI_ENTER_COMM_MODE); //tell WARBL to enter communications mode
             } else {
                 //We send a command to all connected devices unless one responds
                 var cc = buildMessage(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
 
+                //console.log("Sending enter comm mode to all manually with sleeps")
+
                 var iter = midiAccess.outputs.values();
                 for (var o = iter.next(); !o.done; o = iter.next()) {
                     if (!communicationMode) {
+                        //console.log("Sending CC102 to " + o.value.name + " id: " + o.value.id)
+                        midiScanningOutId = o.value.id;
                         o.value.send(cc); //send CC message to all ports
                     } else {
                         break;
                     }
                     await sleep(500); //This should be enough even for BLE
                 }
+
+                //console.log("Done sending comm mode to all")
+
             }
         }
+        midiInitializing = false;
+        midiScanningOutId = 0;
 
     }
     else {
@@ -541,7 +554,8 @@ function WARBL_Receive(event) {
 	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
 	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
 	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
-	if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
+	if ((!WARBLout) && (!midiInitializing) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
+        console.log("reconnect after disconnected?");
 		connect();
 	}
 	
@@ -566,7 +580,7 @@ function WARBL_Receive(event) {
 
             }
 
-            console.log("Searching for WARBL output port matching input port name: "+event.target.name);
+            //console.log("Searching for WARBL output port matching port id " + midiScanningOutId + " or input port name: " + event.target.name);
             //alert("Searching for WARBL output port matching input port name: "+targetName);
             // Send to all MIDI output ports
             var iter = midiAccess.outputs.values();
@@ -576,8 +590,9 @@ function WARBL_Receive(event) {
             for (var o = iter.next(); !o.done; o = iter.next()) {
 
                 var outputName = o.value.name;
+                var outputId = o.value.id;
 
-                //console.log("output name: " + outputName + "  id: " + o.value.id)
+                //console.log("output name: " + outputName + "  id: " + outputId)
 
                 // Strip any [] postfix
 
@@ -591,27 +606,37 @@ function WARBL_Receive(event) {
 
                 }
 
-					
-                if (outputName == inputName) {
-                    // console.log("Found the matching WARBL output port!")
+                // this is the reliable way to match when scanning one by one
+                if (outputId == midiScanningOutId) {
+                    console.log("Found the matching WARBL output port with scan match ID: " + outputName + " id: " + outputId)
 
                     WARBLout = o.value;
                     break;
                 }
+
+                // this is all just backup
+                if (outputName == inputName) {
+                    //console.log("Found the matching WARBL output by name exact for backup: " + outputName)
+
+					backupout = o.value;
+                    //WARBLout = o.value;
+                    //break;
+                }
                 else if (outputName.includes("WARBL")) { //The "WARBL" part is a hack because when we're on BLE the input and output ports don't necessarily have the same name, for example with the Korg BLE MIDI Driver they are WARBL IN and WARBL OUT. AM 10/23
-                    // console.log("Found backup WARBL output port: " + outputName)
+                    //console.log("Found backup WARBL output port: " + outputName)
 					backupout = o.value;
 				}
             }
 
 			// only if an exact match wasn't found do we use the backup "includes-WARBL" output
 			if (!WARBLout && backupout) {
+                console.log("Using backup found port: "+backupout)
 				WARBLout = backupout;
 			}
 
             if (!WARBLout) {
 
-                //console.error("Failed to find the WARBL output port!")
+                console.error("Failed to find the WARBL output port!")
 
                 showWARBLNotDetected();
 
