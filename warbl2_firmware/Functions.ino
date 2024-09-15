@@ -1306,7 +1306,7 @@ void getShift() {
     shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
 
     // Overblow if allowed.
-    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
+    if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
         shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
         if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
@@ -1546,7 +1546,7 @@ void getExpression() {
         useUpperBound = (ED[mode][EXPRESSION_MAX] * 9) + 100;
     } else {
         lowerBound = sensorThreshold[0];
-        if (newState == 3) {
+        if (newState == TOP_REGISTER) {
             useUpperBound = upperBoundLow;  // Get the register boundary taking hysteresis into consideration
         } else {
             useUpperBound = upperBoundHigh;
@@ -1555,7 +1555,7 @@ void getExpression() {
 
     unsigned int halfway = ((useUpperBound - lowerBound) >> 1) + lowerBound;  // Calculate the midpoint of the curent register, where the note should play in tune.
 
-    if (newState == 3) {
+    if (newState == TOP_REGISTER) {
         halfway = useUpperBound + halfway;
         lowerBound = useUpperBound;
     }
