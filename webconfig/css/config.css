@@ -2390,6 +2390,24 @@ input:disabled + .vibratoSlider:before {
 	left: 80px;
 }
 
+.tinyDeviceLabel {
+	display: block;
+	position: absolute;
+	left: 50px;
+	top: 100px;
+	width: 100px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.midiSelector {
+	position: absolute;
+	height: 30px;
+	width: 150px;
+	top: 100px;
+	left: 145px;
+}
+
 .openConsole {
 	position: absolute;
 	height: 30px;
@@ -2397,6 +2415,7 @@ input:disabled + .vibratoSlider:before {
 	top: 100px;
 	left: 350px;
 }
+
 
 .tinyConsoleLabel {
 	display: block;
