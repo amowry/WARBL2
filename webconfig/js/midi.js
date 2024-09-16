@@ -294,7 +294,7 @@ function connect() {
         else {var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_104);}
 
 
-        if (WARBLout) {
+        if (WARBLout && WARBLout != 1) { // just in case
             WARBLout.send(cc); //send CC message
         }
 
@@ -631,7 +631,7 @@ function WARBL_Receive(event) {
     if ((!WARBLout || !WARBLin) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
 
-        if (platform == "web") {
+        //if (platform == "web") {
             
             if (!WARBLout && midiScanningOut) {
                 WARBLout = midiScanningOut;
@@ -645,13 +645,13 @@ function WARBL_Receive(event) {
                 enableMidiInputForOnly(WARBLin.id);
                 updateMidiDeviceSelector();
             }
+        /*
         }
-
         else { //app version
             WARBLout = 1; //for app version we don't worry about the device name or port, just that it's sending on channel 7.
             WARBLin = event.target;
         }
-
+        */
 
     }
 
