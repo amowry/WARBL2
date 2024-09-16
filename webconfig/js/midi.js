@@ -94,6 +94,10 @@ if (platform == "app") {
     document.getElementById("myTopnav").style.display = "none";
     document.getElementById("topLogo").style.display = "none";
     document.getElementById("importexport").style.display = "none";
+
+    document.getElementById("midiSelector").style.display = "none";
+    document.getElementById("tinyDeviceLabel").style.display = "none";
+
 }
 
 // When the user clicks anywhere outside of the modal, close it
@@ -528,6 +532,8 @@ function sendToAll(byte2, byte3) {
 // Send a command to only the WARBL output port
 function sendToWARBL(byte2, byte3) {
     if (communicationMode) {
+        
+        
         if (platform == "app") {
             var cc = buildMessage(byte2, byte3);
             sendAllQueue.push(cc); //add message to queue
@@ -536,7 +542,9 @@ function sendToWARBL(byte2, byte3) {
             }
         }
 
-        else {
+        else 
+        
+        {
 
             // Make sure we have a WARBL output port
             if (!WARBLout) {
@@ -618,20 +626,12 @@ function WARBL_Receive(event) {
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
 	
-	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
-	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
-	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
-	if ((!WARBLout) && (!midiConnecting) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
-        console.log("reconnect after disconnected?");
-		//connect();
-	}
-
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
     if ((!WARBLout || !WARBLin) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
 
-        //if (platform == "web") {
+        if (platform == "web") {
             
             if (!WARBLout && midiScanningOut) {
                 WARBLout = midiScanningOut;
@@ -645,17 +645,16 @@ function WARBL_Receive(event) {
                 enableMidiInputForOnly(WARBLin.id);
                 updateMidiDeviceSelector();
             }
-        /*
         }
         else { //app version
             WARBLout = 1; //for app version we don't worry about the device name or port, just that it's sending on channel 7.
             WARBLin = event.target;
         }
-        */
+        
 
     }
 
-    if (!WARBLin || WARBLin != event.target) {
+    if (WARBLout != 1 && (!WARBLin || WARBLin != event.target)) {
         console.log("Ignoring midi message from unconnected device");
         return;
     }
