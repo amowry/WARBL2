@@ -67,6 +67,17 @@
                <p id="versionLabel" class="noTouch">WARBL firmware version:</p>
                <p id="version" class="noTouch">Unknown</p>
                <p id="current" class="noTouch">Your firmware is up to date.</p>
+
+               <div class="tinyDeviceLabel noTouch">Device:</div>
+               <div class="midiSelector">
+                  <div class="styled-select2 blue semi-square">
+                     <select id="midiDeviceSelector" onChange="midiDeviceSelected(value)">
+                        <option selected="selected" value="0">Auto</option>
+                        <option value="1">Test</option>
+                     </select>
+                  </div>
+               </div>
+
                <button type="button" class="smallbutton noTouch openConsole" onClick="modal(18)">MIDI Console...</button>
                <div class="tinyConsoleLabel noTouch">MIDI Note:</div>
                <div class="tinyConsoleContainer">
@@ -1265,7 +1276,7 @@
                   <input type="checkbox" class="checkboxes" id="checkbox3" onChange="sendSecret(this.checked)" />
                   <span class="slider round"></span>
                   </label>
-                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double-clicks</div>
+                  <div class="doubleClickLabel noTouch" id="doubleClickLabel">Use button double clicks</div>
                   <label class="switch" id="switchDoubleClick">
                     <input type="checkbox" class="checkboxes" id="cbDoubleClick" onChange="sendDoubleClick(this.checked)">
                     <span class="slider round"></span>

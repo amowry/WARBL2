@@ -33,6 +33,10 @@ var previousVersion = 0; //Used to keep track of which version of WARBL is conne
 var midiAccess = null; // the MIDIAccess object.
 
 var WARBLout = null; // WARBL output port
+var WARBLin = null; // WARBL input port
+var midiConnecting = false;
+var midiScanningOut = null;
+var selectedMidiOutId = 0;
 
 var gExportProxy = null; // Export received message proxy
 
@@ -116,6 +120,7 @@ window.addEventListener('load', function () {
 
     // Clear the WARBL output port
     WARBLout = null;
+    WARBLin = null;
 
     updateCells(); // set selects and radio buttons to initial values and enabled/disabled states
 
@@ -188,77 +193,192 @@ function showWARBLUnknown() {
 
 }
 
+function updateMidiDeviceSelector() {
+
+    if (midiAccess) {
+
+        var selector = document.getElementById("midiDeviceSelector");
+        selector.length = 0;
+
+
+        var autoelement = document.createElement("option");
+        autoelement.value = 0;
+        autoelement.text = "Auto";
+        selector.append(autoelement);
+
+        var iter = midiAccess.outputs.values();
+        var currSelectionExists = false;
+
+        for (var o = iter.next(); !o.done; o = iter.next()) {
+
+            if (o.value) {
+                //console.log("Output " + o.value);
+                var element = document.createElement("option");
+                if (o.value.id) {
+                    element.value = o.value.id;
+                    if (o.value.id == selectedMidiOutId) {
+                        currSelectionExists = true;
+                    }
+                }
+                element.text = o.value.name;
+                selector.append(element);
+            }
+        }
+
+        if (WARBLout) {
+            selector.value = WARBLout.id;
+        }
+        else if (currSelectionExists) {
+            selector.value = selectedMidiOutId;
+        }
+        else {
+            // set to auto
+            selector.value = 0;
+        }
+   }
+}
+
+
+function midiDeviceSelected(value) {
+    console.log("Midi device selected: " + value);
+
+    selectedMidiOutId = value;
+    startMidiConnect();
+
+}
+
+function enableMidiInputForOnly(portid)
+{
+    if (midiAccess) {
+        var inputs = midiAccess.inputs.values();
+
+        for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+
+            if (input.value.id == portid) {
+                input.value.onmidimessage = WARBL_Receive;
+            } else {
+                input.value.onmidimessage = null;
+            }
+        }
+    }
+}
+
+function enableMidiInputsForAll()
+{
+    if (midiAccess) {
+        var inputs = midiAccess.inputs.values();
+
+        for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+            input.value.onmidimessage = WARBL_Receive;
+        }
+        console.log("Number midi inputs: " + midiAccess.inputs.size);
+        return midiAccess.inputs.size > 0;
+    }
+    else {
+        return false;
+    }
+}
+
+// is called for connect or disconnect
 function connect() {
 
     //console.log("connect function");
 
     if (communicationMode && version > 2.0) {
-		if (version < 4.1){	
-        var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
-		}
-		else {var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_104);}
-        var iter = midiAccess.outputs.values();
+        //sendToAll(102, 99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"	
+        console.log("DISCONNECTING");
 
-        for (var o = iter.next(); !o.done; o = iter.next()) {
-            o.value.send(cc); //send CC message
+        if (version < 4.1){
+            var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_99); //tell WARBL to exit communications mode if the "connect" button currently reads "Disconnect"
+        }
+        else {var cc = buildMessage(MIDI_CC_102, MIDI_CC_102_VALUE_104);}
+
+
+        if (WARBLout) {
+            WARBLout.send(cc); //send CC message
         }
 
-        communicationMode = false;
-        showWARBLNotDetected();
-        showWARBLUnknown();
-        WARBLout = null;
-        document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text
-        if (midiAccess) {
+        setToDisconnected();
 
-            //console.log("connect: Have a midiAccess, clearing the receive callbacks");
+        enableMidiInputForOnly(0); // disable all midi input
+    }
+    else {
+        // CONNECTING
 
-            // Walk the inputs and clear any receive callbacks
-            var inputs = midiAccess.inputs.values();
-
-            for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-                input.value.onmidimessage = null;
-            }
-        }
-
-        midiAccess = null;
-
-        // Clear the WARBL output port
-        WARBLout = null;
-
+        startMidiConnect();
     }
 
-    else {
+}
 
-        // Clear the midiAccess object callbacks
-        if (midiAccess) {
+async function startMidiConnect()
+{
+    // ensure disconnected
+    setToDisconnected();
 
-            // Walk the inputs and clear any receive callbacks
-            var inputs = midiAccess.inputs.values();
+    console.log("startMidiConnect");
 
-            for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+    var outputId = document.getElementById("midiDeviceSelector").value;
+    var isAutoMode = outputId == 0;
 
-                input.value.onmidimessage = null;
+    enableMidiInputsForAll();
 
+    var cc = buildMessage(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
+
+    // We send a command to specified (or all with AUTO mode) device until one responds
+
+    //console.log("Sending enter comm mode to all manually with sleeps")
+    midiConnecting = true;
+
+    // for speed when there are many devices, try the ones with WARBL in the name first
+    var iter = midiAccess.outputs.values();
+    for (var o = iter.next(); !o.done; o = iter.next()) {
+        if (!communicationMode) {
+
+            if ((outputId == 0 || o.value.id == outputId) && o.value.name.includes("WARBL")) {
+                console.log("Attempting connect to " + o.value.name + " id: " + o.value.id)
+                midiScanningOut = o.value;
+                o.value.send(cc); //send CC message to all ports
             }
+            else {
+                continue;
+            }
+        } else {
+            // communication has been achieved, get out of this loop
+            break;
         }
+        await sleep(250); //This should be enough even for BLE
+    }
 
-        midiAccess = null;
+    if (!communicationMode) {
+        // now try all the rest ( I know this is an ugly copy/paste)
+        var iter = midiAccess.outputs.values();
+        for (var o = iter.next(); !o.done; o = iter.next()) {
+            if (!communicationMode) {
 
-        // Clear the WARBL output port
-        WARBLout = null;
+                if ((outputId == 0 || o.value.id == outputId) && !o.value.name.includes("WARBL") ) {
+                    console.log("Attempting connect to " + o.value.name + " id: " + o.value.id)
+                    midiScanningOut = o.value;
+                    o.value.send(cc); //send CC message to all ports
+                }
+                else {
+                    continue;
+                }
+            } else {
+                // communication has been achieved, get out of this loop
+                break;
+            }
+            await sleep(250); //This should be enough even for BLE
+        }
+    }
 
-        // Setup initial detection and version messages
+    midiScanningOut = null;
+    midiConnecting = false;
+
+    // if we still don't have a connection, disable all midi inputs again
+    if (!communicationMode) {
+        console.log("Could not detect any connected WARBLs");
+        enableMidiInputForOnly(0); // disable all midi input
         showWARBLNotDetected();
-        showWARBLUnknown();
-
-        // If available in the browser, request MIDI access with sysex support
-        if (navigator.requestMIDIAccess)
-            navigator.requestMIDIAccess({
-                sysex: false
-            }).then(onMIDIInit, onMIDIReject);
-        else {
-            alert("Your browser does not support MIDI. Please use Chrome or Opera, or the free WARBL iOS app.");
-        }
     }
 
 }
@@ -266,86 +386,32 @@ function connect() {
 //
 // Callback when first requesting WebMIDI support
 //
-async function onMIDIInit(midi)  {
-	
-	//console.log("onMIDIInit function");
 
-    // Save off the MIDI access object
+async function onMIDIInit(midi)  {
+
     midiAccess = midi;
+    midi.onstatechange = midiOnStateChange;
 
     // Null the WARBL MIDI output port
     WARBLout = null;
+    WARBLin = null;
 
-    var foundMIDIInputDevice = false;
-	
-	
-	
-	
-	// Use onstatechange to detect when a WARBL is disconnected
-	     var iter = midiAccess.inputs.values();
-            var inputs = [];        
-            for (var o = iter.next(); !o.done; o = iter.next()) {
-                inputs.push(o.value);
-            }
-            for (var port = 0; port < inputs.length; port++) {
-                inputs[port].onstatechange = function (event) {
-                    var port = event.port;
-                    //console.log("MIDIInputPort onstatechange name:" + port.name + " connection:" + port.connection + " state:" + port.state);
-					if(port.state == "disconnected"){ // Assume the WARBL has been disconnected if any port state changes to "disconnected".
-						showWARBLNotDetected();
-        				showWARBLUnknown();
-        				WARBLout = null;
-        				document.getElementById("connect").innerHTML = "Connect to WARBL";					
-					}
-                };
-            }
-	
-	
-	
+    var foundMIDIInputDevice = enableMidiInputsForAll();
 
-    // Walk the inputs and see if a WARBL is connected
-    var inputs = midiAccess.inputs.values();
-
-    for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-
-        foundMIDIInputDevice = true;
-        deviceName = input.value.name;
-        //console.log("midiinit deviceName = "+deviceName + "   id: " + input.value.id);
-        //alert("deviceName = "+deviceName);
-        input.value.onmidimessage = WARBL_Receive;
-
-    }
+    updateMidiDeviceSelector();
 
     if (foundMIDIInputDevice) {
-
-        if (!communicationMode || version < 2.1 || version == "Unknown") {
-
-            if (version < 2.1 || communicationMode) {
-                sendToAll(MIDI_CC_102, MIDI_ENTER_COMM_MODE); //tell WARBL to enter communications mode
-            } else {
-                //We send a command to all connected devices unless one responds
-                var cc = buildMessage(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
-
-                var iter = midiAccess.outputs.values();
-                for (var o = iter.next(); !o.done; o = iter.next()) {
-                    if (!communicationMode) {
-                        o.value.send(cc); //send CC message to all ports
-                    } else {
-                        break;
-                    }
-                    await sleep(500); //This should be enough even for BLE
-                }
-            }
-        }
-
+        // try a connection
+        console.log("trying initial connect");
+        startMidiConnect();
     }
     else {
+        console.log("no inputs");
 
         showWARBLNotDetected();
-
     }
-	
 }
+
 
 function onMIDIReject(err) {
 
@@ -353,9 +419,51 @@ function onMIDIReject(err) {
 
 }
 
+function setToDisconnected()
+{
+    showWARBLNotDetected();
+    showWARBLUnknown();
+    WARBLout = null;
+    WARBLin = null;
+    communicationMode = false;
+    previousVersion = 0;
+    document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text    
+}
 
+function midiOnStateChange(event) {
 
+    console.log("midi state change");
 
+    // make sure midi output port still exists, otherwise show disconnected
+    
+    if (WARBLout) {
+        var iter = midiAccess.outputs.values();
+        var foundit = false;
+        for (var o = iter.next(); !o.done; o = iter.next()) {
+            if (o.value == WARBLout) {
+                foundit = true;
+                break;
+            }
+        }
+        if (!foundit) {
+            selectedMidiOutId = 0;
+            setToDisconnected();
+            enableMidiInputForOnly(0); // disable all midi input
+        }
+    }
+
+    updateMidiDeviceSelector();
+}
+
+function setPing() {
+
+    //change ping to 1 after 3 seconds, after which we'll show a disconnnect if the MIDI state changes.
+    setTimeout(function () {
+
+        ping = 1;
+
+    }, 3000);
+}
 
 
 //
@@ -510,84 +618,46 @@ function WARBL_Receive(event) {
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
 	
+	// This is a patch added to reconnect if the app version has disconnected inadvertently, which happens sometimes with BLE.
+	// The issue is that we don't seem to be able to tell which port the WARBL is on, so we're not able to accurately tell when its connection state changes.
+	// With this patch, the Config Tool will reconnect if it receives any CC message from the WARBL in the right range, indicating that the WARBL still thinks that it is connected.
+	if ((!WARBLout) && (!midiConnecting) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 != MIDI_CC_110)) { 
+        console.log("reconnect after disconnected?");
+		//connect();
+	}
 
     // If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
     // find the port by name by walking the output ports and matching the input port name
-    if ((!WARBLout) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
+    if ((!WARBLout || !WARBLin) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
 
         if (platform == "web") {
             
-            var inputName = event.target.name;
-			//console.log(inputName);
-
-            // Strip any [] postfix
-
-            var inputBracketIndex = inputName.indexOf("[");
-
-            if (inputName.indexOf("[") != -1) {
-
-                inputName = inputName.substr(0, inputBracketIndex);
-
+            if (!WARBLout && midiScanningOut) {
+                WARBLout = midiScanningOut;
+                selectedMidiOutId = WARBLout.id;
             }
 
-            console.log("Searching for WARBL output port matching input port name: "+event.target.name);
-            //alert("Searching for WARBL output port matching input port name: "+targetName);
-            // Send to all MIDI output ports
-            var iter = midiAccess.outputs.values();
+            WARBLin = event.target;
 
-			var backupout = null;
-
-            for (var o = iter.next(); !o.done; o = iter.next()) {
-
-                var outputName = o.value.name;
-
-                //console.log("output name: " + outputName + "  id: " + o.value.id)
-
-                // Strip any [] postfix
-
-                var outputBracketIndex = outputName.indexOf("[");
-
-
-
-                if (outputName.indexOf("[") != -1) {
-
-                    outputName = outputName.substr(0, outputBracketIndex);
-
-                }
-
-					
-                if (outputName == inputName) {
-                     //console.log("Found the matching WARBL output port!")
-
-                    WARBLout = o.value;
-                    break;
-                }
-                else if (outputName.includes("WARBL")) { //The "WARBL" part is a hack because when we're on BLE the input and output ports don't necessarily have the same name, for example with the Korg BLE MIDI Driver they are WARBL IN and WARBL OUT. AM 10/23
-                    // console.log("Found backup WARBL output port: " + outputName)
-					backupout = o.value;
-				}
-            }
-
-			// only if an exact match wasn't found do we use the backup "includes-WARBL" output
-			if (!WARBLout && backupout) {
-				WARBLout = backupout;
-			}
-
-            if (!WARBLout) {
-
-                console.error("Failed to find the WARBL output port!")
-
-                showWARBLNotDetected();
-
+            if (WARBLout && WARBLin) {
+                console.log("Connected WARBL!")
+                enableMidiInputForOnly(WARBLin.id);
+                updateMidiDeviceSelector();
             }
         }
 
         else { //app version
             WARBLout = 1; //for app version we don't worry about the device name or port, just that it's sending on channel 7.
+            WARBLin = event.target;
         }
 
 
+    }
+
+    if (!WARBLin || WARBLin != event.target) {
+        console.log("Ignoring midi message from unconnected device");
+        return;
     }
 
     var e;
