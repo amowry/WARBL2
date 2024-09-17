@@ -89,16 +89,8 @@ for (var w = 1; w <= 29; w++) {
 
 }
 
-//hide some stuff for app version
-if (platform == "app") {
-    document.getElementById("myTopnav").style.display = "none";
-    document.getElementById("topLogo").style.display = "none";
-    document.getElementById("importexport").style.display = "none";
+updatePlatform();
 
-    document.getElementById("midiSelector").style.display = "none";
-    document.getElementById("tinyDeviceLabel").style.display = "none";
-
-}
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
@@ -154,6 +146,20 @@ window.addEventListener('load', function () {
         alert("Your browser does not support MIDI. Please use Chrome or Opera, or the free WARBL iOS app.")
 
 });
+
+
+function updatePlatform()
+{
+    let newdisp =  (platform == "app" || platform == "app2") ? "none" : "block";
+    //hide some stuff for app version
+    document.getElementById("myTopnav").style.display = newdisp;
+    document.getElementById("topLogo").style.display = newdisp;
+    document.getElementById("importexport").style.display = newdisp;
+
+    let newdispleg =  (platform == "app") ? "none" : "block";
+    document.getElementById("midiSelector").style.display = newdispleg;
+    document.getElementById("tinyDeviceLabel").style.display = newdispleg;        
+}
 
 //
 // Common function to show the "WARBL not detected" message
@@ -260,8 +266,10 @@ function enableMidiInputForOnly(portid)
 
             if (input.value.id == portid) {
                 input.value.onmidimessage = WARBL_Receive;
+                //input.value.addEventListener('midimessage', WARBL_Receive, false);
             } else {
                 input.value.onmidimessage = null;
+                //input.value.removeEventListener('midimessage', WARBL_Receive, false);
             }
         }
     }
@@ -274,6 +282,8 @@ function enableMidiInputsForAll()
 
         for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
             input.value.onmidimessage = WARBL_Receive;
+            //input.value.removeEventListener('midimessage', WARBL_Receive, false);
+            //input.value.addEventListener('midimessage', WARBL_Receive, false);
         }
         console.log("Number midi inputs: " + midiAccess.inputs.size);
         return midiAccess.inputs.size > 0;
@@ -444,6 +454,7 @@ function midiOnStateChange(event) {
         var iter = midiAccess.outputs.values();
         var foundit = false;
         for (var o = iter.next(); !o.done; o = iter.next()) {
+            console.log("Searching out " + o.value.id + "  wout: " + WARBLout.id);
             if (o.value == WARBLout) {
                 foundit = true;
                 break;
@@ -533,7 +544,7 @@ function sendToAll(byte2, byte3) {
 function sendToWARBL(byte2, byte3) {
     if (communicationMode) {
         
-        
+        // only used in legacy versions of the app
         if (platform == "app") {
             var cc = buildMessage(byte2, byte3);
             sendAllQueue.push(cc); //add message to queue
@@ -541,9 +552,7 @@ function sendToWARBL(byte2, byte3) {
                 sendAllInterval = setInterval(sendAllQueuedMessages, sendDelay); //start interval for sending queued messages
             }
         }
-
         else 
-        
         {
 
             // Make sure we have a WARBL output port
@@ -605,10 +614,11 @@ function sendAllQueuedMessages() {
 
 
 
-function WARBL_Receive(event) {
+function WARBL_Receive(event, source) {
 
+    // only the app version will send this with a source parameter here 
+    // (because for some reason the event.target doesnnt propogate on the iOS webkit side)
     //debugger;
-
 
     var data0 = event.data[0];
     var data1 = event.data[1];
@@ -622,6 +632,9 @@ function WARBL_Receive(event) {
         return;
     }
 
+    //console.log("event target: " + event.target + " source: " + source);
+    source = event.target != null ? event.target : source;
+
     //console.log("WARBL_Receive");
     //console.log(communicationMode);
     //console.log("WARBL_Receive target = "+event.target.name);
@@ -630,31 +643,34 @@ function WARBL_Receive(event) {
     // find the port by name by walking the output ports and matching the input port name
     if ((!WARBLout || !WARBLin) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL-1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
         //alert(data0 & 0x0F);
-
-        if (platform == "web") {
-            
+        console.log("Platform: " + platform);
+        if (platform == "app")  { // legacy app
+            console.log("Legacy app connection");
+            WARBLout = 1; //for legacy app version we don't worry about the device name or port, just that it's sending on channel 7.
+            WARBLin = source;
+        }
+        else  {
+            console.log("midiScanningOut: " + midiScanningOut + " id: " + midiScanningOut.id );
             if (!WARBLout && midiScanningOut) {
                 WARBLout = midiScanningOut;
                 selectedMidiOutId = WARBLout.id;
             }
 
-            WARBLin = event.target;
+            WARBLin = source;
 
             if (WARBLout && WARBLin) {
                 console.log("Connected WARBL!")
+                console.log(WARBLin);
                 enableMidiInputForOnly(WARBLin.id);
                 updateMidiDeviceSelector();
             }
-        }
-        else { //app version
-            WARBLout = 1; //for app version we don't worry about the device name or port, just that it's sending on channel 7.
-            WARBLin = event.target;
         }
         
 
     }
 
-    if (WARBLout != 1 && (!WARBLin || WARBLin != event.target)) {
+
+    if (WARBLout != 1 && (!WARBLin || WARBLin != source)) {
         console.log("Ignoring midi message from unconnected device");
         return;
     }
