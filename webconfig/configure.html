@@ -13,6 +13,9 @@
       <meta name="author" content="Andrew Mowry" />
       <link href="css/nouislider.css" rel="stylesheet" type="text/css" />
       <link href="css/config.min.css" rel="stylesheet" type="text/css" />
+      <link href="css/modal.css" rel="stylesheet" type="text/css" />
+      <link rel="manifest" href="https://michaeleskin.com/warbl/manifest.json">
+
       <style>
          .topnav.responsive {
          background: transparent;
@@ -25,9 +28,20 @@
          if (window.isSecureContext) {
              // Page is a secure context so service workers are now available
          
-         
              console.log("secure");
          }
+
+         // Register service worker
+         if ('serviceWorker' in navigator){
+            navigator.serviceWorker.register('https://michaeleskin.com/warbl/service_worker.js',{updateViaCache: "none"})
+            .then(reg => {
+               console.log("Service Worker Registered!");
+            })
+            .catch(err => {
+               console.log("Service Worker Registration failed: "+err);
+            });
+         }  
+
       </script>
    </head>
    <body>
@@ -45,6 +59,7 @@
          <a href="https://warbl.xyz/contact.html">Contact</a>
          <a href="https://warbl.xyz/Bio.html" >Bio</a>
          <a href="https://warbl.xyz/phpbb/">Forum</a>
+         <a onclick="UpdateToLatestVersion();">Update Tool</p>
          <a class="active" href="https://warbl.xyz/configure.html">Configure WARBL</a>
          <a href="javascript:void(0);" class="icon" onClick="topNavFunction()">
          <object class = "info" data="img/bars.svg" type="image/svg+xml"></object>
@@ -2496,4 +2511,6 @@
    <script src="js/constants.min.js"></script>
    <script src="js/midi.min.js"></script>
    <script src="js/d3.min.js"></script>
+   <script src="js/daypilot-modal.min-3.10.1.js"></script>
+   <script src="js/update.js"></script>
 </html>
