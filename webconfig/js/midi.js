@@ -282,8 +282,21 @@ function enableMidiInputsForAll()
 
         for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
             input.value.onmidimessage = WARBL_Receive;
-            //input.value.removeEventListener('midimessage', WARBL_Receive, false);
-            //input.value.addEventListener('midimessage', WARBL_Receive, false);
+
+            // for legacy app purposes
+            // Use onstatechange to detect when any port is disconnected
+            // the new app doesn't require this
+            if (platform == "app") {
+                input.value.onstatechange = function (event) {
+                    var port = event.port;
+                    console.log("MIDIInputPort onstatechange name:" + port.name + " connection:" + port.connection + " state:" + port.state);
+                    if (port.state == "disconnected") {
+                        // Assume the WARBL has been disconnected if any port state changes to "disconnected".
+                        // since the legacy app doesn't know which port was being used for the WARBL
+                        setToDisconnected();
+                    }
+                };
+            }
         }
         console.log("Number midi inputs: " + midiAccess.inputs.size);
         return midiAccess.inputs.size > 0;
