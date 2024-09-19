@@ -1,0 +1,7 @@
+{
+ "name": "WARBL",
+ "display": "minimal-ui",
+ "theme_color": "#055581",
+ "background_color": "#055581",
+ "start_url": "/tool/configure.html"
+}
