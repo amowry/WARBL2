@@ -3,14 +3,12 @@
 //
 //
 //
-//
-// Updated 19 September 2024 at 0700
-//
+// Updated 19 September 2024 at 0810
 //
 //
 //
 
-const cacheName = "warbl_3";
+const cacheName = "warbl_4";
 
 const contentToCache = [
 "configure.html",
@@ -79,7 +77,7 @@ self.addEventListener("activate", event => {
 // Fetching content using Service Worker
 self.addEventListener("fetch", (e) => {
 
-    //console.log(`[Service Worker] fetching: ${e.request.url}`);
+    console.log(`[Service Worker] fetching: ${e.request.url}`);
 
     // Cache http and https only, skip unsupported chrome-extension:// and file://...
     if (!(
@@ -94,14 +92,14 @@ self.addEventListener("fetch", (e) => {
 
         if (r){
 
-            //console.log(`[Service Worker] Returning cached resource: ${e.request.url}`);
+            console.log(`[Service Worker] Returning cached resource: ${e.request.url}`);
 
             return r;
         }
 
         try{
 
-            //console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
+            console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
 
             const response = await fetch(e.request);
 
@@ -122,7 +120,7 @@ self.addEventListener("fetch", (e) => {
         }
         catch (error){
 
-            //console.log("[Service Worker] fetch error: "+error);
+            console.log("[Service Worker] fetch error: "+error);
     
         }
     })());
