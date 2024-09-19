@@ -12,32 +12,33 @@
 //
 //
 
-const cacheName = "warbl_6";
+const cacheName = "warbl_7";
 
 const contentToCache = [
-    "/configure.html",
-    "/favicon.ico",
-    "/manifest.json",
-    "/css/config.min.css",
-    "/css/nouislider.css",
-    "/css/modal.css", 
-    "/js/jquery-3.3.1.min.js",
-    "/js/nouislider.js",
-    "/js/WebAudioFontPlayer.js",
-    "/js/0650_SBLive_sf2.js",
-    "/js/constants.min.js",
-    "/js/midi.min.js",
-    "/js/d3.min.js",
-    "/js/daypilot-modal.min-3.10.1.js",
-    "/js/update.js",
-    "/img/small_logo.png",
-    "/img/downarrow.png",
-    "/img/info-circle.svg",
-    "/img/volume-off.svg",
-    "/img/volume-up.svg",
-    "/img/angle-up.svg",
-    "/img/angle-down.svg"
+    "configure.html",
+    "favicon.ico",
+    "manifest.json",
+    "css/config.min.css",
+    "css/nouislider.css",
+    "css/modal.css", 
+    "js/jquery-3.3.1.min.js",
+    "js/nouislider.js",
+    "js/WebAudioFontPlayer.js",
+    "js/0650_SBLive_sf2.js",
+    "js/constants.min.js",
+    "js/midi.min.js",
+    "js/d3.min.js",
+    "js/daypilot-modal.min-3.10.1.js",
+    "js/update.js",
+    "img/small_logo.png",
+    "img/downarrow.png",
+    "img/info-circle.svg",
+    "img/volume-off.svg",
+    "img/volume-up.svg",
+    "img/angle-up.svg",
+    "img/angle-down.svg"
 ];
+
 
 // Installing Service Worker
 self.addEventListener("install", (e) => {
