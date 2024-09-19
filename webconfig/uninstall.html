@@ -67,18 +67,9 @@
 			
 		<script>
 
-
 		function unregisterServiceWorker(){
 
 			var alertShown = false;
-
-			// Delete all the caches
-			caches.keys().then((keys) => {
-	          return Promise.all(
-	            keys.map((key) => caches.delete(key))
-	          );
-	        })
-
 
 			// Unregister service worker
 			navigator.serviceWorker.getRegistrations()
@@ -91,7 +82,10 @@
 			 	{
 				   	registrations.map(r => {
 
-						r.unregister();
+				   		if (r.scope.indexOf("warbl") != -1){
+				   			console.log("Unregistering WARBL service worker at scope: "+r.scope);
+							r.unregister();
+						}
 						
 						if (!alertShown){
 							alertShown = true;
@@ -103,8 +97,21 @@
 			});
 		}
 
+		function deleteCaches(){
+
+			caches.keys().then((keys) => {
+	          return Promise.all(
+	            keys.map((key) => {if (key.indexOf("warbl") != -1){caches.delete(key)}})
+	          );
+        	})
+
+		}
+
 		function doUninstall(){
-			
+
+			// Delete caches
+			deleteCaches();
+
 			// Unregister the service worker and delete the service worker cache
 			unregisterServiceWorker();
 
