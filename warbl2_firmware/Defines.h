@@ -148,13 +148,13 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-#define CUSTOM_FINGERING_2 39  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_3 40
-#define CUSTOM_FINGERING_4 41
-#define CUSTOM_FINGERING_5 42
-#define CUSTOM_FINGERING_6 43
-#define CUSTOM_FINGERING_7 44
-#define CUSTOM_FINGERING_8 45
+#define EXPRESSION_MIN_LOW 39  
+#define EXPRESSION_MAX_HIGH 40
+#define EXPRESSION_OUT_LOW_CENTS 41     // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_HIGH_CENTS 42    // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_STABLE_CENTS 43  // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_CLAMP 44  
+#define CUSTOM_FINGERING_8 45       // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_9 46
 #define CUSTOM_FINGERING_10 47
 #define CUSTOM_FINGERING_11 48

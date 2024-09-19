@@ -881,7 +881,7 @@ void getShift() {
     shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
 
     // Overblow if allowed.
-    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
+    if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
         shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
         if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
@@ -1077,10 +1077,73 @@ int calcHysteresis(int currentUpperBound, bool high) {
 
 
 
-
-
 // Calculate pitchbend expression based on pressure
 void getExpression() {
+
+    if (switches[mode][OVERRIDE] && (breathMode != kPressureBreath)) {
+        getExpressionOverride();
+    } else {
+        getExpressionOriginal();
+    }
+
+    if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
+        pitchBend = 0;
+        sendPitchbend();
+    }
+}
+
+
+void getExpressionOverride() {
+
+    // Calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead.
+
+    int lowPressureMin = (ED[mode][EXPRESSION_MIN_LOW] * 9) + 100;
+    int lowPressureMax = (ED[mode][EXPRESSION_MIN] * 9) + 100;
+    int highPressureMin = (ED[mode][EXPRESSION_MAX] * 9) + 100;
+    int highPressureMax = (ED[mode][EXPRESSION_MAX_HIGH] * 9) + 100;
+    int centsLowOffset = 2 * (ED[mode][EXPRESSION_OUT_LOW_CENTS] - 64);
+    int centsHighOffset = 2 * (ED[mode][EXPRESSION_OUT_HIGH_CENTS] - 64);
+    int centsStableOffset = 2 * (ED[mode][EXPRESSION_OUT_STABLE_CENTS] - 64);
+    float depthScale =  1.0f; // ED[mode][EXPRESSION_DEPTH] * 0.01f;
+    bool doClamp = ED[mode][EXPRESSION_OUT_CLAMP] > 0;
+
+    float centsOffset = 0.0f;
+    float ratio = 0.0f;
+    if (sensorValue < lowPressureMax) {  // Pressure is in the lower range
+        ratio = min(((lowPressureMax - sensorValue) * depthScale) / (float)(lowPressureMax - lowPressureMin), 1.0f);
+        // TODO: curve options
+        //ratio = ratio * ratio;
+        centsOffset = centsLowOffset * ratio + centsStableOffset;
+    } else if (sensorValue > highPressureMin) {  // Pressure is in the higher range
+        ratio = max(((sensorValue - highPressureMin) * depthScale) / (float)(highPressureMax - highPressureMin), 0.0f);
+        // TODO: curve options
+        //ratio = sqrtf(ratio);
+        if (doClamp) {
+            ratio = min(ratio, 1.0f);
+        }
+        centsOffset = centsHighOffset * ratio + centsStableOffset;
+    }
+    else {
+        // in the stable range
+        centsOffset = centsStableOffset;
+    }
+
+    expression = (int) (0.01f * centsOffset * pitchBendPerSemi); // expression is in raw pitch bend units
+
+    /*
+    Serial.print("sens = ");
+    Serial.print(sensorValue);
+    Serial.print(" ratio = ");
+    Serial.print(ratio);
+    Serial.print(" cents = ");
+    Serial.print(centsOffset);
+    Serial.print(" expression = ");
+    Serial.println(expression);
+    */
+}
+
+// Calculate pitchbend expression based on pressure
+void getExpressionOriginal() {
 
     // Calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead.
 
@@ -1092,7 +1155,7 @@ void getExpression() {
         useUpperBound = (ED[mode][EXPRESSION_MAX] * 9) + 100;
     } else {
         lowerBound = sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
-        if (newState == 3) {
+        if (newState == TOP_REGISTER) {
             useUpperBound = upperBoundLow;  // Get the register boundary taking hysteresis into consideration
         } else {
             useUpperBound = upperBoundHigh;
@@ -1101,7 +1164,7 @@ void getExpression() {
 
     unsigned int halfway = ((useUpperBound - lowerBound) >> 1) + lowerBound;  // Calculate the midpoint of the curent register, where the note should play in tune.
 
-    if (newState == 3) {
+    if (newState == TOP_REGISTER) {
         halfway = useUpperBound + halfway;
         lowerBound = useUpperBound;
     }
@@ -1126,10 +1189,6 @@ void getExpression() {
         expression = -maxExpression;
     }
 
-    if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
-        pitchBend = 0;
-        sendPitchbend();
-    }
 }
 
 
@@ -1495,7 +1554,7 @@ void sendNote() {
 
     if (noteon) {  // Several conditions to turn a note off
         if (
-          ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
+          ((newState == SILENCE && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
           (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                          // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
@@ -3471,7 +3530,7 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_2; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = CUSTOM_FINGERING_8; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }

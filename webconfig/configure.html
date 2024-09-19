@@ -15,7 +15,6 @@
       <link href="css/config.min.css" rel="stylesheet" type="text/css" />
       <link href="css/modal.css" rel="stylesheet" type="text/css" />
       <link rel="manifest" href="https://warbl.xyz/manifest.json">
-
       <style>
          .topnav.responsive {
          background: transparent;
@@ -1217,7 +1216,27 @@
                   <div class="jumpvalues noTouch" id="slider3-value-min"></div>
                   <div class="jumpvalues noTouch" id="slider3-value-max"></div>
                   <div class="maxMinContainer3" id="slider3"></div>
-                  <div class="overrideRangeLabel noTouch">Pressure range (inH<sub>2</sub>0)</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprhighslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprhighslider-value-max"></div>
+                  <div class="maxMinContainerExprHigh" id="exprhighslider"></div>
+                  
+                  <div class="jumpvalues noTouch" id="exprlowbendslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprlowbendslider-value-max"></div>
+                  <div class="maxMinContainerExprLowBend" id="exprlowbendslider"></div>
+
+                  <div class="jumpvalues noTouch" id="exprhighbendslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprhighbendslider-value-max"></div>
+                  <div class="maxMinContainerExprHighBend" id="exprhighbendslider"></div>
+                  
+                  <div id="clampExprMaxLabel" class="clampExprMaxLabel noTouch">Clamp upper bend</div>
+                  <label class="switch" id="clampExprSwitch">
+                  <input type="checkbox" class="checkboxes" id="clampExprCheck" onChange="sendClampExpr(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
+                  <div class="overrideRangeLabel noTouch">Input Pressure Ranges (inH<sub>2</sub>0)</div>
+                  <div class="overrideCentsLabel noTouch">Output Bend (cents)</div>
                   <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="okayOverride()">OK</button>
                </div>
                <div class="smallcontrolbox dronescontrolBox" id="box3">
@@ -2481,6 +2500,47 @@
       
    </script>
    <script>
+      var exprhighslider = document.getElementById('exprhighslider');
+      noUiSlider.create(exprhighslider, {
+          start: [0, 100],
+          step: 1,
+          connect: false,
+          range: {
+              'min': 0,
+              'max': 100
+          }
+      });
+      
+   </script>
+   <script>
+      var exprlowbendslider = document.getElementById('exprlowbendslider');
+      noUiSlider.create(exprlowbendslider, {
+          start: [0, 127],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
+      
+   </script>
+   <script>
+      var exprhighbendslider = document.getElementById('exprhighbendslider');
+      noUiSlider.create(exprhighbendslider, {
+          start: [0, 127],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
+      
+   </script>
+   <script>
       var slider4 = document.getElementById('slider4');
       noUiSlider.create(slider4, {
           start: [0, 127],
@@ -2523,8 +2583,8 @@
    </script>
    <script src='js/WebAudioFontPlayer.js'></script>
    <script src='js/0650_SBLive_sf2.js'></script>
-   <script src="js/constants.min.js"></script>
-   <script src="js/midi.min.js"></script>
+   <script src="js/constants.js"></script>
+   <script src="js/midi.js"></script>
    <script src="js/d3.min.js"></script>
    <script src="js/daypilot-modal.min-3.10.1.js"></script>
    <script src="js/update.js"></script>

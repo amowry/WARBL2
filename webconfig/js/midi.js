@@ -723,7 +723,7 @@ function WARBL_Receive(event, source) {
 
     //Display received PB messages
     if (e == "PB") {	
-		var pitch = ((data1 + (data2 << 8)) >> 1)-8192;	
+		var pitch = ((data1 + (data2 << 7)))-8192;	
         document.getElementById('receivedPB').innerHTML = pitch;
         var barHeight = pitch / 81.92;
 		var heightPixels = 65 - (barHeight/100*65) + "px";
@@ -1320,10 +1320,10 @@ function WARBL_Receive(event, source) {
                         curve[3] = data2;
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
-                        slider3.noUiSlider.set([data2, null]);
+                        slider3.noUiSlider.set([null, data2]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
-                        slider3.noUiSlider.set([null, data2]);
+                        exprhighslider.noUiSlider.set([data2, null]);
                     }					
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
@@ -1335,6 +1335,29 @@ function WARBL_Receive(event, source) {
 	                    depth.dispatchEvent(new Event('input'));
 	                    output.innerHTML = data2;
 					}
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
+                        slider3.noUiSlider.set([data2, null]);
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
+                        exprhighslider.noUiSlider.set([null, data2]);
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +20) {
+                        // low bend
+                        exprlowbendslider.noUiSlider.set([data2, null]);
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +21) {
+                        // high bend
+                        exprhighbendslider.noUiSlider.set([null, data2]);
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +22) {
+                        // stable expr bend
+                        exprlowbendslider.noUiSlider.set([null, data2]);
+                        exprhighbendslider.noUiSlider.set([data2, null]);
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
+                        // expr max clamp
+                        document.getElementById("clampExprCheck").checked = data2;                        
+                    }					
 
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
@@ -2354,6 +2377,13 @@ function sendExpressionDepth(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function sendClampExpr(selection) {
+    selection = +selection;
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_CLAMP);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
 function sendCurveRadio(selection) {
     blink(1);
     selection = parseFloat(selection);
@@ -2456,12 +2486,54 @@ slider2.noUiSlider.on('change', function (values) {
 //expression override slider
 slider3.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_LOW);
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
     sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+    
+    // if the max is > exprhighslider.min, set the other to match
+    //console.log("slider3 values " + values[0] + " " + values[1]);
+    if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
+        //console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
+        exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
+    }
 });
 
+exprhighslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_HIGH);
+    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+    
+    // if the min is < slider3.max, set the other to match
+    if (parseInt(values[0]) < parseInt(slider3.noUiSlider.get()[1])) {
+        slider3.noUiSlider.set([null, parseInt(values[0])]);
+    }
+});
+
+exprlowbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_LOW_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_STABLE_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+
+    // keep stable (max) linked to other slider    
+    exprhighbendslider.noUiSlider.set([parseInt(values[1]), null]);
+
+});
+
+exprhighbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_STABLE_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_HIGH_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+
+    // keep stable (max) linked to other slider    
+    exprlowbendslider.noUiSlider.set([null, parseInt(values[0])]);
+});
 
 
 
@@ -2567,6 +2639,77 @@ slider3.noUiSlider.on('update', function (values, handle) {
 
 });
 
+exprhighslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprhighslider-value-min'),
+        marginMax = document.getElementById('exprhighslider-value-max');
+
+    if (handle) {
+        var min = parseFloat(values[handle] * 0.24).toFixed(1);
+        marginMax.innerHTML = min;
+    } else {
+        var max = parseFloat(values[handle] * 0.24).toFixed(1);
+        marginMin.innerHTML = max;
+    }
+
+});
+
+exprlowbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprlowbendslider-value-min'),
+        marginMax = document.getElementById('exprlowbendslider-value-max');
+
+    if (handle) {
+        var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+        marginMax.innerHTML = min;
+    } else {
+        var max = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+        marginMin.innerHTML = max;
+    }
+
+    var handleslb = exprlowbendslider.noUiSlider.get();
+    elements = document.getElementById("exprlowbendslider").getElementsByClassName("noUi-connect");
+
+    if (parseInt(handleslb[0]) > parseInt(handleslb[1])) {
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = "#f7c839";
+        }
+    }
+
+    else {
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = "#262626";
+        }
+    }
+
+});
+
+exprhighbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprhighbendslider-value-min'),
+        marginMax = document.getElementById('exprhighbendslider-value-max');
+
+    if (handle) {
+        var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+        marginMax.innerHTML = min;
+    } else {
+        var max = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+        marginMin.innerHTML = max;
+    }
+
+    var handleshb = exprhighbendslider.noUiSlider.get();
+    elements = document.getElementById("exprhighbendslider").getElementsByClassName("noUi-connect");
+
+    if (parseInt(handleshb[0]) > parseInt(handleshb[1])) {
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = "#f7c839";
+        }
+    }
+
+    else {
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = "#262626";
+        }
+    }
+});
+
 slider4.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('slider4-value-min'),
         marginMax = document.getElementById('slider4-value-max');
@@ -2577,7 +2720,7 @@ slider4.noUiSlider.on('update', function (values, handle) {
     }
 
     var handles4 = slider4.noUiSlider.get();
-    elements = document.getElementsByClassName("noUi-connect");
+    elements = document.getElementById("slider4").getElementsByClassName("noUi-connect");
 
     if (parseInt(handles4[0]) > parseInt(handles4[1])) {
         for (var i = 0; i < elements.length; i++) {

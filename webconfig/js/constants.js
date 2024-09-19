@@ -518,6 +518,12 @@ const MIDI_EXPRESSION_MIN = MIDI_CC_104_VALUE_85; // Bidirectional. Settings for
 const MIDI_EXPRESSION_MAX = MIDI_CC_104_VALUE_86; // Bidirectional. Settings for current instrument: indicates ED[37] is about to be sent with CC 105. 
 
 const MIDI_SLIDE_LIMIT_MAX = MIDI_CC_104_VALUE_87; // Bidirectional. Settings for current instrument: indicates ED[38] is about to be sent with CC 105. 
+const MIDI_EXPRESSION_MIN_LOW = MIDI_CC_104_VALUE_88; // Bidirectional. Settings for current instrument: indicates ED[39] is about to be sent with CC 105. 
+const MIDI_EXPRESSION_MAX_HIGH = MIDI_CC_104_VALUE_89; // Bidirectional. Settings for current instrument: indicates ED[40] is about to be sent with CC 105. 
+const MIDI_EXPRESSION_OUT_LOW_CENTS = MIDI_CC_104_VALUE_90; // Bidirectional. Settings for current instrument: indicates ED[41] is about to be sent with CC 105. 
+const MIDI_EXPRESSION_OUT_HIGH_CENTS = MIDI_CC_104_VALUE_91; // Bidirectional. Settings for current instrument: indicates ED[42] is about to be sent with CC 105. 
+const MIDI_EXPRESSION_OUT_STABLE_CENTS = MIDI_CC_104_VALUE_92; // Bidirectional. Settings for current instrument: indicates ED[43] is about to be sent with CC 105.
+const MIDI_EXPRESSION_OUT_CLAMP = MIDI_CC_104_VALUE_93; // Bidirectional. Settings for current instrument: indicates ED[44] is about to be sent with CC 105.
 
 const MIDI_SEND_ROLL = MIDI_CC_109_VALUE_0; // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105. 
 const MIDI_SEND_PITCH = MIDI_CC_109_VALUE_1; // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105. 

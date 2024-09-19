@@ -3274,14 +3274,20 @@ h3 {
 }
 
 #switch16 {
-	top: 130px;
+	top: 70px;
 	left: 330px;
 }
+
+#clampExprSwitch {
+	top: 360px;
+	left: 330px;
+}
+
 
 .overrideLabel {
 	position: absolute;
 	left: 85px;
-	top: 120px;
+	top: 60px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3289,11 +3295,19 @@ h3 {
 .overrideLabel2 {
 	position: absolute;
 	left: 85px;
-	top: 150px;
+	top: 85px;
 	z-index: 99;
 	font-size: 14px;
 }
 
+
+.clampExprMaxLabel {
+	position: absolute;
+	left: 195px;
+	top: 364px;
+	z-index: 99;
+	font-size: 14px;
+}
 
 .hack1Label {
 	position: absolute;
@@ -3510,9 +3524,112 @@ h3 {
 	width: 65%;
 	position: absolute;
 	left: 80px;
-	top: 270px;
+	top: 160px;
 	z-index: 99;
 }
+
+.maxMinContainerExprHigh {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 195px;
+	z-index: 99;
+}
+
+.maxMinContainerExprLowBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 260px;
+	z-index: 99;
+}
+
+.maxMinContainerExprHighBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 295px;
+	z-index: 99;
+}
+
+#slider3-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 155px;
+	z-index: 99;
+}
+
+#slider3-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 155px;
+	z-index: 99;
+}
+
+#exprhighslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 190px;
+	z-index: 99;
+}
+
+#exprhighslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 190px;
+	z-index: 99;
+}
+
+#exprlowbendslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 255px;
+	z-index: 99;
+}
+
+#exprlowbendslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 255px;
+	z-index: 99;
+}
+
+#exprhighbendslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 295px;
+	z-index: 99;
+}
+
+#exprhighbendslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 295px;
+	z-index: 99;
+}
+
+
+
+
 
 .maxMinContainer4 {
 	display: block;
@@ -3577,23 +3694,8 @@ h3 {
 	z-index: 99;
 }
 
-#slider3-value-min {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: -100px;
-	top: 265px;
-	z-index: 99;
-}
 
-#slider3-value-max {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: 270px;
-	top: 265px;
-	z-index: 99;
-}
+
 
 #slider4-value-min {
 	display: block;
@@ -3713,7 +3815,16 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 165px;
-	top: 230px;
+	top: 125px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.overrideCentsLabel {
+	display: block;
+	position: absolute;
+	left: 165px;
+	top: 228px;
 	z-index: 99;
 	font-size: 14px;
 }
