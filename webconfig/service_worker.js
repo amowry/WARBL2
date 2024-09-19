@@ -4,37 +4,39 @@
 //
 //
 //
-// Updated 19 September 2024 at 1300
+//
+// Updated 19 September 2024 at 1330
+//
 //
 //
 //
 //
 
-const cacheName = "warbl_5";
+const cacheName = "warbl_6";
 
 const contentToCache = [
-    "https://warbl.xyz/configure.html",
-    "https://warbl.xyz/favicon.ico",
-    "https://warbl.xyz/manifest.json",
-    "https://warbl.xyz/css/config.min.css",
-    "https://warbl.xyz/css/nouislider.css",
-    "https://warbl.xyz/css/modal.css", 
-    "https://warbl.xyz/js/jquery-3.3.1.min.js",
-    "https://warbl.xyz/js/nouislider.js",
-    "https://warbl.xyz/js/WebAudioFontPlayer.js",
-    "https://warbl.xyz/js/0650_SBLive_sf2.js",
-    "https://warbl.xyz/js/constants.min.js",
-    "https://warbl.xyz/js/midi.min.js",
-    "https://warbl.xyz/js/d3.min.js",
-    "https://warbl.xyz/js/daypilot-modal.min-3.10.1.js",
-    "https://warbl.xyz/js/update.js",
-    "https://warbl.xyz/img/small_logo.png",
-    "https://warbl.xyz/img/downarrow.png",
-    "https://warbl.xyz/img/info-circle.svg",
-    "https://warbl.xyz/img/volume-off.svg",
-    "https://warbl.xyz/img/volume-up.svg",
-    "https://warbl.xyz/img/angle-up.svg",
-    "https://warbl.xyz/img/angle-down.svg"
+    "/configure.html",
+    "/favicon.ico",
+    "/manifest.json",
+    "/css/config.min.css",
+    "/css/nouislider.css",
+    "/css/modal.css", 
+    "/js/jquery-3.3.1.min.js",
+    "/js/nouislider.js",
+    "/js/WebAudioFontPlayer.js",
+    "/js/0650_SBLive_sf2.js",
+    "/js/constants.min.js",
+    "/js/midi.min.js",
+    "/js/d3.min.js",
+    "/js/daypilot-modal.min-3.10.1.js",
+    "/js/update.js",
+    "/img/small_logo.png",
+    "/img/downarrow.png",
+    "/img/info-circle.svg",
+    "/img/volume-off.svg",
+    "/img/volume-up.svg",
+    "/img/angle-up.svg",
+    "/img/angle-down.svg"
 ];
 
 // Installing Service Worker
