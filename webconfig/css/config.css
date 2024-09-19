@@ -2038,7 +2038,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 60px;
-	top: 355px;
+	top: 390px;
 	left: 50px;
 }
 
@@ -3279,10 +3279,17 @@ h3 {
 }
 
 #clampExprSwitch {
-	top: 360px;
+	top: 330px;
 	left: 330px;
 }
 
+.clampExprMaxLabel {
+	position: absolute;
+	left: 200px;
+	top: 334px;
+	z-index: 99;
+	font-size: 14px;
+}
 
 .overrideLabel {
 	position: absolute;
@@ -3301,13 +3308,7 @@ h3 {
 }
 
 
-.clampExprMaxLabel {
-	position: absolute;
-	left: 195px;
-	top: 364px;
-	z-index: 99;
-	font-size: 14px;
-}
+
 
 .hack1Label {
 	position: absolute;
@@ -3553,6 +3554,15 @@ h3 {
 	left: 80px;
 	top: 295px;
 	z-index: 99;
+}
+
+.resetExpressionButton {
+	display: block;
+	position: absolute;
+	height: 30px !important;
+	width: 130px !important;
+	top: 390px;
+	left: 270px;
 }
 
 #slider3-value-min {

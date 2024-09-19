@@ -2017,6 +2017,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     centerIMU();
                 }
 
+                else if (value == MIDI_RESET_PITCH_EXPRESSION) {  // Recenter IMU heading based on current
+                    resetExpressionOverrideDefaults();
+                }
+
                 else if (value >= MIDI_BUTTON_ACTIONS_START) {
                     for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
                         if (buttonReceiveMode == i) {
@@ -2889,7 +2893,24 @@ void loadSettingsForAllModes() {
 
 
 
+ void resetExpressionOverrideDefaults()
+ {
+    // resets current mode's expression override defaults
+    // useful for populating older devices after first installing the version that has them
+    // and for manually restoring to a "sane" default for the new setup
 
+    ED[mode][EXPRESSION_MIN_LOW] = 0;
+    ED[mode][EXPRESSION_MIN] = 4;
+    ED[mode][EXPRESSION_MAX] = 12;
+    ED[mode][EXPRESSION_MAX_HIGH] = 20;
+    // 2x cents signed where 64 = 0, and 64+10 = +20 cents, and 64-10 = -20 cents for example
+    ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 35; // -70 cents
+    ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
+    ED[mode][EXPRESSION_OUT_STABLE_CENTS] = 64;
+    ED[mode][EXPRESSION_OUT_CLAMP] = 0; // boolean
+    ED[mode][EXPRESSION_CURVE] = 0; // linear
+
+ }
 
 
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
@@ -2985,6 +3006,11 @@ void loadPrefs() {
     curve[1] = ED[mode][VELOCITY_CURVE];
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
+
+    // handle transition from older firmwares that didn't have the advanced pitch expression parameters set yet (still 255 placeholders)
+    if (ED[mode][EXPRESSION_MIN_LOW] == 255) {
+        resetExpressionOverrideDefaults();
+    }
 
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
@@ -3530,7 +3556,7 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_8; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = CUSTOM_FINGERING_9; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }

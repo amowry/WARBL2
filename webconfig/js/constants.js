@@ -304,6 +304,7 @@ const MIDI_CC_106 = 106; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_106_VALUE_57 = 57; //Bidirectional. WARBL2 settings array (for settings that are independent of mode)
     /* 58-59 unused */
     const MIDI_CC_106_VALUE_60 = 60; // from Config Tool. WARBL2 recenter yaw
+    const MIDI_CC_106_VALUE_61 = 61; // from Config Tool. WARBL2 reset pitch expression override to default
     /* 61-69 unused */
     const MIDI_CC_106_VALUE_70 = 70; //from WARBL. WARBL2 battery voltage
 	const MIDI_CC_106_VALUE_71 = 71; //from WARBL. WARBL2 charging status
@@ -424,6 +425,7 @@ const MIDI_LEARN_DRONES_PRESSURE = MIDI_CC_106_VALUE_43; // from Config Tool. le
 const MIDI_SAVE_CALIB_AS_FACTORY = MIDI_CC_106_VALUE_45; // from Config Tool. save current sensor calibration as factory calibration (this is on a special webpage for me to use when I first program WARBL)
 const MIDI_CALIB_IMU = MIDI_CC_106_VALUE_54; //from Config Tool. WARBL2 calibrate IMU
 const MIDI_CENTER_YAW = MIDI_CC_106_VALUE_60; // from Config Tool. WARBL2 recenter yaw
+const MIDI_RESET_PITCH_EXPRESSION = MIDI_CC_106_VALUE_61; // from Config Tool. WARBL2 reset pitch expression to default
 
 const MIDI_STICKS_MODE = MIDI_CC_111_VALUE_109; // Bidirectional. Hidden sticks mode - Same for 112 and 113
 
@@ -524,6 +526,7 @@ const MIDI_EXPRESSION_OUT_LOW_CENTS = MIDI_CC_104_VALUE_90; // Bidirectional. Se
 const MIDI_EXPRESSION_OUT_HIGH_CENTS = MIDI_CC_104_VALUE_91; // Bidirectional. Settings for current instrument: indicates ED[42] is about to be sent with CC 105. 
 const MIDI_EXPRESSION_OUT_STABLE_CENTS = MIDI_CC_104_VALUE_92; // Bidirectional. Settings for current instrument: indicates ED[43] is about to be sent with CC 105.
 const MIDI_EXPRESSION_OUT_CLAMP = MIDI_CC_104_VALUE_93; // Bidirectional. Settings for current instrument: indicates ED[44] is about to be sent with CC 105.
+const MIDI_EXPRESSION_CURVE = MIDI_CC_104_VALUE_94; // Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105.
 
 const MIDI_SEND_ROLL = MIDI_CC_109_VALUE_0; // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105. 
 const MIDI_SEND_PITCH = MIDI_CC_109_VALUE_1; // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105. 

@@ -3699,6 +3699,22 @@ function centerYaw() {
     sendToWARBL(MIDI_CC_106, MIDI_CENTER_YAW);
 }
 
+function resetPitchExpressionOverride() {
+    blink(1);
+    sendToWARBL(MIDI_CC_106, MIDI_RESET_PITCH_EXPRESSION);
+
+    setTimeout(function () {
+        //console.log("refreshing UI");
+        sendToWARBL(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
+        
+        setTimeout(function () {
+            mapPressure();
+            overRideExpression();
+        }, 500);
+        
+    }, 500);
+}
+
 
 function WARBL2Radio(selection) {
     blink(1);
