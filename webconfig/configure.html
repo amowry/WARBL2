@@ -841,6 +841,8 @@
                   
                   <div class="receivedPBLabel noTouch">Received pitch&nbspbend:</div>
                   <div class="receivedPB noTouch" id="receivedPB"></div>
+                  <div class="receivedPBCents noTouch" id="receivedPBCents"></div>
+                  <div class="receivedPBCentsLabel noTouch">cents:</div>
                   <div id="PBlevelContainer">
                      <div id="PBlevel"></div>
                   </div>
@@ -1216,18 +1218,20 @@
                   <div class="jumpvalues noTouch" id="slider3-value-min"></div>
                   <div class="jumpvalues noTouch" id="slider3-value-max"></div>
                   <div class="maxMinContainer3" id="slider3"></div>
+                  <div id="lowrangelabel" class="lowrangelabel noTouch">Low range</div>
                   
                   <div class="jumpvalues noTouch" id="exprhighslider-value-min"></div>
                   <div class="jumpvalues noTouch" id="exprhighslider-value-max"></div>
                   <div class="maxMinContainerExprHigh" id="exprhighslider"></div>
+                  <div id="highrangelabel" class="highrangelabel noTouch">High range</div>
                   
-                  <div class="jumpvalues noTouch" id="exprlowbendslider-value-min"></div>
-                  <div class="jumpvalues noTouch" id="exprlowbendslider-value-max"></div>
+                  <div class="jumpvalues noTouch" id="exprlowbendslider-value"></div>
                   <div class="maxMinContainerExprLowBend" id="exprlowbendslider"></div>
+                  <div id="lowrangelabel2" class="lowrangelabel2 noTouch">Low range</div>
 
-                  <div class="jumpvalues noTouch" id="exprhighbendslider-value-min"></div>
-                  <div class="jumpvalues noTouch" id="exprhighbendslider-value-max"></div>
+                  <div class="jumpvalues noTouch" id="exprhighbendslider-value"></div>
                   <div class="maxMinContainerExprHighBend" id="exprhighbendslider"></div>
+                  <div id="highrangelabel2" class="highrangelabel2 noTouch">High range</div>
                   
                   <div id="clampExprMaxLabel" class="clampExprMaxLabel noTouch">Clamp upper bend</div>
                   <label class="switch" id="clampExprSwitch">
@@ -2503,12 +2507,12 @@
    <script>
       var exprhighslider = document.getElementById('exprhighslider');
       noUiSlider.create(exprhighslider, {
-          start: [0, 100],
+          start: [0, 50],
           step: 1,
           connect: false,
           range: {
               'min': 0,
-              'max': 100
+              'max': 50
           }
       });
       
@@ -2516,10 +2520,10 @@
    <script>
       var exprlowbendslider = document.getElementById('exprlowbendslider');
       noUiSlider.create(exprlowbendslider, {
-          start: [0, 127],
+          start: [0],
           step: 1,
-          connect: true,
-          behaviour: "unconstrained-tap",
+          //connect: true,
+          //behaviour: "unconstrained-tap",
           range: {
               'min': 0,
               'max': 127
@@ -2530,10 +2534,10 @@
    <script>
       var exprhighbendslider = document.getElementById('exprhighbendslider');
       noUiSlider.create(exprhighbendslider, {
-          start: [0, 127],
+          start: [0],
           step: 1,
-          connect: true,
-          behaviour: "unconstrained-tap",
+          //connect: true,
+          //behaviour: "unconstrained-tap",
           range: {
               'min': 0,
               'max': 127

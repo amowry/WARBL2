@@ -3529,6 +3529,13 @@ h3 {
 	z-index: 99;
 }
 
+.lowrangelabel {
+	position: absolute;
+	top: 138px;
+	left: 20px;
+	font-size: 11px;    
+}
+
 .maxMinContainerExprHigh {
 	display: block;
 	width: 65%;
@@ -3537,6 +3544,14 @@ h3 {
 	top: 195px;
 	z-index: 99;
 }
+
+.highrangelabel {
+	position: absolute;
+	top: 210px;
+	left: 20px;
+	font-size: 11px;    
+}
+
 
 .maxMinContainerExprLowBend {
 	display: block;
@@ -3547,6 +3562,13 @@ h3 {
 	z-index: 99;
 }
 
+.lowrangelabel2 {
+	position: absolute;
+	top: 256px;
+	left: 20px;
+	font-size: 11px;    
+}
+
 .maxMinContainerExprHighBend {
 	display: block;
 	width: 65%;
@@ -3554,6 +3576,13 @@ h3 {
 	left: 80px;
 	top: 295px;
 	z-index: 99;
+}
+
+.highrangelabel2 {
+	position: absolute;
+	top: 292px;
+	left: 20px;
+	font-size: 11px;    
 }
 
 .resetExpressionButton {
@@ -3601,16 +3630,7 @@ h3 {
 	z-index: 99;
 }
 
-#exprlowbendslider-value-min {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: -100px;
-	top: 255px;
-	z-index: 99;
-}
-
-#exprlowbendslider-value-max {
+#exprlowbendslider-value {
 	display: block;
 	width: 65%;
 	position: absolute;
@@ -3619,21 +3639,12 @@ h3 {
 	z-index: 99;
 }
 
-#exprhighbendslider-value-min {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: -100px;
-	top: 295px;
-	z-index: 99;
-}
-
-#exprhighbendslider-value-max {
+#exprhighbendslider-value {
 	display: block;
 	width: 65%;
 	position: absolute;
 	left: 270px;
-	top: 295px;
+	top: 290px;
 	z-index: 99;
 }
 
@@ -4035,6 +4046,33 @@ h3 {
 	border: solid 2px var(--console-border-color);
 	background-color: var(--console-bg-color);
 	border-radius: 5px;
+}
+
+.receivedPBCentsLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 185px;
+	width: 40px;
+	height: 40px;
+	line-height: 21px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.receivedPBCents {
+	display: block;
+	position: absolute;
+	margin: auto;
+	text-align: center;
+	width: 60px;
+	height: 21px;
+	left: 303px;
+	top: 185px;
+	color: var(--text-color);
+	z-index: 99;
+	font-size: 14px;
+	line-height: 21px;
 }
 
 

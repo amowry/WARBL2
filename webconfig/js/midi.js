@@ -725,6 +725,8 @@ function WARBL_Receive(event, source) {
     if (e == "PB") {	
 		var pitch = ((data1 + (data2 << 7)))-8192;	
         document.getElementById('receivedPB').innerHTML = pitch;
+		var pitchcents = 100 * (pitch / 8192.0) * document.getElementById("midiBendRange").value;	
+        document.getElementById('receivedPBCents').innerHTML = (pitchcents > 0 ? "+" : "") + pitchcents.toFixed(0); // jlc
         var barHeight = pitch / 81.92;
 		var heightPixels = 65 - (barHeight/100*65) + "px";
 		var markerTopPixels = 65 - (barHeight/100*65) + 90 + "px";
@@ -1356,16 +1358,14 @@ function WARBL_Receive(event, source) {
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +20) {
                         // low bend
-                        exprlowbendslider.noUiSlider.set([data2, null]);
+                        exprlowbendslider.noUiSlider.set([data2]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +21) {
                         // high bend
-                        exprhighbendslider.noUiSlider.set([null, data2]);
+                        exprhighbendslider.noUiSlider.set([data2]);
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +22) {
-                        // stable expr bend
-                        exprlowbendslider.noUiSlider.set([null, data2]);
-                        exprhighbendslider.noUiSlider.set([data2, null]);
+                        // stable expr bend // not used
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
                         // expr max clamp
@@ -2538,23 +2538,12 @@ exprlowbendslider.noUiSlider.on('change', function (values) {
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_LOW_CENTS);
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_STABLE_CENTS);
-    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
-
-    // keep stable (max) linked to other slider    
-    exprhighbendslider.noUiSlider.set([parseInt(values[1]), null]);
-
 });
 
 exprhighbendslider.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_STABLE_CENTS);
-    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_HIGH_CENTS);
-    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
-
-    // keep stable (max) linked to other slider    
-    exprlowbendslider.noUiSlider.set([null, parseInt(values[0])]);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
 });
 
 
@@ -2676,60 +2665,17 @@ exprhighslider.noUiSlider.on('update', function (values, handle) {
 });
 
 exprlowbendslider.noUiSlider.on('update', function (values, handle) {
-    var marginMin = document.getElementById('exprlowbendslider-value-min'),
-        marginMax = document.getElementById('exprlowbendslider-value-max');
+    var marginMin = document.getElementById('exprlowbendslider-value');
 
-    if (handle) {
-        var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
-        marginMax.innerHTML = min;
-    } else {
-        var max = parseFloat(2 * (values[handle] - 64)).toFixed(0);
-        marginMin.innerHTML = max;
-    }
-
-    var handleslb = exprlowbendslider.noUiSlider.get();
-    elements = document.getElementById("exprlowbendslider").getElementsByClassName("noUi-connect");
-
-    if (parseInt(handleslb[0]) > parseInt(handleslb[1])) {
-        for (var i = 0; i < elements.length; i++) {
-            elements[i].style.backgroundColor = "#f7c839";
-        }
-    }
-
-    else {
-        for (var i = 0; i < elements.length; i++) {
-            elements[i].style.backgroundColor = "#262626";
-        }
-    }
-
+    var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
 });
 
 exprhighbendslider.noUiSlider.on('update', function (values, handle) {
-    var marginMin = document.getElementById('exprhighbendslider-value-min'),
-        marginMax = document.getElementById('exprhighbendslider-value-max');
+    var marginMin = document.getElementById('exprhighbendslider-value');
 
-    if (handle) {
-        var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
-        marginMax.innerHTML = min;
-    } else {
-        var max = parseFloat(2 * (values[handle] - 64)).toFixed(0);
-        marginMin.innerHTML = max;
-    }
-
-    var handleshb = exprhighbendslider.noUiSlider.get();
-    elements = document.getElementById("exprhighbendslider").getElementsByClassName("noUi-connect");
-
-    if (parseInt(handleshb[0]) > parseInt(handleshb[1])) {
-        for (var i = 0; i < elements.length; i++) {
-            elements[i].style.backgroundColor = "#f7c839";
-        }
-    }
-
-    else {
-        for (var i = 0; i < elements.length; i++) {
-            elements[i].style.backgroundColor = "#262626";
-        }
-    }
+    var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
 });
 
 slider4.noUiSlider.on('update', function (values, handle) {
@@ -3061,6 +3007,23 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         document.getElementById("fingeringInput11").style.cursor = "pointer";
 
     }
+    
+    if (version >= 4.3) {
+        // new pitch expression uses smaller range
+        slider3.noUiSlider.updateOptions({
+            range: {
+                'min': 0,
+                'max': 50
+            }, start: [0, 50]
+        });
+    } else {
+        slider3.noUiSlider.updateOptions({
+            range: {
+                'min': 0,
+                'max': 100
+            }, start: [0, 100]
+        });        
+    }
 }
 
 function sendBreathmodeRadio(selection) {
@@ -3134,23 +3097,24 @@ function overRideExpression() {
             document.getElementById("checkbox16").disabled = false;
         }
         
-        if (version < 4.3) {
-            // hide new advanced pressure override
-            document.getElementById("exprhighslider").style.display = "none";
-            document.getElementById("exprhighslider-value-min").style.display = "none";                        
-            document.getElementById("exprhighslider-value-max").style.display = "none";                        
-            document.getElementById("exprlowbendslider").style.display = "none";
-            document.getElementById("exprlowbendslider-value-min").style.display = "none";                        
-            document.getElementById("exprlowbendslider-value-max").style.display = "none";                        
-            document.getElementById("exprhighbendslider").style.display = "none";
-            document.getElementById("exprhighbendslider-value-min").style.display = "none";                        
-            document.getElementById("exprhighbendslider-value-max").style.display = "none";                        
-            document.getElementById("clampExprMaxLabel").style.display = "none";
-            document.getElementById("clampExprSwitch").style.display = "none";
-            document.getElementById("resetExpressionButton").style.display = "none";
-            document.getElementById("overrideRangeLabel").style.display = "none";
-            document.getElementById("overrideCentsLabel").style.display = "none";
-        }
+        var dispval = version < 4.3 ? "none" : "block";
+        // hide new advanced pressure overridedispval
+        document.getElementById("exprhighslider").style.display = dispval;
+        document.getElementById("exprhighslider-value-min").style.display = dispval;                        
+        document.getElementById("exprhighslider-value-max").style.display = dispval;                        
+        document.getElementById("exprlowbendslider").style.display = dispval;
+        document.getElementById("exprlowbendslider-value").style.display = dispval;                        
+        document.getElementById("exprhighbendslider").style.display = dispval;
+        document.getElementById("exprhighbendslider-value").style.display = dispval;                        
+        document.getElementById("clampExprMaxLabel").style.display = dispval;
+        document.getElementById("clampExprSwitch").style.display = dispval;
+        document.getElementById("resetExpressionButton").style.display = dispval;
+        document.getElementById("overrideRangeLabel").style.display = dispval;
+        document.getElementById("overrideCentsLabel").style.display = dispval;
+        document.getElementById("lowrangelabel").style.display = dispval;
+        document.getElementById("lowrangelabel2").style.display = dispval;
+        document.getElementById("highrangelabel").style.display = dispval;
+        document.getElementById("highrangelabel2").style.display = dispval;
         
         document.getElementById("box8").style.display = "block";
         document.getElementById("box6").style.display = "none";
