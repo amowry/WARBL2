@@ -1320,10 +1320,20 @@ function WARBL_Receive(event, source) {
                         curve[3] = data2;
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
-                        slider3.noUiSlider.set([null, data2]);
+                        // pitch expression min (low max in new model)
+                        if (version < 4.3) {
+                            slider3.noUiSlider.set([data2, null]);
+                        } else {                            
+                            slider3.noUiSlider.set([null, data2]);
+                        }
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
-                        exprhighslider.noUiSlider.set([data2, null]);
+                        // pitch expression max (high min in new model)
+                        if (version < 4.3) {
+                            slider3.noUiSlider.set([null, data2]);
+                        } else {
+                            exprhighslider.noUiSlider.set([data2, null]);                            
+                        }
                     }					
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
@@ -1336,7 +1346,10 @@ function WARBL_Receive(event, source) {
 	                    output.innerHTML = data2;
 					}
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
-                        slider3.noUiSlider.set([data2, null]);
+                        // pitch expression min (low)
+                        if (version >= 4.3) {                            
+                            slider3.noUiSlider.set([data2, null]);                            
+                        }
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
                         exprhighslider.noUiSlider.set([null, data2]);
@@ -2486,16 +2499,25 @@ slider2.noUiSlider.on('change', function (values) {
 //expression override slider
 slider3.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_LOW);
-    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
-    sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     
-    // if the max is > exprhighslider.min, set the other to match
-    //console.log("slider3 values " + values[0] + " " + values[1]);
-    if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
-        //console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
-        exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
+    if (version < 4.3) {
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));    
+    }
+    else {
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_LOW);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+    
+        // if the max is > exprhighslider.min, set the other to match
+        //console.log("slider3 values " + values[0] + " " + values[1]);
+        if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
+            //console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
+            exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
+        }
     }
 });
 
@@ -3111,6 +3133,25 @@ function overRideExpression() {
         else {
             document.getElementById("checkbox16").disabled = false;
         }
+        
+        if (version < 4.3) {
+            // hide new advanced pressure override
+            document.getElementById("exprhighslider").style.display = "none";
+            document.getElementById("exprhighslider-value-min").style.display = "none";                        
+            document.getElementById("exprhighslider-value-max").style.display = "none";                        
+            document.getElementById("exprlowbendslider").style.display = "none";
+            document.getElementById("exprlowbendslider-value-min").style.display = "none";                        
+            document.getElementById("exprlowbendslider-value-max").style.display = "none";                        
+            document.getElementById("exprhighbendslider").style.display = "none";
+            document.getElementById("exprhighbendslider-value-min").style.display = "none";                        
+            document.getElementById("exprhighbendslider-value-max").style.display = "none";                        
+            document.getElementById("clampExprMaxLabel").style.display = "none";
+            document.getElementById("clampExprSwitch").style.display = "none";
+            document.getElementById("resetExpressionButton").style.display = "none";
+            document.getElementById("overrideRangeLabel").style.display = "none";
+            document.getElementById("overrideCentsLabel").style.display = "none";
+        }
+        
         document.getElementById("box8").style.display = "block";
         document.getElementById("box6").style.display = "none";
     }

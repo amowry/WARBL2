@@ -2907,7 +2907,7 @@ void loadSettingsForAllModes() {
     ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 35; // -70 cents
     ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
     ED[mode][EXPRESSION_OUT_STABLE_CENTS] = 64;
-    ED[mode][EXPRESSION_OUT_CLAMP] = 0; // boolean
+    ED[mode][EXPRESSION_OUT_CLAMP] = 1; // boolean
     ED[mode][EXPRESSION_CURVE] = 0; // linear
 
  }
