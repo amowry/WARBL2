@@ -2683,6 +2683,7 @@ exprlowbendslider.noUiSlider.on('update', function (values, handle) {
 
     var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
     marginMin.innerHTML = min;
+    
 });
 
 exprhighbendslider.noUiSlider.on('update', function (values, handle) {

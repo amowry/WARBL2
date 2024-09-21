@@ -3661,6 +3661,14 @@ h3 {
 	z-index: 99;
 }
 
+#slider3 .noUi-connect {
+    background: #f7c839;
+}
+
+#exprhighslider .noUi-connect {
+    background: #f7c839;
+}
+
 #exprhighslider-value-max {
 	display: block;
 	width: 65%;
@@ -3678,6 +3686,23 @@ h3 {
 	top: 255px;
 	z-index: 99;
 }
+
+#exprlowbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprlowbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
+#exprhighbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprhighbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
 
 #exprhighbendslider-value {
 	display: block;

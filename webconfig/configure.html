@@ -2516,7 +2516,7 @@
       noUiSlider.create(slider3, {
           start: [0, 100],
           step: 1,
-          connect: false,
+          connect: true,
           range: {
               'min': 0,
               'max': 100
@@ -2529,7 +2529,7 @@
       noUiSlider.create(exprhighslider, {
           start: [0, 50],
           step: 1,
-          connect: false,
+          connect: true,
           range: {
               'min': 0,
               'max': 50
@@ -2553,30 +2553,28 @@
    <script>
       var exprlowbendslider = document.getElementById('exprlowbendslider');
       noUiSlider.create(exprlowbendslider, {
-          start: [0],
+          start: [0, 64],
           step: 1,
-          //connect: true,
-          //behaviour: "unconstrained-tap",
+          connect: true,
+          behaviour: "unconstrained-tap",
           range: {
               'min': 0,
               'max': 127
           }
       });
-      
    </script>
    <script>
       var exprhighbendslider = document.getElementById('exprhighbendslider');
       noUiSlider.create(exprhighbendslider, {
-          start: [0],
+          start: [0, 64],
           step: 1,
-          //connect: true,
-          //behaviour: "unconstrained-tap",
+          connect: true,
+          behaviour: "unconstrained-tap",
           range: {
               'min': 0,
               'max': 127
           }
       });
-      
    </script>
    <script>
       var slider4 = document.getElementById('slider4');
