@@ -1304,6 +1304,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
+    background: #440000;
 }
 
 #box7 {
@@ -3191,7 +3192,7 @@ h3 {
 .exprcenterpresslabel {
 	position: absolute;
 	top: 205px;
-	left: 20px;
+	left: 27px;
 	width: 50px;
 	font-size: 12px;    
 }
@@ -3210,11 +3211,32 @@ h3 {
 	width: 30%;
 }
 
+#expressionPressureBox {
+	left: 30px;
+	top: 900px;
+	height: 405px;
+	display: none;
+}
+
+#pitchExpressionBox {
+	position: absolute;
+	display: block;
+	width: 95%;
+	top: 124px;
+	height: 116px;
+    background: #323232;
+	border: none;
+	border-radius: 6px;
+	margin-left: 10px;
+	margin-right: -10px;
+	z-index: 0;
+}
+
 .expressionDepthLabel {
 	display: block;
 	position: absolute;
-	left: 30px;
-	top: 175px;
+	left: 40px;
+	top: 177px;
 	z-index: 99;
 	font-size: 12px;
 }
@@ -3232,10 +3254,10 @@ h3 {
 	display: block;
 	position: absolute;
 	width: 140px;
-	left: 25px;
+	left: 20px;
 	top: 138px;
 	z-index: 99;
-	font-size: 14px;
+	font-size: 15px;
 }
 
 #switch6 {

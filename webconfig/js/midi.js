@@ -1584,7 +1584,7 @@ function WARBL_Receive(event, source) {
 						numberOfGestures = 8;
 						for (let element of document.getElementsByClassName("WARBL2Elements")){element.style.display="none";}
                         document.getElementById("box9").style.display = "none";
-                        document.getElementById("box6").style.display = "block";
+                        document.getElementById("expressionPressureBox").style.display = "block";
 						document.getElementById("demo18").style.display = "none";
 						document.getElementById("slideLimitContainer").style.display = "none";
 						document.getElementById("slidelimitlabel").style.display = "none";
@@ -3092,7 +3092,7 @@ function advancedPB() {
 }
 
 function mapPressure() {
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
     document.getElementById("box9").style.display = "none";
 }
 
@@ -3105,7 +3105,7 @@ function mapIMU() {
 
 function backPressure() {
     if (version > 3.9 || version == "Unknown") {
-        document.getElementById("box6").style.display = "none";
+        document.getElementById("expressionPressureBox").style.display = "none";
         document.getElementById("box9").style.display = "block";
     }
 }
@@ -3154,13 +3154,13 @@ function overRideExpression() {
         
         
         document.getElementById("box8").style.display = "block";
-        document.getElementById("box6").style.display = "none";
+        document.getElementById("expressionPressureBox").style.display = "none";
     }
 }
 
 function okayOverride() {
     document.getElementById("box8").style.display = "none";
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
 }
 
 
@@ -3180,7 +3180,7 @@ function configureCustomFingering() {
         document.getElementById("box5").style.top = "740px";
         document.getElementById("pressuregraph").style.top = "740px";
         document.getElementById("box3").style.top = "1200px";
-        document.getElementById("box6").style.top = "1200px";
+        document.getElementById("expressionPressureBox").style.top = "1200px";
         document.getElementById("box9").style.top = "1200px";
         document.getElementById("box10").style.top = "1200px";
         document.getElementById("box7").style.top = "1200px";
@@ -3208,7 +3208,7 @@ function customFingeringOkay() {
     document.getElementById("box5").style.top = "440px";
     document.getElementById("pressuregraph").style.top = "440px";
     document.getElementById("box3").style.top = "900px";
-    document.getElementById("box6").style.top = "900px";
+    document.getElementById("expressionPressureBox").style.top = "900px";
     document.getElementById("box9").style.top = "900px";
     document.getElementById("box10").style.top = "900px";
     document.getElementById("box7").style.top = "900px";
@@ -3230,7 +3230,7 @@ function mapCC() {
     document.getElementById("expressionChannel").style.visibility = "visible";
     document.getElementById("highByte").style.visibility = "visible";
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     if (curve[0] < 3) {
         document.getElementById("curveRadio" + curve[0]).checked = true;
     }
@@ -3247,7 +3247,7 @@ function mapVelocity() {
         document.getElementById("curveRadio" + curve[1]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Velocity Mapping";
     //console.log(mapSelection);
 }
@@ -3262,7 +3262,7 @@ function mapAftertouch() {
         document.getElementById("curveRadio" + curve[2]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Channel Pressure Mapping";
 }
 
@@ -3276,7 +3276,7 @@ function mapPoly() {
         document.getElementById("curveRadio" + curve[3]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Key Pressure Mapping";
 }
 
@@ -3284,7 +3284,7 @@ function mapPoly() {
 function okayCCmap() {
     mapSelection = 4;
     document.getElementById("box7").style.display = "none";
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
     document.getElementById("pressureChannel").style.visibility = "hidden";
     document.getElementById("pressureCC").style.visibility = "hidden";
     document.getElementById("expressionChannel").style.visibility = "hidden";

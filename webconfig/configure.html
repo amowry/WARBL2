@@ -935,7 +935,8 @@
                   <span class="slider round"></span>
                   </label>
                </div>
-               <div class="smallcontrolbox expressionBox" id="box6">
+               <div class="smallcontrolbox expressionBox" id="expressionPressureBox">
+                  <div class="pitchExpressionBox" id="pitchExpressionBox"></div>
                   <h2 class="controlboxtitle noTouch">
                      Pressure Mapping
                      <button type="button" class="infocircle" onClick="modal(12)">  <img  class = "info" src="img/info-circle.svg"></img></button>
@@ -948,7 +949,7 @@
                   </div>
                   <button type="button" id="overrideExpression" class="smallbutton noTouch override" onClick="overRideExpression()">Setup Override...</button>
                   <div class="expressionDepthLabel noTouch">Depth</div>
-                  <div class="expressionLabel noTouch">Pitch expression</div>
+                  <div class="expressionLabel noTouch">Pitch Expression</div>
                   <label class="switch" id="overrideExprSwitch">
                   <input type="checkbox" class="checkboxes" id="overrideExprCheck" onChange="sendOverride(this.checked)" />
                   <span class="slider round"></span>
