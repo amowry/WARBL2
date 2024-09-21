@@ -3,12 +3,14 @@
 //
 //
 //
-// Updated 20 September 2024 at 1800
+//
+// Updated 21 September 2024 at 1220
+//
 //
 //
 //
 
-const cacheName = "warbl_23";
+const cacheName = "warbl_24";
 
 const contentToCache = [
     "configure.html",
@@ -34,12 +36,12 @@ const contentToCache = [
     "img/angle-up.svg",
     "img/angle-down.svg",
     "img/bars.svg",
-    "img/warbl_app_36x36.png",
-    "img/warbl_app_48x48.png",
-    "img/warbl_app_72x72.png",
-    "img/warbl_app_96x96.png",
-    "img/warbl_app_144x144.png",
-    "img/warbl_app_192x192.png"
+    "img/warbl-app-36x36.png",
+    "img/warbl-app-48x48.png",
+    "img/warbl-app-72x72.png",
+    "img/warbl-app-96x96.png",
+    "img/warbl-app-144x144.png",
+    "img/warbl-app-192x192.png"
 ];
 
 
