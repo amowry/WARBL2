@@ -148,12 +148,12 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-#define EXPRESSION_MIN_LOW 39  
-#define EXPRESSION_MAX_HIGH 40
+#define EXPRESSION_MIN_HIGH 39
+#define EXPRESSION_MAX_LOW 40
 #define EXPRESSION_OUT_LOW_CENTS 41     // stored signed as 0 cents = 64
 #define EXPRESSION_OUT_HIGH_CENTS 42    // stored signed as 0 cents = 64
-#define EXPRESSION_OUT_STABLE_CENTS 43  // stored signed as 0 cents = 64
-#define EXPRESSION_OUT_CLAMP 44  
+#define EXPRESSION_FIXED_CENTER_PRESSURE 43
+#define EXPRESSION_OUT_CLAMP 44   // boolean if outbend should be clamped
 #define EXPRESSION_CURVE 45      // values of 0 = linear , 1 = exp , 2 = log
 #define CUSTOM_FINGERING_9 46  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_10 47

@@ -1036,7 +1036,9 @@ function WARBL_Receive(event, source) {
                     for (var i = 0; i < 4; i++)  { //receive and handle Breath mode
                         if (data2 == MIDI_BREATH_MODE_START +i) {
                             document.getElementById("sensorradio" + i.toString()).checked = true;
-
+                            if (i == 1) {
+                                updateExpressionSliderEnableState();
+                            }
                         }
                     }
 
@@ -1241,6 +1243,10 @@ function WARBL_Receive(event, source) {
 
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +10) {
                         document.getElementById("checkbox16").checked = data2;
+                        document.getElementById("overrideExprCheck").checked = data2;
+                        
+                        updateExpressionSliderEnableState();
+                        
                     } //override expression pressure range
 
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +11) {
@@ -1322,19 +1328,15 @@ function WARBL_Receive(event, source) {
                         curve[3] = data2;
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
-                        // pitch expression min (low max in new model)
-                        if (version < 4.3) {
-                            slider3.noUiSlider.set([data2, null]);
-                        } else {                            
-                            slider3.noUiSlider.set([null, data2]);
-                        }
+                        // pitch expression min (low min in new model)
+                        slider3.noUiSlider.set([data2, null]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
-                        // pitch expression max (high min in new model)
+                        // pitch expression max (high max in new model)
                         if (version < 4.3) {
                             slider3.noUiSlider.set([null, data2]);
                         } else {
-                            exprhighslider.noUiSlider.set([data2, null]);                            
+                            exprhighslider.noUiSlider.set([null, data2]);                            
                         }
                     }					
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
@@ -1348,13 +1350,14 @@ function WARBL_Receive(event, source) {
 	                    output.innerHTML = data2;
 					}
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
-                        // pitch expression min (low)
+                        // pitch expression  low max
                         if (version >= 4.3) {                            
-                            slider3.noUiSlider.set([data2, null]);                            
+                            slider3.noUiSlider.set([null, data2]);
                         }
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
-                        exprhighslider.noUiSlider.set([null, data2]);
+                        // pitch expression high min
+                        exprhighslider.noUiSlider.set([data2, null]);
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +20) {
                         // low bend
@@ -1365,7 +1368,8 @@ function WARBL_Receive(event, source) {
                         exprhighbendslider.noUiSlider.set([data2]);
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +22) {
-                        // stable expr bend // not used
+                        // fixed center pressure
+                        exprfixedcenterslider.noUiSlider.set([data2]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
                         // expr max clamp
@@ -2507,9 +2511,9 @@ slider3.noUiSlider.on('change', function (values) {
         sendToWARBL(MIDI_CC_105, parseInt(values[1]));    
     }
     else {
-        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_LOW);
-        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
         sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
         sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     
         // if the max is > exprhighslider.min, set the other to match
@@ -2517,20 +2521,25 @@ slider3.noUiSlider.on('change', function (values) {
         if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
             //console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
             exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
+            sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
+            sendToWARBL(MIDI_CC_105, parseInt(values[1]));
         }
     }
 });
 
 exprhighslider.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_HIGH);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
     sendToWARBL(MIDI_CC_105, parseInt(values[1]));
     
     // if the min is < slider3.max, set the other to match
     if (parseInt(values[0]) < parseInt(slider3.noUiSlider.get()[1])) {
         slider3.noUiSlider.set([null, parseInt(values[0])]);
+        
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
     }
 });
 
@@ -2546,6 +2555,11 @@ exprhighbendslider.noUiSlider.on('change', function (values) {
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
 });
 
+exprfixedcenterslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_FIXED_CENTER_PRESSURE);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+});
 
 
 slider5.noUiSlider.on('change', function (values, handle) {
@@ -2677,6 +2691,14 @@ exprhighbendslider.noUiSlider.on('update', function (values, handle) {
     var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
     marginMin.innerHTML = min;
 });
+
+exprfixedcenterslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprfixedcenterslider-value');
+
+    var min = parseFloat(values[handle] * 0.24).toFixed(1);
+    marginMin.innerHTML = min;
+});
+
 
 slider4.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('slider4-value-min'),
@@ -3033,11 +3055,15 @@ function sendBreathmodeRadio(selection) {
     }
     if (document.getElementById("sensorradio1").checked == true) { //update override
         document.getElementById("checkbox16").disabled = true;
+        document.getElementById("overrideExprCheck").disabled = true;
     }
     else {
         document.getElementById("checkbox16").disabled = false;
+        document.getElementById("overrideExprCheck").disabled = false;
     }
     sendToWARBL(MIDI_CC_102, MIDI_BREATH_MODE_START + selection);
+
+    updateExpressionSliderEnableState();
 
 }
 
@@ -3092,10 +3118,13 @@ function overRideExpression() {
     if (version > 1.8 || version == "Unknown") {
         if (document.getElementById("sensorradio1").checked == true) {
             document.getElementById("checkbox16").disabled = true;
+            document.getElementById("overrideExprCheck").disabled = true;
         }
         else {
             document.getElementById("checkbox16").disabled = false;
+            document.getElementById("overrideExprCheck").disabled = false;
         }
+        
         
         var dispval = version < 4.3 ? "none" : "block";
         // hide new advanced pressure overridedispval
@@ -3598,9 +3627,7 @@ function sendCustom(selection) {
 function sendExpression(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    //if (selection == 1) {
-    //document.getElementById("overrideExpression").disabled = false;
-    //} else (document.getElementById("overrideExpression").disabled = true);
+    
     sendToWARBL(MIDI_CC_104, MIDI_ED_VARS_START);
     sendToWARBL(MIDI_CC_105, selection);
 }
@@ -3650,11 +3677,29 @@ function sendHack2(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function updateExpressionSliderEnableState()
+{
+    var overidden = document.getElementById("overrideExprCheck").checked;
+    var overblow = document.getElementById("sensorradio1").checked;
+
+    document.getElementById("expressionDepth").disabled = overidden || overblow;
+
+    // TODO: figure out how to disable exprfixedcenterslider
+    
+    document.getElementById("overrideExprCheck").disabled = overblow;
+    
+}
+
 function sendOverride(selection) {
     selection = +selection;
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +10);
     sendToWARBL(MIDI_CC_105, selection);
+    
+    document.getElementById("overrideExprCheck").checked = selection;
+    document.getElementById("checkbox16").checked = selection;
+    
+    updateExpressionSliderEnableState();
 }
 
 function sendBoth(selection) {

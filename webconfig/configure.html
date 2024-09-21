@@ -946,9 +946,20 @@
                   <div id="forceVelocityLabel" class="forceVelocityLabel noTouch">
                      Force max velocity
                   </div>
-                  <button type="button" id="overrideExpression" class="smallbutton noTouch override" onClick="overRideExpression()">Override...</button>
-                  <div class="expressionDepthLabel noTouch">Pitch expression depth</div>
+                  <button type="button" id="overrideExpression" class="smallbutton noTouch override" onClick="overRideExpression()">Setup Override...</button>
+                  <div class="expressionDepthLabel noTouch">Depth</div>
                   <div class="expressionLabel noTouch">Pitch expression</div>
+                  <label class="switch" id="overrideExprSwitch">
+                  <input type="checkbox" class="checkboxes" id="overrideExprCheck" onChange="sendOverride(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <div class="expressionOverrideLabel noTouch">Override</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprfixedcenterslider-value"></div>
+                  <div class="maxMinContainerExprFixedCenter" id="exprfixedcenterslider"></div>
+                  <div id="exprcenterpresslabel" class="exprcenterpresslabel noTouch">Center Pressure</div>
+                  
+                  
                   <div id="sendPressureLabel" class="sendPressureLabel noTouch">Send pressure as CC</div>
                   <div id="velocityLabel" class="sendVelocityLabel noTouch">Send pressure as Velocity</div>
                   <div id="aftertouchLabel" class="sendAftertouchLabel noTouch">Channel Pressure</div>
@@ -2302,6 +2313,15 @@
                   <p>
                      By turning on the <b>Override pitch expression range</b> switch and using the sliders, you can override the default pressure range used for pitch expression. This is not available if overblowing is being used, because in that case the pressure range has to be calculated in real time based on the current register and overblowing settings.
                   </p>
+                  <p>
+                    The pitch expression based on pressure is controlled with two segments:
+                    <ul> 
+                        <li>A low pressure range, whose min and max input pressure determine a bend along with the low range output bend, from no pressure to the low range max pressure (it will start at the bend amount specified in the low range output bend and end at no bend).
+                        <li> A high pressure range, whose min and max input pressure determine a bend along with the high range output bend, from the high range min pressure to the high range max pressure (it will start with no bend at the high range min input pressure, and end up with the bend specified in the high range output bend). If the pressure exceeds the high range max input pressure, it will either be clamped at the specified bend amount (if clamp upper bend is on), or it will continue with the same bend slope with more pressure.
+                    </ul>
+                    The low and high ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the pressure range where no pitch bend occurs from this expression.
+                  </p>
+
                </div>
             </div>
          </div>
@@ -2508,6 +2528,19 @@
       var exprhighslider = document.getElementById('exprhighslider');
       noUiSlider.create(exprhighslider, {
           start: [0, 50],
+          step: 1,
+          connect: false,
+          range: {
+              'min': 0,
+              'max': 50
+          }
+      });
+      
+   </script>
+   <script>
+      var exprfixedcenterslider = document.getElementById('exprfixedcenterslider');
+      noUiSlider.create(exprfixedcenterslider, {
+          start: [10],
           step: 1,
           connect: false,
           range: {

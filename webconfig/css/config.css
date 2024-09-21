@@ -2352,11 +2352,12 @@ input:disabled + .vibratoSlider:before {
 
 .override {
 	position: absolute;
-	height: 30px;
+	height: 40px;
 	width: 100px;
-	top: 180px;
-	left: 80px;
+	top: 170px;
+	left: 300px;
 }
+
 
 .tinyDeviceLabel {
 	display: block;
@@ -3171,9 +3172,36 @@ h3 {
 #ExpressionDepthContainer {
 	display: block;
 	position: absolute;
-	left: 250px;
-	top: 175px;
+	left: 82px;
+	top: 174px;
 	z-index: 99;
+}
+
+.maxMinContainerExprFixedCenter {
+	display: block;
+	width: 124px;
+	position: absolute;
+	left: 85px;
+	top: 215px;
+	z-index: 99;
+}
+
+.exprcenterpresslabel {
+	position: absolute;
+	top: 205px;
+	left: 20px;
+	width: 50px;
+	font-size: 12px;    
+}
+
+#exprfixedcenterslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 217px;
+	top: 212px;
+	z-index: 99;
+	font-size: 14px;    
 }
 
 .slidecontainer4 {
@@ -3183,8 +3211,17 @@ h3 {
 .expressionDepthLabel {
 	display: block;
 	position: absolute;
-	left: 250px;
-	top: 148px;
+	left: 30px;
+	top: 175px;
+	z-index: 99;
+	font-size: 12px;
+}
+
+.expressionOverrideLabel {
+	display: block;
+	position: absolute;
+	left: 280px;
+	top: 138px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3308,7 +3345,10 @@ h3 {
 }
 
 
-
+#overrideExprSwitch {
+	top: 134px;
+	left: 350px;
+}
 
 .hack1Label {
 	position: absolute;
