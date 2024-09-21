@@ -1854,6 +1854,11 @@ function WARBL_Receive(event, source) {
                     else {
                         document.getElementById("pressure").innerHTML = (p);
                         document.getElementById("pressure1").innerHTML = (p);
+                        
+                        if (document.getElementById("box8").style.display == "block") {
+                            var barWidth = Math.min(1.0, p / 12) * 100; // this is only half the range
+                            document.getElementById("exprInputPressureLevel").style.width = barWidth + "%";
+                        }
                     }
                 }
 
@@ -3145,6 +3150,8 @@ function overRideExpression() {
         document.getElementById("lowrangelabel2").style.display = dispval;
         document.getElementById("highrangelabel").style.display = dispval;
         document.getElementById("highrangelabel2").style.display = dispval;
+        document.getElementById("exprInputPressureLevelContainer").style.display = dispval;
+        
         
         document.getElementById("box8").style.display = "block";
         document.getElementById("box6").style.display = "none";

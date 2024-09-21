@@ -16,6 +16,8 @@ some colors:
 	--box-border-color: #333;
 	--console-bg-color: #3c3c3c;
 	--console-border-color: #333;
+	--gauge-color: #3c7cfc;
+	--gauge-bg-color: #333333;
 }
 
 html, body {
@@ -3569,6 +3571,26 @@ h3 {
 	z-index: 99;
 }
 
+#exprInputPressureLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 5px;
+	left: 80px;
+	top: 179px;
+	background: var(--gauge-bg-color);
+}
+
+#exprInputPressureLevel{
+	display: block;
+	width: 0%;
+	height: 5px;
+	left: 80px;
+	top: 179px;
+	background: var(--gauge-color);
+	z-index: 99;
+}
+
 .lowrangelabel {
 	position: absolute;
 	top: 138px;
@@ -3624,6 +3646,8 @@ h3 {
 	left: 20px;
 	font-size: 11px;    
 }
+
+
 
 .resetExpressionButton {
 	display: block;
@@ -4102,7 +4126,7 @@ h3 {
 	text-align: center;
 	width: 60px;
 	height: 21px;
-	left: 275px;
+	left: 270px;
 	top: 155px;
 	color: var(--text-color);
 	z-index: 99;
@@ -4117,7 +4141,7 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 275px;
-	top: 185px;
+	top: 188px;
 	width: 40px;
 	height: 40px;
 	line-height: 21px;
@@ -4129,15 +4153,19 @@ h3 {
 	display: block;
 	position: absolute;
 	margin: auto;
-	text-align: center;
-	width: 60px;
+	text-align: right;
+	width: 85px;
 	height: 21px;
-	left: 303px;
+	left: 270px;
 	top: 185px;
+    padding-right: 5px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
 	line-height: 21px;
+	border: solid 2px var(--console-border-color);
+	background-color: var(--console-bg-color);
+	border-radius: 5px;
 }
 
 
