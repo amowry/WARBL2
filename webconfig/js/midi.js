@@ -1369,7 +1369,8 @@ function WARBL_Receive(event, source) {
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +22) {
                         // fixed center pressure
-                        exprfixedcenterslider.noUiSlider.set([data2]);
+                        document.getElementById("exprfixedcenterslider").value = data2;
+                        updateExpressionCenterPressureLabel();
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
                         // expr max clamp
@@ -2399,6 +2400,14 @@ function sendExpressionDepth(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function sendExpressionCenterPressure(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_FIXED_CENTER_PRESSURE);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCenterPressureLabel();
+}
+
 function sendClampExpr(selection) {
     selection = +selection;
     blink(1);
@@ -2560,12 +2569,6 @@ exprhighbendslider.noUiSlider.on('change', function (values) {
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
 });
 
-exprfixedcenterslider.noUiSlider.on('change', function (values) {
-    blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_FIXED_CENTER_PRESSURE);
-    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
-});
-
 
 slider5.noUiSlider.on('change', function (values, handle) {
 
@@ -2697,14 +2700,6 @@ exprhighbendslider.noUiSlider.on('update', function (values, handle) {
     var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
     marginMin.innerHTML = min;
 });
-
-exprfixedcenterslider.noUiSlider.on('update', function (values, handle) {
-    var marginMin = document.getElementById('exprfixedcenterslider-value');
-
-    var min = parseFloat(values[handle] * 0.24).toFixed(1);
-    marginMin.innerHTML = min;
-});
-
 
 slider4.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('slider4-value-min'),
@@ -3685,17 +3680,28 @@ function sendHack2(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function updateExpressionCenterPressureLabel()
+{
+    var slider = document.getElementById('exprfixedcenterslider');
+    var element = document.getElementById('exprfixedcenterslider-value');
+    var min = parseFloat(slider.value * 0.24).toFixed(1);
+    element.innerHTML = min;
+}
+
 function updateExpressionSliderEnableState()
 {
     var overidden = document.getElementById("overrideExprCheck").checked;
     var overblow = document.getElementById("sensorradio1").checked;
 
     document.getElementById("expressionDepth").disabled = overidden || overblow;
+    document.getElementById("exprfixedcenterslider").disabled = overidden || overblow;
 
-    // TODO: figure out how to disable exprfixedcenterslider
-    
+    var dispval = version < 4.3 ? "none" : "block";
+    document.getElementById("exprfixedcenterslider").style.display = dispval;
+    document.getElementById("exprfixedcenterslider-value").style.display = dispval;
+    document.getElementById("exprcenterpresslabel").style.display = dispval;
+
     document.getElementById("overrideExprCheck").disabled = overblow;
-    
 }
 
 function sendOverride(selection) {
