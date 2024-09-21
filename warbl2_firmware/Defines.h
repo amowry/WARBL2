@@ -154,9 +154,9 @@
 #define EXPRESSION_OUT_HIGH_CENTS 42    // stored signed as 0 cents = 64
 #define EXPRESSION_FIXED_CENTER_PRESSURE 43
 #define EXPRESSION_OUT_CLAMP 44   // boolean if outbend should be clamped
-#define EXPRESSION_CURVE 45      // values of 0 = linear , 1 = exp , 2 = log
-#define CUSTOM_FINGERING_9 46  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_10 47
+#define EXPRESSION_CURVE_LOW 45      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define EXPRESSION_CURVE_HIGH 46      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_FINGERING_10 47 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_11 48
 #define kEXPRESSIONnVariables 49
 

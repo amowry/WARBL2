@@ -1072,7 +1072,19 @@ int calcHysteresis(int currentUpperBound, bool high) {
     return newUpperBound;
 }
 
-
+inline float curveValToExponent(int val) {
+    // takes 0 -> 127 and returns curve exponent
+    // which is between 0.25 -> 0 -> 4.0
+    float retval = 1.0f;
+    val -= 64;
+    if (val >= 0) {
+        retval = ((3.0f*val/63.0f) + 1.0f);
+    }
+    else {
+        retval = (0.75f*(64.0f+val)/64.0f + 0.25f);
+    }
+    return retval;
+}
 void getExpression() 
 {
     // calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between
@@ -1082,6 +1094,8 @@ void getExpression()
     int highPressureMax = (ED[mode][EXPRESSION_MAX] * 9) + 100;
     int centsLowOffset = 2 * (ED[mode][EXPRESSION_OUT_LOW_CENTS] - 64);
     int centsHighOffset = 2 * (ED[mode][EXPRESSION_OUT_HIGH_CENTS] - 64);
+    float lowCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_LOW]);
+    float highCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_HIGH]);
     bool doClamp = ED[mode][EXPRESSION_OUT_CLAMP] > 0;
 
     if (!switches[mode][OVERRIDE] || (breathMode == kPressureBreath)) {
@@ -1106,6 +1120,8 @@ void getExpression()
         centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH]; // -20 cents at least
         centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[mode][EXPRESSION_DEPTH];
         doClamp = true;
+        lowCurveExp = 1.0f;
+        highCurveExp = 1.0f;
     }
 
     float centsOffset = 0.0f;
@@ -1114,13 +1130,15 @@ void getExpression()
     int highRangeSpan = max(highPressureMax - highPressureMin, 1);
     if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range
         ratio = min(((lowPressureMax - sensorValue)) / (float)(lowRangeSpan), 1.0f);
-        // TODO: curve options
-        //ratio = ratio * ratio;
+        if (lowCurveExp != 1.0f) {
+            ratio = powf(ratio, lowCurveExp);
+        }
         centsOffset = centsLowOffset * ratio;
     } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range
         ratio = max(((sensorValue - highPressureMin)) / (float)(highRangeSpan), 0.0f);
-        // TODO: curve options
-        //ratio = sqrtf(ratio);
+        if (highCurveExp != 1.0f) {
+            ratio = powf(ratio, highCurveExp);
+        }
         if (doClamp) {
             ratio = min(ratio, 1.0f);
         }
@@ -1139,7 +1157,7 @@ void getExpression()
     }
 
     /*
-    Serial.print("s = ");
+    Serial.print(" s = ");
     Serial.print(sensorValue);
     Serial.print(" lm = ");
     Serial.print(lowPressureMax);
@@ -2867,8 +2885,8 @@ void loadSettingsForAllModes() {
     ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25; // -50 cents
     ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
     ED[mode][EXPRESSION_OUT_CLAMP] = 0; // boolean
-    ED[mode][EXPRESSION_CURVE] = 0; // linear
-
+    ED[mode][EXPRESSION_CURVE_LOW] = 64; // linear
+    ED[mode][EXPRESSION_CURVE_HIGH] = 64; // linear
  }
 
 
@@ -2966,7 +2984,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (ED[mode][EXPRESSION_CURVE] > 5) {
+    if (ED[mode][EXPRESSION_CURVE_LOW] > 200) {
         // handle transition from older firmwares that didn't have the advanced pitch expression parameters set yet
         // convert from original value to the new values
         int exprmin =  ED[mode][EXPRESSION_MIN];
@@ -3522,7 +3540,7 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_9; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = CUSTOM_FINGERING_10; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }

@@ -1329,12 +1329,12 @@ function WARBL_Receive(event, source) {
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
                         // pitch expression min (low min in new model)
-                        slider3.noUiSlider.set([data2, null]);
+                        exprlowslider.noUiSlider.set([data2, null]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
                         // pitch expression max (high max in new model)
                         if (version < 4.3) {
-                            slider3.noUiSlider.set([null, data2]);
+                            exprlowslider.noUiSlider.set([null, data2]);
                         } else {
                             exprhighslider.noUiSlider.set([null, data2]);                            
                         }
@@ -1352,7 +1352,7 @@ function WARBL_Receive(event, source) {
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
                         // pitch expression  low max
                         if (version >= 4.3) {                            
-                            slider3.noUiSlider.set([null, data2]);
+                            exprlowslider.noUiSlider.set([null, data2]);
                         }
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
@@ -1375,6 +1375,16 @@ function WARBL_Receive(event, source) {
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
                         // expr max clamp
                         document.getElementById("clampExprCheck").checked = data2;                        
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +24) {
+                        // expr low curve
+                        document.getElementById("exprcurvelowslider").value = data2;
+                        updateExpressionCurveLabels();
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +25) {
+                        // expr low curve
+                        document.getElementById("exprcurvehighslider").value = data2;
+                        updateExpressionCurveLabels();
                     }					
 
 
@@ -2408,6 +2418,36 @@ function sendExpressionCenterPressure(selection) {
     updateExpressionCenterPressureLabel();
 }
 
+function sendExpressionCurveLow(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_CURVE_LOW);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCurveLabels();
+}
+
+function sendExpressionCurveHigh(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_CURVE_HIGH);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCurveLabels();
+}
+
+function resetExpressionCurveLow() {
+    var lowslider = document.getElementById('exprcurvelowslider');
+    lowslider.value = 64;    
+    sendExpressionCurveLow(64);
+}
+
+function resetExpressionCurveHigh() {
+    var highslider = document.getElementById('exprcurvehighslider');
+    highslider.value = 64;    
+    sendExpressionCurveHigh(64);
+}
+
+
+
 function sendClampExpr(selection) {
     selection = +selection;
     blink(1);
@@ -2515,7 +2555,7 @@ slider2.noUiSlider.on('change', function (values) {
 });
 
 //expression override slider
-slider3.noUiSlider.on('change', function (values) {
+exprlowslider.noUiSlider.on('change', function (values) {
     blink(1);
     
     if (version < 4.3) {
@@ -2529,11 +2569,11 @@ slider3.noUiSlider.on('change', function (values) {
         sendToWARBL(MIDI_CC_105, parseInt(values[0]));
         sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
         sendToWARBL(MIDI_CC_105, parseInt(values[1]));
-    
+        console.log("lowchange");
         // if the max is > exprhighslider.min, set the other to match
-        //console.log("slider3 values " + values[0] + " " + values[1]);
+        //console.log("exprlowslider values " + values[0] + " " + values[1]);
         if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
-            //console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
+            console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
             exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
             sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
             sendToWARBL(MIDI_CC_105, parseInt(values[1]));
@@ -2547,10 +2587,13 @@ exprhighslider.noUiSlider.on('change', function (values) {
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
     sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+
+    console.log("highchange");
     
     // if the min is < slider3.max, set the other to match
-    if (parseInt(values[0]) < parseInt(slider3.noUiSlider.get()[1])) {
-        slider3.noUiSlider.set([null, parseInt(values[0])]);
+    if (parseInt(values[0]) < parseInt(exprlowslider.noUiSlider.get()[1])) {
+        exprlowslider.noUiSlider.set([null, parseInt(values[0])]);
+        console.log("  exprlow values " + exprlowslider.noUiSlider.get()[0] + " " + exprlowslider.noUiSlider.get()[1]);
         
         sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
         sendToWARBL(MIDI_CC_105, parseInt(values[0]));
@@ -2658,9 +2701,9 @@ slider2.noUiSlider.on('update', function (values, handle) {
     }
 });
 
-slider3.noUiSlider.on('update', function (values, handle) {
-    var marginMin = document.getElementById('slider3-value-min'),
-        marginMax = document.getElementById('slider3-value-max');
+exprlowslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprlowslider-value-min'),
+        marginMax = document.getElementById('exprlowslider-value-max');
 
     if (handle) {
         var min = parseFloat(values[handle] * 0.24).toFixed(1);
@@ -2689,7 +2732,7 @@ exprhighslider.noUiSlider.on('update', function (values, handle) {
 exprlowbendslider.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('exprlowbendslider-value');
 
-    var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
     marginMin.innerHTML = min;
     
 });
@@ -2697,7 +2740,7 @@ exprlowbendslider.noUiSlider.on('update', function (values, handle) {
 exprhighbendslider.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('exprhighbendslider-value');
 
-    var min = parseFloat(2 * (values[handle] - 64)).toFixed(0);
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
     marginMin.innerHTML = min;
 });
 
@@ -3033,14 +3076,14 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
     
     if (version >= 4.3) {
         // new pitch expression uses smaller range
-        slider3.noUiSlider.updateOptions({
+        exprlowslider.noUiSlider.updateOptions({
             range: {
                 'min': 0,
                 'max': 50
             }, start: [0, 50]
         });
     } else {
-        slider3.noUiSlider.updateOptions({
+        exprlowslider.noUiSlider.updateOptions({
             range: {
                 'min': 0,
                 'max': 100
@@ -3146,6 +3189,12 @@ function overRideExpression() {
         document.getElementById("highrangelabel").style.display = dispval;
         document.getElementById("highrangelabel2").style.display = dispval;
         document.getElementById("exprInputPressureLevelContainer").style.display = dispval;
+        document.getElementById("exprcurvelowlabel").style.display = dispval;
+        document.getElementById("exprcurvelowslider").style.display = dispval;
+        document.getElementById("exprcurvelowslider-value").style.display = dispval;                        
+        document.getElementById("exprcurvehighlabel").style.display = dispval;
+        document.getElementById("exprcurvehighslider").style.display = dispval;
+        document.getElementById("exprcurvehighslider-value").style.display = dispval;                        
         
         
         document.getElementById("box8").style.display = "block";
@@ -3687,6 +3736,31 @@ function updateExpressionCenterPressureLabel()
     var min = parseFloat(slider.value * 0.24).toFixed(1);
     element.innerHTML = min;
 }
+
+function updateExpressionCurveLabel(theslider, thelabel)
+{
+    var val = parseFloat(theslider.value - 64);
+    if (val == 0) {
+        thelabel.innerHTML = "Linear";
+    } else if (val >= 0) {
+        thelabel.innerHTML = ((3*val/63.0)+1).toFixed(1);
+    }
+    else {
+        thelabel.innerHTML = (0.75*(64+val)/64.0 + 0.25).toFixed(3);
+    }    
+}
+
+function updateExpressionCurveLabels()
+{
+    var lowslider = document.getElementById('exprcurvelowslider');
+    var lowelement = document.getElementById('exprcurvelowslider-value');
+    updateExpressionCurveLabel(lowslider, lowelement);
+    
+    var highslider = document.getElementById('exprcurvehighslider');
+    var highelement = document.getElementById('exprcurvehighslider-value');
+    updateExpressionCurveLabel(highslider, highelement);
+}
+
 
 function updateExpressionSliderEnableState()
 {

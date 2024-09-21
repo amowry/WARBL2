@@ -2040,9 +2040,9 @@ input:disabled + .vibratoSlider:before {
 .advancedOkayPB {
 	position: absolute;
 	height: 30px;
-	width: 60px;
-	top: 390px;
-	left: 50px;
+	width: 70px;
+	top: 63px;
+	left: 40px;
 }
 
 .advancedOkayCC {
@@ -2357,7 +2357,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 40px;
 	width: 100px;
-	top: 170px;
+	top: 175px;
 	left: 300px;
 }
 
@@ -3176,22 +3176,31 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 82px;
-	top: 174px;
+	top: 170px;
 	z-index: 99;
+}
+
+.expressionDepthLabel {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 172px;
+	z-index: 99;
+	font-size: 12px;
 }
 
 .maxMinContainerExprFixedCenter {
 	display: block;
-	width: 124px;
+	width: 135px;
 	position: absolute;
 	left: 85px;
-	top: 215px;
+	top: 207px;
 	z-index: 99;
 }
 
 .exprcenterpresslabel {
 	position: absolute;
-	top: 205px;
+	top: 200px;
 	left: 27px;
 	width: 50px;
 	font-size: 12px;    
@@ -3202,7 +3211,7 @@ h3 {
 	width: 60px;
 	position: absolute;
 	left: 217px;
-	top: 212px;
+	top: 207px;
 	z-index: 99;
 	font-size: 14px;    
 }
@@ -3232,14 +3241,7 @@ h3 {
 	z-index: 0;
 }
 
-.expressionDepthLabel {
-	display: block;
-	position: absolute;
-	left: 40px;
-	top: 177px;
-	z-index: 99;
-	font-size: 12px;
-}
+
 
 .expressionOverrideLabel {
 	display: block;
@@ -3336,25 +3338,26 @@ h3 {
 
 #switch16 {
 	top: 70px;
-	left: 330px;
+	left: 350px;
 }
 
 #clampExprSwitch {
-	top: 330px;
-	left: 330px;
+	top: 345px;
+	left: 370px;
 }
 
 .clampExprMaxLabel {
 	position: absolute;
-	left: 200px;
-	top: 334px;
+	left: 336px;
+	top: 328px;
 	z-index: 99;
-	font-size: 14px;
+	font-size: 13px;
 }
 
 .overrideLabel {
 	position: absolute;
-	left: 85px;
+	left: 100px;
+	width: 60%;
 	top: 60px;
 	z-index: 99;
 	font-size: 14px;
@@ -3584,7 +3587,7 @@ h3 {
 	z-index: 99;
 }
 
-.maxMinContainer3 {
+.maxMinContainerExprLow {
 	display: block;
 	width: 65%;
 	position: absolute;
@@ -3597,18 +3600,18 @@ h3 {
 	display: block;
 	position: absolute;
 	width: 65%;
-	height: 5px;
+	height: 35px;
 	left: 80px;
-	top: 179px;
+	top: 160px;
 	background: var(--gauge-bg-color);
 }
 
 #exprInputPressureLevel{
 	display: block;
 	width: 0%;
-	height: 5px;
+	height: 35px;
 	left: 80px;
-	top: 179px;
+	top: 160px;
 	background: var(--gauge-color);
 	z-index: 99;
 }
@@ -3669,18 +3672,68 @@ h3 {
 	font-size: 11px;    
 }
 
+.maxMinContainerExprCurveLow {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 20px;
+	top: 350px;
+	z-index: 99;
+}
 
+.exprcurvelowlabel {
+	position: absolute;
+	top: 331px;
+	left: 25px;
+	font-size: 11px;    
+}
+
+#exprcurvelowslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 110px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
+
+.maxMinContainerExprCurveHigh {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 180px;
+	top: 350px;
+	z-index: 99;
+}
+
+.exprcurvehighlabel {
+	position: absolute;
+	top: 331px;
+	left: 185px;
+	font-size: 11px;    
+}
+
+#exprcurvehighslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 270px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
 
 .resetExpressionButton {
 	display: block;
 	position: absolute;
 	height: 30px !important;
 	width: 130px !important;
-	top: 390px;
+	top: 400px;
 	left: 270px;
 }
 
-#slider3-value-min {
+#exprlowslider-value-min {
 	display: block;
 	width: 65%;
 	position: absolute;
@@ -3689,7 +3742,7 @@ h3 {
 	z-index: 99;
 }
 
-#slider3-value-max {
+#exprlowslider-value-max {
 	display: block;
 	width: 65%;
 	position: absolute;
@@ -3707,7 +3760,7 @@ h3 {
 	z-index: 99;
 }
 
-#slider3 .noUi-connect {
+#exprlowslider .noUi-connect {
     background: #f7c839;
 }
 

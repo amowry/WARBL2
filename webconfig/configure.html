@@ -957,7 +957,6 @@
                   <div class="expressionOverrideLabel noTouch">Override</div>
                   
                   <div class="jumpvalues noTouch" id="exprfixedcenterslider-value"></div>
-                  <!-- <div class="maxMinContainerExprFixedCenter" id="exprfixedcenterslider"></div> -->
                   <div id="exprcenterpresslabel" class="exprcenterpresslabel noTouch">Center Pressure</div>
                   <div class="maxMinContainerExprFixedCenter" id="maxMinContainerExprFixedCenter">
                      <input type="range" min="0" max="50" value="10" class="ranger" id="exprfixedcenterslider" onChange="sendExpressionCenterPressure(value)"    onInput="updateExpressionCenterPressureLabel()" />
@@ -1223,15 +1222,14 @@
                      Pitch Expression Pressure-Range Override
                      <button type="button" class="infocircle" onClick="modal(20)">  <img  class = "info" src="img/info-circle.svg"></img></button>               
                   </h2>
-                  <div id="overrideLabel" class="overrideLabel noTouch">Override pitch expression range</div>
-                  <div id="overrideLabel2" class="overrideLabel2 noTouch">(not available with overblowing)</div>
+                  <div id="overrideLabel" class="overrideLabel noTouch">Override pitch expression range <br> (not available with overblowing)</div>
                   <label class="switch" id="switch16">
                   <input type="checkbox" class="checkboxes" id="checkbox16" onChange="sendOverride(this.checked)" />
                   <span class="slider round"></span>
                   </label>
-                  <div class="jumpvalues noTouch" id="slider3-value-min"></div>
-                  <div class="jumpvalues noTouch" id="slider3-value-max"></div>
-                  <div class="maxMinContainer3" id="slider3"></div>
+                  <div class="jumpvalues noTouch" id="exprlowslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprlowslider-value-max"></div>
+                  <div class="maxMinContainerExprLow" id="exprlowslider"></div>
                   <div id="lowrangelabel" class="lowrangelabel noTouch">Low range</div>
                   
                   <div class="jumpvalues noTouch" id="exprhighslider-value-min"></div>
@@ -1260,6 +1258,20 @@
                   
                   <div class="overrideRangeLabel noTouch" id="overrideRangeLabel">Input Pressure Range (inH<sub>2</sub>0)</div>
                   <div class="overrideCentsLabel noTouch" id="overrideCentsLabel">Output Bend (cents)</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprcurvelowslider-value"></div>
+                  <div id="exprcurvelowlabel" class="exprcurvelowlabel noTouch">Curve Low</div>
+                  <div class="maxMinContainerExprCurveLow" id="maxMinContainerExprCurveLow">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="exprcurvelowslider" onChange="sendExpressionCurveLow(value)"    onInput="updateExpressionCurveLabels()" ondblclick="resetExpressionCurveLow()" />
+                  </div>
+
+                  <div class="jumpvalues noTouch" id="exprcurvehighslider-value"></div>
+                  <div id="exprcurvehighlabel" class="exprcurvehighlabel noTouch">Curve High</div>
+                  <div class="maxMinContainerExprCurveHigh" id="maxMinContainerExprCurveHigh">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="exprcurvehighslider" onChange="sendExpressionCurveHigh(value)"    onInput="updateExpressionCurveLabels()" ondblclick="resetExpressionCurveHigh()" />
+                  </div>
+                  
+                  
                   <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="okayOverride()">BACK</button>
                </div>
                <div class="smallcontrolbox dronescontrolBox" id="box3">
@@ -2519,8 +2531,8 @@
       
    </script>
    <script>
-      var slider3 = document.getElementById('slider3');
-      noUiSlider.create(slider3, {
+      var exprlowslider = document.getElementById('exprlowslider');
+      noUiSlider.create(exprlowslider, {
           start: [0, 100],
           step: 1,
           connect: true,
