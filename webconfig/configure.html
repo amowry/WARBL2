@@ -25,14 +25,29 @@
          }
       </style>
       <script>
+
+         //
+         // Are we on iOS?
+         //
+         function isIOS() {
+            if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+               return true;
+            } else {
+               return( (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform))
+               ||
+               (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /iPad/.test(navigator.platform))
+               );
+            }
+         }
+         
          if (window.isSecureContext) {
              // Page is a secure context so service workers are now available
          
              console.log("secure");
          }
 
-         // Register service worker
-         if ('serviceWorker' in navigator){
+         // Register service worker (not on iOS or iPad requesting desktop site)
+         if ((!isIOS()) && ('serviceWorker' in navigator)){
             navigator.serviceWorker.register('https://warbl.xyz/service_worker.js',{updateViaCache: "none"})
             .then(reg => {
                console.log("Service Worker Registered!");
