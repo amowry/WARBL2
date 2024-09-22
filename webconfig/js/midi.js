@@ -1867,15 +1867,34 @@ function WARBL_Receive(event, source) {
                         document.getElementById("pressure1").innerHTML = (p);
                         
                         if (document.getElementById("box8").style.display == "block") {
-                            var barWidth = Math.min(1.0, p / 12) * 100; // this is only half the range
-                            document.getElementById("exprInputPressureLevel").style.width = barWidth + "%";
+                            var barWidth = (p / 12) * 100; // this is only half the range
+                            let pressbar = document.getElementById("exprInputPressureLevel");
+                            if (barWidth > 100) {
+                                barWidth = 101;
+                                pressbar.style.background = "var(--gauge-over-color)";
+                            } else {
+                                pressbar.style.background = "var(--gauge-color)";
+                            }
+                            pressbar.style.width = barWidth + "%";
+
                             let cents = calculateOutExprBendFromInput(sensorVal);
                             var centsBarWidth = cents/256.0;
+                            var outofbounds = false;
+                            if (centsBarWidth > 0.5) {
+                                centsBarWidth = 0.51;
+                                outofbounds = true;
+                            } else if (centsBarWidth < -0.5) {
+                                centsBarWidth = -0.51;
+                                outofbounds = true;
+                            }
+
                             let bendbar = document.getElementById("exprOutputBendLevel")
+                            var iscenter = false;
                             if (Math.abs(cents) < 0.5) {
                                 // zero cents
                                 bendbar.style.left = "49%";
-                                bendbar.style.width = "2%";   
+                                bendbar.style.width = "2%";
+                                iscenter = true;
                             }
                             else if (cents > 0) {
                                 bendbar.style.left = "50%";
@@ -1884,6 +1903,15 @@ function WARBL_Receive(event, source) {
                             else {
                                 bendbar.style.left = (50 + centsBarWidth*100).toFixed(0) + "%";
                                 bendbar.style.width = (-centsBarWidth*100).toFixed(0) + "%";
+                            }
+
+                            if (iscenter) {
+                                bendbar.style.background = "var(--gauge-center-color)";
+                            }
+                            else if (outofbounds) {
+                                bendbar.style.background = "var(--gauge-over-color)";
+                            } else {
+                                bendbar.style.background = "var(--gauge-color)";
                             }
                         }
                     }

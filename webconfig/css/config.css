@@ -18,6 +18,8 @@ some colors:
 	--console-border-color: #333;
 	--gauge-color: #3c7cfc;
 	--gauge-bg-color: #333333;
+	--gauge-center-color: #44cc44;
+	--gauge-over-color: #dc4c2c;
 }
 
 html, body {
@@ -3602,18 +3604,18 @@ h3 {
 	width: 65%;
 	height: 35px;
 	left: 80px;
-	top: 160px;
+	top: 164px;
 	background: var(--gauge-bg-color);
 }
 
 #exprInputPressureLevel{
 	display: block;
+	position: absolute;
 	width: 0%;
 	height: 35px;
-	left: 80px;
-	top: 160px;
+	left: 0px;
+	top: 0px;
 	background: var(--gauge-color);
-	z-index: 99;
 }
 
 #exprOutputBendLevelContainer{
@@ -3622,7 +3624,7 @@ h3 {
 	width: 65%;
 	height: 35px;
 	left: 80px;
-	top: 260px;
+	top: 264px;
 	background: var(--gauge-bg-color);
 }
 
@@ -3634,7 +3636,6 @@ h3 {
 	left: 0%;
 	top: 0px;
 	background: var(--gauge-color);
-	z-index: 99;
 }
 
 

@@ -2885,7 +2885,7 @@ void loadSettingsForAllModes() {
     // 2x cents signed where 64 = 0, and 64+10 = +20 cents, and 64-10 = -20 cents for example
     ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25; // -50 cents
     ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
-    ED[mode][EXPRESSION_OUT_CLAMP] = 0; // boolean
+    ED[mode][EXPRESSION_OUT_CLAMP] = 1; // boolean
     ED[mode][EXPRESSION_CURVE_LOW] = 64; // linear
     ED[mode][EXPRESSION_CURVE_HIGH] = 64; // linear
  }
@@ -2985,16 +2985,19 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (ED[mode][EXPRESSION_CURVE_LOW] > 200) {
-        // handle transition from older firmwares that didn't have the advanced pitch expression parameters set yet
-        // convert from original value to the new values
+    if (ED[mode][EXPRESSION_CURVE_LOW] > 200 || ED[mode][EXPRESSION_CURVE_HIGH] > 200 || ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] > 200
+        || ED[mode][EXPRESSION_MIN_HIGH] > 200 || ED[mode][EXPRESSION_MAX_LOW] > 200 || ED[mode][EXPRESSION_OUT_LOW_CENTS] > 200 || ED[mode][EXPRESSION_OUT_HIGH_CENTS] > 200) {
+        // handle transition from older firmware saves that didn't have the advanced pitch expression parameters set yet
+        // this is not a reliable test, unfortunately
         int exprmin =  ED[mode][EXPRESSION_MIN];
         int exprmax =  ED[mode][EXPRESSION_MAX];
         resetExpressionOverrideDefaults();
-        int midpoint = (exprmax - exprmin) / 2;
-        ED[mode][EXPRESSION_MAX_LOW] = midpoint;
-        ED[mode][EXPRESSION_MIN_HIGH] = midpoint;
-
+        // convert from original value to the new values if they were in use, otherwise use our new defaults
+        if (switches[mode][OVERRIDE]) {
+            int midpoint = (exprmax - exprmin) / 2;
+            ED[mode][EXPRESSION_MAX_LOW] = midpoint;
+            ED[mode][EXPRESSION_MIN_HIGH] = midpoint;
+        }
     }
 
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
