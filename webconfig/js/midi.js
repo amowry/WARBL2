@@ -21,7 +21,7 @@ var communicationMode = false; //if we're communicating with WARBL
 var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
 var noteNamesforKeySelect = ["G#","A","Bb","B","C3","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C4","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C5","C#","D","Eb","F","F#","G","G#","A"];
 
-var notePlaying = 0; //MIDI note most recently turned on, used for small note display
+var notePlaying = -1; //MIDI note most recently turned on, used for small note display
 var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
@@ -824,7 +824,11 @@ function WARBL_Receive(event, source) {
         case 0x80:
             noteOff(data1);
             logKeys;
-			if (notePlaying == data1) {document.getElementById("tinyConsole").value = "";}
+			if (notePlaying == data1) {
+                document.getElementById("tinyConsole").value = "";
+                //document.getElementById("exprOutputBendLevel").style.width = "0%";
+                notePlaying = -1;
+            }
             return;
 
         case 0xB0: //incoming CC from WARBL
@@ -3783,11 +3787,11 @@ function updateExpressionCenterPressureLabel()
 
 function updateExpressionCurveLabel(theslider, thelabel)
 {
-    var val = parseFloat(theslider.value - 64);
+    var val = parseInt(theslider.value - 64);
     if (val == 0) {
         thelabel.innerHTML = "Linear";
-    } else if (val >= 0) {
-        thelabel.innerHTML = ((3*val/63.0)+1).toFixed(1);
+    } else if (val > 0) {
+        thelabel.innerHTML = ((3*val/63.0)+1).toFixed(2);
     }
     else {
         thelabel.innerHTML = (0.75*(64+val)/64.0 + 0.25).toFixed(3);
@@ -3811,7 +3815,7 @@ function updateExpressionSliderEnableState()
     var overidden = document.getElementById("overrideExprCheck").checked;
     var overblow = document.getElementById("sensorradio1").checked;
 
-    document.getElementById("expressionDepth").disabled = overidden || overblow;
+    document.getElementById("expressionDepth").disabled = overidden && !overblow;
     document.getElementById("exprfixedcenterslider").disabled = overidden || overblow;
 
     var dispval = version < 4.3 ? "none" : "block";

@@ -2994,6 +2994,10 @@ void loadPrefs() {
         resetExpressionOverrideDefaults();
         // convert from original value to the new values if they were in use, otherwise use our new defaults
         if (switches[mode][OVERRIDE]) {
+            // but sanitize exprmax because the old default was way too high
+            if (exprmax > 50) {
+                exprmax = 50;
+            }
             int midpoint = (exprmax - exprmin) / 2;
             ED[mode][EXPRESSION_MAX_LOW] = midpoint;
             ED[mode][EXPRESSION_MIN_HIGH] = midpoint;

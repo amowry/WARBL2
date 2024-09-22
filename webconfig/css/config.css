@@ -2374,9 +2374,10 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
+
 .midiSelector {
 	position: absolute;
-	height: 30px;
+	height: 38px;
 	width: 150px;
 	top: 100px;
 	left: 145px;
