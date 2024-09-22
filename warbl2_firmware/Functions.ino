@@ -1085,6 +1085,7 @@ inline float curveValToExponent(int val) {
     }
     return retval;
 }
+
 void getExpression() 
 {
     // calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between

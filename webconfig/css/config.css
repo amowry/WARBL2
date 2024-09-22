@@ -3616,6 +3616,28 @@ h3 {
 	z-index: 99;
 }
 
+#exprOutputBendLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 35px;
+	left: 80px;
+	top: 260px;
+	background: var(--gauge-bg-color);
+}
+
+#exprOutputBendLevel{
+	display: block;
+    position: absolute;
+	width: 0%;
+	height: 35px;
+	left: 0%;
+	top: 0px;
+	background: var(--gauge-color);
+	z-index: 99;
+}
+
+
 .lowrangelabel {
 	position: absolute;
 	top: 138px;

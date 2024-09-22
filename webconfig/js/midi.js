@@ -1850,8 +1850,8 @@ function WARBL_Receive(event, source) {
                 } else if (data1 == MIDI_CC_116) {
                     lsb = data2;
                 } else if (data1 == MIDI_CC_118) {
-                    var x = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
-                    x = (x - 100) * 24 / 900; //convert to inches of water.  105 is the approximate minimum sensor value.
+                    let sensorVal = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
+                    var x = (sensorVal - 100) * 24 / 900; //convert to inches of water.  105 is the approximate minimum sensor value.
                     p = Math.min(Math.max(p, 0), 24); //constrain
                     var p = x.toFixed(1); //round to 1 decimal
                     if (p < 0.2) {
@@ -1869,6 +1869,22 @@ function WARBL_Receive(event, source) {
                         if (document.getElementById("box8").style.display == "block") {
                             var barWidth = Math.min(1.0, p / 12) * 100; // this is only half the range
                             document.getElementById("exprInputPressureLevel").style.width = barWidth + "%";
+                            let cents = calculateOutExprBendFromInput(sensorVal);
+                            var centsBarWidth = cents/256.0;
+                            let bendbar = document.getElementById("exprOutputBendLevel")
+                            if (Math.abs(cents) < 0.5) {
+                                // zero cents
+                                bendbar.style.left = "49%";
+                                bendbar.style.width = "2%";   
+                            }
+                            else if (cents > 0) {
+                                bendbar.style.left = "50%";
+                                bendbar.style.width = (centsBarWidth*100).toFixed(0) + "%";
+                            } 
+                            else {
+                                bendbar.style.left = (50 + centsBarWidth*100).toFixed(0) + "%";
+                                bendbar.style.width = (-centsBarWidth*100).toFixed(0) + "%";
+                            }
                         }
                     }
                 }
@@ -3776,6 +3792,73 @@ function updateExpressionSliderEnableState()
     document.getElementById("exprcenterpresslabel").style.display = dispval;
 
     document.getElementById("overrideExprCheck").disabled = overblow;
+}
+
+function curveValToExponent(val) {
+    // takes 0 -> 127 and returns curve exponent
+    // which is between 0.25 -> 0 -> 4.0
+    var retval = 1.0;
+    val -= 64;
+    if (val >= 0) {
+        retval = ((3.0*val/63.0) + 1.0);
+    }
+    else {
+        retval = (0.75*(64.0+val)/64.0 + 0.25);
+    }
+    return retval;
+}
+
+function calculateOutExprBendFromInput(sensorValue)
+{
+    let overblow = document.getElementById("sensorradio1").checked;
+    let overidden = document.getElementById("overrideExprCheck").checked;
+    
+    if (!overidden || overblow) {
+        // do nothing!
+        return 0.0;
+    }
+
+    // jlc
+    // this mirrors the calculation on the warbl to give us just the expression bend component
+    // not great, but better than adding a dedicated debug midi out message stream for this
+    let lowPressureMin = parseInt(exprlowslider.noUiSlider.get()[0]) * 9 + 100;
+    let lowPressureMax = parseInt(exprlowslider.noUiSlider.get()[1]) * 9 + 100;
+    let highPressureMin = parseInt(exprhighslider.noUiSlider.get()[0]) * 9 + 100;
+    let highPressureMax = parseInt(exprhighslider.noUiSlider.get()[1]) * 9 + 100;
+    var centsLowOffset = 2 * (parseInt(exprlowbendslider.noUiSlider.get()[0]) - 64);
+    var centsHighOffset = 2 * (parseInt(exprhighbendslider.noUiSlider.get()[0]) - 64);
+    var lowCurveExp = curveValToExponent(parseInt(document.getElementById("exprcurvelowslider").value));
+    var highCurveExp = curveValToExponent(parseInt(document.getElementById("exprcurvehighslider").value));
+    let doClamp = document.getElementById("clampExprCheck").checked;
+    
+
+    var centsOffset = 0.0;
+    var ratio = 0.0;
+    let lowRangeSpan = Math.max(lowPressureMax - lowPressureMin, 1);
+    let highRangeSpan = Math.max(highPressureMax - highPressureMin, 1);
+    if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range
+        ratio = Math.min(((lowPressureMax - sensorValue)) / (lowRangeSpan), 1.0);
+        if (lowCurveExp != 1.0) {
+            ratio = Math.pow(ratio, lowCurveExp);
+        }
+        centsOffset = centsLowOffset * ratio;
+    } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range
+        ratio = Math.max(((sensorValue - highPressureMin)) / (highRangeSpan), 0.0);
+        if (highCurveExp != 1.0) {
+            ratio = Math.pow(ratio, highCurveExp);
+        }
+        if (doClamp) {
+            ratio = Math.min(ratio, 1.0);
+        }
+        centsOffset = centsHighOffset * ratio;
+    }
+    else {
+        // in the stable range
+        centsOffset = 0;
+    }
+    
+    // console.log("Cents out: " + centsOffset.toFixed(0) + " lm : " + lowPressureMin + " lx: " + lowPressureMax + " ratio: " + ratio + " sensorVal: " + sensorValue.toFixed(0));
+    return centsOffset;
 }
 
 function sendOverride(selection) {
