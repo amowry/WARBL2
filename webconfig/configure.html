@@ -31,8 +31,8 @@
              console.log("secure");
          }
 
-         // Register service worker
-         if ('serviceWorker' in navigator){
+         // Register service worker (only on web app version)
+         if (platform && (platform == "web") && ('serviceWorker' in navigator)){
             navigator.serviceWorker.register('https://warbl.xyz/service_worker.js',{updateViaCache: "none"})
             .then(reg => {
                console.log("Service Worker Registered!");
