@@ -2,7 +2,7 @@
 
 #define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
-#define VERSION 42  // Firmware version (without decimal point)
+#define VERSION 43  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
@@ -148,15 +148,15 @@
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
-#define CUSTOM_FINGERING_2 39  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_3 40
-#define CUSTOM_FINGERING_4 41
-#define CUSTOM_FINGERING_5 42
-#define CUSTOM_FINGERING_6 43
-#define CUSTOM_FINGERING_7 44
-#define CUSTOM_FINGERING_8 45
-#define CUSTOM_FINGERING_9 46
-#define CUSTOM_FINGERING_10 47
+#define EXPRESSION_MIN_HIGH 39
+#define EXPRESSION_MAX_LOW 40
+#define EXPRESSION_OUT_LOW_CENTS 41     // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_HIGH_CENTS 42    // stored signed as 0 cents = 64
+#define EXPRESSION_FIXED_CENTER_PRESSURE 43
+#define EXPRESSION_OUT_CLAMP 44   // boolean if outbend should be clamped
+#define EXPRESSION_CURVE_LOW 45      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define EXPRESSION_CURVE_HIGH 46      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_FINGERING_10 47 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define CUSTOM_FINGERING_11 48
 #define kEXPRESSIONnVariables 49
 
@@ -563,7 +563,8 @@
 #define MIDI_CC_106_VALUE_57 57  // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 /* 58-59 unused */
 #define MIDI_CC_106_VALUE_60 60  // from Config Tool. WARBL2 recenter yaw
-/* 61-69 unused */
+#define MIDI_CC_106_VALUE_61 61  // from Config Tool. WARBL2 reset pitch expression override to default
+/* 62-69 unused */
 #define MIDI_CC_106_VALUE_70 70  // from WARBL. WARBL2 battery voltage
 #define MIDI_CC_106_VALUE_71 71  // from WARBL. WARBL2 charging status
 
@@ -686,6 +687,7 @@
 #define MIDI_SAVE_CALIB_AS_FACTORY MIDI_CC_106_VALUE_45     // from Config Tool. save current sensor calibration as factory calibration (this is on a special webpage for me to use when I first program WARBL)
 #define MIDI_CALIB_IMU MIDI_CC_106_VALUE_54                 // from Config Tool. WARBL2 calibrate IMU
 #define MIDI_CENTER_YAW MIDI_CC_106_VALUE_60                // from Config Tool. WARBL2 recenter yaw
+#define MIDI_RESET_PITCH_EXPRESSION MIDI_CC_106_VALUE_61    // from Config Tool. WARBL2 reset pitch expression override to default
 
 #define MIDI_STICKS_MODE MIDI_CC_111_VALUE_109  // Bidirectional. Hidden sticks mode - Same for 112 and 113
 

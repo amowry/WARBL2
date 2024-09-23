@@ -16,6 +16,10 @@ some colors:
 	--box-border-color: #333;
 	--console-bg-color: #3c3c3c;
 	--console-border-color: #333;
+	--gauge-color: #3c7cfc;
+	--gauge-bg-color: #333333;
+	--gauge-center-color: #44cc44;
+	--gauge-over-color: #dc4c2c;
 }
 
 html, body {
@@ -1302,6 +1306,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
+    background: #440000;
 }
 
 #box7 {
@@ -2037,9 +2042,9 @@ input:disabled + .vibratoSlider:before {
 .advancedOkayPB {
 	position: absolute;
 	height: 30px;
-	width: 60px;
-	top: 355px;
-	left: 50px;
+	width: 70px;
+	top: 63px;
+	left: 40px;
 }
 
 .advancedOkayCC {
@@ -2352,11 +2357,12 @@ input:disabled + .vibratoSlider:before {
 
 .override {
 	position: absolute;
-	height: 30px;
+	height: 40px;
 	width: 100px;
-	top: 180px;
-	left: 80px;
+	top: 175px;
+	left: 300px;
 }
+
 
 .tinyDeviceLabel {
 	display: block;
@@ -2368,9 +2374,10 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
+
 .midiSelector {
 	position: absolute;
-	height: 30px;
+	height: 38px;
 	width: 150px;
 	top: 100px;
 	left: 145px;
@@ -3171,20 +3178,79 @@ h3 {
 #ExpressionDepthContainer {
 	display: block;
 	position: absolute;
-	left: 250px;
-	top: 175px;
+	left: 82px;
+	top: 170px;
 	z-index: 99;
+}
+
+.expressionDepthLabel {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 172px;
+	z-index: 99;
+	font-size: 12px;
+}
+
+.maxMinContainerExprFixedCenter {
+	display: block;
+	width: 135px;
+	position: absolute;
+	left: 85px;
+	top: 207px;
+	z-index: 99;
+}
+
+.exprcenterpresslabel {
+	position: absolute;
+	top: 200px;
+	left: 27px;
+	width: 50px;
+	font-size: 12px;    
+}
+
+#exprfixedcenterslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 217px;
+	top: 207px;
+	z-index: 99;
+	font-size: 14px;    
 }
 
 .slidecontainer4 {
 	width: 30%;
 }
 
-.expressionDepthLabel {
+#expressionPressureBox {
+	left: 30px;
+	top: 900px;
+	height: 405px;
+	display: none;
+}
+
+#pitchExpressionBox {
+	position: absolute;
+	display: block;
+	width: 95%;
+	top: 124px;
+	height: 116px;
+    background: #323232;
+	border: none;
+	border-radius: 6px;
+	margin-left: 10px;
+	margin-right: -10px;
+	z-index: 0;
+}
+
+
+
+.expressionOverrideLabel {
 	display: block;
 	position: absolute;
-	left: 250px;
-	top: 148px;
+	left: 280px;
+	top: 138px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3193,10 +3259,10 @@ h3 {
 	display: block;
 	position: absolute;
 	width: 140px;
-	left: 25px;
+	left: 20px;
 	top: 138px;
 	z-index: 99;
-	font-size: 14px;
+	font-size: 15px;
 }
 
 #switch6 {
@@ -3274,14 +3340,28 @@ h3 {
 }
 
 #switch16 {
-	top: 130px;
-	left: 330px;
+	top: 70px;
+	left: 350px;
+}
+
+#clampExprSwitch {
+	top: 345px;
+	left: 370px;
+}
+
+.clampExprMaxLabel {
+	position: absolute;
+	left: 336px;
+	top: 328px;
+	z-index: 99;
+	font-size: 13px;
 }
 
 .overrideLabel {
 	position: absolute;
-	left: 85px;
-	top: 120px;
+	left: 100px;
+	width: 60%;
+	top: 60px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3289,11 +3369,16 @@ h3 {
 .overrideLabel2 {
 	position: absolute;
 	left: 85px;
-	top: 150px;
+	top: 85px;
 	z-index: 99;
 	font-size: 14px;
 }
 
+
+#overrideExprSwitch {
+	top: 134px;
+	left: 350px;
+}
 
 .hack1Label {
 	position: absolute;
@@ -3505,14 +3590,255 @@ h3 {
 	z-index: 99;
 }
 
-.maxMinContainer3 {
+.maxMinContainerExprLow {
 	display: block;
 	width: 65%;
 	position: absolute;
 	left: 80px;
-	top: 270px;
+	top: 160px;
 	z-index: 99;
 }
+
+#exprInputPressureLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 35px;
+	left: 80px;
+	top: 164px;
+	background: var(--gauge-bg-color);
+}
+
+#exprInputPressureLevel{
+	display: block;
+	position: absolute;
+	width: 0%;
+	height: 35px;
+	left: 0px;
+	top: 0px;
+	background: var(--gauge-color);
+}
+
+#exprOutputBendLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 35px;
+	left: 80px;
+	top: 264px;
+	background: var(--gauge-bg-color);
+}
+
+#exprOutputBendLevel{
+	display: block;
+    position: absolute;
+	width: 0%;
+	height: 35px;
+	left: 0%;
+	top: 0px;
+	background: var(--gauge-color);
+}
+
+
+.lowrangelabel {
+	position: absolute;
+	top: 138px;
+	left: 20px;
+	font-size: 11px;    
+}
+
+.maxMinContainerExprHigh {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 195px;
+	z-index: 99;
+}
+
+.highrangelabel {
+	position: absolute;
+	top: 210px;
+	left: 20px;
+	font-size: 11px;    
+}
+
+
+.maxMinContainerExprLowBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 260px;
+	z-index: 99;
+}
+
+.lowrangelabel2 {
+	position: absolute;
+	top: 256px;
+	left: 20px;
+	font-size: 11px;    
+}
+
+.maxMinContainerExprHighBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 295px;
+	z-index: 99;
+}
+
+.highrangelabel2 {
+	position: absolute;
+	top: 292px;
+	left: 20px;
+	font-size: 11px;    
+}
+
+.maxMinContainerExprCurveLow {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 20px;
+	top: 350px;
+	z-index: 99;
+}
+
+.exprcurvelowlabel {
+	position: absolute;
+	top: 331px;
+	left: 25px;
+	font-size: 11px;    
+}
+
+#exprcurvelowslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 110px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
+
+.maxMinContainerExprCurveHigh {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 180px;
+	top: 350px;
+	z-index: 99;
+}
+
+.exprcurvehighlabel {
+	position: absolute;
+	top: 331px;
+	left: 185px;
+	font-size: 11px;    
+}
+
+#exprcurvehighslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 270px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
+
+.resetExpressionButton {
+	display: block;
+	position: absolute;
+	height: 30px !important;
+	width: 130px !important;
+	top: 400px;
+	left: 270px;
+}
+
+#exprlowslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 155px;
+	z-index: 99;
+}
+
+#exprlowslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 155px;
+	z-index: 99;
+}
+
+#exprhighslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 190px;
+	z-index: 99;
+}
+
+#exprlowslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprhighslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprhighslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 190px;
+	z-index: 99;
+}
+
+#exprlowbendslider-value {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 255px;
+	z-index: 99;
+}
+
+#exprlowbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprlowbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
+#exprhighbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#exprhighbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
+
+#exprhighbendslider-value {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 290px;
+	z-index: 99;
+}
+
+
+
+
 
 .maxMinContainer4 {
 	display: block;
@@ -3577,23 +3903,8 @@ h3 {
 	z-index: 99;
 }
 
-#slider3-value-min {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: -100px;
-	top: 265px;
-	z-index: 99;
-}
 
-#slider3-value-max {
-	display: block;
-	width: 65%;
-	position: absolute;
-	left: 270px;
-	top: 265px;
-	z-index: 99;
-}
+
 
 #slider4-value-min {
 	display: block;
@@ -3713,7 +4024,16 @@ h3 {
 	display: block;
 	position: absolute;
 	left: 165px;
-	top: 230px;
+	top: 125px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.overrideCentsLabel {
+	display: block;
+	position: absolute;
+	left: 165px;
+	top: 228px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -3905,8 +4225,39 @@ h3 {
 	text-align: center;
 	width: 60px;
 	height: 21px;
-	left: 275px;
+	left: 270px;
 	top: 155px;
+	color: var(--text-color);
+	z-index: 99;
+	font-size: 14px;
+	line-height: 21px;
+	border: solid 2px var(--console-border-color);
+	background-color: var(--console-bg-color);
+	border-radius: 5px;
+}
+
+.receivedPBCentsLabel {
+	display: block;
+	position: absolute;
+	left: 275px;
+	top: 188px;
+	width: 40px;
+	height: 40px;
+	line-height: 21px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.receivedPBCents {
+	display: block;
+	position: absolute;
+	margin: auto;
+	text-align: right;
+	width: 85px;
+	height: 21px;
+	left: 270px;
+	top: 185px;
+    padding-right: 5px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;

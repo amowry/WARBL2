@@ -21,7 +21,7 @@ var communicationMode = false; //if we're communicating with WARBL
 var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
 var noteNamesforKeySelect = ["G#","A","Bb","B","C3","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C4","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C5","C#","D","Eb","F","F#","G","G#","A"];
 
-var notePlaying = 0; //MIDI note most recently turned on, used for small note display
+var notePlaying = -1; //MIDI note most recently turned on, used for small note display
 var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
@@ -723,8 +723,10 @@ function WARBL_Receive(event, source) {
 
     //Display received PB messages
     if (e == "PB") {	
-		var pitch = ((data1 + (data2 << 8)) >> 1)-8192;	
+		var pitch = ((data1 + (data2 << 7)))-8192;	
         document.getElementById('receivedPB').innerHTML = pitch;
+		var pitchcents = 100 * (pitch / 8192.0) * document.getElementById("midiBendRange").value;	
+        document.getElementById('receivedPBCents').innerHTML = (pitchcents > 0 ? "+" : "") + pitchcents.toFixed(0); // jlc
         var barHeight = pitch / 81.92;
 		var heightPixels = 65 - (barHeight/100*65) + "px";
 		var markerTopPixels = 65 - (barHeight/100*65) + 90 + "px";
@@ -822,7 +824,11 @@ function WARBL_Receive(event, source) {
         case 0x80:
             noteOff(data1);
             logKeys;
-			if (notePlaying == data1) {document.getElementById("tinyConsole").value = "";}
+			if (notePlaying == data1) {
+                document.getElementById("tinyConsole").value = "";
+                //document.getElementById("exprOutputBendLevel").style.width = "0%";
+                notePlaying = -1;
+            }
             return;
 
         case 0xB0: //incoming CC from WARBL
@@ -1034,7 +1040,9 @@ function WARBL_Receive(event, source) {
                     for (var i = 0; i < 4; i++)  { //receive and handle Breath mode
                         if (data2 == MIDI_BREATH_MODE_START +i) {
                             document.getElementById("sensorradio" + i.toString()).checked = true;
-
+                            if (i == 1) {
+                                updateExpressionSliderEnableState();
+                            }
                         }
                     }
 
@@ -1239,6 +1247,10 @@ function WARBL_Receive(event, source) {
 
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +10) {
                         document.getElementById("checkbox16").checked = data2;
+                        document.getElementById("overrideExprCheck").checked = data2;
+                        
+                        updateExpressionSliderEnableState();
+                        
                     } //override expression pressure range
 
                     else if (jumpFactorWrite == MIDI_SWITCHES_VARS_START +11) {
@@ -1320,10 +1332,16 @@ function WARBL_Receive(event, source) {
                         curve[3] = data2;
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
-                        slider3.noUiSlider.set([data2, null]);
+                        // pitch expression min (low min in new model)
+                        exprlowslider.noUiSlider.set([data2, null]);
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
-                        slider3.noUiSlider.set([null, data2]);
+                        // pitch expression max (high max in new model)
+                        if (version < 4.3) {
+                            exprlowslider.noUiSlider.set([null, data2]);
+                        } else {
+                            exprhighslider.noUiSlider.set([null, data2]);                            
+                        }
                     }					
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
@@ -1335,6 +1353,43 @@ function WARBL_Receive(event, source) {
 	                    depth.dispatchEvent(new Event('input'));
 	                    output.innerHTML = data2;
 					}
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
+                        // pitch expression  low max
+                        if (version >= 4.3) {                            
+                            exprlowslider.noUiSlider.set([null, data2]);
+                        }
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
+                        // pitch expression high min
+                        exprhighslider.noUiSlider.set([data2, null]);
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +20) {
+                        // low bend
+                        exprlowbendslider.noUiSlider.set([data2]);
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +21) {
+                        // high bend
+                        exprhighbendslider.noUiSlider.set([data2]);
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +22) {
+                        // fixed center pressure
+                        document.getElementById("exprfixedcenterslider").value = data2;
+                        updateExpressionCenterPressureLabel();
+                    }
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +23) {
+                        // expr max clamp
+                        document.getElementById("clampExprCheck").checked = data2;                        
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +24) {
+                        // expr low curve
+                        document.getElementById("exprcurvelowslider").value = data2;
+                        updateExpressionCurveLabels();
+                    }					
+                    else if (jumpFactorWrite == MIDI_ED_VARS2_START +25) {
+                        // expr low curve
+                        document.getElementById("exprcurvehighslider").value = data2;
+                        updateExpressionCurveLabels();
+                    }					
 
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
@@ -1544,7 +1599,7 @@ function WARBL_Receive(event, source) {
 						numberOfGestures = 8;
 						for (let element of document.getElementsByClassName("WARBL2Elements")){element.style.display="none";}
                         document.getElementById("box9").style.display = "none";
-                        document.getElementById("box6").style.display = "block";
+                        document.getElementById("expressionPressureBox").style.display = "block";
 						document.getElementById("demo18").style.display = "none";
 						document.getElementById("slideLimitContainer").style.display = "none";
 						document.getElementById("slidelimitlabel").style.display = "none";
@@ -1799,8 +1854,8 @@ function WARBL_Receive(event, source) {
                 } else if (data1 == MIDI_CC_116) {
                     lsb = data2;
                 } else if (data1 == MIDI_CC_118) {
-                    var x = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
-                    x = (x - 100) * 24 / 900; //convert to inches of water.  105 is the approximate minimum sensor value.
+                    let sensorVal = parseInt((data2 << 7) | lsb); //receive pressure between 100 and 900
+                    var x = (sensorVal - 100) * 24 / 900; //convert to inches of water.  105 is the approximate minimum sensor value.
                     p = Math.min(Math.max(p, 0), 24); //constrain
                     var p = x.toFixed(1); //round to 1 decimal
                     if (p < 0.2) {
@@ -1814,6 +1869,55 @@ function WARBL_Receive(event, source) {
                     else {
                         document.getElementById("pressure").innerHTML = (p);
                         document.getElementById("pressure1").innerHTML = (p);
+                        
+                        if (document.getElementById("box8").style.display == "block") {
+                            var barWidth = (p / 12) * 100; // this is only half the range
+                            let pressbar = document.getElementById("exprInputPressureLevel");
+                            if (barWidth > 100) {
+                                barWidth = 101;
+                                pressbar.style.background = "var(--gauge-over-color)";
+                            } else {
+                                pressbar.style.background = "var(--gauge-color)";
+                            }
+                            pressbar.style.width = barWidth + "%";
+
+                            let cents = calculateOutExprBendFromInput(sensorVal);
+                            var centsBarWidth = cents/256.0;
+                            var outofbounds = false;
+                            if (centsBarWidth > 0.5) {
+                                centsBarWidth = 0.51;
+                                outofbounds = true;
+                            } else if (centsBarWidth < -0.5) {
+                                centsBarWidth = -0.51;
+                                outofbounds = true;
+                            }
+
+                            let bendbar = document.getElementById("exprOutputBendLevel")
+                            var iscenter = false;
+                            if (Math.abs(cents) < 0.5) {
+                                // zero cents
+                                bendbar.style.left = "49%";
+                                bendbar.style.width = "2%";
+                                iscenter = true;
+                            }
+                            else if (cents > 0) {
+                                bendbar.style.left = "50%";
+                                bendbar.style.width = (centsBarWidth*100).toFixed(0) + "%";
+                            } 
+                            else {
+                                bendbar.style.left = (50 + centsBarWidth*100).toFixed(0) + "%";
+                                bendbar.style.width = (-centsBarWidth*100).toFixed(0) + "%";
+                            }
+
+                            if (iscenter) {
+                                bendbar.style.background = "var(--gauge-center-color)";
+                            }
+                            else if (outofbounds) {
+                                bendbar.style.background = "var(--gauge-over-color)";
+                            } else {
+                                bendbar.style.background = "var(--gauge-color)";
+                            }
+                        }
                     }
                 }
 
@@ -2354,6 +2458,51 @@ function sendExpressionDepth(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function sendExpressionCenterPressure(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_FIXED_CENTER_PRESSURE);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCenterPressureLabel();
+}
+
+function sendExpressionCurveLow(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_CURVE_LOW);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCurveLabels();
+}
+
+function sendExpressionCurveHigh(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_CURVE_HIGH);
+    sendToWARBL(MIDI_CC_105, selection);
+    updateExpressionCurveLabels();
+}
+
+function resetExpressionCurveLow() {
+    var lowslider = document.getElementById('exprcurvelowslider');
+    lowslider.value = 64;    
+    sendExpressionCurveLow(64);
+}
+
+function resetExpressionCurveHigh() {
+    var highslider = document.getElementById('exprcurvehighslider');
+    highslider.value = 64;    
+    sendExpressionCurveHigh(64);
+}
+
+
+
+function sendClampExpr(selection) {
+    selection = +selection;
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_CLAMP);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
 function sendCurveRadio(selection) {
     blink(1);
     selection = parseFloat(selection);
@@ -2454,15 +2603,62 @@ slider2.noUiSlider.on('change', function (values) {
 });
 
 //expression override slider
-slider3.noUiSlider.on('change', function (values) {
+exprlowslider.noUiSlider.on('change', function (values) {
     blink(1);
-    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+    
+    if (version < 4.3) {
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));    
+    }
+    else {
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+        console.log("lowchange");
+        // if the max is > exprhighslider.min, set the other to match
+        //console.log("exprlowslider values " + values[0] + " " + values[1]);
+        if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
+            console.log("  exprhigh values " + exprhighslider.noUiSlider.get()[0] + " " + exprhighslider.noUiSlider.get()[1]);
+            exprhighslider.noUiSlider.set([parseInt(values[1]), null]);
+            sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
+            sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+        }
+    }
+});
+
+exprhighslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
     sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+
+    console.log("highchange");
+    
+    // if the min is < slider3.max, set the other to match
+    if (parseInt(values[0]) < parseInt(exprlowslider.noUiSlider.get()[1])) {
+        exprlowslider.noUiSlider.set([null, parseInt(values[0])]);
+        console.log("  exprlow values " + exprlowslider.noUiSlider.get()[0] + " " + exprlowslider.noUiSlider.get()[1]);
+        
+        sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+    }
 });
 
+exprlowbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_LOW_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+});
 
+exprhighbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_HIGH_CENTS);
+    sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+});
 
 
 slider5.noUiSlider.on('change', function (values, handle) {
@@ -2553,9 +2749,9 @@ slider2.noUiSlider.on('update', function (values, handle) {
     }
 });
 
-slider3.noUiSlider.on('update', function (values, handle) {
-    var marginMin = document.getElementById('slider3-value-min'),
-        marginMax = document.getElementById('slider3-value-max');
+exprlowslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprlowslider-value-min'),
+        marginMax = document.getElementById('exprlowslider-value-max');
 
     if (handle) {
         var min = parseFloat(values[handle] * 0.24).toFixed(1);
@@ -2565,6 +2761,35 @@ slider3.noUiSlider.on('update', function (values, handle) {
         marginMin.innerHTML = max;
     }
 
+});
+
+exprhighslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprhighslider-value-min'),
+        marginMax = document.getElementById('exprhighslider-value-max');
+
+    if (handle) {
+        var min = parseFloat(values[handle] * 0.24).toFixed(1);
+        marginMax.innerHTML = min;
+    } else {
+        var max = parseFloat(values[handle] * 0.24).toFixed(1);
+        marginMin.innerHTML = max;
+    }
+
+});
+
+exprlowbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprlowbendslider-value');
+
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
+    
+});
+
+exprhighbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('exprhighbendslider-value');
+
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
 });
 
 slider4.noUiSlider.on('update', function (values, handle) {
@@ -2577,7 +2802,7 @@ slider4.noUiSlider.on('update', function (values, handle) {
     }
 
     var handles4 = slider4.noUiSlider.get();
-    elements = document.getElementsByClassName("noUi-connect");
+    elements = document.getElementById("slider4").getElementsByClassName("noUi-connect");
 
     if (parseInt(handles4[0]) > parseInt(handles4[1])) {
         for (var i = 0; i < elements.length; i++) {
@@ -2896,6 +3121,14 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         document.getElementById("fingeringInput11").style.cursor = "pointer";
 
     }
+
+    exprlowslider.noUiSlider.updateOptions({
+        range: {
+            'min': 0,
+            'max': 100
+        }, start: [0, 100]
+    });        
+
 }
 
 function sendBreathmodeRadio(selection) {
@@ -2905,11 +3138,15 @@ function sendBreathmodeRadio(selection) {
     }
     if (document.getElementById("sensorradio1").checked == true) { //update override
         document.getElementById("checkbox16").disabled = true;
+        document.getElementById("overrideExprCheck").disabled = true;
     }
     else {
         document.getElementById("checkbox16").disabled = false;
+        document.getElementById("overrideExprCheck").disabled = false;
     }
     sendToWARBL(MIDI_CC_102, MIDI_BREATH_MODE_START + selection);
+
+    updateExpressionSliderEnableState();
 
 }
 
@@ -2932,7 +3169,7 @@ function advancedPB() {
 }
 
 function mapPressure() {
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
     document.getElementById("box9").style.display = "none";
 }
 
@@ -2945,7 +3182,7 @@ function mapIMU() {
 
 function backPressure() {
     if (version > 3.9 || version == "Unknown") {
-        document.getElementById("box6").style.display = "none";
+        document.getElementById("expressionPressureBox").style.display = "none";
         document.getElementById("box9").style.display = "block";
     }
 }
@@ -2964,18 +3201,49 @@ function overRideExpression() {
     if (version > 1.8 || version == "Unknown") {
         if (document.getElementById("sensorradio1").checked == true) {
             document.getElementById("checkbox16").disabled = true;
+            document.getElementById("overrideExprCheck").disabled = true;
         }
         else {
             document.getElementById("checkbox16").disabled = false;
+            document.getElementById("overrideExprCheck").disabled = false;
         }
+        
+        
+        var dispval = version < 4.3 ? "none" : "block";
+        // hide new advanced pressure overridedispval
+        document.getElementById("exprhighslider").style.display = dispval;
+        document.getElementById("exprhighslider-value-min").style.display = dispval;                        
+        document.getElementById("exprhighslider-value-max").style.display = dispval;                        
+        document.getElementById("exprlowbendslider").style.display = dispval;
+        document.getElementById("exprlowbendslider-value").style.display = dispval;                        
+        document.getElementById("exprhighbendslider").style.display = dispval;
+        document.getElementById("exprhighbendslider-value").style.display = dispval;                        
+        document.getElementById("clampExprMaxLabel").style.display = dispval;
+        document.getElementById("clampExprSwitch").style.display = dispval;
+        document.getElementById("resetExpressionButton").style.display = dispval;
+        document.getElementById("overrideRangeLabel").style.display = dispval;
+        document.getElementById("overrideCentsLabel").style.display = dispval;
+        document.getElementById("lowrangelabel").style.display = dispval;
+        document.getElementById("lowrangelabel2").style.display = dispval;
+        document.getElementById("highrangelabel").style.display = dispval;
+        document.getElementById("highrangelabel2").style.display = dispval;
+        document.getElementById("exprInputPressureLevelContainer").style.display = dispval;
+        document.getElementById("exprcurvelowlabel").style.display = dispval;
+        document.getElementById("exprcurvelowslider").style.display = dispval;
+        document.getElementById("exprcurvelowslider-value").style.display = dispval;                        
+        document.getElementById("exprcurvehighlabel").style.display = dispval;
+        document.getElementById("exprcurvehighslider").style.display = dispval;
+        document.getElementById("exprcurvehighslider-value").style.display = dispval;                        
+        
+        
         document.getElementById("box8").style.display = "block";
-        document.getElementById("box6").style.display = "none";
+        document.getElementById("expressionPressureBox").style.display = "none";
     }
 }
 
 function okayOverride() {
     document.getElementById("box8").style.display = "none";
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
 }
 
 
@@ -2995,7 +3263,7 @@ function configureCustomFingering() {
         document.getElementById("box5").style.top = "740px";
         document.getElementById("pressuregraph").style.top = "740px";
         document.getElementById("box3").style.top = "1200px";
-        document.getElementById("box6").style.top = "1200px";
+        document.getElementById("expressionPressureBox").style.top = "1200px";
         document.getElementById("box9").style.top = "1200px";
         document.getElementById("box10").style.top = "1200px";
         document.getElementById("box7").style.top = "1200px";
@@ -3023,7 +3291,7 @@ function customFingeringOkay() {
     document.getElementById("box5").style.top = "440px";
     document.getElementById("pressuregraph").style.top = "440px";
     document.getElementById("box3").style.top = "900px";
-    document.getElementById("box6").style.top = "900px";
+    document.getElementById("expressionPressureBox").style.top = "900px";
     document.getElementById("box9").style.top = "900px";
     document.getElementById("box10").style.top = "900px";
     document.getElementById("box7").style.top = "900px";
@@ -3045,7 +3313,7 @@ function mapCC() {
     document.getElementById("expressionChannel").style.visibility = "visible";
     document.getElementById("highByte").style.visibility = "visible";
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     if (curve[0] < 3) {
         document.getElementById("curveRadio" + curve[0]).checked = true;
     }
@@ -3062,7 +3330,7 @@ function mapVelocity() {
         document.getElementById("curveRadio" + curve[1]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Velocity Mapping";
     //console.log(mapSelection);
 }
@@ -3077,7 +3345,7 @@ function mapAftertouch() {
         document.getElementById("curveRadio" + curve[2]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Channel Pressure Mapping";
 }
 
@@ -3091,7 +3359,7 @@ function mapPoly() {
         document.getElementById("curveRadio" + curve[3]).checked = true;
     }
     document.getElementById("box7").style.display = "block";
-    document.getElementById("box6").style.display = "none";
+    document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Key Pressure Mapping";
 }
 
@@ -3099,7 +3367,7 @@ function mapPoly() {
 function okayCCmap() {
     mapSelection = 4;
     document.getElementById("box7").style.display = "none";
-    document.getElementById("box6").style.display = "block";
+    document.getElementById("expressionPressureBox").style.display = "block";
     document.getElementById("pressureChannel").style.visibility = "hidden";
     document.getElementById("pressureCC").style.visibility = "hidden";
     document.getElementById("expressionChannel").style.visibility = "hidden";
@@ -3450,9 +3718,7 @@ function sendCustom(selection) {
 function sendExpression(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
-    //if (selection == 1) {
-    //document.getElementById("overrideExpression").disabled = false;
-    //} else (document.getElementById("overrideExpression").disabled = true);
+    
     sendToWARBL(MIDI_CC_104, MIDI_ED_VARS_START);
     sendToWARBL(MIDI_CC_105, selection);
 }
@@ -3502,11 +3768,132 @@ function sendHack2(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function updateExpressionCenterPressureLabel()
+{
+    var slider = document.getElementById('exprfixedcenterslider');
+    var element = document.getElementById('exprfixedcenterslider-value');
+    var min = parseFloat(slider.value * 0.24).toFixed(1);
+    element.innerHTML = min;
+}
+
+function updateExpressionCurveLabel(theslider, thelabel)
+{
+    var val = parseInt(theslider.value - 64);
+    if (val == 0) {
+        thelabel.innerHTML = "Linear";
+    } else if (val > 0) {
+        thelabel.innerHTML = ((3*val/63.0)+1).toFixed(2);
+    }
+    else {
+        thelabel.innerHTML = (0.75*(64+val)/64.0 + 0.25).toFixed(3);
+    }    
+}
+
+function updateExpressionCurveLabels()
+{
+    var lowslider = document.getElementById('exprcurvelowslider');
+    var lowelement = document.getElementById('exprcurvelowslider-value');
+    updateExpressionCurveLabel(lowslider, lowelement);
+    
+    var highslider = document.getElementById('exprcurvehighslider');
+    var highelement = document.getElementById('exprcurvehighslider-value');
+    updateExpressionCurveLabel(highslider, highelement);
+}
+
+
+function updateExpressionSliderEnableState()
+{
+    var overidden = document.getElementById("overrideExprCheck").checked;
+    var overblow = document.getElementById("sensorradio1").checked;
+
+    document.getElementById("expressionDepth").disabled = overidden && !overblow;
+    document.getElementById("exprfixedcenterslider").disabled = overidden || overblow;
+
+    var dispval = version < 4.3 ? "none" : "block";
+    document.getElementById("exprfixedcenterslider").style.display = dispval;
+    document.getElementById("exprfixedcenterslider-value").style.display = dispval;
+    document.getElementById("exprcenterpresslabel").style.display = dispval;
+
+    document.getElementById("overrideExprCheck").disabled = overblow;
+}
+
+function curveValToExponent(val) {
+    // takes 0 -> 127 and returns curve exponent
+    // which is between 0.25 -> 0 -> 4.0
+    var retval = 1.0;
+    val -= 64;
+    if (val >= 0) {
+        retval = ((3.0*val/63.0) + 1.0);
+    }
+    else {
+        retval = (0.75*(64.0+val)/64.0 + 0.25);
+    }
+    return retval;
+}
+
+function calculateOutExprBendFromInput(sensorValue)
+{
+    let overblow = document.getElementById("sensorradio1").checked;
+    let overidden = document.getElementById("overrideExprCheck").checked;
+    
+    if (!overidden || overblow) {
+        // do nothing!
+        return 0.0;
+    }
+
+    // jlc
+    // this mirrors the calculation on the warbl to give us just the expression bend component
+    // not great, but better than adding a dedicated debug midi out message stream for this
+    let lowPressureMin = parseInt(exprlowslider.noUiSlider.get()[0]) * 9 + 100;
+    let lowPressureMax = parseInt(exprlowslider.noUiSlider.get()[1]) * 9 + 100;
+    let highPressureMin = parseInt(exprhighslider.noUiSlider.get()[0]) * 9 + 100;
+    let highPressureMax = parseInt(exprhighslider.noUiSlider.get()[1]) * 9 + 100;
+    var centsLowOffset = 2 * (parseInt(exprlowbendslider.noUiSlider.get()[0]) - 64);
+    var centsHighOffset = 2 * (parseInt(exprhighbendslider.noUiSlider.get()[0]) - 64);
+    var lowCurveExp = curveValToExponent(parseInt(document.getElementById("exprcurvelowslider").value));
+    var highCurveExp = curveValToExponent(parseInt(document.getElementById("exprcurvehighslider").value));
+    let doClamp = document.getElementById("clampExprCheck").checked;
+    
+
+    var centsOffset = 0.0;
+    var ratio = 0.0;
+    let lowRangeSpan = Math.max(lowPressureMax - lowPressureMin, 1);
+    let highRangeSpan = Math.max(highPressureMax - highPressureMin, 1);
+    if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range
+        ratio = Math.min(((lowPressureMax - sensorValue)) / (lowRangeSpan), 1.0);
+        if (lowCurveExp != 1.0) {
+            ratio = Math.pow(ratio, lowCurveExp);
+        }
+        centsOffset = centsLowOffset * ratio;
+    } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range
+        ratio = Math.max(((sensorValue - highPressureMin)) / (highRangeSpan), 0.0);
+        if (highCurveExp != 1.0) {
+            ratio = Math.pow(ratio, highCurveExp);
+        }
+        if (doClamp) {
+            ratio = Math.min(ratio, 1.0);
+        }
+        centsOffset = centsHighOffset * ratio;
+    }
+    else {
+        // in the stable range
+        centsOffset = 0;
+    }
+    
+    // console.log("Cents out: " + centsOffset.toFixed(0) + " lm : " + lowPressureMin + " lx: " + lowPressureMax + " ratio: " + ratio + " sensorVal: " + sensorValue.toFixed(0));
+    return centsOffset;
+}
+
 function sendOverride(selection) {
     selection = +selection;
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +10);
     sendToWARBL(MIDI_CC_105, selection);
+    
+    document.getElementById("overrideExprCheck").checked = selection;
+    document.getElementById("checkbox16").checked = selection;
+    
+    updateExpressionSliderEnableState();
 }
 
 function sendBoth(selection) {
@@ -3554,6 +3941,22 @@ function calibrateIMU() {
 function centerYaw() {
     blink(1);
     sendToWARBL(MIDI_CC_106, MIDI_CENTER_YAW);
+}
+
+function resetPitchExpressionOverride() {
+    blink(1);
+    sendToWARBL(MIDI_CC_106, MIDI_RESET_PITCH_EXPRESSION);
+
+    setTimeout(function () {
+        //console.log("refreshing UI");
+        sendToWARBL(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
+        
+        setTimeout(function () {
+            mapPressure();
+            overRideExpression();
+        }, 500);
+        
+    }, 500);
 }
 
 

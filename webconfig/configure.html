@@ -15,7 +15,6 @@
       <link href="css/config.min.css" rel="stylesheet" type="text/css" />
       <link href="css/modal.css" rel="stylesheet" type="text/css" />
       <link rel="manifest" href="https://warbl.xyz/manifest.json">
-
       <style>
          .topnav.responsive {
          background: transparent;
@@ -103,7 +102,6 @@
                   <div class="styled-select2 blue semi-square">
                      <select id="midiDeviceSelector" onChange="midiDeviceSelected(value)">
                         <option selected="selected" value="0">Auto</option>
-                        <option value="1">Test</option>
                      </select>
                   </div>
                </div>
@@ -374,7 +372,7 @@
                      <button type="button" class="infocircle" onClick="modal(19)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
                   <textarea placeholder="Paste custom chart here" id="WARBL2CustomTextArea"></textarea>
-                  <button type="button" class="smallbutton noTouch WARBL2customFingeringOkay" onClick="customFingeringOkay()"><-- Back</button>
+                  <button type="button" class="smallbutton noTouch WARBL2customFingeringOkay" onClick="customFingeringOkay()">BACK</button>
                   <div class="WARBL2customFillContainer">
                      <div class="styled-fingering-select blue semi-square" id="WARBL2customFingeringFillContainer">
                         <select id="WARBL2customFingeringFill" onChange="modal(24)">
@@ -842,6 +840,8 @@
                   
                   <div class="receivedPBLabel noTouch">Received pitch&nbspbend:</div>
                   <div class="receivedPB noTouch" id="receivedPB"></div>
+                  <div class="receivedPBCents noTouch" id="receivedPBCents"></div>
+                  <div class="receivedPBCentsLabel noTouch">cents:</div>
                   <div id="PBlevelContainer">
                      <div id="PBlevel"></div>
                   </div>
@@ -902,7 +902,7 @@
                      Advanced Pitch Bend Settings
                      <button type="button" class="infocircle" onClick="modal(17)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
-                  <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="advancedOkayPB()">OK</button>
+                  <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="advancedOkayPB()">BACK</button>
                   <div id="advancedPBsliders">
                      <div class="slidecontainer2" id="pitchBendContainer">
                         <input type="range" min="-75" max="-10" value="-10" class="ranger" id="senseDistance" onChange="sendSenseDistance(value)" />
@@ -934,7 +934,8 @@
                   <span class="slider round"></span>
                   </label>
                </div>
-               <div class="smallcontrolbox expressionBox" id="box6">
+               <div class="smallcontrolbox expressionBox" id="expressionPressureBox">
+                  <div class="pitchExpressionBox" id="pitchExpressionBox"></div>
                   <h2 class="controlboxtitle noTouch">
                      Pressure Mapping
                      <button type="button" class="infocircle" onClick="modal(12)">  <img  class = "info" src="img/info-circle.svg"></img></button>
@@ -945,9 +946,21 @@
                   <div id="forceVelocityLabel" class="forceVelocityLabel noTouch">
                      Force max velocity
                   </div>
-                  <button type="button" id="overrideExpression" class="smallbutton noTouch override" onClick="overRideExpression()">Override...</button>
-                  <div class="expressionDepthLabel noTouch">Pitch expression depth</div>
-                  <div class="expressionLabel noTouch">Pitch expression</div>
+                  <button type="button" id="overrideExpression" class="smallbutton noTouch override" onClick="overRideExpression()">Setup Override...</button>
+                  <div class="expressionDepthLabel noTouch">Depth</div>
+                  <div class="expressionLabel noTouch">Pitch Expression</div>
+                  <label class="switch" id="overrideExprSwitch">
+                  <input type="checkbox" class="checkboxes" id="overrideExprCheck" onChange="sendOverride(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <div class="expressionOverrideLabel noTouch">Override</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprfixedcenterslider-value"></div>
+                  <div id="exprcenterpresslabel" class="exprcenterpresslabel noTouch">Center Pressure</div>
+                  <div class="maxMinContainerExprFixedCenter" id="maxMinContainerExprFixedCenter">
+                     <input type="range" min="0" max="100" value="10" class="ranger" id="exprfixedcenterslider" onChange="sendExpressionCenterPressure(value)"    onInput="updateExpressionCenterPressureLabel()" />
+                  </div>
+                  
                   <div id="sendPressureLabel" class="sendPressureLabel noTouch">Send pressure as CC</div>
                   <div id="velocityLabel" class="sendVelocityLabel noTouch">Send pressure as Velocity</div>
                   <div id="aftertouchLabel" class="sendAftertouchLabel noTouch">Channel Pressure</div>
@@ -980,7 +993,7 @@
                   <button type="button" id="velocityMapButton" class="smallbutton noTouch mapVelocity" onClick="mapVelocity()">Map...</button>
                   <button type="button" id="aftertouchMapButton" class="smallbutton noTouch mapAftertouch" onClick="mapAftertouch()">Map...</button>
                   <button type="button" id="polyMapButton" class="smallbutton noTouch mapPoly" onClick="mapPoly()">Map...</button>
-                  <button type="button" id="backPressureButton" class="smallbutton noTouch backPressure" onClick="backPressure()"><-- Back</button>
+                  <button type="button" id="backPressureButton" class="smallbutton noTouch backPressure" onClick="backPressure()">BACK</button>
                </div>
                <div class="smallcontrolbox expressionBox" id="box9">
                   <h2 class="controlboxtitle noTouch">
@@ -995,7 +1008,7 @@
                      IMU Mapping
                      <button type="button" class="infocircle" onClick="modal(26)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
-                  <button type="button" id="backIMUButton" class="smallbutton noTouch backIMU" onClick="backIMU()"><-- Back</button>
+                  <button type="button" id="backIMUButton" class="smallbutton noTouch backIMU" onClick="backIMU()">BACK</button>
                   <div id="sendRollLabel" class="sendRollLabel noTouch">Send roll as CC</div>
                   <div id="sendPitchLabel" class="sendPitchLabel noTouch">Send elevation as CC</div>
                   <div id="sendYawLabel" class="sendYawLabel noTouch">Send yaw as CC</div>
@@ -1072,7 +1085,7 @@
                      <div class="IMUHighByteInputContainer">
                         <input class="IMUInput" type="text" onChange="sendIMUCC(value)" id="IMUCC" />
                      </div>
-                     <button type="button" class="smallbutton noTouch advancedOkayIMU" onClick="okayIMUmap()">OK</button>
+                     <button type="button" class="smallbutton noTouch advancedOkayIMU" onClick="okayIMUmap()">BACK</button>
                      <div class="receivedCCLabel noTouch">Received CC:</div>
                      <div class="receivedCC noTouch" id="receivedCC"></div>
                      <div id="CClevelContainer">
@@ -1106,7 +1119,7 @@
                   <div class="maxMinContainer6" id="slider6"></div>
                   <div class="rangeLabel6 noTouch">Input range (degrees)</div>
                   <div class="rangeLabel7 noTouch">Number of registers</div>
-                  <button type="button" class="smallbutton noTouch advancedOkayIMU" onClick="okayPitchRegistermap()">OK</button>
+                  <button type="button" class="smallbutton noTouch advancedOkayIMU" onClick="okayPitchRegistermap()">BACK</button>
                   <div class="slidecontainer6" id="pitchRegisterContainer">
                      <input type="range" min="2" max="5" value="2" class="ranger" id="pitchRegisterNumber" onChange="sendpitchRegisterNumber(value)" />
                   </div>
@@ -1188,7 +1201,7 @@
                   <div class="maxMinContainer2" id="slider2"></div>
                   <div class="rangeLabel noTouch">Input pressure range (inH<sub>2</sub>0)</div>
                   <div class="rangeLabel2 noTouch">Output range</div>
-                  <button type="button" class="smallbutton noTouch advancedOkayCC" onClick="okayCCmap()">OK</button>
+                  <button type="button" class="smallbutton noTouch advancedOkayCC" onClick="okayCCmap()">BACK</button>
                   <div class="expressionChannelLabel noTouch" id="expressionChannel">CC Channel</div>
                   <div class="highByteLabel noTouch" id="highByte">CC number</div>
                   <div class="expressionChannelInputContainer">
@@ -1208,17 +1221,63 @@
                      Pitch Expression Pressure-Range Override
                      <button type="button" class="infocircle" onClick="modal(20)">  <img  class = "info" src="img/info-circle.svg"></img></button>               
                   </h2>
-                  <div id="overrideLabel" class="overrideLabel noTouch">Override pitch expression range</div>
-                  <div id="overrideLabel2" class="overrideLabel2 noTouch">(not available with overblowing)</div>
+                  <div id="overrideLabel" class="overrideLabel noTouch">Override pitch expression range <br> (not available with overblowing)</div>
                   <label class="switch" id="switch16">
                   <input type="checkbox" class="checkboxes" id="checkbox16" onChange="sendOverride(this.checked)" />
                   <span class="slider round"></span>
                   </label>
-                  <div class="jumpvalues noTouch" id="slider3-value-min"></div>
-                  <div class="jumpvalues noTouch" id="slider3-value-max"></div>
-                  <div class="maxMinContainer3" id="slider3"></div>
-                  <div class="overrideRangeLabel noTouch">Pressure range (inH<sub>2</sub>0)</div>
-                  <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="okayOverride()">OK</button>
+                  <div class="jumpvalues noTouch" id="exprlowslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprlowslider-value-max"></div>
+                  <div class="maxMinContainerExprLow" id="exprlowslider"></div>
+                  <div id="lowrangelabel" class="lowrangelabel noTouch">Low range</div>
+
+                  <div id="exprInputPressureLevelContainer">
+                     <div id="exprInputPressureLevel"></div>
+                  </div>
+
+                  <div id="exprOutputBendLevelContainer">
+                     <div id="exprOutputBendLevel"></div>
+                  </div>
+                  
+                  <div class="jumpvalues noTouch" id="exprhighslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="exprhighslider-value-max"></div>
+                  <div class="maxMinContainerExprHigh" id="exprhighslider"></div>
+                  <div id="highrangelabel" class="highrangelabel noTouch">High range</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprlowbendslider-value"></div>
+                  <div class="maxMinContainerExprLowBend" id="exprlowbendslider"></div>
+                  <div id="lowrangelabel2" class="lowrangelabel2 noTouch">Low range</div>
+
+                  <div class="jumpvalues noTouch" id="exprhighbendslider-value"></div>
+                  <div class="maxMinContainerExprHighBend" id="exprhighbendslider"></div>
+                  <div id="highrangelabel2" class="highrangelabel2 noTouch">High range</div>
+                  
+
+                  
+                  <div id="clampExprMaxLabel" class="clampExprMaxLabel noTouch">Clamp upper bend</div>
+                  <label class="switch" id="clampExprSwitch">
+                  <input type="checkbox" class="checkboxes" id="clampExprCheck" onChange="sendClampExpr(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <button type="button" class="resetExpressionButton smallbutton noTouch" id="resetExpressionButton" onClick="resetPitchExpressionOverride()">Reset to Default</button>
+                  
+                  <div class="overrideRangeLabel noTouch" id="overrideRangeLabel">Input Pressure Range (inH<sub>2</sub>0)</div>
+                  <div class="overrideCentsLabel noTouch" id="overrideCentsLabel">Output Bend (cents)</div>
+                  
+                  <div class="jumpvalues noTouch" id="exprcurvelowslider-value"></div>
+                  <div id="exprcurvelowlabel" class="exprcurvelowlabel noTouch">Curve Low</div>
+                  <div class="maxMinContainerExprCurveLow" id="maxMinContainerExprCurveLow">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="exprcurvelowslider" onChange="sendExpressionCurveLow(value)"    onInput="updateExpressionCurveLabels()" ondblclick="resetExpressionCurveLow()" />
+                  </div>
+
+                  <div class="jumpvalues noTouch" id="exprcurvehighslider-value"></div>
+                  <div id="exprcurvehighlabel" class="exprcurvehighlabel noTouch">Curve High</div>
+                  <div class="maxMinContainerExprCurveHigh" id="maxMinContainerExprCurveHigh">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="exprcurvehighslider" onChange="sendExpressionCurveHigh(value)"    onInput="updateExpressionCurveLabels()" ondblclick="resetExpressionCurveHigh()" />
+                  </div>
+                  
+                  
+                  <button type="button" class="smallbutton noTouch advancedOkayPB" onClick="okayOverride()">BACK</button>
                </div>
                <div class="smallcontrolbox dronescontrolBox" id="box3">
                   <h2 class="controlboxtitle noTouch">
@@ -2155,7 +2214,7 @@
                      Turning on the <b>Force Max Velocity</b> switch will cause WARBL to always send notes with a velocity of 127 (the maximum allowed), which will allow maximum volume from MIDI apps. Some more sophisticated apps interpret high velocity in ways that also affect the timbre of notes, or various other effects. If this is the case, you may want to uncheck this switch, which will cause WARBL to send notes with a velocity of 64 (the middle of the allowed range). The switch has no effect if the <b>"Send Pressure as Velocity"</b> (below) is selected.
                   </p>
                   <p>
-                     Turning on the <b>Send expression as pitch bend</b> switch will cause WARBL to send pitch bend messages based on pressure. This means that for a given note, blowing (or squeezing a bag) gently will cause the note to play slightly flat, while blowing with excess force will cause it to be slightly sharp. This is meant to simulate the way that pressure is used to fine-tune the pitch of real instruments, and can make WARBL sound more lifelike. The <b>Expression depth</b> slider controls the amount of pitch bend. The pitch bend is added to any that is contributed by vibrato and slide, so they can all be used simultaneously. If overblowing is not being used, you have the option of changing the default pressure range used for Expression by clicking the <b>Override...</b> button.
+                     Turning on the <b>Send expression as pitch bend</b> switch will cause WARBL to send pitch bend messages based on pressure. This means that for a given note, blowing (or squeezing a bag) gently will cause the note to play slightly flat, while blowing with excess force will cause it to be slightly sharp. This is meant to simulate the way that pressure is used to fine-tune the pitch of real instruments, and can make WARBL sound more lifelike. The <b>Expression depth</b> slider controls the amount of pitch bend, and on firmware 4.3 and above on the WARBL2 the <b>Center Pressure</b> control lets you set the preferred blowing pressure where the pitch is centered.  The pitch bend is added to any that is contributed by vibrato and slide, so they can all be used simultaneously. If overblowing is not being used, you have the option of changing the default pressure range used for Expression by clicking the <b>Override...</b> button. On firmware 4.3 and above on the WARBL2, the pitch expression override controls are much more advanced letting you control exactly how the bend responds to pressure.
                   </p>
                   <p>
                      WARBL also has the ability to map pressure sensor values to a MIDI Continuous Controller (CC) note-on velocity, channel pressure, and key pressure, allowing it to function as a MIDI breath controller. These are advanced settings and not needed by many WARBL users. An example would be to send pressure data to CC 7 to control the volume of notes with pressure. The <b>"Send Pressure as Velocity"</b> option overrides the <b>"Force Max Velocity"</b> switch (above).
@@ -2278,6 +2337,16 @@
                   <p>
                      By turning on the <b>Override pitch expression range</b> switch and using the sliders, you can override the default pressure range used for pitch expression. This is not available if overblowing is being used, because in that case the pressure range has to be calculated in real time based on the current register and overblowing settings.
                   </p>
+                  <p>
+                    The pitch expression based on pressure is controlled with two segments:
+                    <ul> 
+                        <li>A low pressure range, whose min and max input pressure determine a bend along with the low range output bend, from no pressure to the low range max pressure (it will start at the bend amount specified in the low range output bend and end at no bend).
+                        <li> A high pressure range, whose min and max input pressure determine a bend along with the high range output bend, from the high range min pressure to the high range max pressure (it will start with no bend at the high range min input pressure, and end up with the bend specified in the high range output bend). If the pressure exceeds the high range max input pressure, it will either be clamped at the specified bend amount (if clamp upper bend is on), or it will continue with the same bend slope with more pressure.
+                    </ul>
+                    The low and high ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the pressure range where no pitch bend occurs from this expression. You can see exactly how input pressure maps to output bend in cents with the interactive meters for both input pressure and output bend which are behind each pair of sliders.
+                    
+                  </p>
+
                </div>
             </div>
          </div>
@@ -2468,17 +2537,56 @@
       
    </script>
    <script>
-      var slider3 = document.getElementById('slider3');
-      noUiSlider.create(slider3, {
+      var exprlowslider = document.getElementById('exprlowslider');
+      noUiSlider.create(exprlowslider, {
           start: [0, 100],
           step: 1,
-          connect: false,
+          connect: true,
           range: {
               'min': 0,
               'max': 100
           }
       });
       
+   </script>
+   <script>
+      var exprhighslider = document.getElementById('exprhighslider');
+      noUiSlider.create(exprhighslider, {
+          start: [0, 100],
+          step: 1,
+          connect: true,
+          range: {
+              'min': 0,
+              'max': 100
+          }
+      });
+      
+   </script>
+   <script>
+      var exprlowbendslider = document.getElementById('exprlowbendslider');
+      noUiSlider.create(exprlowbendslider, {
+          start: [0, 64],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
+   </script>
+   <script>
+      var exprhighbendslider = document.getElementById('exprhighbendslider');
+      noUiSlider.create(exprhighbendslider, {
+          start: [0, 64],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
    </script>
    <script>
       var slider4 = document.getElementById('slider4');

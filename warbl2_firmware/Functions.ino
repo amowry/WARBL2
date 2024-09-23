@@ -881,7 +881,7 @@ void getShift() {
     shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
 
     // Overblow if allowed.
-    if (newState == 3 && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
+    if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
         shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
         if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
@@ -1072,70 +1072,106 @@ int calcHysteresis(int currentUpperBound, bool high) {
     return newUpperBound;
 }
 
+inline float curveValToExponent(int val) {
+    // takes 0 -> 127 and returns curve exponent
+    // which is between 0.25 -> 0 -> 4.0
+    float retval = 1.0f;
+    val -= 64;
+    if (val >= 0) {
+        retval = ((3.0f*val/63.0f) + 1.0f);
+    }
+    else {
+        retval = (0.75f*(64.0f+val)/64.0f + 0.25f);
+    }
+    return retval;
+}
 
+void getExpression() 
+{
+    // calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between
+    int lowPressureMin = (ED[mode][EXPRESSION_MIN] * 9) + 100;
+    int lowPressureMax = (ED[mode][EXPRESSION_MIN_HIGH] * 9) + 100;
+    int highPressureMin = (ED[mode][EXPRESSION_MAX_LOW] * 9) + 100;
+    int highPressureMax = (ED[mode][EXPRESSION_MAX] * 9) + 100;
+    int centsLowOffset = 2 * (ED[mode][EXPRESSION_OUT_LOW_CENTS] - 64);
+    int centsHighOffset = 2 * (ED[mode][EXPRESSION_OUT_HIGH_CENTS] - 64);
+    float lowCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_LOW]);
+    float highCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_HIGH]);
+    bool doClamp = ED[mode][EXPRESSION_OUT_CLAMP] > 0;
 
-
-
-
-
-
-// Calculate pitchbend expression based on pressure
-void getExpression() {
-
-    // Calculate the center pressure value for the current note, regardless of register, unless "override" is turned on and we're not in overblow mode. In that case, use the override bounds instead.
-
-    int lowerBound;
-    int useUpperBound;
-
-    if (switches[mode][OVERRIDE] && (breathMode != kPressureBreath)) {  // Use override boundaries.
-        lowerBound = (ED[mode][EXPRESSION_MIN] * 9) + 100;
-        useUpperBound = (ED[mode][EXPRESSION_MAX] * 9) + 100;
-    } else {
-        lowerBound = sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
-        if (newState == 3) {
-            useUpperBound = upperBoundLow;  // Get the register boundary taking hysteresis into consideration
+    if (!switches[mode][OVERRIDE] || (breathMode == kPressureBreath)) {
+        // fixed non-override options or overblow mode
+        if (newState == TOP_REGISTER) {
+            lowPressureMin = upperBoundLow; // sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
+            highPressureMax = upperBoundLow + ((upperBoundHigh-sensorThreshold[0])>>1);  // Get the register boundary taking hysteresis into consideration
         } else {
-            useUpperBound = upperBoundHigh;
+            lowPressureMin = sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
+            if (breathMode == kPressureBreath) {
+                highPressureMax = upperBoundHigh;
+            } else {
+                int centerPressure = (ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] * 9) + 100;
+                highPressureMax = 2 * (centerPressure - lowPressureMin) + lowPressureMin;
+            }
         }
+
+        // make them meet in the middle
+        lowPressureMax = highPressureMin = ((highPressureMax + lowPressureMin) >> 1);
+
+        // may need to play with these - XXX
+        centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH]; // -20 cents at least
+        centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[mode][EXPRESSION_DEPTH];
+        doClamp = true;
+        lowCurveExp = 1.0f;
+        highCurveExp = 1.0f;
     }
 
-    unsigned int halfway = ((useUpperBound - lowerBound) >> 1) + lowerBound;  // Calculate the midpoint of the curent register, where the note should play in tune.
-
-    if (newState == 3) {
-        halfway = useUpperBound + halfway;
-        lowerBound = useUpperBound;
+    float centsOffset = 0.0f;
+    float ratio = 0.0f;
+    int lowRangeSpan = max(lowPressureMax - lowPressureMin, 1);
+    int highRangeSpan = max(highPressureMax - highPressureMin, 1);
+    if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range
+        ratio = min(((lowPressureMax - sensorValue)) / (float)(lowRangeSpan), 1.0f);
+        if (lowCurveExp != 1.0f) {
+            ratio = powf(ratio, lowCurveExp);
+        }
+        centsOffset = centsLowOffset * ratio;
+    } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range
+        ratio = max(((sensorValue - highPressureMin)) / (float)(highRangeSpan), 0.0f);
+        if (highCurveExp != 1.0f) {
+            ratio = powf(ratio, highCurveExp);
+        }
+        if (doClamp) {
+            ratio = min(ratio, 1.0f);
+        }
+        centsOffset = centsHighOffset * ratio;
+    }
+    else {
+        // in the stable range
+        centsOffset = 0;
     }
 
-    if (sensorValue < halfway) {  // Pressure is below the center of the range.
-        byte scale = (((halfway - sensorValue) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
-        expression = -((scale * scale) >> 3);
-    } else {  // Pressure is above the center of the range.
-        byte scale = (((sensorValue - halfway) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
-        expression = ((scale * scale) >> 3);
-    }
-
-    // Calculate lowest possible pitchbend. This will be used to constrain the range.
-    byte maxScale = (((halfway - lowerBound) * ED[mode][EXPRESSION_DEPTH] * 20) / (halfway - lowerBound));
-    int maxExpression = ((maxScale * maxScale) >> 3);
-
-    if (sensorValue > (halfway + (halfway - lowerBound))) {
-        expression = maxExpression;
-    }
-
-    if (sensorValue < lowerBound) {
-        expression = -maxExpression;
-    }
+    expression = (int) (0.01f * centsOffset * pitchBendPerSemi); // expression is in raw pitch bend units
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
         pitchBend = 0;
         sendPitchbend();
     }
+
+    /*
+    Serial.print(" s = ");
+    Serial.print(sensorValue);
+    Serial.print(" lm = ");
+    Serial.print(lowPressureMax);
+    Serial.print(" hm = ");
+    Serial.print(highPressureMin);
+    Serial.print(" rat = ");
+    Serial.print(ratio);
+    Serial.print(" c = ");
+    Serial.print(centsOffset);
+    Serial.print(" exp = ");
+    Serial.println(expression);
+    */
 }
-
-
-
-
-
 
 
 
@@ -1495,7 +1531,7 @@ void sendNote() {
 
     if (noteon) {  // Several conditions to turn a note off
         if (
-          ((newState == 1 && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
+          ((newState == SILENCE && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
           (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                          // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
@@ -1956,6 +1992,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
                 else if (value == MIDI_CENTER_YAW) {  // Recenter IMU heading based on current
                     centerIMU();
+                }
+
+                else if (value == MIDI_RESET_PITCH_EXPRESSION) {  // Recenter IMU heading based on current
+                    resetExpressionOverrideDefaults();
                 }
 
                 else if (value >= MIDI_BUTTON_ACTIONS_START) {
@@ -2830,7 +2870,25 @@ void loadSettingsForAllModes() {
 
 
 
+ void resetExpressionOverrideDefaults()
+ {
+    // resets current mode's expression override defaults
+    // useful for populating older devices after first installing the version that has them
+    // and for manually restoring to a "sane" default for the new setup
+    //Serial.println("reset expression");
 
+    ED[mode][EXPRESSION_MIN] = 0;
+    ED[mode][EXPRESSION_MIN_HIGH] = 7;
+    ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] = 8;
+    ED[mode][EXPRESSION_MAX_LOW] = 11;
+    ED[mode][EXPRESSION_MAX] = 20;
+    // 2x cents signed where 64 = 0, and 64+10 = +20 cents, and 64-10 = -20 cents for example
+    ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25; // -50 cents
+    ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
+    ED[mode][EXPRESSION_OUT_CLAMP] = 1; // boolean
+    ED[mode][EXPRESSION_CURVE_LOW] = 64; // linear
+    ED[mode][EXPRESSION_CURVE_HIGH] = 64; // linear
+ }
 
 
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
@@ -2926,6 +2984,25 @@ void loadPrefs() {
     curve[1] = ED[mode][VELOCITY_CURVE];
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
+
+    if (ED[mode][EXPRESSION_CURVE_LOW] > 200 || ED[mode][EXPRESSION_CURVE_HIGH] > 200 || ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] > 200
+        || ED[mode][EXPRESSION_MIN_HIGH] > 200 || ED[mode][EXPRESSION_MAX_LOW] > 200 || ED[mode][EXPRESSION_OUT_LOW_CENTS] > 200 || ED[mode][EXPRESSION_OUT_HIGH_CENTS] > 200) {
+        // handle transition from older firmware saves that didn't have the advanced pitch expression parameters set yet
+        // this is not a reliable test, unfortunately
+        int exprmin =  ED[mode][EXPRESSION_MIN];
+        int exprmax =  ED[mode][EXPRESSION_MAX];
+        resetExpressionOverrideDefaults();
+        // convert from original value to the new values if they were in use, otherwise use our new defaults
+        if (switches[mode][OVERRIDE]) {
+            // but sanitize exprmax because the old default was way too high
+            if (exprmax > 50) {
+                exprmax = 50;
+            }
+            int midpoint = (exprmax - exprmin) / 2;
+            ED[mode][EXPRESSION_MAX_LOW] = midpoint;
+            ED[mode][EXPRESSION_MIN_HIGH] = midpoint;
+        }
+    }
 
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
@@ -3471,7 +3548,7 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_2; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = CUSTOM_FINGERING_10; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }
