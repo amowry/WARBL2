@@ -1584,6 +1584,12 @@ function WARBL_Receive(event, source) {
 
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
 					
+					if (version < 4.3) {
+						document.getElementById("exprOutputBendLevelContainer").style.display = "none";
+						document.getElementById("advancedOkayPB").style.top = "275px";
+						document.getElementById("advancedOkayPB").style.left = "205px";
+					}
+					
 					
 					if (version < 4.2) {
 					
