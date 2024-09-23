@@ -3121,23 +3121,14 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         document.getElementById("fingeringInput11").style.cursor = "pointer";
 
     }
-    
-    if (version >= 4.3) {
-        // new pitch expression uses smaller range
-        exprlowslider.noUiSlider.updateOptions({
-            range: {
-                'min': 0,
-                'max': 50
-            }, start: [0, 50]
-        });
-    } else {
-        exprlowslider.noUiSlider.updateOptions({
-            range: {
-                'min': 0,
-                'max': 100
-            }, start: [0, 100]
-        });        
-    }
+
+    exprlowslider.noUiSlider.updateOptions({
+        range: {
+            'min': 0,
+            'max': 100
+        }, start: [0, 100]
+    });        
+
 }
 
 function sendBreathmodeRadio(selection) {

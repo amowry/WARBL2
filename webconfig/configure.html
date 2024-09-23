@@ -958,7 +958,7 @@
                   <div class="jumpvalues noTouch" id="exprfixedcenterslider-value"></div>
                   <div id="exprcenterpresslabel" class="exprcenterpresslabel noTouch">Center Pressure</div>
                   <div class="maxMinContainerExprFixedCenter" id="maxMinContainerExprFixedCenter">
-                     <input type="range" min="0" max="50" value="10" class="ranger" id="exprfixedcenterslider" onChange="sendExpressionCenterPressure(value)"    onInput="updateExpressionCenterPressureLabel()" />
+                     <input type="range" min="0" max="100" value="10" class="ranger" id="exprfixedcenterslider" onChange="sendExpressionCenterPressure(value)"    onInput="updateExpressionCenterPressureLabel()" />
                   </div>
                   
                   <div id="sendPressureLabel" class="sendPressureLabel noTouch">Send pressure as CC</div>
@@ -2552,25 +2552,12 @@
    <script>
       var exprhighslider = document.getElementById('exprhighslider');
       noUiSlider.create(exprhighslider, {
-          start: [0, 50],
+          start: [0, 100],
           step: 1,
           connect: true,
           range: {
               'min': 0,
-              'max': 50
-          }
-      });
-      
-   </script>
-   <script>
-      var exprfixedcenterslider = document.getElementById('exprfixedcenterslider');
-      noUiSlider.create(exprfixedcenterslider, {
-          start: [10],
-          step: 1,
-          connect: false,
-          range: {
-              'min': 0,
-              'max': 50
+              'max': 100
           }
       });
       
