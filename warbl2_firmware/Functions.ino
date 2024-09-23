@@ -2875,7 +2875,7 @@ void loadSettingsForAllModes() {
     // resets current mode's expression override defaults
     // useful for populating older devices after first installing the version that has them
     // and for manually restoring to a "sane" default for the new setup
-    Serial.println("reset expression");
+    //Serial.println("reset expression");
 
     ED[mode][EXPRESSION_MIN] = 0;
     ED[mode][EXPRESSION_MIN_HIGH] = 7;
