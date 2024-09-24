@@ -69,6 +69,9 @@ var jumpFactorWrite; //to indicate which pressure variable is going to be sent o
 
 var fingeringWrite; //indicates the instrument for which a fingering pattern is being sent.
 
+var exprlowsliderHandleSetting; // temp location for slider handles so we can set both handles at once when we receive data from WARBL
+var exprhighsliderHandleSetting;
+
 var WARBL2SettingsReceive; //indicates which WARBL2 setting is about to be received on CC119
 
 var version = "Unknown";
@@ -90,6 +93,10 @@ for (var w = 1; w <= 29; w++) {
 }
 
 updatePlatform();
+
+//disable fixed handlees for sliders
+exprlowbendslider.noUiSlider.disable(1);
+exprhighbendslider.noUiSlider.disable(1);
 
 
 // When the user clicks anywhere outside of the modal, close it
@@ -1333,14 +1340,16 @@ function WARBL_Receive(event, source) {
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +15) {
                         // pitch expression min (low min in new model)
-                        exprlowslider.noUiSlider.set([data2, null]);
+                        //exprlowslider.noUiSlider.set([data2, null]);
+						exprlowsliderHandleSetting = data2;
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +16) {
                         // pitch expression max (high max in new model)
                         if (version < 4.3) {
-                            exprlowslider.noUiSlider.set([null, data2]);
+                            exprlowslider.noUiSlider.set([exprlowsliderHandleSetting, data2]);
                         } else {
-                            exprhighslider.noUiSlider.set([null, data2]);                            
+                            //exprhighslider.noUiSlider.set([null, data2]); 
+							exprhighsliderHandleSetting = data2;                        
                         }
                     }					
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
@@ -1356,12 +1365,12 @@ function WARBL_Receive(event, source) {
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +18) {
                         // pitch expression  low max
                         if (version >= 4.3) {                            
-                            exprlowslider.noUiSlider.set([null, data2]);
+                            exprlowslider.noUiSlider.set([exprlowsliderHandleSetting, data2]);
                         }
                     }
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +19) {
                         // pitch expression high min
-                        exprhighslider.noUiSlider.set([data2, null]);
+                        exprhighslider.noUiSlider.set([data2, exprhighsliderHandleSetting]);
                     }					
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +20) {
                         // low bend
@@ -1877,7 +1886,7 @@ function WARBL_Receive(event, source) {
                         document.getElementById("pressure1").innerHTML = (p);
                         
                         if (document.getElementById("box8").style.display == "block") {
-                            var barWidth = (p / 12) * 100; // this is only half the range
+                            var barWidth = (p / 24) * 100; // this is only half the range
                             let pressbar = document.getElementById("exprInputPressureLevel");
                             if (barWidth > 100) {
                                 barWidth = 101;
@@ -2635,6 +2644,7 @@ exprlowslider.noUiSlider.on('change', function (values) {
     }
 });
 
+
 exprhighslider.noUiSlider.on('change', function (values) {
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX_LOW);
@@ -2651,6 +2661,7 @@ exprhighslider.noUiSlider.on('change', function (values) {
         
         sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
         sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		
     }
 });
 
@@ -2780,7 +2791,6 @@ exprhighslider.noUiSlider.on('update', function (values, handle) {
         var max = parseFloat(values[handle] * 0.24).toFixed(1);
         marginMin.innerHTML = max;
     }
-
 });
 
 exprlowbendslider.noUiSlider.on('update', function (values, handle) {
