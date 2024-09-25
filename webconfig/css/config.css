@@ -2051,8 +2051,8 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 60px;
-	top: 335px;
-	left: 80px;
+	top: 20px;
+	left: 30px;
 }
 
 .backPressure {
@@ -3409,6 +3409,32 @@ h3 {
 	z-index: 99;
 	font-size: 14px;
 
+}
+
+#pressureShakeModSwitch {
+	top: 320px;
+	left: 134px;
+}
+
+.pressureShakeModLabel {
+	position: absolute;
+	left: 35px;
+	top: 324px;
+	z-index: 99;
+	font-size: 13px;
+}
+
+#pressureMPEplusSwitch {
+	top: 320px;
+	left: 354px;
+}
+
+.pressureMPEplusLabel {
+	position: absolute;
+	left: 268px;
+	top: 324px;
+	z-index: 99;
+	font-size: 13px;
 }
 
 .highByteLabel {

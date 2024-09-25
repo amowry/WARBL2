@@ -121,6 +121,9 @@ float roll;
 float pitch;
 float yaw;
 int shakeVibrato;                  // Shake vibrato depth, from -8192 to 8192
+int shakePressureCCMod;            // Shake pressure for CC mod: -127 to 127
+float shakePressureChanPressMod;     // Shake pressure for chan pressure mod: -127 to 127
+int shakePressureKeyPressMod;      // Shake pressure for keypressure mod: -127 to 127
 unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the yaw after silence
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
 int pitchRegisterBounds[6];        // Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
@@ -175,14 +178,14 @@ byte switches[3][kSWITCHESnVariables] =              // Settings for the switche
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
 byte IMUsettings[3][kIMUnVariables] =                                                                                      // Settings for mapping and sending IMU readings (see defines above)
-  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 0
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 },    // Instrument 1
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0 } };  // Instrument 2
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 },    // Instrument 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 },    // Instrument 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 255, 255 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 255, 255 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 255, 255 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -252,6 +255,7 @@ byte outputBounds[4][2] =  // Container for ED output pressure range variables (
 
 byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
 
+float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f}; // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
 
 // Variables for reading tonehole sensors
 unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
@@ -274,6 +278,7 @@ int pitchBend = 8192;                                                         //
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 float pitchBendPerSemi = 4096.0f;
 int prevChanPressure = 0;
+int prevChanPressureLSB = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
 unsigned long noteOnTimestamp = 0;                                                 // When the note was activated

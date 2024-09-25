@@ -1205,6 +1205,18 @@
                   <button type="button" class="smallbutton noTouch advancedOkayCC" onClick="okayCCmap()">BACK</button>
                   <div class="expressionChannelLabel noTouch" id="expressionChannel">CC Channel</div>
                   <div class="highByteLabel noTouch" id="highByte">CC number</div>
+                  
+                  <div id="pressureShakeModLabel" class="pressureShakeModLabel noTouch">IMU Shake Mod</div>
+                  <label class="switch" id="pressureShakeModSwitch">
+                  <input type="checkbox" class="checkboxes" id="pressureShakeModCheck" onChange="sendPressureShakeMod(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <div id="pressureMPEplusLabel" class="pressureMPEplusLabel noTouch">MPE+ (14bit)</div>
+                  <label class="switch" id="pressureMPEplusSwitch">
+                  <input type="checkbox" class="checkboxes" id="pressureMPEplusCheck" onChange="sendPressureAftertouchMPEplus(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
                   <div class="expressionChannelInputContainer">
                      <input class="expressionInput" type="text" onChange="sendPressureChannel(value)" id="pressureChannel" value="1" />
                   </div>
@@ -2636,8 +2648,8 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
    </script>
    <script src='js/WebAudioFontPlayer.js'></script>
    <script src='js/0650_SBLive_sf2.js'></script>
-   <script src="js/constants.min.js"></script>
-   <script src="js/midi.min.js"></script>
+   <script src="js/constants.js"></script>
+   <script src="js/midi.js"></script>
    <script src="js/d3.min.js"></script>
    <script src="js/daypilot-modal.min-3.10.1.js"></script>
    <script src="js/update.js"></script>
