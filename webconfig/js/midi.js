@@ -1405,7 +1405,7 @@ function WARBL_Receive(event, source) {
                         // presure MPE+
                         document.getElementById("pressureMPEplusCheck").checked = data2 > 0;
                     }					
-
+                   
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
 
@@ -1526,43 +1526,53 @@ function WARBL_Receive(event, source) {
                             // pressure shake mod CC
                             pressureShakeMod[0] = data2;
                             if (mapSelection == 0) {
-                                document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModCheck").checked = data2 > 0;
                             }
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +34) {
                             // pressure shake mod ChanPress
                             pressureShakeMod[2] = data2;
                             if (mapSelection == 2) {
-                                document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModCheck").checked = data2 > 0;
                             }
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +35) {
                             // pressure shake mod KeyPress
                             pressureShakeMod[3] = data2;
                             if (mapSelection == 3) {
-                                document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModCheck").checked = data2 > 0;
                             }
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +36) {
                             // pressure shake mod CC
                             pressureShakeDepth[0] = data2;
                             if (mapSelection == 0) {
-                                //document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModDepth").value = data2;
+                                var output = document.getElementById("pressureShakeModDepthValue");
+                                //pressureShakeModDepth.dispatchEvent(new Event('input'));
+                                //output.innerHTML = data2;                        
                             }
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +37) {
                             // pressure shake mod ChanPress
                             pressureShakeDepth[2] = data2;
                             if (mapSelection == 2) {
-                                //document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModDepth").value = data2;
+                                var output = document.getElementById("pressureShakeModDepthValue");
+                                //pressureShakeModDepth.dispatchEvent(new Event('input'));
+                                //output.innerHTML = data2;                        
                             }
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +38) {
                             // pressure shake mod KeyPress
                             pressureShakeDepth[3] = data2;
                             if (mapSelection == 3) {
-                                //document.getElementById("pressureShakeModCheck").value = data2;
+                                document.getElementById("pressureShakeModDepth").value = data2;
+                                var output = document.getElementById("pressureShakeModDepthValue");
+                                //pressureShakeModDepth.dispatchEvent(new Event('input'));
+                                //output.innerHTML = data2;                        
                             }
+                            console.log("keypress depth: " + data2);
                         }
 						
 						//End of WARBL2 IMU settings
@@ -2620,8 +2630,29 @@ function sendPressureShakeMod(selection) {
         sendToWARBL(MIDI_CC_109, MIDI_Y_SHAKE_MOD_KEYPRESS);
         sendToWARBL(MIDI_CC_105, selection ? 1 : 0);
     }
+    pressureShakeMod[mapSelection] = selection;
 }
 
+function sendPressureShakeModDepth(value)
+{
+    blink(1);
+    value = parseFloat(value);
+    if (mapSelection == 0) {
+        sendToWARBL(MIDI_CC_109, MIDI_Y_SHAKE_MOD_CC_DEPTH);
+        sendToWARBL(MIDI_CC_105, value);
+    }
+    else if (mapSelection == 2) {
+        sendToWARBL(MIDI_CC_109, MIDI_Y_SHAKE_MOD_CHPRESS_DEPTH);
+        sendToWARBL(MIDI_CC_105, value);
+    }
+    else if (mapSelection == 3) {
+        sendToWARBL(MIDI_CC_109, MIDI_Y_SHAKE_MOD_KEYPRESS_DEPTH);
+        sendToWARBL(MIDI_CC_105, value);
+    }
+    
+    pressureShakeDepth[mapSelection] = value;
+    updatePressureValuesForSelection();
+}
 
 function sendBendRange(selection) {
     blink(1);
@@ -3390,13 +3421,24 @@ function customFingeringOkay() {
     document.getElementById("customFingeringFill").value = "12";
 }
 
+function updatePressureValuesForSelection()
+{
+    slider.noUiSlider.set([inputSliderMin[mapSelection], inputSliderMax[mapSelection]]);
+    slider2.noUiSlider.set([outputSliderMin[mapSelection], outputSliderMax[mapSelection]]);    
+    document.getElementById("pressureShakeModDepth").value = pressureShakeDepth[mapSelection];
+    document.getElementById("pressureShakeModDepthValue").innerHTML = pressureShakeDepth[mapSelection] + "%";
+    document.getElementById("pressureShakeModCheck").checked = pressureShakeMod[mapSelection];
+
+    if (curve[mapSelection] < 3) {
+        document.getElementById("curveRadio" + curve[mapSelection]).checked = true;
+    }        
+    
+}
 
 function mapCC() {
     mapSelection = 0;
 	document.getElementById('receivedpressureCC').innerHTML = null;
     document.getElementById("CCpressurelevel").style.width = 0 + "%";
-    slider.noUiSlider.set([inputSliderMin[0], inputSliderMax[0]]);
-    slider2.noUiSlider.set([outputSliderMin[0], outputSliderMax[0]]);
     document.getElementById("pressureChannel").style.visibility = "visible";
     document.getElementById("pressureCC").style.visibility = "visible";
     document.getElementById("expressionChannel").style.visibility = "visible";
@@ -3407,22 +3449,19 @@ function mapCC() {
     document.getElementById("pressureShakeModLabel").style.display = "block";
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
     document.getElementById("pressureMPEplusLabel").style.display = "none";
+    document.getElementById("pressureShakeModDepth").style.display = "block";
+    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
+    document.getElementById("pressureShakeModDepthValue").style.display = "block";
     
-    if (curve[0] < 3) {
-        document.getElementById("curveRadio" + curve[0]).checked = true;
-    }
     document.getElementById("pressureMappingHeader").innerHTML = "CC Mapping";
+    
+    updatePressureValuesForSelection();
 }
 
 function mapVelocity() {
     mapSelection = 1;
 	document.getElementById('receivedpressureCC').innerHTML = null;
     document.getElementById("CCpressurelevel").style.width = 0 + "%";
-    slider.noUiSlider.set([inputSliderMin[1], inputSliderMax[1]]);
-    slider2.noUiSlider.set([outputSliderMin[1], outputSliderMax[1]]);
-    if (curve[1] < 3) {
-        document.getElementById("curveRadio" + curve[1]).checked = true;
-    }
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Velocity Mapping";
@@ -3430,6 +3469,12 @@ function mapVelocity() {
     document.getElementById("pressureShakeModLabel").style.display = "none";
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
     document.getElementById("pressureMPEplusLabel").style.display = "none";
+    document.getElementById("pressureShakeModDepth").style.display = "none";
+    document.getElementById("pressureShakeModDepthLabel").style.display = "none";
+    document.getElementById("pressureShakeModDepthValue").style.display = "none";
+
+    updatePressureValuesForSelection();
+    
     //console.log(mapSelection);
 }
 
@@ -3437,11 +3482,6 @@ function mapAftertouch() {
     mapSelection = 2;
 	document.getElementById('receivedpressureCC').innerHTML = null;
     document.getElementById("CCpressurelevel").style.width = 0 + "%";
-    slider.noUiSlider.set([inputSliderMin[2], inputSliderMax[2]]);
-    slider2.noUiSlider.set([outputSliderMin[2], outputSliderMax[2]]);
-    if (curve[2] < 3) {
-        document.getElementById("curveRadio" + curve[2]).checked = true;
-    }
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Channel Pressure Mapping";
@@ -3449,6 +3489,12 @@ function mapAftertouch() {
     document.getElementById("pressureShakeModLabel").style.display = "block";
     document.getElementById("pressureMPEplusSwitch").style.display = "block";
     document.getElementById("pressureMPEplusLabel").style.display = "block";
+    document.getElementById("pressureShakeModDepth").style.display = "block";
+    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
+    document.getElementById("pressureShakeModDepthValue").style.display = "block";
+    
+    updatePressureValuesForSelection();
+    
     console.log("map aftertouch");
 }
 
@@ -3456,11 +3502,6 @@ function mapPoly() {
     mapSelection = 3;
 	document.getElementById('receivedpressureCC').innerHTML = null;
     document.getElementById("CCpressurelevel").style.width = 0 + "%";
-    slider.noUiSlider.set([inputSliderMin[3], inputSliderMax[3]]);
-    slider2.noUiSlider.set([outputSliderMin[3], outputSliderMax[3]]);
-    if (curve[3] < 3) {
-        document.getElementById("curveRadio" + curve[3]).checked = true;
-    }
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Key Pressure Mapping";
@@ -3468,6 +3509,11 @@ function mapPoly() {
     document.getElementById("pressureShakeModLabel").style.display = "block";
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
     document.getElementById("pressureMPEplusLabel").style.display = "none";
+    document.getElementById("pressureShakeModDepth").style.display = "block";
+    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
+    document.getElementById("pressureShakeModDepthValue").style.display = "block";
+
+    updatePressureValuesForSelection();    
 }
 
 
@@ -4392,7 +4438,12 @@ function poweroffSliderChange() {
     outputPoweroff.innerHTML = poweroffSlider.value;
 }
 
-
+var pressureShakeModDepthValue = document.getElementById("pressureShakeModDepthValue");
+var pressureShakeModDepthSlider = document.getElementById('pressureShakeModDepth');
+pressureShakeModDepthSlider.addEventListener('input', pressureShakeModDepthSliderChange);
+function pressureShakeModDepthSliderChange() {
+    pressureShakeModDepthValue.innerHTML = pressureShakeModDepthSlider.value + "%";
+}
 
 function clearConsole() { //clear MIDI console
     document.getElementById("console").innerHTML = "";

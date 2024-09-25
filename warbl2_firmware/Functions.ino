@@ -427,9 +427,9 @@ void shakeForVibrato() {
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
     const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;  // Adjust the vibrato depth range based on the Config Tool setting.
-    const float shakeModCCDepth = 12.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
-    const float shakeModChanPressDepth = 12.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
-    const float shakeModKeyPressDepth = 12.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModCCDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModChanPressDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModKeyPressDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;

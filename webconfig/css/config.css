@@ -3413,7 +3413,7 @@ h3 {
 
 #pressureShakeModSwitch {
 	top: 320px;
-	left: 134px;
+	left: 140px;
 }
 
 .pressureShakeModLabel {
@@ -3435,6 +3435,36 @@ h3 {
 	top: 324px;
 	z-index: 99;
 	font-size: 13px;
+}
+
+.pressureShakeModDepthContainerClass {
+	width: 150px;
+}
+
+#pressureShakeModDepthContainer {
+	display: block;
+	position: absolute;
+	left: 35px;
+	top: 370px;
+	z-index: 99;
+}
+
+.pressureShakeModDepthLabel {
+	display: block;
+	position: absolute;
+	left: 39px;
+	top: 349px;
+	z-index: 99;
+	font-size: 12px;
+}
+
+#pressureShakeModDepthValue {
+	display: block;
+	position: absolute;
+	left: 160px;
+	top: 349px;
+	font-size: 14px;
+	z-index: 99;
 }
 
 .highByteLabel {

@@ -12,7 +12,7 @@
       <meta name="description" content="WARBL Configuration Tool" />
       <meta name="author" content="Andrew Mowry" />
       <link href="css/nouislider.css" rel="stylesheet" type="text/css" />
-      <link href="css/config.min.css" rel="stylesheet" type="text/css" />
+      <link href="css/config.css" rel="stylesheet" type="text/css" />
       <link href="css/modal.css" rel="stylesheet" type="text/css" />
       <link rel="manifest" href="https://warbl.xyz/manifest.json">
       <style>
@@ -1211,6 +1211,12 @@
                   <input type="checkbox" class="checkboxes" id="pressureShakeModCheck" onChange="sendPressureShakeMod(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+                  <div class="pressureShakeModDepthContainerClass" id="pressureShakeModDepthContainer">
+                     <input type="range" min="1" max="100" value="50" class="ranger" id="pressureShakeModDepth" onChange="sendPressureShakeModDepth(value)" ondblclick="sendPressureShakeModDepth(50)"/>
+                  </div>
+                  <div class="pressureShakeModDepthLabel noTouch" id="pressureShakeModDepthLabel">Depth</div>
+                  <div class="jumpvalues noTouch" id="pressureShakeModDepthValue"></div>
+                  
                   <div id="pressureMPEplusLabel" class="pressureMPEplusLabel noTouch">MPE+ (14bit)</div>
                   <label class="switch" id="pressureMPEplusSwitch">
                   <input type="checkbox" class="checkboxes" id="pressureMPEplusCheck" onChange="sendPressureAftertouchMPEplus(this.checked)" />
