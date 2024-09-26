@@ -3488,14 +3488,16 @@ function mapCC() {
     document.getElementById("highByte").style.visibility = "visible";
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
-    document.getElementById("pressureShakeModSwitch").style.display = "block";
-    document.getElementById("pressureShakeModLabel").style.display = "block";
+    
+    var dispval = version < 4.3 ? "none" : "block";
+    document.getElementById("pressureShakeModSwitch").style.display = dispval;
+    document.getElementById("pressureShakeModLabel").style.display = dispval;
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
     document.getElementById("pressureMPEplusLabel").style.display = "none";
-    document.getElementById("pressureShakeModDepth").style.display = "block";
-    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
-    document.getElementById("pressureShakeModDepthValue").style.display = "block";
-    document.getElementById("shakePressureModMode").style.display = "block";
+    document.getElementById("pressureShakeModDepth").style.display = dispval;
+    document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
+    document.getElementById("pressureShakeModDepthValue").style.display = dispval;
+    document.getElementById("shakePressureModModeContainer").style.display = dispval;
     
     document.getElementById("pressureMappingHeader").innerHTML = "CC Mapping";
     
@@ -3509,6 +3511,7 @@ function mapVelocity() {
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Velocity Mapping";
+    
     document.getElementById("pressureShakeModSwitch").style.display = "none";
     document.getElementById("pressureShakeModLabel").style.display = "none";
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
@@ -3516,7 +3519,7 @@ function mapVelocity() {
     document.getElementById("pressureShakeModDepth").style.display = "none";
     document.getElementById("pressureShakeModDepthLabel").style.display = "none";
     document.getElementById("pressureShakeModDepthValue").style.display = "none";
-    document.getElementById("shakePressureModMode").style.display = "none";
+    document.getElementById("shakePressureModModeContainer").style.display = "none";
 
     updatePressureValuesForSelection();
     
@@ -3530,14 +3533,16 @@ function mapAftertouch() {
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Channel Pressure Mapping";
-    document.getElementById("pressureShakeModSwitch").style.display = "block";
-    document.getElementById("pressureShakeModLabel").style.display = "block";
-    document.getElementById("pressureMPEplusSwitch").style.display = "block";
-    document.getElementById("pressureMPEplusLabel").style.display = "block";
-    document.getElementById("pressureShakeModDepth").style.display = "block";
-    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
-    document.getElementById("pressureShakeModDepthValue").style.display = "block";
-    document.getElementById("shakePressureModMode").style.display = "block";
+    
+    var dispval = version < 4.3 ? "none" : "block";
+    document.getElementById("pressureShakeModSwitch").style.display = dispval;
+    document.getElementById("pressureShakeModLabel").style.display = dispval;
+    document.getElementById("pressureMPEplusSwitch").style.display = dispval;
+    document.getElementById("pressureMPEplusLabel").style.display = dispval;
+    document.getElementById("pressureShakeModDepth").style.display = dispval;
+    document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
+    document.getElementById("pressureShakeModDepthValue").style.display = dispval;
+    document.getElementById("shakePressureModModeContainer").style.display = dispval;
     
     updatePressureValuesForSelection();
     
@@ -3551,14 +3556,16 @@ function mapPoly() {
     document.getElementById("box7").style.display = "block";
     document.getElementById("expressionPressureBox").style.display = "none";
     document.getElementById("pressureMappingHeader").innerHTML = "Key Pressure Mapping";
-    document.getElementById("pressureShakeModSwitch").style.display = "block";
-    document.getElementById("pressureShakeModLabel").style.display = "block";
+    
+    var dispval = version < 4.3 ? "none" : "block";    
+    document.getElementById("pressureShakeModSwitch").style.display = dispval;
+    document.getElementById("pressureShakeModLabel").style.display = dispval;
     document.getElementById("pressureMPEplusSwitch").style.display = "none";
     document.getElementById("pressureMPEplusLabel").style.display = "none";
-    document.getElementById("pressureShakeModDepth").style.display = "block";
-    document.getElementById("pressureShakeModDepthLabel").style.display = "block";
-    document.getElementById("pressureShakeModDepthValue").style.display = "block";
-    document.getElementById("shakePressureModMode").style.display = "block";
+    document.getElementById("pressureShakeModDepth").style.display = dispval;
+    document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
+    document.getElementById("pressureShakeModDepthValue").style.display = dispval;
+    document.getElementById("shakePressureModModeContainer").style.display = dispval;
 
     updatePressureValuesForSelection();    
 }
