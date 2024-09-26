@@ -1042,6 +1042,8 @@
                            <option value="1">Down/Up</option>
                            <option value="2">Up Only</option>
                            <option value="3">Down Only</option>
+                           <option value="4">Up Only Invert</option>
+                           <option value="5">Down Only Invert</option>
                         </select>
                      </div>
                   </div>
@@ -1205,6 +1207,36 @@
                   <button type="button" class="smallbutton noTouch advancedOkayCC" onClick="okayCCmap()">BACK</button>
                   <div class="expressionChannelLabel noTouch" id="expressionChannel">CC Channel</div>
                   <div class="highByteLabel noTouch" id="highByte">CC number</div>
+                  
+                  <div id="pressureShakeModLabel" class="pressureShakeModLabel noTouch">IMU Shake Mod</div>
+                  <label class="switch" id="pressureShakeModSwitch">
+                  <input type="checkbox" class="checkboxes" id="pressureShakeModCheck" onChange="sendPressureShakeMod(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <div class="shakePressureModModeContainer">
+                     <div class="styled-select2 blue semi-square" id="shakePressureModModeSelect">
+                        <select id="shakePressureModMode" onChange="sendPressureShakeModMode(value)">
+                           <option selected="selected" value="0">Up/Down</option>
+                           <option value="1">Down/Up</option>
+                           <option value="2">Up Only</option>
+                           <option value="3">Down Only</option>
+                           <option value="4">Up Only Invert</option>
+                           <option value="5">Down Only Invert</option>                        
+                        </select>
+                     </div>
+                  </div>
+                  <div class="pressureShakeModDepthContainerClass" id="pressureShakeModDepthContainer">
+                     <input type="range" min="1" max="100" value="50" class="ranger" id="pressureShakeModDepth" onChange="sendPressureShakeModDepth(value)" ondblclick="sendPressureShakeModDepth(40)"/>
+                  </div>
+                  <div class="pressureShakeModDepthLabel noTouch" id="pressureShakeModDepthLabel">Depth</div>
+                  <div class="jumpvalues noTouch" id="pressureShakeModDepthValue"></div>
+                  
+                  <div id="pressureMPEplusLabel" class="pressureMPEplusLabel noTouch">MPE+ (14bit)</div>
+                  <label class="switch" id="pressureMPEplusSwitch">
+                  <input type="checkbox" class="checkboxes" id="pressureMPEplusCheck" onChange="sendPressureAftertouchMPEplus(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
                   <div class="expressionChannelInputContainer">
                      <input class="expressionInput" type="text" onChange="sendPressureChannel(value)" id="pressureChannel" value="1" />
                   </div>

@@ -383,7 +383,16 @@ const MIDI_CC_109 = 109; // From WARBL. Values as follows:
     const MIDI_CC_109_VALUE_30 = 30; // Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_31 = 31; // Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_32 = 32; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
-    /* 33-99	unused -- can be used to extend above array or for other variables */
+    const MIDI_CC_109_VALUE_33 = 33; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_34 = 34; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_35 = 35; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_36 = 36; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_37 = 37; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_38 = 38; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_39 = 39; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_40 = 40; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_41 = 41; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    /* 42-99	unused -- can be used to extend above array or for other variables */
 
     const MIDI_CC_109_VALUE_100 = 100; // Bidirectional. Indicates that WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
     const MIDI_CC_109_VALUE_101 = 101; // Bidirectional. Indicates that WARBL2 custom fingering chart 2 is about to be sent on CC 105. 
@@ -527,7 +536,8 @@ const MIDI_EXPRESSION_OUT_HIGH_CENTS = MIDI_CC_104_VALUE_91; // Bidirectional. S
 const MIDI_EXPRESSION_FIXED_CENTER_PRESSURE = MIDI_CC_104_VALUE_92; // Bidirectional. Settings for current instrument: indicates ED[43] is about to be sent with CC 105.
 const MIDI_EXPRESSION_OUT_CLAMP = MIDI_CC_104_VALUE_93; // Bidirectional. Settings for current instrument: indicates ED[44] is about to be sent with CC 105.
 const MIDI_EXPRESSION_CURVE_LOW = MIDI_CC_104_VALUE_94; // Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105.
-const MIDI_EXPRESSION_CURVE_HIGH = MIDI_CC_104_VALUE_95; // Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105.
+const MIDI_EXPRESSION_CURVE_HIGH = MIDI_CC_104_VALUE_95; // Bidirectional. Settings for current instrument: indicates ED[46] is about to be sent with CC 105.
+const MIDI_AFTERTOUCH_MPEPLUS = MIDI_CC_104_VALUE_96;  // Bidirectional. Settings for current instrument: indicates ED[47] is about to be sent with CC 105.
 
 const MIDI_SEND_ROLL = MIDI_CC_109_VALUE_0; // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105. 
 const MIDI_SEND_PITCH = MIDI_CC_109_VALUE_1; // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105. 
@@ -548,7 +558,15 @@ const MIDI_PITCH_REGISTER_INPUT_MAX = MIDI_CC_109_VALUE_29; // Bidirectional. Se
 
 const MIDI_PITCH_REGISTER_NUMBER = MIDI_CC_109_VALUE_30; // Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105. 
 const MIDI_Y_PITCHBEND_MODE = MIDI_CC_109_VALUE_31; // Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105. 
-
+const MIDI_Y_SHAKE_MOD_CC = MIDI_CC_109_VALUE_33;              // On/Off
+const MIDI_Y_SHAKE_MOD_CHPRESS = MIDI_CC_109_VALUE_34;       // On/Off
+const MIDI_Y_SHAKE_MOD_KEYPRESS = MIDI_CC_109_VALUE_35;         // On/Off
+const MIDI_Y_SHAKE_MOD_CC_DEPTH = MIDI_CC_109_VALUE_36;         // 0-100
+const MIDI_Y_SHAKE_MOD_CHPRESS_DEPTH = MIDI_CC_109_VALUE_37;    // 0-100
+const MIDI_Y_SHAKE_MOD_KEYPRESS_DEPTH = MIDI_CC_109_VALUE_38;   // 0-100
+const MIDI_Y_SHAKE_MOD_CC_MODE = MIDI_CC_109_VALUE_39;         // 0,1,2,3
+const MIDI_Y_SHAKE_MOD_CHPRESS_MODE = MIDI_CC_109_VALUE_40;    // 0,1,2,3
+const MIDI_Y_SHAKE_MOD_KEYPRESS_MODE = MIDI_CC_109_VALUE_41;   // 0,1,2,3
 
 //END Config tool only Constants
 

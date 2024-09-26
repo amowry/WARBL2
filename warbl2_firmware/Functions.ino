@@ -426,7 +426,10 @@ void shakeForVibrato() {
 
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
-    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100;  // Adjust the vibrato depth range based on the Config Tool setting.
+    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;  // Adjust the vibrato depth range based on the Config Tool setting.
+    const float shakeModCCDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModChanPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure ChanPress out depth range based on the Config Tool setting.
+    const float shakeModKeyPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure KeyPress out depth range based on the Config Tool setting.
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
@@ -446,9 +449,13 @@ void shakeForVibrato() {
         shakeDetected = false;
     }
 
-    if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {  // Do this part ony if shake pitchbend is turned on.
+    bool doShake = (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] ||  IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]);
+    if (doShake) {  // Do this part only if one of the shake mod options is turned on.
 
         shakeVibrato = 0;
+        shakePressureCCMod = 0;
+        shakePressureChanPressMod = 0;
+        shakePressureKeyPressMod = 0;
 
         if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
             tapFilterActive = true;
@@ -485,16 +492,75 @@ void shakeForVibrato() {
 
 
         if (shakeActive) {  // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
-            float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+            const float basenormshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+            float normshake = basenormshake;
+            
             if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                 normshake *= -1.0f;  // reverse phase
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                 normshake = constrain(normshake, -1.0f, 0.0f);
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                 normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                normshake = constrain(-1.0f*normshake, -1.0f, 0.0f);
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                normshake = constrain(normshake, 0.0f, 1.0f);
             }
 
-            shakeVibrato = (int)(normshake * shakeBendDepth * pitchBendPerSemi);
+            if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+                shakeVibrato = (int)(normshake * shakeBendDepth * pitchBendPerSemi);
+            }
+
+            if (IMUsettings[mode][Y_SHAKE_MOD_CC]) {
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureCCMod = (int)(normmodshake * shakeModCCDepth);
+            }
+            if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS]) {
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureChanPressMod = (normmodshake * shakeModChanPressDepth);
+            }
+            if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]) {
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureKeyPressMod = (int)(normmodshake * shakeModKeyPressDepth);
+            }
+
+            //Serial.print("shake: ");
+            //Serial.print(" vib: "); Serial.print(shakeVibrato);
+            //Serial.print(" cp: "); Serial.print(shakePressureChanPressMod);
+            //Serial.println("");
         }
 
         if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
@@ -1879,6 +1945,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode >= MIDI_CC_109_OFFSET && pressureReceiveMode < (kIMUnVariables + MIDI_CC_109_OFFSET)) {
+                    Serial.print("IMU ");
+                    Serial.print(pressureReceiveMode);
+                    Serial.print(" value: ");
+                    Serial.println(value);
                     IMUsettings[mode][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
                     loadPrefs();
                 }
@@ -2923,6 +2993,9 @@ void loadPrefs() {
     pitchBend = 8192;
     expression = 0;
     shakeVibrato = 0;
+    shakePressureCCMod = 0;
+    shakePressureChanPressMod = 0.0f;
+    shakePressureKeyPressMod = 0;
     prevHoleCovered = 1;  // Necessary so we know to call getNote() again if the fingerin chart has been changed.
 
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
@@ -2984,25 +3057,6 @@ void loadPrefs() {
     curve[1] = ED[mode][VELOCITY_CURVE];
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
-
-    if (ED[mode][EXPRESSION_CURVE_LOW] > 200 || ED[mode][EXPRESSION_CURVE_HIGH] > 200 || ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] > 200
-        || ED[mode][EXPRESSION_MIN_HIGH] > 200 || ED[mode][EXPRESSION_MAX_LOW] > 200 || ED[mode][EXPRESSION_OUT_LOW_CENTS] > 200 || ED[mode][EXPRESSION_OUT_HIGH_CENTS] > 200) {
-        // handle transition from older firmware saves that didn't have the advanced pitch expression parameters set yet
-        // this is not a reliable test, unfortunately
-        int exprmin =  ED[mode][EXPRESSION_MIN];
-        int exprmax =  ED[mode][EXPRESSION_MAX];
-        resetExpressionOverrideDefaults();
-        // convert from original value to the new values if they were in use, otherwise use our new defaults
-        if (switches[mode][OVERRIDE]) {
-            // but sanitize exprmax because the old default was way too high
-            if (exprmax > 50) {
-                exprmax = 50;
-            }
-            int midpoint = (exprmax - exprmin) / 2;
-            ED[mode][EXPRESSION_MAX_LOW] = midpoint;
-            ED[mode][EXPRESSION_MIN_HIGH] = midpoint;
-        }
-    }
 
     if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
@@ -3121,8 +3175,8 @@ void loadCalibration() {
 
 
 void calculateAndSendPressure() {
-
-    if (abs(prevSensorValue - smoothed_pressure) > 1) {  // If pressure has changed more than a little, send it.
+    bool shakemod = IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS] || IMUsettings[mode][Y_SHAKE_MOD_CC];
+    if (abs(prevSensorValue - smoothed_pressure) > 1 || shakemod) {  // If pressure has changed more than a little, send it.
         if (ED[mode][SEND_PRESSURE]) {
             calculatePressure(0);
         }
@@ -3179,8 +3233,9 @@ void calculatePressure(byte pressureOption) {
     }
 
     // Else curve 0 is linear, so no transformation.
-
-    inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
+    mappedPressureHiRes[pressureOption] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) / 1024.0f) + outputBounds[pressureOption][0];  // Map to output pressure range.
+    //inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
+    inputPressureBounds[pressureOption][3] = (unsigned int) mappedPressureHiRes[pressureOption];
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
         velocity = inputPressureBounds[pressureOption][3];
@@ -3233,15 +3288,35 @@ void sendPressure(bool force) {
     filteredOld = filtered;
 */
 
-    if (ED[mode][SEND_PRESSURE] == 1 && (inputPressureBounds[0][3] != prevCCPressure || force)) {
-        sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], inputPressureBounds[0][3]);  // Send MSB of pressure mapped to the output range.
-        prevCCPressure = inputPressureBounds[0][3];
+    if (ED[mode][SEND_PRESSURE] == 1) {
+        int sendp =  constrain((int)inputPressureBounds[0][3] + shakePressureCCMod, 0, 127);
+        if (sendp != prevCCPressure || force) {
+            sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], sendp);  // Send MSB of pressure mapped to the output range.
+            prevCCPressure = sendp;
+        }
     }
 
     if ((switches[mode][SEND_AFTERTOUCH] & 1)) {
         // hack
-        int sendm = (!noteon && sensorValue <= 100) ? 0 : inputPressureBounds[2][3];
-        if (sendm != prevChanPressure || force) {
+        float hiresOut = constrain(mappedPressureHiRes[2] + shakePressureChanPressMod, 0.0f, 127.0f);
+        float ipart = 0.0f;
+        int sendl = (int) (modf(hiresOut, &ipart) * 128);
+        sendl = (!noteon && sensorValue <= 100) ? 0 : sendl;
+        int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)ipart, 0, 127);
+        if (sendm != prevChanPressure || (ED[mode][AFTERTOUCH_MPEPLUS] && sendl != prevChanPressureLSB) || force) {
+            //Serial.print("hr: ");
+            //Serial.print(hiresOut);
+            //Serial.print(" msb: ");
+            //Serial.print(sendm);
+            //Serial.print(" lsb: ");
+            //Serial.println(sendl);
+
+            // a bit of midi bandwidth optimization to not bother sending LSB if the MSB has a large jumps (moving fast)
+            if (ED[mode][AFTERTOUCH_MPEPLUS] && abs(sendm - prevChanPressure) < 16) {
+                // MPE+ uses CC 87 sent just prior as LSB
+                sendMIDI(CONTROL_CHANGE, mainMidiChannel, 87, sendl);  // Send LSB
+                prevChanPressureLSB = sendl;
+            }
             sendMIDI(CHANNEL_PRESSURE, mainMidiChannel, sendm);  // Send MSB of pressure mapped to the output range.
             prevChanPressure = sendm;
         }
@@ -3250,7 +3325,7 @@ void sendPressure(bool force) {
     // Poly aftertouch uses 2nd lowest bit of ED flag.
     if ((switches[mode][SEND_AFTERTOUCH] & 2) && noteon) {
         // Hack
-        int sendm = (!noteon && sensorValue <= 100) ? 0 : inputPressureBounds[3][3];
+        int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)inputPressureBounds[3][3] + shakePressureKeyPressMod, 0, 127);
         if (sendm != prevPolyPressure || force) {
             sendMIDI(KEY_PRESSURE, mainMidiChannel, notePlaying, sendm);  // Send MSB of pressure mapped to the output range.
             prevPolyPressure = sendm;
@@ -3548,13 +3623,76 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)), 0);                                  // Initialize button double-click preferences as false (0) for all three modes.
                 writeEEPROM((EEPROM_SWITCHES_START + i + (BUTTON_DOUBLE_CLICK * 3)) + EEPROM_FACTORY_SETTINGS_START, 0);  // Initialize factory settings for same.
 
-                for (byte n = CUSTOM_FINGERING_10; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
+                for (byte n = EXPRESSION_MIN_HIGH; n < (CUSTOM_FINGERING_11 + 1); n++) {  // Reset EEPROM for these unused variables so they don't cause problems later.
                     writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), 255);
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (n * 3)) + EEPROM_FACTORY_SETTINGS_START), 255);  // Same for factory settings.
                 }
 
                 writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3), 0);  // Sticks mode
                 writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (STICKS_MODE * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+            }
+        }
+
+        if (currentVersion < 43) {  // Manage all changes made in version 43.
+            // reset pitch expression to defaults with logic
+            for (byte i = 0; i < 3; i++) {
+                byte exprmin =  readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3));
+                byte exprmax =  readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3));
+                byte override = readEEPROM(EEPROM_SWITCHES_START + i + (OVERRIDE * 3));
+
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3)), 0);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3)) + EEPROM_FACTORY_SETTINGS_START), 0);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN_HIGH * 3)), 7);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), 7);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_FIXED_CENTER_PRESSURE * 3)), 8);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_FIXED_CENTER_PRESSURE * 3)) + EEPROM_FACTORY_SETTINGS_START), 8);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX_LOW * 3)), 11);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX_LOW * 3)) + EEPROM_FACTORY_SETTINGS_START), 11);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)), 20);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)) + EEPROM_FACTORY_SETTINGS_START), 20);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)), 64-25); // -50 cents
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64-25);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)), 64+50); // +100 cents
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64+50);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_CLAMP * 3)), 1); // boolean
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_CLAMP * 3)) + EEPROM_FACTORY_SETTINGS_START), 1);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_LOW * 3)), 64); // linear
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_LOW * 3)) + EEPROM_FACTORY_SETTINGS_START), 64);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)), 64); // linear
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), 64);
+
+                // convert from original value to the new values if they were in use, otherwise keep our new defaults
+                if (override) {
+                    // but sanitize exprmax because the old default was way too high
+                    if (exprmax > 50) {
+                        exprmax = 50;
+                    }
+                    byte midpoint = (exprmax - exprmin) / 2;
+                    writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3)), exprmin);
+                    writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3)) + EEPROM_FACTORY_SETTINGS_START), exprmin);
+                    writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)), exprmax);
+                    writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)) + EEPROM_FACTORY_SETTINGS_START), exprmax);
+                    writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX_LOW * 3)), midpoint);
+                    writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX_LOW * 3)) + EEPROM_FACTORY_SETTINGS_START), midpoint);
+                    writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN_HIGH * 3)), midpoint);
+                    writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), midpoint);
+                }
+
+                for (int n=Y_SHAKE_MOD_CC; n <= Y_SHAKE_MOD_KEYPRESS; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0);  // default shake mod to off
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+                }
+                for (int n=Y_SHAKE_MOD_CC_DEPTH; n <= Y_SHAKE_MOD_KEYPRESS_DEPTH; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 40); // default shake mod depth to 40%
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 50);
+                }
+                for (int n=Y_SHAKE_MOD_CC_MODE; n <= Y_SHAKE_MOD_KEYPRESS_MODE; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0); // default shake mod mode - Up/Down
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+                }
+                // pressure MPE+ default to off
+                writeEEPROM((EEPROM_ED_VARS_START + i + (AFTERTOUCH_MPEPLUS * 3)), 0);
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (AFTERTOUCH_MPEPLUS * 3)) + EEPROM_FACTORY_SETTINGS_START), 0);
             }
         }
 

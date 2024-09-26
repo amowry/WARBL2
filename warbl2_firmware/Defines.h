@@ -156,8 +156,8 @@
 #define EXPRESSION_OUT_CLAMP 44   // boolean if outbend should be clamped
 #define EXPRESSION_CURVE_LOW 45      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define EXPRESSION_CURVE_HIGH 46      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define CUSTOM_FINGERING_10 47 // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define CUSTOM_FINGERING_11 48
+#define AFTERTOUCH_MPEPLUS  47 
+#define CUSTOM_FINGERING_11 48     // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define kEXPRESSIONnVariables 49
 
 // Button combinations/gestures
@@ -232,14 +232,25 @@
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
-#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
+#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
 #define STICKS_MODE 32       // On/off
-#define kIMUnVariables 33
+#define Y_SHAKE_MOD_CC 33              // On/Off
+#define Y_SHAKE_MOD_CHPRESS 34         // On/Off
+#define Y_SHAKE_MOD_KEYPRESS 35        // On/Off
+#define Y_SHAKE_MOD_CC_DEPTH 36        // 0-100
+#define Y_SHAKE_MOD_CHPRESS_DEPTH 37   // 0-100
+#define Y_SHAKE_MOD_KEYPRESS_DEPTH 38  // 0-100
+#define Y_SHAKE_MOD_CC_MODE 39        // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only 
+#define Y_SHAKE_MOD_CHPRESS_MODE 40   // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define Y_SHAKE_MOD_KEYPRESS_MODE 41  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define kIMUnVariables 42
 
 #define Y_PITCHBEND_MODE_UPDOWN 0
 #define Y_PITCHBEND_MODE_DOWNUP 1
 #define Y_PITCHBEND_MODE_UPONLY 2
 #define Y_PITCHBEND_MODE_DOWNONLY 3
+#define Y_PITCHBEND_MODE_UPONLY_INV 4
+#define Y_PITCHBEND_MODE_DOWNONLY_INV 5
 
 #define RED_LED 0
 #define GREEN_LED 1
@@ -842,8 +853,8 @@
 /* 498-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
-#define EEPROM_IMU_SETTINGS_START 625  // 625-723 WARBL2 IMUsettings array
-/*724-999 unused, room for extending above array or other variables */
+#define EEPROM_IMU_SETTINGS_START 625  // 625-732 WARBL2 IMUsettings array
+/*733-999 unused, room for extending above array or other variables */
 #define EEPROM_BUTTON_PREFS_START 1000  // 1000-1247 button prefs
 /* 1248-1974 unused */
 /* Note: 1975-1986 currently doesn't get saved to factory settings but does get restored from factory settings (calibrations are saved to factory settings manually) */

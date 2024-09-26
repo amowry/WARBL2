@@ -2051,8 +2051,8 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 60px;
-	top: 335px;
-	left: 80px;
+	top: 20px;
+	left: 30px;
 }
 
 .backPressure {
@@ -3411,6 +3411,71 @@ h3 {
 
 }
 
+#pressureShakeModSwitch {
+	top: 320px;
+	left: 140px;
+}
+
+.pressureShakeModLabel {
+	position: absolute;
+	left: 35px;
+	top: 324px;
+	z-index: 99;
+	font-size: 13px;
+}
+
+
+.shakePressureModModeContainer {
+	display: block;
+	position: absolute;
+	z-index: 99;
+	top: 410px;
+	left: 40px;
+}
+
+#pressureMPEplusSwitch {
+	top: 320px;
+	left: 350px;
+}
+
+.pressureMPEplusLabel {
+	position: absolute;
+	left: 260px;
+	top: 324px;
+	z-index: 99;
+	font-size: 13px;
+}
+
+.pressureShakeModDepthContainerClass {
+	width: 150px;
+}
+
+#pressureShakeModDepthContainer {
+	display: block;
+	position: absolute;
+	left: 35px;
+	top: 375px;
+	z-index: 99;
+}
+
+.pressureShakeModDepthLabel {
+	display: block;
+	position: absolute;
+	left: 39px;
+	top: 354px;
+	z-index: 99;
+	font-size: 12px;
+}
+
+#pressureShakeModDepthValue {
+	display: block;
+	position: absolute;
+	left: 160px;
+	top: 354px;
+	font-size: 14px;
+	z-index: 99;
+}
+
 .highByteLabel {
 	display: block;
 	position: absolute;
@@ -4386,8 +4451,8 @@ h3 {
 .receivedCCpressureLabel {
 	display: block;
 	position: absolute;
-	left: 50px;
-	top: 403px;
+	left: 260px;
+	top: 388px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -4397,10 +4462,10 @@ h3 {
 	position: absolute;
 	margin: auto;
 	text-align: center;
-	width: 60px;
+	width: 45px;
 	height: 21px;
-	left: 160px;
-	top: 400px;
+	left: 378px;
+	top: 382px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -4415,8 +4480,8 @@ h3 {
 	position: absolute;
 	width: 170px;
 	height: 20px;
-	left: 240px;
-	top: 402px;
+	left: 260px;
+	top: 412px;
 	background: var(--secondary-color);
 }
 
@@ -4424,8 +4489,8 @@ h3 {
 	display: block;
 	width: 0%;
 	height: 20px;
-	left: 240px;
-	top: 402px;
+	left: 260px;
+	top: 412px;
 	background: var(--primary-color);
 	z-index: 99;
 }
