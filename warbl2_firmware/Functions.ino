@@ -427,9 +427,9 @@ void shakeForVibrato() {
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
     const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;  // Adjust the vibrato depth range based on the Config Tool setting.
-    const float shakeModCCDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
-    const float shakeModChanPressDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
-    const float shakeModKeyPressDepth = 48.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModCCDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModChanPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure ChanPress out depth range based on the Config Tool setting.
+    const float shakeModKeyPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure KeyPress out depth range based on the Config Tool setting.
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
@@ -492,7 +492,8 @@ void shakeForVibrato() {
 
 
         if (shakeActive) {  // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
-            float normshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+            const float basenormshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
+            float normshake = basenormshake;
             
             if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                 normshake *= -1.0f;  // reverse phase
@@ -500,19 +501,60 @@ void shakeForVibrato() {
                 normshake = constrain(normshake, -1.0f, 0.0f);
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                 normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                normshake = constrain(-1.0f*normshake, -1.0f, 0.0f);
+            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                normshake = constrain(normshake, 0.0f, 1.0f);
             }
 
             if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
                 shakeVibrato = (int)(normshake * shakeBendDepth * pitchBendPerSemi);
             }
+
             if (IMUsettings[mode][Y_SHAKE_MOD_CC]) {
-                shakePressureCCMod = (int)(normshake * shakeModCCDepth);
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureCCMod = (int)(normmodshake * shakeModCCDepth);
             }
             if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS]) {
-                shakePressureChanPressMod = (normshake * shakeModChanPressDepth);
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureChanPressMod = (normmodshake * shakeModChanPressDepth);
             }
             if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]) {
-                shakePressureKeyPressMod = (int)(normshake * shakeModKeyPressDepth);
+                float normmodshake = basenormshake;
+                if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                    normmodshake *= -1.0f;  // reverse phase
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                    normmodshake = constrain(normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                    normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                    normmodshake = constrain(1.0f * normmodshake, -1.0f, 0.0f);
+                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                    normmodshake = constrain(normmodshake, 0.0f, 1.0f);
+                }
+                shakePressureKeyPressMod = (int)(normmodshake * shakeModKeyPressDepth);
             }
 
             //Serial.print("shake: ");
@@ -3133,8 +3175,8 @@ void loadCalibration() {
 
 
 void calculateAndSendPressure() {
-
-    if (abs(prevSensorValue - smoothed_pressure) > 1) {  // If pressure has changed more than a little, send it.
+    bool shakemod = IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS] || IMUsettings[mode][Y_SHAKE_MOD_CC];
+    if (abs(prevSensorValue - smoothed_pressure) > 1 || shakemod) {  // If pressure has changed more than a little, send it.
         if (ED[mode][SEND_PRESSURE]) {
             calculatePressure(0);
         }
@@ -3641,8 +3683,12 @@ void checkFirmwareVersion() {
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
                 }
                 for (int n=Y_SHAKE_MOD_CC_DEPTH; n <= Y_SHAKE_MOD_KEYPRESS_DEPTH; ++n) {
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 50); // default shake mod depth to 50%
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 40); // default shake mod depth to 40%
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 50);
+                }
+                for (int n=Y_SHAKE_MOD_CC_MODE; n <= Y_SHAKE_MOD_KEYPRESS_MODE; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0); // default shake mod mode - Up/Down
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
                 }
                 // pressure MPE+ default to off
                 writeEEPROM((EEPROM_ED_VARS_START + i + (AFTERTOUCH_MPEPLUS * 3)), 0);

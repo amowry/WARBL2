@@ -178,14 +178,14 @@ byte switches[3][kSWITCHESnVariables] =              // Settings for the switche
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
 byte IMUsettings[3][kIMUnVariables] =                                                                                      // Settings for mapping and sending IMU readings (see defines above)
-  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 },    // Instrument 0
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 },    // Instrument 1
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50 } };  // Instrument 2
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 50, 0, 255 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -510,8 +510,8 @@ void loop() {
     /////////// Things here happen ~ every 2 to 17 ms.
 
     byte pressureInterval = calculatePressureInterval();  // Determine how frequently to send MIDI messages based on pressure.
-    if ((millis() - pressureTimer) >= pressureInterval) {
-        pressureTimer = millis();
+    if ((wakeTime - pressureTimer) >= pressureInterval) {
+        pressureTimer = wakeTime;
         calculateAndSendPressure();
     }
 
@@ -519,8 +519,8 @@ void loop() {
 
     /////////// Things here happen ~ every 5 ms. These are things that should happen at a regular rate regardless of connection but don't need to happen as fast as possible.
 
-    if ((millis() - timerE) > 5) {
-        timerE = millis();
+    if ((wakeTime - timerE) >= 5) {
+        timerE = wakeTime;
         readIMU();    // Takes about 145 us using SensorFusion's Mahony.
         blink();      // Blink any LED if necessary.
         pulse();      // Pulse any LED if necessary.
@@ -528,6 +528,7 @@ void loop() {
         checkButtons();
         detectSip();
         detectShake();
+        shakeForVibrato();            // ~ 200 uS
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
     }
 
@@ -535,20 +536,20 @@ void loop() {
 
     /////////// Things here happen ~ every 9 ms if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
-    if ((millis() - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
-        pitchBendTimer = millis();    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
+    if ((wakeTime - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+        pitchBendTimer = wakeTime;    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
+        //shakeForVibrato();            // ~ 200 uS
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();                 // Debug
         sendIMU();                    // ~ 130 us
-        shakeForVibrato();            // ~ 200 uS
     }
 
 
 
     /////////// Things here happen ~ every 0.75 s.
 
-    if ((millis() - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
-        timerF = millis();
+    if ((wakeTime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
+        timerF = wakeTime;
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }

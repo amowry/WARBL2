@@ -1,9 +1,9 @@
 
 
-//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 43  // Firmware version (without decimal point)
-//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
@@ -232,7 +232,7 @@
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
-#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only
+#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
 #define STICKS_MODE 32       // On/off
 #define Y_SHAKE_MOD_CC 33              // On/Off
 #define Y_SHAKE_MOD_CHPRESS 34         // On/Off
@@ -240,12 +240,17 @@
 #define Y_SHAKE_MOD_CC_DEPTH 36        // 0-100
 #define Y_SHAKE_MOD_CHPRESS_DEPTH 37   // 0-100
 #define Y_SHAKE_MOD_KEYPRESS_DEPTH 38  // 0-100
-#define kIMUnVariables 39
+#define Y_SHAKE_MOD_CC_MODE 39        // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only 
+#define Y_SHAKE_MOD_CHPRESS_MODE 40   // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define Y_SHAKE_MOD_KEYPRESS_MODE 41  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define kIMUnVariables 42
 
 #define Y_PITCHBEND_MODE_UPDOWN 0
 #define Y_PITCHBEND_MODE_DOWNUP 1
 #define Y_PITCHBEND_MODE_UPONLY 2
 #define Y_PITCHBEND_MODE_DOWNONLY 3
+#define Y_PITCHBEND_MODE_UPONLY_INV 4
+#define Y_PITCHBEND_MODE_DOWNONLY_INV 5
 
 #define RED_LED 0
 #define GREEN_LED 1
@@ -848,8 +853,8 @@
 /* 498-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
-#define EEPROM_IMU_SETTINGS_START 625  // 625-729 WARBL2 IMUsettings array
-/*730-999 unused, room for extending above array or other variables */
+#define EEPROM_IMU_SETTINGS_START 625  // 625-732 WARBL2 IMUsettings array
+/*733-999 unused, room for extending above array or other variables */
 #define EEPROM_BUTTON_PREFS_START 1000  // 1000-1247 button prefs
 /* 1248-1974 unused */
 /* Note: 1975-1986 currently doesn't get saved to factory settings but does get restored from factory settings (calibrations are saved to factory settings manually) */
