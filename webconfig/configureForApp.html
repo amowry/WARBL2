@@ -2,8 +2,8 @@
 <html>
    <script>
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
-      var platform = "app";
-     //var platform = "web";
+      //var platform = "app";
+     var platform = "web";
    </script>
    <head>
       <meta charset="utf-8" />
@@ -1213,7 +1213,7 @@
                   <input type="checkbox" class="checkboxes" id="pressureShakeModCheck" onChange="sendPressureShakeMod(this.checked)" />
                   <span class="slider round"></span>
                   </label>
-                  <div class="shakePressureModModeContainer">
+                  <div class="shakePressureModModeContainer" id="shakePressureModModeContainer">
                      <div class="styled-select2 blue semi-square" id="shakePressureModModeSelect">
                         <select id="shakePressureModMode" onChange="sendPressureShakeModMode(value)">
                            <option selected="selected" value="0">Up/Down</option>
@@ -1226,7 +1226,7 @@
                      </div>
                   </div>
                   <div class="pressureShakeModDepthContainerClass" id="pressureShakeModDepthContainer">
-                     <input type="range" min="1" max="100" value="50" class="ranger" id="pressureShakeModDepth" onChange="sendPressureShakeModDepth(value)" ondblclick="sendPressureShakeModDepth(40)"/>
+                     <input type="range" min="1" max="100" value="50" class="ranger" id="pressureShakeModDepth" onChange="sendPressureShakeModDepth(value)" onDblClick="sendPressureShakeModDepth(40)"/>
                   </div>
                   <div class="pressureShakeModDepthLabel noTouch" id="pressureShakeModDepthLabel">Depth</div>
                   <div class="jumpvalues noTouch" id="pressureShakeModDepthValue"></div>
@@ -2379,10 +2379,10 @@
                         <li>A low pressure range, whose min and max input pressure determine a bend along with the low range output bend, from no pressure to the low range max pressure (it will start at the bend amount specified in the low range output bend and end at no bend).
                         <li> A high pressure range, whose min and max input pressure determine a bend along with the high range output bend, from the high range min pressure to the high range max pressure (it will start with no bend at the high range min input pressure, and end up with the bend specified in the high range output bend). If the pressure exceeds the high range max input pressure, it will either be clamped at the specified bend amount (if <b>clamp upper bend</b> is on), or it will continue with the same bend slope with more pressure.
                     </ul>
-                    The low and high ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the pressure range where no pitch bend occurs from this expression. You can see exactly how input pressure maps to output bend in cents with the interactive meters for both input pressure and output bend which are behind each pair of sliders.       
+                    The low and high ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the pressure range where no pitch bend occurs. You can see exactly how input pressure maps to output bend in cents with the interactive meters for both input pressure and output bend which are behind each pair of sliders.       
                   </p>
 				<p>
-The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high pressure ranges to pitchbend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00".
+The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high pressure ranges to pitchbend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00". Double-clicking (or double-tapping) the sliders will return them to the linear setting.
 				</p>
                </div>
             </div>
@@ -2392,11 +2392,11 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
                <h2 title="Close" onClick="modalclose(21)" class="modal-close">Close</h2>
                <h1>Pressure Mapping</h1>
                <div>
-                  <p>
-                     The input pressure range can be mapped to the output (CC, velocity, channel pressure, or key pressure) range using one of three curves: linear, a power curve (curve 2), or an inverse power curve (curve 3). Adjusting the sliders controls which portion of the overall breath/bag pressure is mapped to which portion of the possible MIDI output range of 0-127.
-                  </p>
                   <p>        
-                     The input pressure range can be mapped to the output (CC, velocity, channel pressure, or key pressure) range using one of three curves: linear, a power curve (curve 2), or an inverse power curve (curve 3). Adjusting the sliders controls which portion of the overall breath/bag pressure is mapped to which portion of the possible MIDI output range of 0-127. When mapping pressure to CC you can choose a CC channel and CC number. Also note that the WARBL will only be sending those messages if the corresponding switch in the main Pressure Mapping panel is turned on.
+                     The input pressure range can be mapped to the output (<b>CC, velocity, channel pressure, <b>or </b>key pressure</b>) range using one of three curves: linear, a power curve (curve 2), or an inverse power curve (curve 3). Adjusting the sliders controls which portion of the overall breath/bag pressure is mapped to which portion of the possible MIDI output range of 0-127. When mapping pressure to CC you can choose a CC channel and CC number. Also note that the WARBL will only be sending those messages if the corresponding switch in the main Pressure Mapping panel is turned on. In the <b>Channel Pressure</b> mapping panel, you can turn on the <b>MPE+</b> switch to send 14-bit MPE+ specifically for use with Haken Audio hardware.  
+				</p>
+                  <p> 
+                  Beginning with firmware v. 4.3 it is possible to turn on the <b>IMU Shake Mod switch</b> to modify the pressure mapping by shaking the WARBL2 along its long axis. This can be useful, for example, to modify volume by shaking the WARBL2. It could also be used along with <b>Shake vibrato</b> (see the IMU mapping section below) to control both pitch and volume (or another type of expression) by shaking the WARBL2. You can select the "depth" of the modification as well as the direction (in the drop-down menu below the depth slider).
                   </p>
                   <p>  
                      The <b>Received value</b> field and bar at the bottom show the MIDI messages received from the WARBL2 that correspond to the current panel. For example, if you are mapping breath pressure to CC 7 on channel 1, the display will show only those specific messages. Also, note that the WARBL will only send messages if the corresponding switch in the main panel is turned on.
