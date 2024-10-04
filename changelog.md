@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- The "pitch expression" functionality for mapping pressure to pitchbend is now much more sophisticated. If not using overblowing, you can now separately map a low pressure range and high pressure range to pitchbend while optionally maitaining a "stable" middle range where no pitchbend mapping occurs.
+- The "pitch expression" functionality for mapping pressure to pitchbend is now much more sophisticated. If not using overblowing, you can now separately map a low pressure range and high pressure range to pitchbend while optionally maintaining a "stable" middle range where no pitchbend mapping occurs.
 
 ### Added
 
