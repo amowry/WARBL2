@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
+## [Released]
+
+## [4.3] - 2024-10-4
+
+### Changed
+
+- The "pitch expression" functionality for mapping pressure to pitchbend is now much more sophisticated. If not using overblowing, you can now separately map a low pressure range and high pressure range to pitchbend while optionally maitaining a "stable" middle range where no pitchbend mapping occurs.
+
+### Added
+
+- It is now possible to use IMU shake to modify breath pressure mapping (this is located in the pressure mapping panels for CC, Channel Pressure, and Key Pressure).
 
 ## [Released]
 
