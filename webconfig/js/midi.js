@@ -29,7 +29,7 @@ var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
 
-var currentVersion = 42; // Current version of the WARBL2 firmware
+var currentVersion = 43; // Current version of the WARBL2 firmware
 var currentVersionOriginal = 21; // Current version of the original WARBL firmware
 var previousVersion = 0; //Used to keep track of which version of WARBL is connected so that the page will refresh if a different WARBL with an older firmware version is connected.
 
