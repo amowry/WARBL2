@@ -728,9 +728,9 @@ void checkButtons() {
 void getFingers() {
 
     for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i]) > (toneholeCovered[i] - 50)) {
+        if ((toneholeRead[i]) > (toneholeCovered[i] - toneholeBaseline[i] )) {
             bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
-        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - 54)) {
+        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - toneholeBaseline[i] - 4)) {
             bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
         }
     }
@@ -1339,7 +1339,7 @@ void handleCustomPitchBend() {
                     }
                     if (testNote == newNote) {  // If the hole is uncovered and covering the hole wouldn't change the current note (or the left thumb hole is uncovered, because that case isn't included in the fingering chart).
                         if (toneholeRead[i] > senseDistance) {
-                            iPitchBend[i] = 0 - (int)(((toneholeCovered[i] - 50.0f - toneholeRead[i]) * vibratoScale[i]));  // Bend up, yielding a negative pitchbend value.
+                            iPitchBend[i] = 0 - (int)((max(toneholeCovered[i] - toneholeBaseline[i] - toneholeRead[i], 0) * vibratoScale[i]));  // Bend up, yielding a negative pitchbend value.
                         } else {
                             iPitchBend[i] = 0 - adjvibdepth;  // If the hole is totally uncovered, max the pitchbend.
                         }
@@ -1721,10 +1721,11 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             /////// CC 102
             if (number == MIDI_CC_102) {                                               // Many settings are controlled by a value in CC 102 (always channel 7).
                 if (value >= MIDI_CALIB_MSGS_START && value <= MIDI_CALIB_MSGS_END) {  // Handle sensor calibration commands from the configuration tool.
+                    int hindex = (value >> 1) - 1;
                     if ((value & 1) == 0) {
-                        toneholeCovered[(value >> 1) - 1] -= 5;
-                        if ((toneholeCovered[(value >> 1) - 1] - 54) < 5) {  //if the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
-                            sendMIDI(MIDI_CC_102_MSG, (MIDI_MAX_CALIB_MSGS_START + ((value >> 1) - 1)));
+                        toneholeCovered[hindex] -= 5;
+                        if ((toneholeCovered[hindex] - toneholeBaseline[hindex] - 4) < 5) {  //if the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
+                            sendMIDI(MIDI_CC_102_MSG, (MIDI_MAX_CALIB_MSGS_START + (hindex)));
                         }
                     } else {
                         toneholeCovered[((value + 1) >> 1) - 1] += 5;
@@ -2040,10 +2041,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
 
                 else if (value == MIDI_SAVE_CALIB_AS_FACTORY) {  // Save current sensor calibration as factory calibration
-                    for (byte i = EEPROM_SENSOR_CALIB_START; i <= EEPROM_SENSOR_CALIB_SAVED; i++) {
+                    for (int i = EEPROM_BASELINE_CALIB_START; i < EEPROM_SENSOR_CALIB_START; i++) {  // Save baseline calibration as factory baseline
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
-                    for (int i = EEPROM_BASELINE_CALIB_START; i < 10; i++) {  // Save baseline calibration as factory baseline
+                    for (byte i = EEPROM_SENSOR_CALIB_START; i <= EEPROM_SENSOR_CALIB_SAVED; i++) {
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
                     for (int i = EEPROM_XGYRO_CALIB_START; i < EEPROM_RESERVED_TESTING; i++) {  // Save gyroscope calibration as factory calibration
@@ -3028,8 +3029,8 @@ void loadPrefs() {
 
     for (byte i = 0; i < 9; i++) {
         //toneholeScale[i] = ((8 * (16383 / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);            // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
-        toneholeScale[i] = (((16383.0f / midiBendRange)) / (toneholeCovered[i] - 50.0f - senseDistance) / 2.0f);                     // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
-        vibratoScale[i] = ((2.0f * (((float)vibratoDepth) / midiBendRange)) / (toneholeCovered[i] - 50.0f - senseDistance) / 2.0f);  // This one is for vibrato.
+        toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - toneholeBaseline[i] - senseDistance, 1) / 2.0f);                     // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
+        vibratoScale[i] = ((2.0f * (((float)vibratoDepth) / midiBendRange)) / max(toneholeCovered[i] - toneholeBaseline[i] - senseDistance, 1) / 2.0f);  // This one is for vibrato.
     }
 
     adjvibdepth = vibratoDepth / midiBendRange;  // Precalculations for pitchbend range
@@ -3090,12 +3091,12 @@ void calibrate() {
             if (calibration == 1) {  // Calibrate all sensors if we're in calibration "mode" 1.
                 for (byte i = 1; i < 9; i++) {
                     toneholeCovered[i] = 0;     // First set the calibration to 0 for all of the sensors so it can only be increassed by calibrating.
-                    toneholeBaseline[i] = 255;  // And set baseline high so it can only be reduced.
+                    toneholeBaseline[i] = 1024;  // And set baseline high so it can only be reduced.
                 }
             }
 
             toneholeCovered[0] = 0;  // Also zero the bell sensor if it's plugged in (doesn't matter which calibration mode for this one).
-            toneholeBaseline[0] = 255;
+            toneholeBaseline[0] = 1024;
 
             return;  // We return once to make sure we've gotten some new sensor readings.
         }
@@ -3122,6 +3123,28 @@ void calibrate() {
         }
 
         if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
+
+            // just in case bell wasn't exercised
+            if (abs(toneholeCovered[0] - toneholeBaseline[0]) < 50) {
+                toneholeCovered[0] = toneholeBaseline[0] + 50;
+                Serial.println("Bell auto-set");
+            }
+            else {
+                int feeloffset = (int) ((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
+                toneholeCovered[0] -= feeloffset;
+            }
+
+            if (calibration == 1) {
+                // adjust for calibration feel
+                for (byte i = 1; i < 9; i++) {
+                    int feeloffset = (int) ((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f);
+                    toneholeCovered[i] -= feeloffset;
+                    Serial.print(i);
+                    Serial.print(" feeloff: ");
+                    Serial.println(feeloffset);
+                }
+            }
+
             saveCalibration();
             loadPrefs();  // Do this so pitchbend scaling will be recalculated.
         }
@@ -3139,7 +3162,11 @@ void saveCalibration() {
     for (byte i = 0; i < 9; i++) {
         writeEEPROM((i + 9) * 2, highByte(toneholeCovered[i]));
         writeEEPROM(((i + 9) * 2) + 1, lowByte(toneholeCovered[i]));
-        writeEEPROM((1 + i), lowByte(toneholeBaseline[i]));  // The baseline readings can be stored in a single byte because they should be close to zero.
+        writeEEPROM((1 + i), lowByte(toneholeBaseline[i]));
+        if (i > 0) {
+            // baseline high byte stored for toneholes (only had this much reserved space)
+            writeEEPROM(9 + i, highByte(toneholeBaseline[i]));
+        }
     }
     calibration = 0;
     writeEEPROM(EEPROM_SENSOR_CALIB_SAVED, 3);  // We write a 3 to address 37 to indicate that we have stored a set of calibrations.
@@ -3163,7 +3190,14 @@ void loadCalibration() {
         byte low = readEEPROM(i + 1);
         byte index = (i - EEPROM_SENSOR_CALIB_START) / 2;
         toneholeCovered[index] = word(high, low);
-        toneholeBaseline[index] = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
+
+        low = readEEPROM(EEPROM_BASELINE_CALIB_START + index);
+        if (index > 0) {
+            high = readEEPROM(EEPROM_BASELINE_CALIB_START + 8 + index);
+        } else {
+            high = 0;
+        }
+        toneholeBaseline[index] = word(high, low);
     }
 }
 
@@ -3695,6 +3729,25 @@ void checkFirmwareVersion() {
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (AFTERTOUCH_MPEPLUS * 3)) + EEPROM_FACTORY_SETTINGS_START), 0);
             }
         }
+
+         if (currentVersion < 44) {
+            // clear the high bytes for baseline
+            for (int i=0; i < 8; ++i) { // fingerholes only
+                writeEEPROM(EEPROM_BASELINE_CALIB_START + 9 + i, 0);
+            }
+
+            // we've moved the "feel" cal offset that was hardcoded as -50 into the actual calibration, so make that change to
+            // the cal covered data
+            for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
+                byte high = readEEPROM(i);
+                byte low = readEEPROM(i + 1);
+                byte index = (i - EEPROM_SENSOR_CALIB_START) / 2;
+                int caldata = word(high, low);
+                caldata -= 50;
+                writeEEPROM(i, highByte(caldata));
+                writeEEPROM(i + 1, lowByte(caldata));
+            }
+         }
 
         writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
     }

@@ -2,7 +2,7 @@
 
 #define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
-#define VERSION 43  // Firmware version (without decimal point)
+#define VERSION 44  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
@@ -805,7 +805,7 @@
 
 /* EEPROM Addresses */
 #define EEPROM_BASELINE_CALIB_START 1  // values 0-255 baseline sensor calibrations - 9 bytes 1-9
-/* 10-17 unused */
+/* 10-17 used for high bytes of toneholes (not bell) */
 #define EEPROM_SENSOR_CALIB_START 18  // sensor calibrations - 18 bytes 18-35, two byte per sensor high-low
 #define EEPROM_XGYRO_CALIB_SAVED 36   // value 3 indicates a saved gyro calibration
 #define EEPROM_SENSOR_CALIB_SAVED 37  // value 3 indicates a saved sensor calibration
