@@ -727,10 +727,12 @@ void checkButtons() {
 // Determine which holes are covered.
 void getFingers() {
 
+
     for (byte i = 0; i < 9; i++) {
-        if ((toneholeRead[i]) > (toneholeCovered[i] - toneholeBaseline[i] )) {
+        const int caloffset = calibration > 0 ? (int) ((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f) : 0; // only need to apply this offset during calibration itself
+        if ((toneholeRead[i]) > (toneholeCovered[i] - toneholeBaseline[i] - caloffset)) {
             bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
-        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - toneholeBaseline[i] - 4)) {
+        } else if ((toneholeRead[i]) <= (toneholeCovered[i] - toneholeBaseline[i] - caloffset - 4)) {
             bitWrite(holeCovered, i, 0);  // Decide which holes are uncovered -- the "hole uncovered" reading is a little less then the "hole covered" reading, to prevent oscillations.
         }
     }
