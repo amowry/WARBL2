@@ -3127,7 +3127,7 @@ void calibrate() {
             // just in case bell wasn't exercised
             if (abs(toneholeCovered[0] - toneholeBaseline[0]) < 50) {
                 toneholeCovered[0] = toneholeBaseline[0] + 50;
-                Serial.println("Bell auto-set");
+                //Serial.println("Bell auto-set");
             }
             else {
                 int feeloffset = (int) ((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
@@ -3139,9 +3139,9 @@ void calibrate() {
                 for (byte i = 1; i < 9; i++) {
                     int feeloffset = (int) ((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f);
                     toneholeCovered[i] -= feeloffset;
-                    Serial.print(i);
-                    Serial.print(" feeloff: ");
-                    Serial.println(feeloffset);
+                    //Serial.print(i);
+                    //Serial.print(" feeloff: ");
+                    //Serial.println(feeloffset);
                 }
             }
 
