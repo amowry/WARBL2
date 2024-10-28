@@ -122,7 +122,7 @@ float pitch;
 float yaw;
 int shakeVibrato;                  // Shake vibrato depth, from -8192 to 8192
 int shakePressureCCMod;            // Shake pressure for CC mod: -127 to 127
-float shakePressureChanPressMod;     // Shake pressure for chan pressure mod: -127 to 127
+float shakePressureChanPressMod;   // Shake pressure for chan pressure mod: -127 to 127
 int shakePressureKeyPressMod;      // Shake pressure for keypressure mod: -127 to 127
 unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the yaw after silence
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
@@ -177,15 +177,15 @@ byte switches[3][kSWITCHESnVariables] =              // Settings for the switche
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
-byte IMUsettings[3][kIMUnVariables] =                                                                                      // Settings for mapping and sending IMU readings (see defines above)
+byte IMUsettings[3][kIMUnVariables] =                                                                                                                    // Settings for mapping and sending IMU readings (see defines above)
   { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 0
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64-35), (64+50), 8, 1, 64, 40, 0, 255 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -255,7 +255,7 @@ byte outputBounds[4][2] =  // Container for ED output pressure range variables (
 
 byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
 
-float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f}; // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
+float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f };  // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
 
 // Variables for reading tonehole sensors
 unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
@@ -448,13 +448,13 @@ void setup() {
         saveFactorySettings();  // If we're running the software for the first time, or if a factory reset has been requested, copy all settings to EEPROM.
     }
 
+    checkFirmwareVersion();  // Make any necessary changes to saved settings if we've just upgraded the firmware.
+
+    writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
+
     if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
-
-    checkFirmwareVersion();
-
-    writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
 
 
     loadFingering();
@@ -490,7 +490,6 @@ void setup() {
 
 void loop() {
 
-    //  if (tud_ready() == 1) { analogWrite(LED_BUILTIN, 1023); } //testing
 
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
@@ -528,7 +527,7 @@ void loop() {
         checkButtons();
         detectSip();
         detectShake();
-        shakeForVibrato();            // ~ 200 uS
+        shakeForVibrato();           // ~ 200 uS
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
     }
 
@@ -537,7 +536,7 @@ void loop() {
     /////////// Things here happen ~ every 9 ms if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
 
     if ((wakeTime - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
-        pitchBendTimer = wakeTime;    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
+        pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
         //shakeForVibrato();            // ~ 200 uS
         calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
         printStuff();                 // Debug

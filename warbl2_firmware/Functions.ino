@@ -426,8 +426,8 @@ void shakeForVibrato() {
 
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
-    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;  // Adjust the vibrato depth range based on the Config Tool setting.
-    const float shakeModCCDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;  // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;                   // Adjust the vibrato depth range based on the Config Tool setting.
+    const float shakeModCCDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;              // Adjust the pressure CC out depth range based on the Config Tool setting.
     const float shakeModChanPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure ChanPress out depth range based on the Config Tool setting.
     const float shakeModKeyPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure KeyPress out depth range based on the Config Tool setting.
     const float kShakeStartThresh = 0.5f;
@@ -449,7 +449,7 @@ void shakeForVibrato() {
         shakeDetected = false;
     }
 
-    bool doShake = (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] ||  IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]);
+    bool doShake = (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] || IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]);
     if (doShake) {  // Do this part only if one of the shake mod options is turned on.
 
         shakeVibrato = 0;
@@ -494,7 +494,7 @@ void shakeForVibrato() {
         if (shakeActive) {  // Normalize and clip, +/-15 input seems to be reasonably realistic max accel while still having it in the mouth!
             const float basenormshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
             float normshake = basenormshake;
-            
+
             if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                 normshake *= -1.0f;  // reverse phase
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
@@ -502,7 +502,7 @@ void shakeForVibrato() {
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                 normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
-                normshake = constrain(-1.0f*normshake, -1.0f, 0.0f);
+                normshake = constrain(-1.0f * normshake, -1.0f, 0.0f);
             } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
                 normshake = constrain(normshake, 0.0f, 1.0f);
             }
@@ -729,7 +729,7 @@ void getFingers() {
 
 
     for (byte i = 0; i < 9; i++) {
-        const int caloffset = calibration > 0 ? (int) ((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f) : 0; // only need to apply this offset during calibration itself
+        const int caloffset = calibration > 0 ? (int)((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f) : 0;  // only need to apply this offset during calibration itself
         if ((toneholeRead[i]) > (toneholeCovered[i] - toneholeBaseline[i] - caloffset)) {
             bitWrite(holeCovered, i, 1);  // Use the tonehole readings to decide which holes are covered
         } else if ((toneholeRead[i]) <= (toneholeCovered[i] - toneholeBaseline[i] - caloffset - 4)) {
@@ -897,7 +897,6 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 
-
 // Return a MIDI note number (0-127) based on the current fingering.
 byte getNote(unsigned int fingerPattern) {
     byte ret = 127;  // Default (blank position)
@@ -950,8 +949,8 @@ void getShift() {
 
     // Overblow if allowed.
     if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + 12;                                                                                                                                                                                                                                                                                                                      // Add a register jump to the transposition if overblowing.
-        if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                  // Kaval only plays a fifth higher in the second register.
+        shift = shift + 12;                                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
+        if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                             // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
     }
@@ -972,7 +971,6 @@ void getShift() {
         }
     }
 }
-
 
 
 
@@ -1045,8 +1043,6 @@ void getState() {
         prevState = newState;
     }
 }
-
-
 
 
 
@@ -1140,22 +1136,36 @@ int calcHysteresis(int currentUpperBound, bool high) {
     return newUpperBound;
 }
 
+
+
+
+
+
+
+
+
 inline float curveValToExponent(int val) {
     // takes 0 -> 127 and returns curve exponent
     // which is between 0.25 -> 0 -> 4.0
     float retval = 1.0f;
     val -= 64;
     if (val >= 0) {
-        retval = ((3.0f*val/63.0f) + 1.0f);
-    }
-    else {
-        retval = (0.75f*(64.0f+val)/64.0f + 0.25f);
+        retval = ((3.0f * val / 63.0f) + 1.0f);
+    } else {
+        retval = (0.75f * (64.0f + val) / 64.0f + 0.25f);
     }
     return retval;
 }
 
-void getExpression() 
-{
+
+
+
+
+
+
+
+
+void getExpression() {
     // calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between
     int lowPressureMin = (ED[mode][EXPRESSION_MIN] * 9) + 100;
     int lowPressureMax = (ED[mode][EXPRESSION_MIN_HIGH] * 9) + 100;
@@ -1170,8 +1180,8 @@ void getExpression()
     if (!switches[mode][OVERRIDE] || (breathMode == kPressureBreath)) {
         // fixed non-override options or overblow mode
         if (newState == TOP_REGISTER) {
-            lowPressureMin = upperBoundLow; // sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
-            highPressureMax = upperBoundLow + ((upperBoundHigh-sensorThreshold[0])>>1);  // Get the register boundary taking hysteresis into consideration
+            lowPressureMin = upperBoundLow;                                                  // sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
+            highPressureMax = upperBoundLow + ((upperBoundHigh - sensorThreshold[0]) >> 1);  // Get the register boundary taking hysteresis into consideration
         } else {
             lowPressureMin = sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
             if (breathMode == kPressureBreath) {
@@ -1186,7 +1196,7 @@ void getExpression()
         lowPressureMax = highPressureMin = ((highPressureMax + lowPressureMin) >> 1);
 
         // may need to play with these - XXX
-        centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH]; // -20 cents at least
+        centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH];  // -20 cents at least
         centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[mode][EXPRESSION_DEPTH];
         doClamp = true;
         lowCurveExp = 1.0f;
@@ -1212,13 +1222,12 @@ void getExpression()
             ratio = min(ratio, 1.0f);
         }
         centsOffset = centsHighOffset * ratio;
-    }
-    else {
+    } else {
         // in the stable range
         centsOffset = 0;
     }
 
-    expression = (int) (0.01f * centsOffset * pitchBendPerSemi); // expression is in raw pitch bend units
+    expression = (int)(0.01f * centsOffset * pitchBendPerSemi);  // expression is in raw pitch bend units
 
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
         pitchBend = 0;
@@ -1243,6 +1252,12 @@ void getExpression()
 
 
 
+
+
+
+
+
+
 // For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
     unsigned int closedHolePattern = holeCovered;
@@ -1250,6 +1265,8 @@ int findStepsOffsetFor(int hole) {
     int stepsOffset = getNote(closedHolePattern) - newNote;
     return stepsOffset;
 }
+
+
 
 
 
@@ -1600,10 +1617,10 @@ void sendNote() {
     if (noteon) {  // Several conditions to turn a note off
         if (
           ((newState == SILENCE && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
-          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                           // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                          // Or completely closed pipe with any fingering chart.
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                 // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
-                                                                                                                  // Keep track.
+          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                                 // Or closed Northumbrian pipe.
+          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                                // Or completely closed pipe with any fingering chart.
+            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                       // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
+                                                                                                                        // Keep track.
 
             if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
                 autoCenterYawTimer = millis();
@@ -2042,7 +2059,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
 
-                else if (value == MIDI_SAVE_CALIB_AS_FACTORY) {  // Save current sensor calibration as factory calibration
+                else if (value == MIDI_SAVE_CALIB_AS_FACTORY) {                                      // Save current sensor calibration as factory calibration
                     for (int i = EEPROM_BASELINE_CALIB_START; i < EEPROM_SENSOR_CALIB_START; i++) {  // Save baseline calibration as factory baseline
                         writeEEPROM(i + EEPROM_FACTORY_SETTINGS_START, readEEPROM(i));
                     }
@@ -2328,7 +2345,7 @@ void performAction(byte action) {
                 if (!momentary[mode][action]) {
                     sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
                 } else {
-                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0); // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
+                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0);  // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
                 }
             }
 
@@ -2474,6 +2491,7 @@ void performAction(byte action) {
 
 
 
+
 void octaveShiftUp() {
     if (octaveShift < 3) {
         octaveShiftSelector[mode]++;  // Adjust octave shift up, within reason
@@ -2486,12 +2504,16 @@ void octaveShiftUp() {
 
 
 
+
 void octaveShiftDown() {
     if (octaveShift > -4) {
         octaveShiftSelector[mode]--;
         octaveShift = octaveShiftSelector[mode];
     }
 }
+
+
+
 
 
 
@@ -2515,6 +2537,8 @@ void changePitchBend() {
 
 
 
+
+
 // Cycle through instruments
 void changeInstrument() {
     mode++;  //set instrument
@@ -2528,6 +2552,8 @@ void changeInstrument() {
         sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
     }
 }
+
+
 
 
 
@@ -2876,8 +2902,6 @@ void saveSettings(byte i) {
 
 
 
-
-
 // Load settings for all three instruments from EEPROM.
 void loadSettingsForAllModes() {
     // Some things that are independent of mode.
@@ -2943,8 +2967,11 @@ void loadSettingsForAllModes() {
 
 
 
- void resetExpressionOverrideDefaults()
- {
+
+
+
+
+void resetExpressionOverrideDefaults() {
     // resets current mode's expression override defaults
     // useful for populating older devices after first installing the version that has them
     // and for manually restoring to a "sane" default for the new setup
@@ -2956,12 +2983,12 @@ void loadSettingsForAllModes() {
     ED[mode][EXPRESSION_MAX_LOW] = 11;
     ED[mode][EXPRESSION_MAX] = 20;
     // 2x cents signed where 64 = 0, and 64+10 = +20 cents, and 64-10 = -20 cents for example
-    ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25; // -50 cents
-    ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50; // +100 cents
-    ED[mode][EXPRESSION_OUT_CLAMP] = 1; // boolean
-    ED[mode][EXPRESSION_CURVE_LOW] = 64; // linear
-    ED[mode][EXPRESSION_CURVE_HIGH] = 64; // linear
- }
+    ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25;   // -50 cents
+    ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50;  // +100 cents
+    ED[mode][EXPRESSION_OUT_CLAMP] = 1;             // boolean
+    ED[mode][EXPRESSION_CURVE_LOW] = 64;            // linear
+    ED[mode][EXPRESSION_CURVE_HIGH] = 64;           // linear
+}
 
 
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
@@ -3092,7 +3119,7 @@ void calibrate() {
 
             if (calibration == 1) {  // Calibrate all sensors if we're in calibration "mode" 1.
                 for (byte i = 1; i < 9; i++) {
-                    toneholeCovered[i] = 0;     // First set the calibration to 0 for all of the sensors so it can only be increassed by calibrating.
+                    toneholeCovered[i] = 0;      // First set the calibration to 0 for all of the sensors so it can only be increassed by calibrating.
                     toneholeBaseline[i] = 1024;  // And set baseline high so it can only be reduced.
                 }
             }
@@ -3130,16 +3157,15 @@ void calibrate() {
             if (abs(toneholeCovered[0] - toneholeBaseline[0]) < 50) {
                 toneholeCovered[0] = toneholeBaseline[0] + 50;
                 //Serial.println("Bell auto-set");
-            }
-            else {
-                int feeloffset = (int) ((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
+            } else {
+                int feeloffset = (int)((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
                 toneholeCovered[0] -= feeloffset;
             }
 
             if (calibration == 1) {
                 // adjust for calibration feel
                 for (byte i = 1; i < 9; i++) {
-                    int feeloffset = (int) ((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f);
+                    int feeloffset = (int)((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f);
                     toneholeCovered[i] -= feeloffset;
                     //Serial.print(i);
                     //Serial.print(" feeloff: ");
@@ -3271,7 +3297,7 @@ void calculatePressure(byte pressureOption) {
     // Else curve 0 is linear, so no transformation.
     mappedPressureHiRes[pressureOption] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) / 1024.0f) + outputBounds[pressureOption][0];  // Map to output pressure range.
     //inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
-    inputPressureBounds[pressureOption][3] = (unsigned int) mappedPressureHiRes[pressureOption];
+    inputPressureBounds[pressureOption][3] = (unsigned int)mappedPressureHiRes[pressureOption];
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
         velocity = inputPressureBounds[pressureOption][3];
@@ -3325,7 +3351,7 @@ void sendPressure(bool force) {
 */
 
     if (ED[mode][SEND_PRESSURE] == 1) {
-        int sendp =  constrain((int)inputPressureBounds[0][3] + shakePressureCCMod, 0, 127);
+        int sendp = constrain((int)inputPressureBounds[0][3] + shakePressureCCMod, 0, 127);
         if (sendp != prevCCPressure || force) {
             sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], sendp);  // Send MSB of pressure mapped to the output range.
             prevCCPressure = sendp;
@@ -3336,7 +3362,7 @@ void sendPressure(bool force) {
         // hack
         float hiresOut = constrain(mappedPressureHiRes[2] + shakePressureChanPressMod, 0.0f, 127.0f);
         float ipart = 0.0f;
-        int sendl = (int) (modf(hiresOut, &ipart) * 128);
+        int sendl = (int)(modf(hiresOut, &ipart) * 128);
         sendl = (!noteon && sensorValue <= 100) ? 0 : sendl;
         int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)ipart, 0, 127);
         if (sendm != prevChanPressure || (ED[mode][AFTERTOUCH_MPEPLUS] && sendl != prevChanPressureLSB) || force) {
@@ -3672,8 +3698,8 @@ void checkFirmwareVersion() {
         if (currentVersion < 43) {  // Manage all changes made in version 43.
             // reset pitch expression to defaults with logic
             for (byte i = 0; i < 3; i++) {
-                byte exprmin =  readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3));
-                byte exprmax =  readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3));
+                byte exprmin = readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3));
+                byte exprmax = readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3));
                 byte override = readEEPROM(EEPROM_SWITCHES_START + i + (OVERRIDE * 3));
 
                 writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3)), 0);
@@ -3686,15 +3712,15 @@ void checkFirmwareVersion() {
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX_LOW * 3)) + EEPROM_FACTORY_SETTINGS_START), 11);
                 writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)), 20);
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3)) + EEPROM_FACTORY_SETTINGS_START), 20);
-                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)), 64-25); // -50 cents
-                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64-25);
-                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)), 64+50); // +100 cents
-                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64+50);
-                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_CLAMP * 3)), 1); // boolean
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)), 64 - 25);  // -50 cents
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_LOW_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64 - 25);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)), 64 + 50);  // +100 cents
+                writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_HIGH_CENTS * 3)) + EEPROM_FACTORY_SETTINGS_START), 64 + 50);
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_CLAMP * 3)), 1);  // boolean
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_OUT_CLAMP * 3)) + EEPROM_FACTORY_SETTINGS_START), 1);
-                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_LOW * 3)), 64); // linear
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_LOW * 3)), 64);  // linear
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_LOW * 3)) + EEPROM_FACTORY_SETTINGS_START), 64);
-                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)), 64); // linear
+                writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)), 64);  // linear
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), 64);
 
                 // convert from original value to the new values if they were in use, otherwise keep our new defaults
@@ -3714,16 +3740,16 @@ void checkFirmwareVersion() {
                     writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_MIN_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), midpoint);
                 }
 
-                for (int n=Y_SHAKE_MOD_CC; n <= Y_SHAKE_MOD_KEYPRESS; ++n) {
+                for (int n = Y_SHAKE_MOD_CC; n <= Y_SHAKE_MOD_KEYPRESS; ++n) {
                     writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0);  // default shake mod to off
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
                 }
-                for (int n=Y_SHAKE_MOD_CC_DEPTH; n <= Y_SHAKE_MOD_KEYPRESS_DEPTH; ++n) {
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 40); // default shake mod depth to 40%
+                for (int n = Y_SHAKE_MOD_CC_DEPTH; n <= Y_SHAKE_MOD_KEYPRESS_DEPTH; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 40);  // default shake mod depth to 40%
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 50);
                 }
-                for (int n=Y_SHAKE_MOD_CC_MODE; n <= Y_SHAKE_MOD_KEYPRESS_MODE; ++n) {
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0); // default shake mod mode - Up/Down
+                for (int n = Y_SHAKE_MOD_CC_MODE; n <= Y_SHAKE_MOD_KEYPRESS_MODE; ++n) {
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + (n * 3), 0);  // default shake mod mode - Up/Down
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
                 }
                 // pressure MPE+ default to off
@@ -3732,9 +3758,9 @@ void checkFirmwareVersion() {
             }
         }
 
-         if (currentVersion < 44) {
+        if (currentVersion < 44) {
             // clear the high bytes for baseline
-            for (int i=0; i < 8; ++i) { // fingerholes only
+            for (int i = 0; i < 8; ++i) {  // fingerholes only
                 writeEEPROM(EEPROM_BASELINE_CALIB_START + 9 + i, 0);
             }
 
@@ -3743,13 +3769,26 @@ void checkFirmwareVersion() {
             for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
                 byte high = readEEPROM(i);
                 byte low = readEEPROM(i + 1);
-                byte index = (i - EEPROM_SENSOR_CALIB_START) / 2;
                 int caldata = word(high, low);
                 caldata -= 50;
                 writeEEPROM(i, highByte(caldata));
                 writeEEPROM(i + 1, lowByte(caldata));
             }
-         }
+
+            // Do the same for the factory calibration.
+            for (int i = 0; i < 8; ++i) {  // fingerholes only
+                writeEEPROM(EEPROM_BASELINE_CALIB_START + 9 + i + EEPROM_FACTORY_SETTINGS_START, 0);
+            }
+
+            for (int i = EEPROM_SENSOR_CALIB_START + EEPROM_FACTORY_SETTINGS_START; i < EEPROM_SENSOR_CALIB_START + 18 + EEPROM_FACTORY_SETTINGS_START; i += 2) {
+                byte high = readEEPROM(i);
+                byte low = readEEPROM(i + 1);
+                int caldata = word(high, low);
+                caldata -= 50;
+                writeEEPROM(i, highByte(caldata));
+                writeEEPROM(i + 1, lowByte(caldata));
+            }
+        }
 
         writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
     }
