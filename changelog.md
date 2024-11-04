@@ -12,11 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixes to tonehole sensor calibration routine.
 
-- Added mapping of IMU roll/elevation/yaw to pitchbend.
 
 ### Added
 
-
+- Added mapping of IMU roll/elevation/yaw to pitchbend.
 
 ## [Released]
 
