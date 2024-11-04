@@ -391,8 +391,38 @@ const MIDI_CC_109 = 109; // From WARBL. Values as follows:
     const MIDI_CC_109_VALUE_38 = 38; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_39 = 39; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
     const MIDI_CC_109_VALUE_40 = 40; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
-    const MIDI_CC_109_VALUE_41 = 41; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
-    /* 42-99	unused -- can be used to extend above array or for other variables */
+    const MIDI_CC_109_VALUE_41 = 41; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
+	const MIDI_CC_109_VALUE_42 = 42; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_43 = 43; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_44 = 44; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_45 = 45; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_46 = 46; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_47 = 47; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_48 = 48; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_49 = 49; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_50 = 50; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_51 = 51; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
+	const MIDI_CC_109_VALUE_52 = 52; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_53 = 53; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_54 = 54; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_55 = 55; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_56 = 56; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_57 = 57; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_58 = 58; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_59 = 59; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_60 = 60; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_61 = 61; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
+	const MIDI_CC_109_VALUE_62 = 62; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_63 = 63; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_64 = 64; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_65 = 65; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_66 = 66; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_67 = 67; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_68 = 68; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_69 = 69; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_70 = 70; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105. 
+    const MIDI_CC_109_VALUE_71 = 71; // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
+    /* 72-99	unused -- can be used to extend above array or for other variables */
 
     const MIDI_CC_109_VALUE_100 = 100; // Bidirectional. Indicates that WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
     const MIDI_CC_109_VALUE_101 = 101; // Bidirectional. Indicates that WARBL2 custom fingering chart 2 is about to be sent on CC 105. 
@@ -567,6 +597,37 @@ const MIDI_Y_SHAKE_MOD_KEYPRESS_DEPTH = MIDI_CC_109_VALUE_38;   // 0-100
 const MIDI_Y_SHAKE_MOD_CC_MODE = MIDI_CC_109_VALUE_39;         // 0,1,2,3
 const MIDI_Y_SHAKE_MOD_CHPRESS_MODE = MIDI_CC_109_VALUE_40;    // 0,1,2,3
 const MIDI_Y_SHAKE_MOD_KEYPRESS_MODE = MIDI_CC_109_VALUE_41;   // 0,1,2,3
+
+const IMU_ROLL_PITCH_MIN = MIDI_CC_109_VALUE_42; // IMU pitchbend mapping variables
+const IMU_ROLL_PITCH_MAX = MIDI_CC_109_VALUE_43;
+const IMU_ROLL_PITCH_MIN_HIGH = MIDI_CC_109_VALUE_44;
+const IMU_ROLL_PITCH_MAX_LOW = MIDI_CC_109_VALUE_45;
+const IMU_ROLL_PITCH_OUT_LOW_CENTS = MIDI_CC_109_VALUE_46;     // stored signed as 0 cents = 64
+const IMU_ROLL_PITCH_OUT_HIGH_CENTS = MIDI_CC_109_VALUE_47;    // stored signed as 0 cents = 64
+const IMU_ROLL_PITCH_OUT_CLAMP = MIDI_CC_109_VALUE_48;   // boolean if outbend should be clamped
+const IMU_ROLL_PITCH_CURVE_LOW = MIDI_CC_109_VALUE_49;     // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const IMU_ROLL_PITCH_CURVE_HIGH = MIDI_CC_109_VALUE_50;      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const IMU_ELEVATION_PITCH_MIN = MIDI_CC_109_VALUE_51; // IMU pitchbend mapping variables
+const IMU_ELEVATION_PITCH_MAX = MIDI_CC_109_VALUE_52;
+const IMU_ELEVATION_PITCH_MIN_HIGH = MIDI_CC_109_VALUE_53;
+const IMU_ELEVATION_PITCH_MAX_LOW = MIDI_CC_109_VALUE_54;
+const IMU_ELEVATION_PITCH_OUT_LOW_CENTS = MIDI_CC_109_VALUE_55;     // stored signed as 0 cents = 64
+const IMU_ELEVATION_PITCH_OUT_HIGH_CENTS = MIDI_CC_109_VALUE_56;    // stored signed as 0 cents = 64
+const IMU_ELEVATION_PITCH_OUT_CLAMP = MIDI_CC_109_VALUE_57;   // boolean if outbend should be clamped
+const IMU_ELEVATION_PITCH_CURVE_LOW = MIDI_CC_109_VALUE_58;      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const IMU_ELEVATION_PITCH_CURVE_HIGH = MIDI_CC_109_VALUE_59;      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const IMU_YAW_PITCH_MIN = MIDI_CC_109_VALUE_60; // IMU pitchbend mapping variables
+const IMU_YAW_PITCH_MAX = MIDI_CC_109_VALUE_61;
+const IMU_YAW_PITCH_MIN_HIGH = MIDI_CC_109_VALUE_62;
+const IMU_YAW_PITCH_MAX_LOW = MIDI_CC_109_VALUE_63;
+const IMU_YAW_PITCH_OUT_LOW_CENTS = MIDI_CC_109_VALUE_64;     // stored signed as 0 cents = 64
+const IMU_YAW_PITCH_OUT_HIGH_CENTS = MIDI_CC_109_VALUE_65;    // stored signed as 0 cents = 64
+const IMU_YAW_PITCH_OUT_CLAMP = MIDI_CC_109_VALUE_66;   // boolean if outbend should be clamped
+const IMU_YAW_PITCH_CURVE_LOW = MIDI_CC_109_VALUE_67;      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const IMU_YAW_PITCH_CURVE_HIGH = MIDI_CC_109_VALUE_68;      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+const MAP_ROLL_TO_PITCHBEND = MIDI_CC_109_VALUE_69; // ON/OFF boolean
+const MAP_ELEVATION_TO_PITCHBEND = MIDI_CC_109_VALUE_70; // ON/OFF boolean
+const MAP_YAW_TO_PITCHBEND = MIDI_CC_109_VALUE_71; // ON/OFF boolean
 
 //END Config tool only Constants
 

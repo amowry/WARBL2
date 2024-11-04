@@ -16,12 +16,6 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-
-
-    for (byte i = 0; i < 9; i++) {
-        //Serial.println(toneholeRead[i]);
-    }
-    //Serial.println(" ");
 }
 
 
@@ -1164,9 +1158,9 @@ inline float curveValToExponent(int val) {
 
 
 
-
+// Calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between.
 void getExpression() {
-    // calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between
+
     int lowPressureMin = (ED[mode][EXPRESSION_MIN] * 9) + 100;
     int lowPressureMax = (ED[mode][EXPRESSION_MIN_HIGH] * 9) + 100;
     int highPressureMin = (ED[mode][EXPRESSION_MAX_LOW] * 9) + 100;
@@ -1177,11 +1171,11 @@ void getExpression() {
     float highCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_HIGH]);
     bool doClamp = ED[mode][EXPRESSION_OUT_CLAMP] > 0;
 
+    // Fixed non-override options or overblow mode
     if (!switches[mode][OVERRIDE] || (breathMode == kPressureBreath)) {
-        // fixed non-override options or overblow mode
         if (newState == TOP_REGISTER) {
             lowPressureMin = upperBoundLow;                                                  // sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
-            highPressureMax = upperBoundLow + ((upperBoundHigh - sensorThreshold[0]) >> 1);  // Get the register boundary taking hysteresis into consideration
+            highPressureMax = upperBoundLow + ((upperBoundHigh - sensorThreshold[0]) >> 1);  // Get the register boundary taking hysteresis into consideration.
         } else {
             lowPressureMin = sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
             if (breathMode == kPressureBreath) {
@@ -1192,10 +1186,10 @@ void getExpression() {
             }
         }
 
-        // make them meet in the middle
+        // Make them meet in the middle.
         lowPressureMax = highPressureMin = ((highPressureMax + lowPressureMin) >> 1);
 
-        // may need to play with these - XXX
+        // May need to play with these - XXX
         centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH];  // -20 cents at least
         centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[mode][EXPRESSION_DEPTH];
         doClamp = true;
@@ -1207,13 +1201,13 @@ void getExpression() {
     float ratio = 0.0f;
     int lowRangeSpan = max(lowPressureMax - lowPressureMin, 1);
     int highRangeSpan = max(highPressureMax - highPressureMin, 1);
-    if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range
+    if (sensorValue <= lowPressureMax) {  // Pressure is in the lower range.
         ratio = min(((lowPressureMax - sensorValue)) / (float)(lowRangeSpan), 1.0f);
         if (lowCurveExp != 1.0f) {
             ratio = powf(ratio, lowCurveExp);
         }
         centsOffset = centsLowOffset * ratio;
-    } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range
+    } else if (sensorValue >= highPressureMin) {  // Pressure is in the higher range.
         ratio = max(((sensorValue - highPressureMin)) / (float)(highRangeSpan), 0.0f);
         if (highCurveExp != 1.0f) {
             ratio = powf(ratio, highCurveExp);
@@ -1223,31 +1217,82 @@ void getExpression() {
         }
         centsOffset = centsHighOffset * ratio;
     } else {
-        // in the stable range
+        // In the stable range
         centsOffset = 0;
     }
 
-    expression = (int)(0.01f * centsOffset * pitchBendPerSemi);  // expression is in raw pitch bend units
+    expression = (int)(0.01f * centsOffset * pitchBendPerSemi);  // Expression is in raw pitch bend units.
 
+    if (pitchBendMode == kPitchBendNone && !(IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND])) {  // If we're not using vibrato/slide and not using IMU pitchbend, send the pitchbend now instead of adding it in later.
+        pitchBend = 0;
+        sendPitchbend();
+    }
+}
+
+
+
+
+
+
+
+
+// Calculate the bend in a low and high IMU range segments, with a stable (no-bend) range between.
+void getIMUpitchbend() {
+
+    IMUpitchbend = 0;  // Reset.
+
+    for (byte i = 0; i < 3; i++) {
+        if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND + i]) {  // Calculate pitchbend separately for roll, pitch, and yaw if necessary.
+            int IMUvalue;
+            if (i == 0) {
+                IMUvalue = ((constrain(roll, -90, 90) + 90) * 5) + 100;  // Constrain roll to 180 degrees and map to same range as pressure sensor, for re-using expression calculations.
+            }
+            if (i == 1) {
+                IMUvalue = ((constrain(pitch, -90, 90) + 90) * 5) + 100;  // Pitch
+            }
+            if (i == 2) {
+                IMUvalue = ((constrain(yaw, -180, 180) + 180) * 2.5f) + 100;  // Yaw (full 360 degree range)
+            }
+            int lowIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MIN + (i * 9)] * 25) + 100;  // Values received from the Config Tool range from 0-36 and we scale them up to 900 here to make it easy to re-use the calculations from the expression override function above.
+            int lowIMUmax = (IMUsettings[mode][IMU_ROLL_PITCH_MIN_HIGH + (i * 9)] * 25) + 100;
+            int highIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MAX_LOW + (i * 9)] * 25) + 100;
+            int highIMUmax = (IMUsettings[mode][IMU_ROLL_PITCH_MAX + (i * 9)] * 25) + 100;
+            int centsLowOffset = 2 * (IMUsettings[mode][IMU_ROLL_PITCH_OUT_LOW_CENTS + (i * 9)] - 64);
+            int centsHighOffset = 2 * (IMUsettings[mode][IMU_ROLL_PITCH_OUT_HIGH_CENTS + (i * 9)] - 64);
+            float lowCurveExp = curveValToExponent(IMUsettings[mode][IMU_ROLL_PITCH_CURVE_LOW + (i * 9)]);
+            float highCurveExp = curveValToExponent(IMUsettings[mode][IMU_ROLL_PITCH_CURVE_HIGH + (i * 9)]);
+            bool doClamp = IMUsettings[mode][IMU_ROLL_PITCH_OUT_CLAMP + (i * 9)] > 0;
+            float centsOffset = 0.0f;
+            float ratio = 0.0f;
+            int lowRangeSpan = max(lowIMUmax - lowIMUmin, 1);
+            int highRangeSpan = max(highIMUmax - highIMUmin, 1);
+            if (IMUvalue <= lowIMUmax) {  // IMU is in the lower range.
+                ratio = min(((lowIMUmax - IMUvalue)) / (float)(lowRangeSpan), 1.0f);
+                if (lowCurveExp != 1.0f) {
+                    ratio = powf(ratio, lowCurveExp);
+                }
+                centsOffset = centsLowOffset * ratio;
+            } else if (IMUvalue >= highIMUmin) {  // IMU is in the higher range.
+                ratio = max(((IMUvalue - highIMUmin)) / (float)(highRangeSpan), 0.0f);
+                if (highCurveExp != 1.0f) {
+                    ratio = powf(ratio, highCurveExp);
+                }
+                if (doClamp) {
+                    ratio = min(ratio, 1.0f);
+                }
+                centsOffset = centsHighOffset * ratio;
+            } else {
+                // In the stable range
+                centsOffset = 0;
+            }
+
+            IMUpitchbend += (int)(0.01f * centsOffset * pitchBendPerSemi);  // Add in contribution by roll, pitch, yaw. In raw pitch bend units.
+        }
+    }
     if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
         pitchBend = 0;
         sendPitchbend();
     }
-
-    /*
-    Serial.print(" s = ");
-    Serial.print(sensorValue);
-    Serial.print(" lm = ");
-    Serial.print(lowPressureMax);
-    Serial.print(" hm = ");
-    Serial.print(highPressureMin);
-    Serial.print(" rat = ");
-    Serial.print(ratio);
-    Serial.print(" c = ");
-    Serial.print(centsOffset);
-    Serial.print(" exp = ");
-    Serial.println(expression);
-    */
 }
 
 
@@ -1285,7 +1330,7 @@ void handleCustomPitchBend() {
         getSlide();
     }
 
-    // this method only cares if 2 or 3 are slideholes
+    // This method only cares if 2 or 3 are slideholes.
     int slideHoleIndex = iPitchBend[2] != 0 ? 2 : iPitchBend[3] != 0 ? 3
                                                                      : 0;
 
@@ -1299,8 +1344,6 @@ void handleCustomPitchBend() {
                 iPitchBend[2] = 0;
             }
         }
-
-
 
 
         if (vibratoEnable == 2) {  // Used for whistle and uilleann, indicates that it's a pattern where lowering finger 2 or 3 partway would trigger progressive vibrato.
@@ -1490,7 +1533,7 @@ void sendPitchbend() {
         pitchBend += (int)(noteshift * pitchBendPerSemi);
     }
 
-    pitchBend = 8192 - pitchBend + expression + shakeVibrato;
+    pitchBend = 8192 - pitchBend + expression + shakeVibrato + IMUpitchbend;  // Add up all sources of pitchbend.
 
     if (pitchBend < 0) {
         pitchBend = 0;
@@ -1520,6 +1563,10 @@ void calculateAndSendPitchbend() {
     if (ED[mode][EXPRESSION_ON] && !switches[mode][BAGLESS]) {
         getExpression();  // IF using pitchbend expression, calculate pitchbend based on pressure reading.
     }
+    if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+        getIMUpitchbend();
+    }
+
 
     if (!customEnabled && pitchBendMode != kPitchBendNone) {
         handlePitchBend();
@@ -1965,10 +2012,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode >= MIDI_CC_109_OFFSET && pressureReceiveMode < (kIMUnVariables + MIDI_CC_109_OFFSET)) {
-                    Serial.print("IMU ");
-                    Serial.print(pressureReceiveMode);
-                    Serial.print(" value: ");
-                    Serial.println(value);
+                    //Serial.print("IMU ");
+                    //Serial.print(pressureReceiveMode);
+                    //Serial.print(" value: ");
+                    //Serial.println(value);
                     IMUsettings[mode][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
                     loadPrefs();
                 }
@@ -2991,6 +3038,12 @@ void resetExpressionOverrideDefaults() {
 }
 
 
+
+
+
+
+
+
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
     vibratoHoles = vibratoHolesSelector[mode];
@@ -3088,11 +3141,11 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE]) {
+    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     }
 
-    // Calculate upper and lower bounds for IMU pitch register mapping.
+    // Calculate upper and lower bounds for IMU pitch (elevation) register mapping.
     byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  // Number of degrees per register
     IMUsettings[mode][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[mode][PITCH_REGISTER_NUMBER], 2, 5);                                                                // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
     for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
@@ -3787,6 +3840,36 @@ void checkFirmwareVersion() {
                 caldata -= 50;
                 writeEEPROM(i, highByte(caldata));
                 writeEEPROM(i + 1, lowByte(caldata));
+            }
+
+            // New IMU settings
+            for (int i = 0; i < 3; ++i) {      // Each mode
+                for (int n = 0; n < 3; ++n) {  // Roll, pitch, yaw settings
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3), 0);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3), 36);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 36);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3), 9);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 9);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3), 27);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 27);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3), 39);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 39);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3), 114);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 114);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3), 0);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3), 64);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 64);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3), 64);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 64);
+                }
+                writeEEPROM(EEPROM_IMU_SETTINGS_START + i + MAP_ROLL_TO_PITCHBEND * 3, 0);
+                writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_ROLL_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);
+                writeEEPROM(EEPROM_IMU_SETTINGS_START + i + MAP_ELEVATION_TO_PITCHBEND * 3, 0);
+                writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_ELEVATION_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);
+                writeEEPROM(EEPROM_IMU_SETTINGS_START + i + MAP_YAW_TO_PITCHBEND * 3, 0);
+                writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_YAW_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);
             }
         }
 

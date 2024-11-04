@@ -2,8 +2,8 @@
 <html>
    <script>
       //Change this for app vs. web version. File names should be configure.html for web version and configureForApp.html for app version.
-      //var platform = "app";
-     var platform = "web";
+      var platform = "app";
+     //var platform = "web";
    </script>
    <head>
       <meta charset="utf-8" />
@@ -996,6 +996,9 @@
                   <button type="button" id="polyMapButton" class="smallbutton noTouch mapPoly" onClick="mapPoly()">Map...</button>
                   <button type="button" id="backPressureButton" class="smallbutton noTouch backPressure" onClick="backPressure()">BACK</button>
                </div>
+               
+               
+               
                <div class="smallcontrolbox expressionBox" id="box9">
                   <h2 class="controlboxtitle noTouch">
                      Pressure and IMU Mapping
@@ -1004,29 +1007,40 @@
                   <button type="button" id="pressureMapButton" class="smallbutton noTouch pressureMapping" onClick="mapPressure()">Pressure mapping...</button>
                   <button type="button" id="IMUMapButton" class="smallbutton noTouch IMUMapping" onClick="mapIMU()">IMU mapping...</button>
                </div>
+               
+               
+               
                <div class="smallcontrolbox expressionBox" id="box10">
                   <h2 class="controlboxtitle noTouch">
                      IMU Mapping
                      <button type="button" class="infocircle" onClick="modal(26)">  <img  class = "info" src="img/info-circle.svg"></img></button>
                   </h2>
                   <button type="button" id="backIMUButton" class="smallbutton noTouch backIMU" onClick="backIMU()">BACK</button>
-                  <div id="sendRollLabel" class="sendRollLabel noTouch">Send roll as CC</div>
-                  <div id="sendPitchLabel" class="sendPitchLabel noTouch">Send elevation as CC</div>
-                  <div id="sendYawLabel" class="sendYawLabel noTouch">Send yaw as CC</div>
+ 
+                  <div id="IMUCCMappingControls">
+                  	<div id="sendRollLabel" class="sendRollLabel noTouch">Send roll as CC</div>
+                  	<div id="sendPitchLabel" class="sendPitchLabel noTouch">Send elevation as CC</div>
+                  	<div id="sendYawLabel" class="sendYawLabel noTouch">Send yaw as CC</div>
+                  	<button type="button" id="rollMapButton" class="smallbutton noTouch mapRoll" onClick="mapRoll()">Map...</button>
+                  	<button type="button" id="rollPitchButton" class="smallbutton noTouch mapPitch" onClick="mapPitch()">Map...</button>
+                  	<button type="button" id="rollYawButton" class="smallbutton noTouch mapYaw" onClick="mapYaw()">Map...</button>
+                    <label class="switch" id="switch20">
+                  	<input type="checkbox" class="checkboxes" id="checkbox20" onChange="sendRoll(this.checked)" />
+                  	<span class="slider round"></span>
+                  	</label>
+                  	<label class="switch" id="switch21">
+                  	<input type="checkbox" class="checkboxes" id="checkbox21" onChange="sendPitch(this.checked)" />
+                 	 <span class="slider round"></span>
+                 	 </label>
+                 	 <label class="switch" id="switch22">
+                 	 <input type="checkbox" class="checkboxes" id="checkbox22" onChange="sendYaw(this.checked)" />
+                 	 <span class="slider round"></span>
+                 	 </label>
+                  </div>
+                  
+                  <div id="IMUbottomControls">
                   <div id="sendPitchRegisterLabel" class="sendPitchRegisterLabel noTouch">Control register with elevation</div>
                   <div id="sendShakeLabel" class="sendShakeLabel noTouch">Shake vibrato</div>
-                  <label class="switch" id="switch20">
-                  <input type="checkbox" class="checkboxes" id="checkbox20" onChange="sendRoll(this.checked)" />
-                  <span class="slider round"></span>
-                  </label>
-                  <label class="switch" id="switch21">
-                  <input type="checkbox" class="checkboxes" id="checkbox21" onChange="sendPitch(this.checked)" />
-                  <span class="slider round"></span>
-                  </label>
-                  <label class="switch" id="switch22">
-                  <input type="checkbox" class="checkboxes" id="checkbox22" onChange="sendYaw(this.checked)" />
-                  <span class="slider round"></span>
-                  </label>
                   <label class="switch" id="switch27">
                   <input type="checkbox" class="checkboxes" id="checkbox27" onChange="sendPitchRegister(this.checked)" />
                   <span class="slider round"></span>
@@ -1052,13 +1066,34 @@
                   </div>
                   <div class="shakeDepthlabel noTouch">Shake vibrato depth (percent)</div>
                   <div class="jumpvalues jumpvalue15">
-                     <p><span id="demo15"></span></p>
+                  <p><span id="demo15"></span></p>
                   </div>
-                  <button type="button" id="rollMapButton" class="smallbutton noTouch mapRoll" onClick="mapRoll()">Map...</button>
-                  <button type="button" id="rollPitchButton" class="smallbutton noTouch mapPitch" onClick="mapPitch()">Map...</button>
-                  <button type="button" id="rollYawButton" class="smallbutton noTouch mapYaw" onClick="mapYaw()">Map...</button>
                   <button type="button" id="pitchRegisterButton" class="smallbutton noTouch pitchRegister" onClick="mapPitchRegister()">Map...</button>
+                  </div>
+                  
+                  <div id="IMUpitchMappingControls">
+                  	<div id="sendRollLabel" class="sendRollPitchbendLabel noTouch">Send roll as pitch bend</div>
+                  	<div id="sendPitchLabel" class="sendPitchPitchbendLabel noTouch">Send elevation as pitch bend</div>
+                  	<div id="sendYawLabel" class="sendYawPitchbendLabel noTouch">Send yaw as pitch bend</div>
+                  	<button type="button" id="rollMapButton" class="smallbutton noTouch mapRollPitchbend" onClick="mapRollPitchbend()">Map...</button>
+                  	<button type="button" id="rollPitchButton" class="smallbutton noTouch mapPitchPitchbend" onClick="mapPitchPitchbend()">Map...</button>
+                  	<button type="button" id="rollYawButton" class="smallbutton noTouch mapYawPitchbend" onClick="mapYawPitchbend()">Map...</button>
+                    <label class="switch" id="switch28">
+                  	<input type="checkbox" class="checkboxes" id="checkbox28" onChange="sendRollPitchbend(this.checked)" />
+                  	<span class="slider round"></span>
+                  	</label>
+                  	<label class="switch" id="switch29">
+                  	<input type="checkbox" class="checkboxes" id="checkbox29" onChange="sendPitchPitchbend(this.checked)" />
+                  	<span class="slider round"></span>
+                  	</label>
+                  	<label class="switch" id="switch30">
+                  	<input type="checkbox" class="checkboxes" id="checkbox30" onChange="sendYawPitchbend(this.checked)" />
+                  	<span class="slider round"></span>
+                  	</label>
+                  </div>
                </div>
+               
+               
                <div class="smallcontrolbox expressionBox" id="box11">
                   <h2 class="controlboxtitle noTouch">
                      <span id="IMUMappingHeader">
@@ -1249,6 +1284,9 @@
                      <div id="CCpressurelevel"></div>
                   </div>
                </div>
+               
+               
+               
                <div class="smallcontrolbox expressionBox" id="box8">
                   <h2 class="controlboxtitle noTouch">
                      Pitch Expression Pressure-Range Override
@@ -1307,11 +1345,74 @@
                   <div id="exprcurvehighlabel" class="exprcurvehighlabel noTouch">Curve High</div>
                   <div class="maxMinContainerExprCurveHigh" id="maxMinContainerExprCurveHigh">
                      <input type="range" min="0" max="127" value="64" class="ranger" id="exprcurvehighslider" onChange="sendExpressionCurveHigh(value)"    onInput="updateExpressionCurveLabels()" onDblClick="resetExpressionCurveHigh()" />
-                  </div>
-                  
+                  </div> 
                   
                   <button type="button" class="smallbutton noTouch advancedOkayPB" id = "advancedOkayPB" onClick="okayOverride()">BACK</button>
                </div>
+               
+               
+               
+               
+               
+                  <div class="smallcontrolbox expressionBox" id="box13">
+                  <h2 class="controlboxtitle noTouch">
+                     <span id="IMUPitchbendMappingHeader">IMU pitch bend mapping
+                     </span>
+                     <button type="button" class="infocircle" onClick="modal(31)">  <img  class = "info" src="img/info-circle.svg"></img></button>
+                  </h2>
+
+                  <div class="jumpvalues noTouch" id="IMUlowslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="IMUlowslider-value-max"></div>
+                  <div class="maxMinContainerIMULow" id="IMUlowslider"></div>
+                  <div id="lowrangelabel" class="lowrangelabel noTouch">Low range</div>
+
+                  
+                  <div class="jumpvalues noTouch" id="IMUhighslider-value-min"></div>
+                  <div class="jumpvalues noTouch" id="IMUhighslider-value-max"></div>
+                  <div class="maxMinContainerIMUHigh" id="IMUhighslider"></div>
+                  <div id="highrangelabel" class="highrangelabel noTouch">High range</div>
+                  
+                  <div class="jumpvalues noTouch" id="IMUlowbendslider-value"></div>
+                  <div class="maxMinContainerIMULowBend" id="IMUlowbendslider"></div>
+                  <div id="lowrangelabel2" class="lowrangelabel2 noTouch">Low range</div>
+
+                  <div class="jumpvalues noTouch" id="IMUhighbendslider-value"></div>
+                  <div class="maxMinContainerIMUHighBend" id="IMUhighbendslider"></div>
+                  <div id="highrangelabel2" class="highrangelabel2 noTouch">High range</div>
+                  
+
+                  
+                  <div id="clampIMUMaxLabel" class="clampIMUMaxLabel noTouch">Clamp upper bend</div>
+                  <label class="switch" id="clampIMUSwitch">
+                  <input type="checkbox" class="checkboxes" id="clampIMUCheck" onChange="sendClampIMU(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <button type="button" class="resetExpressionButton smallbutton noTouch" id="resetExpressionButton" onClick="resetIMUPitch()">Reset to Default</button>
+                  
+                  <div class="overrideRangeLabel noTouch" id="overrideRangeLabel">Input Range (degrees)</div>
+                  <div class="overrideCentsLabel noTouch" id="overrideCentsLabel">Output Bend (cents)</div>
+                  
+                  <div class="jumpvalues noTouch" id="IMUcurvelowslider-value"></div>
+                  <div id="IMUcurvelowlabel" class="IMUcurvelowlabel noTouch">Curve Low</div>
+                  <div class="maxMinContainerIMUCurveLow" id="maxMinContainerIMUCurveLow">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="IMUcurvelowslider" onChange="sendIMUCurveLow(value)"    onInput="updateIMUCurveLabels()" onDblClick="resetIMUCurveLow()" />
+                  </div>
+
+                  <div class="jumpvalues noTouch" id="IMUcurvehighslider-value"></div>
+                  <div id="IMUcurvehighlabel" class="IMUcurvehighlabel noTouch">Curve High</div>
+                  <div class="maxMinContainerIMUCurveHigh" id="maxMinContainerIMUCurveHigh">
+                     <input type="range" min="0" max="127" value="64" class="ranger" id="IMUcurvehighslider" onChange="sendIMUCurveHigh(value)"    onInput="updateIMUCurveLabels()" onDblClick="resetIMUCurveHigh()" />
+                  </div> 
+                  
+                  <button type="button" class="smallbutton noTouch advancedOkayPB" id = "advancedOkayPB" onClick="okayIMUPitchbend()">BACK</button>
+               </div>
+               
+               
+               
+               
+               
+               
+               
                <div class="smallcontrolbox dronescontrolBox" id="box3">
                   <h2 class="controlboxtitle noTouch">
                      Drones Control
@@ -2086,7 +2187,7 @@
                      The <b>Legato slide limit (semitones)</b> setting determines the maximum range for sliding if you are using the <b>4. Legato slide/vibrato option</b>. Note that the <b>MIDI bend range (semitones)</b> must also be set at least as high, and you must also always set the MIDI pitch bend range in whatever MIDI app or host you are using to the same value as the <b>MIDI bend range (semitones)</b> setting.
                   </p>
                   <p>
-                     Normally WARBL sends a pitchbend message after a new MIDI note is turned on. Some users may instead wish to send pitch bend before the note is turned on by using the <b>Send pitch bend immediately before Note On</b> switch. This may cause pitch bend audio artifacts with some MIDI apps but is the recommended setting for MIDI MPE.
+                     Normally WARBL sends a pitch bend message after a new MIDI note is turned on. Some users may instead wish to send pitch bend before the note is turned on by using the <b>Send pitch bend immediately before Note On</b> switch. This may cause pitch bend audio artifacts with some MIDI apps but is the recommended setting for MIDI MPE.
                   </p>
                   <p>
                      The <b>Send notes as legato</b> switch cause WARBL to wait to turn off each MIDI note until after the next note is sent. This is the recommended setting for most apps and allows many apps to interpret the notes as legato, allowing them to flow seamlessly together.
@@ -2371,7 +2472,7 @@
                      By turning on the <b>Override pitch expression range</b> switch and using the sliders, you can override the default pressure range used for pitch expression. This is not available if overblowing is being used, because in that case the pressure range has to be calculated in real time based on the current register and overblowing settings. 
                   </p>
                   <p>
-                  With the original WARBL, there is a single slider for controlling the pressure range used for pitchbend. 
+                  With the original WARBL, there is a single slider for controlling the pressure range used for pitch bend. 
                   </p>
                   <p>
                     With the WARBL2 (firmware 4.3 or higher), the pitch expression based on pressure is controlled with two segments:
@@ -2382,7 +2483,7 @@
                     The low and high ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the pressure range where no pitch bend occurs. You can see exactly how input pressure maps to output bend in cents with the interactive meters for both input pressure and output bend which are behind each pair of sliders.       
                   </p>
 				<p>
-The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high pressure ranges to pitchbend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00". Double-clicking (or double-tapping) the sliders will return them to the linear setting.
+The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high pressure ranges to pitch bend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00". Double-clicking (or double-tapping) the sliders will return them to the linear setting.
 				</p>
                </div>
             </div>
@@ -2461,6 +2562,25 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
             </div>
          </div>
       </div>
+    <div id="open-modal31" onClick="" class="modal-window">
+            <div id="modal-center31">
+               <h2 title="Close" onClick="modalclose(31)" class="modal-close">Close</h2>
+               <h1>Roll/Elevation/Yaw pitch bend mapping</h1>
+               <div>
+                  <p>
+                    Roll, elevation, and yaw can be mapped to pitch bend based on pressure with two segments:
+                    <ul> 
+                        <li>A low input range, whose min and max input determine a bend along with the low range output bend, and...
+                        <li> A high input range, whose min and max input determine a bend along with the high range output bend. If the input is greater than the high range max input, it will either be clamped at the specified bend amount (if <b>clamp upper bend</b> is on), or it will continue with the same bend slope with higher values of roll/elevation/yaw.
+                    </ul>
+                    The low and high input ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the roll/elevation/yaw range where no pitch bend occurs.     
+                  </p>
+				<p>
+The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high input ranges to pitch bend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00". Double-clicking (or double-tapping) the sliders will return them to the linear setting.
+				</p>
+               </div>
+            </div>
+         </div>
       <div id="open-modal26" onClick="" class="modal-window">
          <div id="modal-center26">
             <h2 title="Close" onClick="modalclose(26)" class="modal-close">Close</h2>
@@ -2470,7 +2590,7 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
                   The Inertial Measurement Unit (IMU) continuously tracks acceleration and  angular rotation in three dimensions. This information is converted to roll, elevation angle ("pitch"), and yaw, which can be then mapped to MIDI messages. 
                </p>
                <p>
-                  There is also an option to play pitchbend vibrato by shaking the WARBL2 along its long axis. You can adjust the amount of <b>shake vibrato</b> and also select the "direction" of pitchbend: selecting <b>up/down</b> means that the pitch will be altered both above and below the normal pitch for the note, corresponding to the direction of movement of the WARBL2. <b>Down/up</b> has the same effect but opposite the direction of the movement of the device. <b>Up only</b> causes the pitch to only be raised above the current note, and <b>down only</b> causes the pitch to only be flattened.
+                  There is also an option to play pitch bend vibrato by shaking the WARBL2 along its long axis. You can adjust the amount of <b>shake vibrato</b> and also select the "direction" of pitch bend: selecting <b>up/down</b> means that the pitch will be altered both above and below the normal pitch for the note, corresponding to the direction of movement of the WARBL2. <b>Down/up</b> has the same effect but opposite the direction of the movement of the device. <b>Up only</b> causes the pitch to only be raised above the current note, and <b>down only</b> causes the pitch to only be flattened.
                </p>
                <p>
                   To map <b>roll, elevation, or yaw to CC messages</b>, turn on the appropriate switch and then click <b>Map</b>.
@@ -2573,6 +2693,7 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
       });
       
    </script>
+   
    <script>
       var exprlowslider = document.getElementById('exprlowslider');
       noUiSlider.create(exprlowslider, {
@@ -2597,8 +2718,7 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
               'max': 100
           }
       });
-      
-   </script>
+     </script>
    <script>
       var exprlowbendslider = document.getElementById('exprlowbendslider');
       noUiSlider.create(exprlowbendslider, {
@@ -2624,6 +2744,59 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
               'max': 127
           }
       });
+   </script>
+   
+      <script>
+      var IMUlowslider = document.getElementById('IMUlowslider');
+      noUiSlider.create(IMUlowslider, {
+          start: [0, 9],
+          step: 1,
+          connect: true,
+          range: {
+              'min': 0,
+              'max': 36
+          }
+      });
+      
+   </script>
+   <script>
+      var IMUhighslider = document.getElementById('IMUhighslider');
+      noUiSlider.create(IMUhighslider, {
+          start: [27, 36],
+          step: 1,
+          connect: true,
+          range: {
+              'min': 0,
+              'max': 36
+          }
+      });
+    </script>
+   <script>
+      var IMUlowbendslider = document.getElementById('IMUlowbendslider');
+      noUiSlider.create(IMUlowbendslider, {
+          start: [39, 64],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
+   </script>
+   <script>
+      var IMUhighbendslider = document.getElementById('IMUhighbendslider');
+      noUiSlider.create(IMUhighbendslider, {
+          start: [114, 64],
+          step: 1,
+          connect: true,
+          behaviour: "unconstrained-tap",
+          range: {
+              'min': 0,
+              'max': 127
+          }
+      });
+	  
    </script>
    <script>
       var slider4 = document.getElementById('slider4');
@@ -2666,11 +2839,11 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
       });
       
    </script>
-   <script src='js/WebAudioFontPlayer.js'></script>
-   <script src='js/0650_SBLive_sf2.js'></script>
    <script src="js/constants.min.js"></script>
    <script src="js/midi.min.js"></script>
    <script src="js/d3.min.js"></script>
+   <script src='js/WebAudioFontPlayer.js'></script>
+   <script src='js/0650_SBLive_sf2.js'></script>
    <script src="js/daypilot-modal.min-3.10.1.js"></script>
    <script src="js/update.js"></script>
 </html>

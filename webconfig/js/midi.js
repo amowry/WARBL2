@@ -7,6 +7,7 @@ var sendDelay = 15 //milliseconds delay between sending commands to the WARBL
 
 var mapSelection; //keeps track of which pressure output we're mapping (CC, vel, aftertouch, poly)
 var IMUmapSelection; //keeps track of which IMU output we're mapping (roll, pitch, yaw)
+var IMUpitchSelection; //Same as above, for IMU pitch mapping
 var center = [1, 1, 1, 1]; //center range of input sliders for IMU mapping
 var IMUchannel = [1, 1, 1]; //CC channels for roll, pitch, yaw mapping
 var IMUnumber = [2, 2, 2]; //CC numbers for roll, pitch, yaw mapping
@@ -18,6 +19,13 @@ var inputSliderMin = [0, 0, 0, 0, -90, -90, -90]; //settings for pressure and IM
 var inputSliderMax = [100, 100, 100, 100, 90, 90, 90];
 var outputSliderMin = [0, 0, 0, 0, 0, 0, 0];
 var outputSliderMax = [127, 127, 127, 127, 127, 127, 127];
+
+// Settings for IMU to pitchbend mapping panel (initialized with defaults): PITCH_MIN, PITCH_MAX, PITCH_MIN_HIGH, PITCH_MAX_LOW, PITCH_OUT_LOW_CENTS, PITCH_OUT_HIGH_CENTS, PITCH_OUT_CLAMP, PITCH_CURVE_LOW, PITCH_CURVE_HIGH
+var IMUtoPitchSettingsDefaults = [0, 36, 9, 27, 39, 114, 0, 64, 64];
+var IMUtoPitchSettingsRoll = [0, 36, 9, 27, 39, 114, 0, 64, 64];
+var IMUtoPitchSettingsPitch = [0, 36, 9, 27, 39, 114, 0, 64, 64];
+var IMUtoPitchSettingsYaw = [0, 36, 9, 27, 39, 114, 0, 64, 64];
+
 var consoleEntries = 0; //number of lines in MIDI console
 var customFingeringFills = [[null, null, null, null, null, null, null, null, null, null, null], [0, 74, 73, 72, 71, 69, 67, 66, 64, 62, 61], [0, 74, 72, 72, 70, 68, 67, 65, 64, 62, 61], [0, 74, 74, 72, 72, 69, 68, 67, 65, 62, 60]];
 var communicationMode = false; //if we're communicating with WARBL
@@ -89,7 +97,7 @@ var defaultInstr = 0; //default instrument
 
 var modals = new Array();
 
-for (var w = 1; w <= 29; w++) {
+for (var w = 1; w <= 31; w++) {
 
     modals[w] = document.getElementById("open-modal" + w);
 
@@ -97,15 +105,17 @@ for (var w = 1; w <= 29; w++) {
 
 updatePlatform();
 
-//disable fixed handlees for sliders
+//disable fixed handles for sliders
 exprlowbendslider.noUiSlider.disable(1);
 exprhighbendslider.noUiSlider.disable(1);
+IMUlowbendslider.noUiSlider.disable(1);
+IMUhighbendslider.noUiSlider.disable(1);
 
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
 
-    for (var i = 1; i <= 30; i++) {
+    for (var i = 1; i <= 31; i++) {
 
         if (event.target == modals[i]) {
 
@@ -937,6 +947,7 @@ function WARBL_Receive(event, source) {
                         okayIMUmap();
 						okayPitchRegistermap();
                         okayOverride();
+						okayIMUPitchbend();
                         backIMU();
                         backPressure();
                         handleDefault();
@@ -959,6 +970,7 @@ function WARBL_Receive(event, source) {
                         okayIMUmap();
 						okayPitchRegistermap();
                         okayOverride();
+						okayIMUPitchbend();
                         backIMU();
                         backPressure();
                         handleDefault();
@@ -981,6 +993,7 @@ function WARBL_Receive(event, source) {
                         okayIMUmap();
 						okayPitchRegistermap();
                         okayOverride();
+						okayIMUPitchbend();
                         backIMU();
                         backPressure();
                         handleDefault();
@@ -1573,7 +1586,7 @@ function WARBL_Receive(event, source) {
                                 //pressureShakeModDepth.dispatchEvent(new Event('input'));
                                 //output.innerHTML = data2;                        
                             }
-                            console.log("keypress depth: " + data2);
+                            //console.log("keypress depth: " + data2);
                         }
                         else if (jumpFactorWrite == MIDI_CC_109_OFFSET +39) {
                             // pressure shake mod CC
@@ -1595,6 +1608,21 @@ function WARBL_Receive(event, source) {
                             if (mapSelection == 3) {
                                 document.getElementById("shakePressureModMode").value = data2;
                             }
+                        }
+						
+						
+						else if ((jumpFactorWrite >= MIDI_CC_109_OFFSET + 42) && (jumpFactorWrite <= MIDI_CC_109_OFFSET + 50)) {
+						IMUtoPitchSettingsRoll[jumpFactorWrite - MIDI_CC_109_OFFSET - 42] = data2;
+						}
+						
+						else if (jumpFactorWrite == MIDI_CC_109_OFFSET + 69) {
+                            document.getElementById("checkbox28").checked = data2;
+                        }
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET + 70) {
+                            document.getElementById("checkbox29").checked = data2;
+                        }
+                        else if (jumpFactorWrite == MIDI_CC_109_OFFSET + 71) {
+                            document.getElementById("checkbox30").checked = data2;
                         }
 						
 						//End of WARBL2 IMU settings
@@ -1672,6 +1700,14 @@ function WARBL_Receive(event, source) {
 
 
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
+					
+					
+					if (version > 4.3) {
+						document.getElementById("IMUpitchMappingControls").style.display = "block";
+						document.getElementById("IMUCCMappingControls").style.top = "-120px";
+						document.getElementById("IMUbottomControls").style.top = "-120px";
+					}
+					
 					
 					if (version < 4.3) {
 						document.getElementById("exprOutputBendLevelContainer").style.display = "none";
@@ -2445,6 +2481,7 @@ function sendFingeringRadio(tab) { //change instruments, showing the correct tab
     okayIMUmap();
 	okayPitchRegistermap();
     okayOverride();
+	okayIMUPitchbend();
     backIMU();
     backPressure();
     handleDefault(); //display correct default instrument and "set default" buttons	
@@ -2577,6 +2614,24 @@ function sendExpressionCurveHigh(value) {
     updateExpressionCurveLabels();
 }
 
+function sendIMUCurveLow(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_CURVE_LOW + ((IMUpitchSelection - 1) * 9));
+    sendToWARBL(MIDI_CC_105, selection);
+    updateIMUCurveLabels();
+	updateIMUtoPitchSettings();
+}
+
+function sendIMUCurveHigh(value) {
+    blink(1);
+    selection = parseFloat(value);
+    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_CURVE_HIGH + ((IMUpitchSelection - 1) * 9));
+    sendToWARBL(MIDI_CC_105, selection);
+    updateIMUCurveLabels();
+	updateIMUtoPitchSettings();
+}
+
 function resetExpressionCurveLow() {
     var lowslider = document.getElementById('exprcurvelowslider');
     lowslider.value = 64;    
@@ -2589,6 +2644,18 @@ function resetExpressionCurveHigh() {
     sendExpressionCurveHigh(64);
 }
 
+function resetIMUCurveLow() {
+    var lowslider = document.getElementById('IMUcurvelowslider');
+    lowslider.value = 64;    
+    sendIMUCurveLow(64);
+}
+
+function resetIMUCurveHigh() {
+    var highslider = document.getElementById('IMUcurvehighslider');
+    highslider.value = 64;    
+    sendIMUCurveHigh(64);
+}
+
 function sendPressureAftertouchMPEplus(value) {
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_AFTERTOUCH_MPEPLUS);
@@ -2596,13 +2663,19 @@ function sendPressureAftertouchMPEplus(value) {
 }
 
 
-
-
 function sendClampExpr(selection) {
     selection = +selection;
     blink(1);
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_CLAMP);
     sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendClampIMU(selection) {
+    selection = +selection;
+    blink(1);
+    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_OUT_CLAMP + ((IMUpitchSelection - 1) * 9));
+    sendToWARBL(MIDI_CC_105, selection);
+	updateIMUtoPitchSettings();
 }
 
 function sendCurveRadio(selection) {
@@ -2778,7 +2851,7 @@ exprlowslider.noUiSlider.on('change', function (values) {
         sendToWARBL(MIDI_CC_105, parseInt(values[0]));
         sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MIN_HIGH);
         sendToWARBL(MIDI_CC_105, parseInt(values[1]));
-        console.log("lowchange");
+        //console.log("lowchange");
         // if the max is > exprhighslider.min, set the other to match
         //console.log("exprlowslider values " + values[0] + " " + values[1]);
         if ( parseInt(values[1]) > parseInt(exprhighslider.noUiSlider.get()[0])) {
@@ -2798,7 +2871,7 @@ exprhighslider.noUiSlider.on('change', function (values) {
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_MAX);
     sendToWARBL(MIDI_CC_105, parseInt(values[1]));
 
-    console.log("highchange");
+    //console.log("highchange");
     
     // if the min is < slider3.max, set the other to match
     if (parseInt(values[0]) < parseInt(exprlowslider.noUiSlider.get()[1])) {
@@ -2822,6 +2895,111 @@ exprhighbendslider.noUiSlider.on('change', function (values) {
     sendToWARBL(MIDI_CC_104, MIDI_EXPRESSION_OUT_HIGH_CENTS);
     sendToWARBL(MIDI_CC_105, parseInt(values[0]));
 });
+
+
+
+
+
+
+///////////////////////////////
+//IMU to pitchbend sliders 
+IMUlowslider.noUiSlider.on('change', function (values) {
+	console.log("change");
+    blink(1);
+	
+	    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MIN + ((IMUpitchSelection - 1) * 9)); // Use IMUpitchSelection to know if we're sending data for roll, elevation, or yaw.
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MIN_HIGH + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+  
+        //console.log("lowchange");
+        // if the max is > exprhighslider.min, set the other to match
+        //console.log("exprlowslider values " + values[0] + " " + values[1]);
+        if ( parseInt(values[1]) > parseInt(IMUhighslider.noUiSlider.get()[0])) {
+            console.log("  IMUhigh values " + IMUhighslider.noUiSlider.get()[0] + " " + IMUhighslider.noUiSlider.get()[1]);
+            IMUhighslider.noUiSlider.set([parseInt(values[1]), null]);
+	    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MAX_LOW + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+        }
+    updateIMUtoPitchSettings();
+});
+
+
+IMUhighslider.noUiSlider.on('change', function (values) {
+    blink(1);
+	    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MAX_LOW + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MAX + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[1]));
+
+    //console.log("highchange");
+    
+    // if the min is < slider3.max, set the other to match
+    if (parseInt(values[0]) < parseInt(IMUlowslider.noUiSlider.get()[1])) {
+        IMUlowslider.noUiSlider.set([null, parseInt(values[0])]);
+        console.log("  exprlow values " + IMUlowslider.noUiSlider.get()[0] + " " + IMUlowslider.noUiSlider.get()[1]);
+		sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MIN_HIGH + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		
+    }
+	updateIMUtoPitchSettings();
+});
+
+
+IMUlowbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+	    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_OUT_LOW_CENTS + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		updateIMUtoPitchSettings();
+});
+
+
+IMUhighbendslider.noUiSlider.on('change', function (values) {
+    blink(1);
+	    sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_OUT_HIGH_CENTS + ((IMUpitchSelection - 1) * 9));
+        sendToWARBL(MIDI_CC_105, parseInt(values[0]));
+		updateIMUtoPitchSettings();
+});
+
+/////////////////////////////
+
+
+function updateIMUtoPitchSettings() { // Update all the stored values for the IMU to pitchbend mapping panel when any control changes
+	if (IMUpitchSelection == 1){
+		IMUtoPitchSettingsRoll[0] = parseInt(IMUlowslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsRoll[2] = parseInt(IMUlowslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsRoll[3] = parseInt(IMUhighslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsRoll[1] = parseInt(IMUhighslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsRoll[4] = parseInt(IMUlowbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsRoll[5] = parseInt(IMUhighbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsRoll[6] = document.getElementById("clampIMUCheck").checked;
+		IMUtoPitchSettingsRoll[7] = document.getElementById("IMUcurvelowslider").value;
+		IMUtoPitchSettingsRoll[8] = document.getElementById("IMUcurvehighslider").value;
+	}
+	else if (IMUpitchSelection == 2){
+		IMUtoPitchSettingsPitch[0] = parseInt(IMUlowslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsPitch[2] = parseInt(IMUlowslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsPitch[3] = parseInt(IMUhighslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsPitch[1] = parseInt(IMUhighslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsPitch[4] = parseInt(IMUlowbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsPitch[5] = parseInt(IMUhighbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsPitch[6] = document.getElementById("clampIMUCheck").checked;
+		IMUtoPitchSettingsPitch[7] = document.getElementById("IMUcurvelowslider").value;
+		IMUtoPitchSettingsPitch[8] = document.getElementById("IMUcurvehighslider").value;
+	}
+	else if (IMUpitchSelection == 3){
+		IMUtoPitchSettingsYaw[0] = parseInt(IMUlowslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsYaw[2] = parseInt(IMUlowslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsYaw[3] = parseInt(IMUhighslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsYaw[1] = parseInt(IMUhighslider.noUiSlider.get()[1]);
+		IMUtoPitchSettingsYaw[4] = parseInt(IMUlowbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsYaw[5] = parseInt(IMUhighbendslider.noUiSlider.get()[0]);
+		IMUtoPitchSettingsYaw[6] = document.getElementById("clampIMUCheck").checked;
+		IMUtoPitchSettingsYaw[7] = document.getElementById("IMUcurvelowslider").value;
+		IMUtoPitchSettingsYaw[8] = document.getElementById("IMUcurvehighslider").value;
+	}
+}
+
 
 
 slider5.noUiSlider.on('change', function (values, handle) {
@@ -2954,6 +3132,72 @@ exprhighbendslider.noUiSlider.on('update', function (values, handle) {
     marginMin.innerHTML = min;
 });
 
+
+////////////////IMU pitchbend slider values
+IMUlowslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('IMUlowslider-value-min'),
+        marginMax = document.getElementById('IMUlowslider-value-max');
+    if (IMUpitchSelection == 3) {
+        if (handle) {
+            var min = parseFloat((10 * values[handle]) - 180).toFixed(0);
+            marginMax.innerHTML = min;
+        } else {
+            var max = parseFloat((10 * values[handle]) - 180).toFixed(0);
+            marginMin.innerHTML = max;
+        } 
+	}
+	else{
+    if (handle) {
+        var min = parseFloat((5 * values[handle]) - 90).toFixed(0);
+        marginMax.innerHTML = min;
+    	} else {
+       	 	var max = parseFloat((5 * values[handle]) - 90).toFixed(0);
+        	marginMin.innerHTML = max;
+    	}
+	}
+
+});
+
+IMUhighslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('IMUhighslider-value-min'),
+        marginMax = document.getElementById('IMUhighslider-value-max');
+    if (IMUpitchSelection == 3) {
+        if (handle) {
+            var min = parseFloat((10 * values[handle]) - 180).toFixed(0);
+            marginMax.innerHTML = min;
+        } else {
+            var max = parseFloat((10 * values[handle]) - 180).toFixed(0);
+            marginMin.innerHTML = max;
+        } 
+	}
+	else{
+    if (handle) {
+        var min = parseFloat((5 * values[handle]) - 90).toFixed(0);
+        marginMax.innerHTML = min;
+    	} else {
+        	var max = parseFloat((5 * values[handle]) - 90).toFixed(0);
+        	marginMin.innerHTML = max;
+    }
+	}
+});
+
+IMUlowbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('IMUlowbendslider-value');
+
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
+    
+});
+
+IMUhighbendslider.noUiSlider.on('update', function (values, handle) {
+    var marginMin = document.getElementById('IMUhighbendslider-value');
+
+    var min = parseFloat(2 * (values[0] - 64)).toFixed(0);
+    marginMin.innerHTML = min;
+});
+/////////////////////////////////
+
+
 slider4.noUiSlider.on('update', function (values, handle) {
     var marginMin = document.getElementById('slider4-value-min'),
         marginMax = document.getElementById('slider4-value-max');
@@ -3047,6 +3291,27 @@ function sendYaw(selection) {
     selection = +selection; //convert true/false to 1/0
     blink(1);
     sendToWARBL(MIDI_CC_109, MIDI_SEND_YAW);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendRollPitchbend(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_109, MAP_ROLL_TO_PITCHBEND);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendPitchPitchbend(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_109, MAP_ELEVATION_TO_PITCHBEND);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendYawPitchbend(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_109, MAP_YAW_TO_PITCHBEND);
     sendToWARBL(MIDI_CC_105, selection);
 }
 
@@ -3546,7 +3811,7 @@ function mapAftertouch() {
     
     updatePressureValuesForSelection();
     
-    console.log("map aftertouch");
+    //console.log("map aftertouch");
 }
 
 function mapPoly() {
@@ -3635,6 +3900,54 @@ function mapYaw() {
 }
 
 
+function mapRollPitchbend() {
+	IMUpitchSelection = 1;
+    document.getElementById("box10").style.display = "none";
+    document.getElementById("box13").style.display = "block";
+    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Roll Pitch Bend Mapping";
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsRoll[0], IMUtoPitchSettingsRoll[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsRoll[3], IMUtoPitchSettingsRoll[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsRoll[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsRoll[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsRoll[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsRoll[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsRoll[6];
+	updateIMUCurveLabels();	
+}
+
+
+function mapPitchPitchbend() {
+	IMUpitchSelection = 2;
+    document.getElementById("box10").style.display = "none";
+    document.getElementById("box13").style.display = "block";
+    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Elevation Pitch Bend Mapping";
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsPitch[0], IMUtoPitchSettingsPitch[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsPitch[3], IMUtoPitchSettingsPitch[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsPitch[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsPitch[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsPitch[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsPitch[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsPitch[6];
+	updateIMUCurveLabels();	
+}
+
+
+function mapYawPitchbend() {
+	IMUpitchSelection = 3;
+    document.getElementById("box10").style.display = "none";
+    document.getElementById("box13").style.display = "block";
+    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Yaw Pitch Bend Mapping";
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsYaw[0], IMUtoPitchSettingsYaw[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsYaw[3], IMUtoPitchSettingsYaw[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsYaw[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsYaw[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsYaw[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsYaw[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsYaw[6];
+	updateIMUCurveLabels();	
+}
+
+
 function mapPitchRegister() {
     document.getElementById('receivedCC').innerHTML = null;
     document.getElementById("CClevel").style.width = 0 + "%";
@@ -3654,6 +3967,12 @@ function okayIMUmap() {
     document.getElementById("YawCenterControls").style.display = "none";
     document.getElementById("IMUMappingControls").style.top = "-170px";
     document.getElementById("box11").style.display = "none";
+    document.getElementById("box10").style.display = "block";
+}
+
+
+function okayIMUPitchbend() {
+    document.getElementById("box13").style.display = "none";
     document.getElementById("box10").style.display = "block";
 }
 
@@ -3720,8 +4039,8 @@ function advancedDefaults() {
         document.getElementById("jumpFactor7").value = "3";
         document.getElementById("jumpFactor8").value = "7";
         document.getElementById("jumpFactor9").value = "20";
-        document.getElementById("jumpFactor11").value = "12";
-        document.getElementById("jumpFactor12").value = "50";
+        document.getElementById("jumpFactor11").value = "3";
+        document.getElementById("jumpFactor12").value = "10";
         for (var i = 7; i < 10; i++) {
             var k = document.getElementById("jumpFactor" + (i));
             k.dispatchEvent(new Event('input'));
@@ -4007,6 +4326,29 @@ function updateExpressionCurveLabels()
     updateExpressionCurveLabel(highslider, highelement);
 }
 
+function updateIMUCurveLabel(theslider, thelabel)
+{
+    var val = parseInt(theslider.value - 64);
+    if (val == 0) {
+        thelabel.innerHTML = "Linear";
+    } else if (val > 0) {
+        thelabel.innerHTML = ((3*val/63.0)+1).toFixed(2);
+    }
+    else {
+        thelabel.innerHTML = (0.75*(64+val)/64.0 + 0.25).toFixed(3);
+    }    
+}
+
+function updateIMUCurveLabels()
+{
+    var lowslider = document.getElementById('IMUcurvelowslider');
+    var lowelement = document.getElementById('IMUcurvelowslider-value');
+    updateIMUCurveLabel(lowslider, lowelement);
+    
+    var highslider = document.getElementById('IMUcurvehighslider');
+    var highelement = document.getElementById('IMUcurvehighslider-value');
+    updateIMUCurveLabel(highslider, highelement);
+}
 
 function updateExpressionSliderEnableState()
 {
@@ -4165,6 +4507,62 @@ function resetPitchExpressionOverride() {
         
     }, 500);
 }
+
+
+
+function resetIMUPitch() {
+    blink(1);
+
+	if (IMUpitchSelection == 1){
+		IMUtoPitchSettingsRoll = IMUtoPitchSettingsDefaults.slice(0); // Reset stored values to defaults and send
+		for (var i = 0; i < 9; i++) {		
+			sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MIN + i);
+			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsRoll[i]));
+		}
+		// Then update UI.
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsRoll[0], IMUtoPitchSettingsRoll[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsRoll[3], IMUtoPitchSettingsRoll[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsRoll[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsRoll[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsRoll[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsRoll[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsRoll[6];
+	}
+		
+	else if (IMUpitchSelection == 2){
+		IMUtoPitchSettingsPitch = IMUtoPitchSettingsDefaults.slice(0);
+		for (var i = 0; i < 9; i++) {		
+			sendToWARBL(MIDI_CC_109, IMU_ELEVATION_PITCH_MIN + i);
+			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsPitch[i]));
+		}
+				// Then update UI.
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsPitch[0], IMUtoPitchSettingsPitch[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsPitch[3], IMUtoPitchSettingsPitch[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsPitch[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsPitch[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsPitch[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsPitch[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsPitch[6];
+	}
+		
+	else if (IMUpitchSelection == 3){
+		IMUtoPitchSettingsYaw = IMUtoPitchSettingsDefaults.slice(0);
+		for (var i = 0; i < 9; i++) {		
+			sendToWARBL(MIDI_CC_109, IMU_YAW_PITCH_MIN + i);
+			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsYaw[i]));
+		}
+				// Then update UI.
+	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsYaw[0], IMUtoPitchSettingsYaw[2]]);
+	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsYaw[3], IMUtoPitchSettingsYaw[1]]);
+	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsYaw[4], null]);
+	IMUhighbendslider.noUiSlider.set([IMUtoPitchSettingsYaw[5], null]);
+	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsYaw[7];
+	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsYaw[8];
+	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsYaw[6];
+	}
+	
+}
+
 
 
 function WARBL2Radio(selection) {

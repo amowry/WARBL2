@@ -243,7 +243,37 @@
 #define Y_SHAKE_MOD_CC_MODE 39        // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only 
 #define Y_SHAKE_MOD_CHPRESS_MODE 40   // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
 #define Y_SHAKE_MOD_KEYPRESS_MODE 41  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
-#define kIMUnVariables 42
+#define IMU_ROLL_PITCH_MIN 42 // IMU pitchbend mapping variables
+#define IMU_ROLL_PITCH_MAX 43
+#define IMU_ROLL_PITCH_MIN_HIGH 44
+#define IMU_ROLL_PITCH_MAX_LOW 45
+#define IMU_ROLL_PITCH_OUT_LOW_CENTS 46     // stored signed as 0 cents = 64
+#define IMU_ROLL_PITCH_OUT_HIGH_CENTS 47    // stored signed as 0 cents = 64
+#define IMU_ROLL_PITCH_OUT_CLAMP 48   // boolean if outbend should be clamped
+#define IMU_ROLL_PITCH_CURVE_LOW 49     // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_ROLL_PITCH_CURVE_HIGH 50      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_ELEVATION_PITCH_MIN 51 // IMU pitchbend mapping variables
+#define IMU_ELEVATION_PITCH_MAX 52
+#define IMU_ELEVATION_PITCH_MIN_HIGH 53
+#define IMU_ELEVATION_PITCH_MAX_LOW 54
+#define IMU_ELEVATION_PITCH_OUT_LOW_CENTS 55     // stored signed as 0 cents = 64
+#define IMU_ELEVATION_PITCH_OUT_HIGH_CENTS 56    // stored signed as 0 cents = 64
+#define IMU_ELEVATION_PITCH_OUT_CLAMP 57   // boolean if outbend should be clamped
+#define IMU_ELEVATION_PITCH_CURVE_LOW 58      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_ELEVATION_PITCH_CURVE_HIGH 59      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_YAW_PITCH_MIN 60 // IMU pitchbend mapping variables
+#define IMU_YAW_PITCH_MAX 61
+#define IMU_YAW_PITCH_MIN_HIGH 62
+#define IMU_YAW_PITCH_MAX_LOW 63
+#define IMU_YAW_PITCH_OUT_LOW_CENTS 64     // stored signed as 0 cents = 64
+#define IMU_YAW_PITCH_OUT_HIGH_CENTS 65    // stored signed as 0 cents = 64
+#define IMU_YAW_PITCH_OUT_CLAMP 66   // boolean if outbend should be clamped
+#define IMU_YAW_PITCH_CURVE_LOW 67      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_YAW_PITCH_CURVE_HIGH 68      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define MAP_ROLL_TO_PITCHBEND 69 // ON/OFF boolean
+#define MAP_ELEVATION_TO_PITCHBEND 70 // ON/OFF boolean
+#define MAP_YAW_TO_PITCHBEND 71 // ON/OFF boolean
+#define kIMUnVariables 72
 
 #define Y_PITCHBEND_MODE_UPDOWN 0
 #define Y_PITCHBEND_MODE_DOWNUP 1
@@ -620,41 +650,14 @@
 
 #define MIDI_CC_109 109         // From WARBL. Values as follows:
 #define MIDI_CC_109_OFFSET 200  // Value added to received CC 109, to distinguish them from those from CC_104
+
 //IMU Settings Array - see defines above
 #define MIDI_CC_109_VALUE_0 0    // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105.
 #define MIDI_CC_109_VALUE_1 1    // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105.
 #define MIDI_CC_109_VALUE_2 2    // Bidirectional. Settings for current instrument: indicates IMUsettings[2] is about to be sent with CC 105.
 #define MIDI_CC_109_VALUE_3 3    // Bidirectional. Settings for current instrument: indicates IMUsettings[3] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_4 4    // Bidirectional. Settings for current instrument: indicates IMUsettings[4] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_5 5    // Bidirectional. Settings for current instrument: indicates IMUsettings[5] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_6 6    // Bidirectional. Settings for current instrument: indicates IMUsettings[6] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_7 7    // Bidirectional. Settings for current instrument: indicates IMUsettings[7] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_8 8    // Bidirectional. Settings for current instrument: indicates IMUsettings[8] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_9 9    // Bidirectional. Settings for current instrument: indicates IMUsettings[9] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_10 10  // Bidirectional. Settings for current instrument: indicates IMUsettings[10] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_11 11  // Bidirectional. Settings for current instrument: indicates IMUsettings[11] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_12 12  // Bidirectional. Settings for current instrument: indicates IMUsettings[12] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_13 13  // Bidirectional. Settings for current instrument: indicates IMUsettings[13] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_14 14  // Bidirectional. Settings for current instrument: indicates IMUsettings[14] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_15 15  // Bidirectional. Settings for current instrument: indicates IMUsettings[15] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_16 16  // Bidirectional. Settings for current instrument: indicates IMUsettings[16] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_17 17  // Bidirectional. Settings for current instrument: indicates IMUsettings[17] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_18 18  // Bidirectional. Settings for current instrument: indicates IMUsettings[18] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_19 19  // Bidirectional. Settings for current instrument: indicates IMUsettings[19] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_20 20  // Bidirectional. Settings for current instrument: indicates IMUsettings[20] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_21 21  // Bidirectional. Settings for current instrument: indicates IMUsettings[21] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_22 22  // Bidirectional. Settings for current instrument: indicates IMUsettings[22] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_23 23  // Bidirectional. Settings for current instrument: indicates IMUsettings[23] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_24 24  // Bidirectional. Settings for current instrument: indicates IMUsettings[24] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_25 25  // Bidirectional. Settings for current instrument: indicates IMUsettings[25] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_26 26  // Bidirectional. Settings for current instrument: indicates IMUsettings[26] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_27 27  // Bidirectional. Settings for current instrument: indicates IMUsettings[27] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_28 28  // Bidirectional. Settings for current instrument: indicates IMUsettings[28] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_29 29  // Bidirectional. Settings for current instrument: indicates IMUsettings[29] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_30 30  // Bidirectional. Settings for current instrument: indicates IMUsettings[30] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_31 31  // Bidirectional. Settings for current instrument: indicates IMUsettings[31] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_32 32  // Bidirectional. Settings for current instrument: indicates IMUsettings[32] is about to be sent with CC 105.
-/* 33-99	unused -- can be used to extend above array or for other variables */
+// ... up to 62. These defines aren't currently used.
+/* 63-99	unused -- can be used to extend above array or for other variables */
 
 #define MIDI_CC_109_VALUE_100 100  // Bidirectional. Indicates that  WARBL2 custom fingering chart 1 is about to be sent on CC 105. Same command from WARBL indicates that all 256 messages were received.
 #define MIDI_CC_109_VALUE_101 101  // Bidirectional. Indicates that  WARBL2 custom fingering chart 2 is about to be sent on CC 105.
@@ -853,8 +856,8 @@
 /* 498-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
-#define EEPROM_IMU_SETTINGS_START 625  // 625-732 WARBL2 IMUsettings array
-/*733-999 unused, room for extending above array or other variables */
+#define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array
+/*842-999 unused, room for extending above array or other variables */
 #define EEPROM_BUTTON_PREFS_START 1000  // 1000-1247 button prefs
 /* 1248-1974 unused */
 /* Note: 1975-1986 currently doesn't get saved to factory settings but does get restored from factory settings (calibrations are saved to factory settings manually) */

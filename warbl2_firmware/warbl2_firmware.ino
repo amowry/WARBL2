@@ -177,10 +177,10 @@ byte switches[3][kSWITCHESnVariables] =              // Settings for the switche
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
-byte IMUsettings[3][kIMUnVariables] =                                                                                                                    // Settings for mapping and sending IMU readings (see defines above)
-  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 0
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 },    // Instrument 1
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0 } };  // Instrument 2
+byte IMUsettings[3][kIMUnVariables] =                                                                                                                                                                                                                                   // Settings for mapping and sending IMU readings (see defines)
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 0, 0 },    // Instrument 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 0, 0 },    // Instrument 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 36, 9, 27, 39, 114, 0, 64, 64, 0, 0, 0 } };  // Instrument 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
   { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 },    // Instrument 0
@@ -288,6 +288,7 @@ unsigned int vibratoHoles = 0b111111111;                                        
 float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // A scale for normalizing the range of each sensor, for sliding
 float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };   // Same as above but for vibrato
 int expression = 0;                                                                // Pitchbend up or down from current note based on pressure
+int IMUpitchbend = 0;                                                              // Pitchbend from IMU orientation
 bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
 

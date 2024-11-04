@@ -4,13 +4,13 @@
 //
 //
 //
-// Updated 21 September 2024 at 2010
+// Updated 4 November 2024 at 2010
 //
 //
 //
 //
 
-const cacheName = "warbl_26";
+const cacheName = "warbl_28";
 
 const contentToCache = [
     "configure.html",
