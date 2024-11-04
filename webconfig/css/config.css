@@ -1205,7 +1205,7 @@ fieldset {
 #topcontrolbox {
 	position: relative;
 	background-color: var(--main-bg-color);
-	padding-bottom: 50px;
+	padding-bottom: 70px;
 	margin-bottom: 30px;
 	display: block;
 	clear: both;
@@ -1342,6 +1342,10 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
+}
+
+#box13 {
+	height: 405px;
 }
 
 #pressuregraph {
@@ -1574,6 +1578,12 @@ fieldset {
 	left: 30px;
 }
 
+
+#box13 {
+	display: none;
+	top: 900px;
+	left: 30px;
+}
 
 .pitchbend {
 	top: 175px;
@@ -2067,8 +2077,8 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 30px;
 	width: 100px;
-	top: 77px;
-	left: 50px;
+	top: 20px;
+	left: 20px;
 }
 
 .pressureMapping {
@@ -2077,6 +2087,23 @@ input:disabled + .vibratoSlider:before {
 	width: 160px;
 	top: 130px;
 	left: 150px;
+}
+
+#IMUCCMappingControls {
+	position: relative;
+	top: -80px;
+}
+
+
+#IMUbottomControls {
+	position: relative;
+	top: -160px;
+}
+
+
+#IMUpitchMappingControls {
+	//position: relative;
+	display: none;
 }
 
 .IMUMapping {
@@ -2089,52 +2116,93 @@ input:disabled + .vibratoSlider:before {
 
 .mapRoll {
 	position: absolute;
-	height: 30px;
+	height: 27px;
 	width: 80px;
-	top: 130px;
+	top: 65px;
 	left: 300px;
 }
 
 .mapPitch {
 	position: absolute;
-	height: 30px;
+	height: 27px;
 	width: 80px;
-	top: 175px;
+	top: 105px;
 	left: 300px;
 }
 
 .mapYaw {
 	position: absolute;
-	height: 30px;
+	height: 27px;
 	width: 80px;
-	top: 220px;
+	top: 145px;
+	left: 300px;
+}
+
+.mapRollPitchbend {
+	position: absolute;
+	height: 27px;
+	width: 80px;
+	top: 185px;
+	left: 300px;
+}
+
+.mapPitchPitchbend {
+	position: absolute;
+	height: 27px;
+	width: 80px;
+	top: 225px;
+	left: 300px;
+}
+
+.mapYawPitchbend {
+	position: absolute;
+	height: 27px;
+	width: 80px;
+	top: 265px;
 	left: 300px;
 }
 
 .pitchRegister {
 	position: absolute;
-	height: 30px;
+	height: 27px;
 	width: 80px;
-	top: 265px;
+	top: 305px;
 	left: 300px;
 }
 
 
 
 #switch20 {
-	top: 134px;
+	top: 69px;
 	left: 230px;
 }
 
 #switch21 {
-	top: 179px;
+	top: 109px;
 	left: 230px;
 }
 
 #switch22 {
-	top: 224px;
+	top: 149px;
 	left: 230px;
 }
+
+
+#switch28 {
+	top: 189px;
+	left: 230px;
+}
+
+#switch29 {
+	top: 229px;
+	left: 230px;
+}
+
+#switch30 {
+	top: 269px;
+	left: 230px;
+}
+
 
 #switch23 {
 	top: 145px;
@@ -2142,7 +2210,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch27 {
-	top: 269px;
+	top: 309px;
 	left: 230px;
 }
 
@@ -2151,7 +2219,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 118px;
-	top: 136px;
+	top: 71px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2169,7 +2237,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 82px;
-	top: 181px;
+	top: 111px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2178,16 +2246,46 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 115px;
-	top: 226px;
+	top: 151px;
 	z-index: 99;
 	font-size: 14px;
 }
+
+
+.sendRollPitchbendLabel {
+	display: block;
+	position: absolute;
+	left: 75px;
+	top: 191px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+
+.sendPitchPitchbendLabel {
+	display: block;
+	position: absolute;
+	left: 39px;
+	top: 231px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.sendYawPitchbendLabel {
+	display: block;
+	position: absolute;
+	left: 72px;
+	top: 271px;
+	z-index: 99;
+	font-size: 14px;
+}
+
 
 .sendPitchRegisterLabel {
 	display: block;
 	position: absolute;
 	left: 35px;
-	top: 271px;
+	top: 311px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2197,13 +2295,13 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 100px;
-	top: 332px;
+	top: 357px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 #switch24 {
-	top: 328px;
+	top: 353px;
 	left: 200px;
 }
 
@@ -2211,7 +2309,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	z-index: 99;
-	top: 327px;
+	top: 352px;
 	left: 270px;	
 }
 
@@ -2237,7 +2335,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 95px;
-	top: 400px;
+	top: 420px;
 	z-index: 99;
 }
 
@@ -2245,14 +2343,14 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 140px;
-	top: 375px;
+	top: 395px;
 	z-index: 99;
 	font-size: 14px;
 }
 
 .jumpvalue15 {
 	left: 395px;
-	top: 385px;
+	top: 405px;
 }
 
 
@@ -3361,6 +3459,19 @@ h3 {
 	font-size: 13px;
 }
 
+#clampIMUSwitch {
+	top: 350px;
+	left: 370px;
+}
+
+.clampIMUMaxLabel {
+	position: absolute;
+	left: 336px;
+	top: 328px;
+	z-index: 99;
+	font-size: 13px;
+}
+
 .overrideLabel {
 	display: none;
 	position: absolute;
@@ -3669,7 +3780,26 @@ h3 {
 	z-index: 99;
 }
 
+.maxMinContainerIMULow {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 160px;
+	z-index: 99;
+}
+
 #exprInputPressureLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 35px;
+	left: 80px;
+	top: 164px;
+	background: var(--gauge-bg-color);
+}
+
+#IMUInputPressureLevelContainer{
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -3689,7 +3819,27 @@ h3 {
 	background: var(--gauge-color);
 }
 
+#IMUInputPressureLevel{
+	display: block;
+	position: absolute;
+	width: 0%;
+	height: 35px;
+	left: 0px;
+	top: 0px;
+	background: var(--gauge-color);
+}
+
 #exprOutputBendLevelContainer{
+	display: block;
+	position: absolute;
+	width: 65%;
+	height: 35px;
+	left: 80px;
+	top: 264px;
+	background: var(--gauge-bg-color);
+}
+
+#IMUOutputBendLevelContainer{
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -3709,6 +3859,15 @@ h3 {
 	background: var(--gauge-color);
 }
 
+#IMUOutputBendLevel{
+	display: block;
+    position: absolute;
+	width: 0%;
+	height: 35px;
+	left: 0%;
+	top: 0px;
+	background: var(--gauge-color);
+}
 
 .lowrangelabel {
 	position: absolute;
@@ -3718,6 +3877,15 @@ h3 {
 }
 
 .maxMinContainerExprHigh {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 195px;
+	z-index: 99;
+}
+
+.maxMinContainerIMUHigh {
 	display: block;
 	width: 65%;
 	position: absolute;
@@ -3743,6 +3911,16 @@ h3 {
 	z-index: 99;
 }
 
+
+.maxMinContainerIMULowBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 260px;
+	z-index: 99;
+}
+
 .lowrangelabel2 {
 	position: absolute;
 	top: 256px;
@@ -3758,6 +3936,16 @@ h3 {
 	top: 295px;
 	z-index: 99;
 }
+
+.maxMinContainerIMUHighBend {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 80px;
+	top: 295px;
+	z-index: 99;
+}
+
 
 .highrangelabel2 {
 	position: absolute;
@@ -3775,6 +3963,15 @@ h3 {
 	z-index: 99;
 }
 
+.maxMinContainerIMUCurveLow {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 20px;
+	top: 350px;
+	z-index: 99;
+}
+
 .exprcurvelowlabel {
 	position: absolute;
 	top: 331px;
@@ -3782,7 +3979,26 @@ h3 {
 	font-size: 11px;    
 }
 
+.IMUcurvelowlabel {
+	position: absolute;
+	top: 331px;
+	left: 25px;
+	font-size: 11px;    
+}
+
+
+
 #exprcurvelowslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 110px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
+
+#IMUcurvelowslider-value {
 	display: block;
 	width: 60px;
 	position: absolute;
@@ -3801,6 +4017,15 @@ h3 {
 	z-index: 99;
 }
 
+.maxMinContainerIMUCurveHigh {
+	display: block;
+	width: 30%;
+	position: absolute;
+	left: 180px;
+	top: 350px;
+	z-index: 99;
+}
+
 .exprcurvehighlabel {
 	position: absolute;
 	top: 331px;
@@ -3808,7 +4033,24 @@ h3 {
 	font-size: 11px;    
 }
 
+.IMUcurvehighlabel {
+	position: absolute;
+	top: 331px;
+	left: 185px;
+	font-size: 11px;    
+}
+
 #exprcurvehighslider-value {
+	display: block;
+	width: 60px;
+	position: absolute;
+	left: 270px;
+	top: 331px;
+	z-index: 99;
+	font-size: 12px;    
+}
+
+#IMUcurvehighslider-value {
 	display: block;
 	width: 60px;
 	position: absolute;
@@ -3905,6 +4147,91 @@ h3 {
 	top: 290px;
 	z-index: 99;
 }
+
+
+
+
+
+
+#IMUlowslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 155px;
+	z-index: 99;
+}
+
+#IMUlowslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 155px;
+	z-index: 99;
+}
+
+#IMUhighslider-value-min {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: -100px;
+	top: 190px;
+	z-index: 99;
+}
+
+#IMUlowslider .noUi-connect {
+    background: #f7c839;
+}
+
+#IMUhighslider .noUi-connect {
+    background: #f7c839;
+}
+
+#IMUhighslider-value-max {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 190px;
+	z-index: 99;
+}
+
+#IMUlowbendslider-value {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 255px;
+	z-index: 99;
+}
+
+#IMUlowbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#IMUlowbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
+#IMUhighbendslider .noUi-connect {
+    background: #f7c839;
+}
+
+#IMUhighbendslider .noUi-handle[data-handle="1"] {
+    display: none;
+}
+
+
+#IMUhighbendslider-value {
+	display: block;
+	width: 65%;
+	position: absolute;
+	left: 270px;
+	top: 290px;
+	z-index: 99;
+}
+
 
 
 
@@ -4062,6 +4389,7 @@ h3 {
 	font-size: 14px;
 }
 
+
 .rangeLabel5 {
 	display: block;
 	position: absolute;
@@ -4093,7 +4421,16 @@ h3 {
 .overrideRangeLabel {
 	display: block;
 	position: absolute;
-	left: 165px;
+	left: 135px;
+	top: 125px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.IMUoverrideRangeLabel {
+	display: block;
+	position: absolute;
+	left: 155px;
 	top: 125px;
 	z-index: 99;
 	font-size: 14px;
