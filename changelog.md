@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
+## [4.4] - 2024-11-4
+
+### Changed
+
+- Medieval pipes fingering X XOX OOOO will now play an F natural (77) rather than an F# (78).
+
+- Fixes to tonehole sensor calibration routine.
+
+- Added mapping of IMU roll/elevation/yaw to pitchbend.
+
+### Added
+
+
+
 ## [Released]
 
 ## [4.3] - 2024-10-4
