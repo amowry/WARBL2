@@ -26,7 +26,6 @@ void printStuff(void) {
 
 
 
-
 // Determine how long to sleep each time through the loop.
 byte calculateDelayTime(void) {
 
@@ -178,17 +177,6 @@ void readIMU(void) {
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
-    /*
-    Serial.print(-180);
-    Serial.print(" , ");
-    Serial.print(roll);
-    Serial.print(" , ");
-    Serial.print(pitch);
-    Serial.print(" , ");
-    Serial.print(yaw);
-    Serial.print(" , ");
-    Serial.println(180);
-*/
 
 
 #if 1
@@ -334,7 +322,6 @@ void sendIMU() {
         }
 
         byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[mode][ROLL_INPUT_MIN] * 5000, IMUsettings[mode][ROLL_INPUT_MAX] * 5000, IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]), lowerConstraint, upperConstraint);
-        //Serial.println(pitchOutput);
 
         if (prevRollCC != rollOutput) {
             sendMIDI(CONTROL_CHANGE, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
@@ -360,7 +347,6 @@ void sendIMU() {
         }
 
         byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[mode][PITCH_INPUT_MIN] * 5000, IMUsettings[mode][PITCH_INPUT_MAX] * 5000, IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]), lowerConstraint, upperConstraint);
-        //Serial.println(pitchOutput);
 
         if (prevPitchCC != pitchOutput) {
             sendMIDI(CONTROL_CHANGE, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
@@ -386,7 +372,6 @@ void sendIMU() {
         }
 
         yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
-        //Serial.println(yawOutput);
 
         if (prevYawCC != yawOutput && IMUsettings[mode][SEND_YAW]) {
             sendMIDI(CONTROL_CHANGE, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
@@ -454,7 +439,6 @@ void shakeForVibrato() {
         if (tapFilterActive == false && abs(accelFilteredB) > kShakeStartThresh) {
             tapFilterActive = true;
             tapFilterStartTime = nowtime;
-            // Serial.println("Shake Tap Filt");
         }
 
         if ((nowtime - tapFilterStartTime) < ktapFilterTimeMs) {  // Return if we haven't waited long enough after crossing the shake threshold, for further filtering brief tone hole taps.
@@ -463,7 +447,6 @@ void shakeForVibrato() {
 
         if (!preTrigger && abs(accelFilteredB) > kShakeStartThresh) {
             preTrigger = true;
-            // Serial.println("Pre Shake Trigger");
         }
 
         if (!shakeActive && preTrigger  // Start shake vib only when doing a zero crossing after threshold has been triggered.
@@ -550,11 +533,6 @@ void shakeForVibrato() {
                 }
                 shakePressureKeyPressMod = (int)(normmodshake * shakeModKeyPressDepth);
             }
-
-            //Serial.print("shake: ");
-            //Serial.print(" vib: "); Serial.print(shakeVibrato);
-            //Serial.print(" cp: "); Serial.print(shakePressureChanPressMod);
-            //Serial.println("");
         }
 
         if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
@@ -573,26 +551,6 @@ void shakeForVibrato() {
 
 // Return number of registers to jump based on IMU pitch (elevation).
 int pitchRegister() {
-
-    // Experimenting with gestures instead of absolute elevation.
-    /*
-    static bool shiftedUp = false;
-    static bool shiftedDown = false;
-
-    if (gyroX < -1 && !shiftedUp) {
-        octaveShift += 1;
-        shiftedUp = true;
-        Serial.println("up");
-    }
-    if (gyroX > 1 && !shiftedDown) {
-        octaveShift -= 1;
-        shiftedDown = true;
-        Serial.println("down");
-    }
-
-    if (shiftedUp && gyroX > 0) { shiftedUp = false; }
-    if (shiftedDown && gyroX <= 0) { shiftedDown = false; }
-*/
 
     for (byte i = 1; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
         if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  // See if IMU pitch is within the bounds for each register.
@@ -1267,9 +1225,12 @@ void getIMUpitchbend() {
             int lowRangeSpan = max(lowIMUmax - lowIMUmin, 1);
             int highRangeSpan = max(highIMUmax - highIMUmin, 1);
             if (IMUvalue <= lowIMUmax) {  // IMU is in the lower range.
-                ratio = min(((lowIMUmax - IMUvalue)) / (float)(lowRangeSpan), 1.0f);
+                ratio = ((lowIMUmax - IMUvalue)) / (float)(lowRangeSpan);
                 if (lowCurveExp != 1.0f) {
                     ratio = powf(ratio, lowCurveExp);
+                }
+                if (doClamp) {
+                    ratio = min(ratio, 1.0f);
                 }
                 centsOffset = centsLowOffset * ratio;
             } else if (IMUvalue >= highIMUmin) {  // IMU is in the higher range.
@@ -2012,10 +1973,6 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode >= MIDI_CC_109_OFFSET && pressureReceiveMode < (kIMUnVariables + MIDI_CC_109_OFFSET)) {
-                    //Serial.print("IMU ");
-                    //Serial.print(pressureReceiveMode);
-                    //Serial.print(" value: ");
-                    //Serial.println(value);
                     IMUsettings[mode][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
                     loadPrefs();
                 }
@@ -2364,7 +2321,6 @@ void handleButtons() {
 
 // Perform desired action in response to buttons
 void performAction(byte action) {
-    //Serial.println((buttonPrefs[mode][action][0]));
 
     if (communicationMode) {
         sendMIDICouplet(MIDI_SEND_BUTTON_ACTION, action);
@@ -3017,12 +2973,9 @@ void loadSettingsForAllModes() {
 
 
 
-
+// Resets current mode's expression override defaults.
+// Useful for populating older devices after first installing the version that has them and for manually restoring to a "sane" default for the new setup.
 void resetExpressionOverrideDefaults() {
-    // resets current mode's expression override defaults
-    // useful for populating older devices after first installing the version that has them
-    // and for manually restoring to a "sane" default for the new setup
-    //Serial.println("reset expression");
 
     ED[mode][EXPRESSION_MIN] = 0;
     ED[mode][EXPRESSION_MIN_HIGH] = 7;
@@ -3046,6 +2999,7 @@ void resetExpressionOverrideDefaults() {
 
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
+  
     vibratoHoles = vibratoHolesSelector[mode];
     octaveShift = octaveShiftSelector[mode];
     noteShift = noteShiftSelector[mode];
@@ -3110,7 +3064,6 @@ void loadPrefs() {
     sensorThreshold[1] = sensorThreshold[0] + (offset << 2);  // Threshold for move to second octave
 
     for (byte i = 0; i < 9; i++) {
-        //toneholeScale[i] = ((8 * (16383 / midiBendRange)) / (toneholeCovered[i] - 50 - senseDistance) / 2);            // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
         toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - toneholeBaseline[i] - senseDistance, 1) / 2.0f);                     // Precalculate scaling factors for pitchbend. This one is for sliding. We multiply by 8 first to reduce rounding errors. We'll divide again later.
         vibratoScale[i] = ((2.0f * (((float)vibratoDepth) / midiBendRange)) / max(toneholeCovered[i] - toneholeBaseline[i] - senseDistance, 1) / 2.0f);  // This one is for vibrato.
     }
@@ -3206,23 +3159,20 @@ void calibrate() {
 
         if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
 
-            // just in case bell wasn't exercised
+            // Just in case bell wasn't exercised
             if (abs(toneholeCovered[0] - toneholeBaseline[0]) < 50) {
                 toneholeCovered[0] = toneholeBaseline[0] + 50;
-                //Serial.println("Bell auto-set");
+
             } else {
                 int feeloffset = (int)((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
                 toneholeCovered[0] -= feeloffset;
             }
 
             if (calibration == 1) {
-                // adjust for calibration feel
+                // Adjust for calibration feel.
                 for (byte i = 1; i < 9; i++) {
                     int feeloffset = (int)((toneholeCovered[i] - toneholeBaseline[i]) * 0.2f);
                     toneholeCovered[i] -= feeloffset;
-                    //Serial.print(i);
-                    //Serial.print(" feeloff: ");
-                    //Serial.println(feeloffset);
                 }
             }
 
@@ -3245,7 +3195,7 @@ void saveCalibration() {
         writeEEPROM(((i + 9) * 2) + 1, lowByte(toneholeCovered[i]));
         writeEEPROM((1 + i), lowByte(toneholeBaseline[i]));
         if (i > 0) {
-            // baseline high byte stored for toneholes (only had this much reserved space)
+            // Baseline high byte stored for toneholes (only had this much reserved space)
             writeEEPROM(9 + i, highByte(toneholeBaseline[i]));
         }
     }
@@ -3261,11 +3211,10 @@ void saveCalibration() {
 
 
 
+
 // Load the stored sensor calibrations from EEPROM
 void loadCalibration() {
-    // for (byte i = 0; i < 9; i++) {
-    //     byte high = readEEPROM((i + 9) * 2);
-    //     byte low = readEEPROM(((i + 9) * 2) + 1);
+
     for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
         byte high = readEEPROM(i);
         byte low = readEEPROM(i + 1);
@@ -3349,7 +3298,7 @@ void calculatePressure(byte pressureOption) {
 
     // Else curve 0 is linear, so no transformation.
     mappedPressureHiRes[pressureOption] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) / 1024.0f) + outputBounds[pressureOption][0];  // Map to output pressure range.
-    //inputPressureBounds[pressureOption][3] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) >> 10) + outputBounds[pressureOption][0];  // Map to output pressure range.
+
     inputPressureBounds[pressureOption][3] = (unsigned int)mappedPressureHiRes[pressureOption];
 
     if (pressureOption == 1) {  // Set velocity to mapped pressure if desired.
@@ -3390,18 +3339,8 @@ byte calculatePressureInterval(void) {
 
 
 
-// Send pressure data
+// Send pressure data.
 void sendPressure(bool force) {
-
-    // Experimental smoothing of pressure at the expense of responsiveness
-
-    /*
-    static float filteredOld;
-    const float timeConstant = 0.2f;
-    float filtered = timeConstant * inputPressureBounds[0][3] + (1.0f - timeConstant) * filteredOld;  // Low-pass filter.
-    inputPressureBounds[0][3] = filtered;
-    filteredOld = filtered;
-*/
 
     if (ED[mode][SEND_PRESSURE] == 1) {
         int sendp = constrain((int)inputPressureBounds[0][3] + shakePressureCCMod, 0, 127);
@@ -3419,14 +3358,9 @@ void sendPressure(bool force) {
         sendl = (!noteon && sensorValue <= 100) ? 0 : sendl;
         int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)ipart, 0, 127);
         if (sendm != prevChanPressure || (ED[mode][AFTERTOUCH_MPEPLUS] && sendl != prevChanPressureLSB) || force) {
-            //Serial.print("hr: ");
-            //Serial.print(hiresOut);
-            //Serial.print(" msb: ");
-            //Serial.print(sendm);
-            //Serial.print(" lsb: ");
-            //Serial.println(sendl);
 
-            // a bit of midi bandwidth optimization to not bother sending LSB if the MSB has a large jumps (moving fast)
+
+            // A bit of midi bandwidth optimization to not bother sending LSB if the MSB has a large jumps (moving fast).
             if (ED[mode][AFTERTOUCH_MPEPLUS] && abs(sendm - prevChanPressure) < 16) {
                 // MPE+ uses CC 87 sent just prior as LSB
                 sendMIDI(CONTROL_CHANGE, mainMidiChannel, 87, sendl);  // Send LSB
@@ -3499,8 +3433,7 @@ void sendMIDICouplet(uint8_t indexCC, uint8_t indexValue, uint8_t valueCC, uint8
 
 
 // These convert MIDI messages from the old WARBL code to the correct format for the MIDI.h library. ToDo: These could be made shorter/more efficient.
-void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2)  // Send a 3-byte MIDI event over USB.
-{
+void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2) {  // Send a 3-byte MIDI event over USB.
 
     m &= 0xF0;
     c = constrain(c, 1, 16);
@@ -3601,11 +3534,9 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
             {
                 if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_BLE_ONLY || connIntvl == 0) {
                     MIDI.sendAfterTouch(d, c);
-                    // MIDI.sendPolyPressure(d, c); // deprecated
                 }
                 if (WARBL2settings[MIDI_DESTINATION] != MIDI_DESTINATION_USB_ONLY || USBstatus != USB_HOST) {
                     BLEMIDI.sendAfterTouch(d, c);
-                    // BLEMIDI.sendPolyPressure(d, c); // deprecated
                 }
                 break;
             }
@@ -3644,8 +3575,6 @@ void connect_callback(uint16_t conn_handle) {
     connIntvl = connection->getConnectionInterval();  // Get the current connection agreed upon connection interval in units of 0.625 ms
     connIntvl = connIntvl * 0.625;                    // Convert to ms. A 7.5 ms interval gets truncated to 7.
 
-    //Serial.print("connIntvl = ");
-    //Serial.println(connIntvl);
 
     if (connIntvl < 7) {  // When connecting to a CME Widi Bud Pro, getConnectionInterval() erroneously returns a connection interval of 3 ms. No idea why :).
         connIntvl = 7;
@@ -3727,6 +3656,7 @@ void watchdogReset() {
 
 
 // Make any necessary changes to EEPROM when new firmware is installed.
+// Note: This is called before loadSettingsForAllModes() (before variables are filled from EEPROM) so we can use initialized values of variables for writing defaults to EEPROM.
 void checkFirmwareVersion() {
     byte currentVersion = readEEPROM(EEPROM_FIRMWARE_VERSION);  // Previous firmware version.
 
@@ -3749,7 +3679,7 @@ void checkFirmwareVersion() {
         }
 
         if (currentVersion < 43) {  // Manage all changes made in version 43.
-            // reset pitch expression to defaults with logic
+            // Reset pitch expression to defaults with logic.
             for (byte i = 0; i < 3; i++) {
                 byte exprmin = readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MIN * 3));
                 byte exprmax = readEEPROM(EEPROM_ED_VARS_START + i + (EXPRESSION_MAX * 3));
@@ -3776,9 +3706,9 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)), 64);  // linear
                 writeEEPROM(((EEPROM_ED_VARS_START + i + (EXPRESSION_CURVE_HIGH * 3)) + EEPROM_FACTORY_SETTINGS_START), 64);
 
-                // convert from original value to the new values if they were in use, otherwise keep our new defaults
+                // Convert from original value to the new values if they were in use, otherwise keep our new defaults.
                 if (override) {
-                    // but sanitize exprmax because the old default was way too high
+                    // but sanitize exprmax because the old default was way too high.
                     if (exprmax > 50) {
                         exprmax = 50;
                     }
@@ -3812,13 +3742,12 @@ void checkFirmwareVersion() {
         }
 
         if (currentVersion < 44) {
-            // clear the high bytes for baseline
-            for (int i = 0; i < 8; ++i) {  // fingerholes only
+            // Clear the high bytes for baseline.
+            for (int i = 0; i < 8; ++i) {  // Fingerholes only
                 writeEEPROM(EEPROM_BASELINE_CALIB_START + 9 + i, 0);
             }
 
-            // we've moved the "feel" cal offset that was hardcoded as -50 into the actual calibration, so make that change to
-            // the cal covered data
+            // We've moved the "feel" cal offset that was hardcoded as -50 into the actual calibration, so make that change to the cal covered data.
             for (byte i = EEPROM_SENSOR_CALIB_START; i < EEPROM_SENSOR_CALIB_START + 18; i += 2) {
                 byte high = readEEPROM(i);
                 byte low = readEEPROM(i + 1);
@@ -3829,7 +3758,7 @@ void checkFirmwareVersion() {
             }
 
             // Do the same for the factory calibration.
-            for (int i = 0; i < 8; ++i) {  // fingerholes only
+            for (int i = 0; i < 8; ++i) {  // Fingerholes only
                 writeEEPROM(EEPROM_BASELINE_CALIB_START + 9 + i + EEPROM_FACTORY_SETTINGS_START, 0);
             }
 
@@ -3844,25 +3773,25 @@ void checkFirmwareVersion() {
 
             // New IMU settings
             for (int i = 0; i < 3; ++i) {      // Each mode
-                for (int n = 0; n < 3; ++n) {  // Roll, pitch, yaw settings
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3), 0);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3), 36);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 36);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3), 9);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 9);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3), 27);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 27);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3), 39);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 39);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3), 114);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 114);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3), 0);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 0);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3), 64);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 64);
-                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3), 64);
-                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), 64);
+                for (int n = 0; n < 3; ++n) {  // Roll, pitch, yaw settings, taken from IMUsettings initialized values.
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_MIN + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_MIN + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_MAX + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_MAX + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_MIN_HIGH + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_MIN_HIGH + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_MAX_LOW + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MAX_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_MAX_LOW + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_OUT_LOW_CENTS + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_OUT_HIGH_CENTS + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_OUT_CLAMP + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_CURVE_LOW + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_LOW + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_CURVE_LOW + (n * 9)]);
+                    writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)]);
+                    writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_CURVE_HIGH + (n * 9)]);
                 }
                 writeEEPROM(EEPROM_IMU_SETTINGS_START + i + MAP_ROLL_TO_PITCHBEND * 3, 0);
                 writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_ROLL_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);

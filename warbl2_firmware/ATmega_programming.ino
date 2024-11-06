@@ -2,7 +2,7 @@
 // Reprogram the ATmega32u4 if necessary.
 // Modified from the Adafruit_AVRProg library.
 // Green LED will blink 3 times to indicate success.
-// To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE it set large enough (otherwise it won't compile), and set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
+// To use, paste in the ATmega firmware hex file below, make sure HEX_SIZE is set large enough (otherwise it won't compile), and set the new ATmega firmware version in Defines.h so we know the ATmega will need to be programmed.
 
 #define HEX_SIZE 20000  // This needs to be set larger than the size of the hex file in bytes. If it is larger than necessary the buffer will take up unneeded space in flash.
 

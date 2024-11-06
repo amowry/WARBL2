@@ -21,8 +21,10 @@ var outputSliderMin = [0, 0, 0, 0, 0, 0, 0];
 var outputSliderMax = [127, 127, 127, 127, 127, 127, 127];
 
 // Settings for IMU to pitchbend mapping panel (initialized with defaults): PITCH_MIN, PITCH_MAX, PITCH_MIN_HIGH, PITCH_MAX_LOW, PITCH_OUT_LOW_CENTS, PITCH_OUT_HIGH_CENTS, PITCH_OUT_CLAMP, PITCH_CURVE_LOW, PITCH_CURVE_HIGH
-var IMUtoPitchSettingsDefaults = [0, 36, 9, 27, 39, 114, 0, 64, 64];
-var IMUtoPitchSettingsRoll = [0, 36, 9, 27, 39, 114, 0, 64, 64];
+var IMURolltoPitchSettingsDefaults = [11, 25, 16, 20, 14, 114, 1, 64, 64]; // Defaults for resetting
+var IMUElevationtoPitchSettingsDefaults = [4, 19, 9, 14, 14, 114, 1, 64, 64];
+var IMUYawtoPitchSettingsDefaults = [14, 22, 17, 19, 14, 114, 1, 64, 64];
+var IMUtoPitchSettingsRoll = [0, 36, 9, 27, 39, 114, 0, 64, 64]; // Current settings (synced with WARBL)
 var IMUtoPitchSettingsPitch = [0, 36, 9, 27, 39, 114, 0, 64, 64];
 var IMUtoPitchSettingsYaw = [0, 36, 9, 27, 39, 114, 0, 64, 64];
 
@@ -1613,7 +1615,17 @@ function WARBL_Receive(event, source) {
 						
 						else if ((jumpFactorWrite >= MIDI_CC_109_OFFSET + 42) && (jumpFactorWrite <= MIDI_CC_109_OFFSET + 50)) {
 						IMUtoPitchSettingsRoll[jumpFactorWrite - MIDI_CC_109_OFFSET - 42] = data2;
-						}
+							}
+							
+						else if ((jumpFactorWrite >= MIDI_CC_109_OFFSET + 51) && (jumpFactorWrite <= MIDI_CC_109_OFFSET + 59)) {
+						IMUtoPitchSettingsPitch[jumpFactorWrite - MIDI_CC_109_OFFSET - 42-9] = data2;
+							}
+							
+						else if ((jumpFactorWrite >= MIDI_CC_109_OFFSET + 60) && (jumpFactorWrite <= MIDI_CC_109_OFFSET + 68)) {
+						IMUtoPitchSettingsYaw[jumpFactorWrite - MIDI_CC_109_OFFSET - 42-18] = data2;
+							}
+							
+							
 						
 						else if (jumpFactorWrite == MIDI_CC_109_OFFSET + 69) {
                             document.getElementById("checkbox28").checked = data2;
@@ -3904,7 +3916,12 @@ function mapRollPitchbend() {
 	IMUpitchSelection = 1;
     document.getElementById("box10").style.display = "none";
     document.getElementById("box13").style.display = "block";
-    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Roll Pitch Bend Mapping";
+	updateRolltoPitchbendSliders();
+
+}
+
+function updateRolltoPitchbendSliders() {
+	document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Roll Pitch Bend Mapping";
 	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsRoll[0], IMUtoPitchSettingsRoll[2]]);
 	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsRoll[3], IMUtoPitchSettingsRoll[1]]);
 	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsRoll[4], null]);
@@ -3920,7 +3937,11 @@ function mapPitchPitchbend() {
 	IMUpitchSelection = 2;
     document.getElementById("box10").style.display = "none";
     document.getElementById("box13").style.display = "block";
-    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Elevation Pitch Bend Mapping";
+	updatePitchtoPitchbendSliders();	
+}
+
+function updatePitchtoPitchbendSliders() {
+	document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Elevation Pitch Bend Mapping";
 	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsPitch[0], IMUtoPitchSettingsPitch[2]]);
 	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsPitch[3], IMUtoPitchSettingsPitch[1]]);
 	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsPitch[4], null]);
@@ -3928,7 +3949,7 @@ function mapPitchPitchbend() {
 	document.getElementById("IMUcurvelowslider").value = IMUtoPitchSettingsPitch[7];
 	document.getElementById("IMUcurvehighslider").value = IMUtoPitchSettingsPitch[8];
 	document.getElementById("clampIMUCheck").checked = IMUtoPitchSettingsPitch[6];
-	updateIMUCurveLabels();	
+	updateIMUCurveLabels();
 }
 
 
@@ -3936,7 +3957,11 @@ function mapYawPitchbend() {
 	IMUpitchSelection = 3;
     document.getElementById("box10").style.display = "none";
     document.getElementById("box13").style.display = "block";
-    document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Yaw Pitch Bend Mapping";
+	updateYawtoPitchbendSliders();
+}
+
+function updateYawtoPitchbendSliders() {
+	document.getElementById("IMUPitchbendMappingHeader").innerHTML = "Yaw Pitch Bend Mapping";
 	IMUlowslider.noUiSlider.set([IMUtoPitchSettingsYaw[0], IMUtoPitchSettingsYaw[2]]);
 	IMUhighslider.noUiSlider.set([IMUtoPitchSettingsYaw[3], IMUtoPitchSettingsYaw[1]]);
 	IMUlowbendslider.noUiSlider.set([IMUtoPitchSettingsYaw[4], null]);
@@ -4514,7 +4539,7 @@ function resetIMUPitch() {
     blink(1);
 
 	if (IMUpitchSelection == 1){
-		IMUtoPitchSettingsRoll = IMUtoPitchSettingsDefaults.slice(0); // Reset stored values to defaults and send
+		IMUtoPitchSettingsRoll = IMURolltoPitchSettingsDefaults.slice(0); // Reset stored values to defaults and send
 		for (var i = 0; i < 9; i++) {		
 			sendToWARBL(MIDI_CC_109, IMU_ROLL_PITCH_MIN + i);
 			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsRoll[i]));
@@ -4530,7 +4555,7 @@ function resetIMUPitch() {
 	}
 		
 	else if (IMUpitchSelection == 2){
-		IMUtoPitchSettingsPitch = IMUtoPitchSettingsDefaults.slice(0);
+		IMUtoPitchSettingsPitch = IMUElevationtoPitchSettingsDefaults.slice(0);
 		for (var i = 0; i < 9; i++) {		
 			sendToWARBL(MIDI_CC_109, IMU_ELEVATION_PITCH_MIN + i);
 			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsPitch[i]));
@@ -4546,7 +4571,7 @@ function resetIMUPitch() {
 	}
 		
 	else if (IMUpitchSelection == 3){
-		IMUtoPitchSettingsYaw = IMUtoPitchSettingsDefaults.slice(0);
+		IMUtoPitchSettingsYaw = IMUYawtoPitchSettingsDefaults.slice(0);
 		for (var i = 0; i < 9; i++) {		
 			sendToWARBL(MIDI_CC_109, IMU_YAW_PITCH_MIN + i);
 			sendToWARBL(MIDI_CC_105, parseInt(IMUtoPitchSettingsYaw[i]));
