@@ -3343,7 +3343,8 @@ byte calculatePressureInterval(void) {
 void sendPressure(bool force) {
 
     if (ED[mode][SEND_PRESSURE] == 1) {
-        int sendp = constrain((int)inputPressureBounds[0][3] + shakePressureCCMod, 0, 127);
+        const int usedmod = inputPressureBounds[0][3] > 0 ? shakePressureCCMod : 0;
+        int sendp = constrain((int)inputPressureBounds[0][3] + usedmod, 0, 127);
         if (sendp != prevCCPressure || force) {
             sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], sendp);  // Send MSB of pressure mapped to the output range.
             prevCCPressure = sendp;
@@ -3352,7 +3353,8 @@ void sendPressure(bool force) {
 
     if ((switches[mode][SEND_AFTERTOUCH] & 1)) {
         // hack
-        float hiresOut = constrain(mappedPressureHiRes[2] + shakePressureChanPressMod, 0.0f, 127.0f);
+        const float usedmod = mappedPressureHiRes[2] > 0.0f ? shakePressureChanPressMod : 0.0f;
+        float hiresOut = constrain(mappedPressureHiRes[2] + usedmod, 0.0f, 127.0f);
         float ipart = 0.0f;
         int sendl = (int)(modf(hiresOut, &ipart) * 128);
         sendl = (!noteon && sensorValue <= 100) ? 0 : sendl;
@@ -3374,7 +3376,8 @@ void sendPressure(bool force) {
     // Poly aftertouch uses 2nd lowest bit of ED flag.
     if ((switches[mode][SEND_AFTERTOUCH] & 2) && noteon) {
         // Hack
-        int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)inputPressureBounds[3][3] + shakePressureKeyPressMod, 0, 127);
+        const int usedmod = inputPressureBounds[3][3] > 0 ? shakePressureKeyPressMod : 0;
+        int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)inputPressureBounds[3][3] + usedmod, 0, 127);
         if (sendm != prevPolyPressure || force) {
             sendMIDI(KEY_PRESSURE, mainMidiChannel, notePlaying, sendm);  // Send MSB of pressure mapped to the output range.
             prevPolyPressure = sendm;
