@@ -150,14 +150,14 @@
 #define SLIDE_LIMIT_MAX 38
 #define EXPRESSION_MIN_HIGH 39
 #define EXPRESSION_MAX_LOW 40
-#define EXPRESSION_OUT_LOW_CENTS 41     // stored signed as 0 cents = 64
-#define EXPRESSION_OUT_HIGH_CENTS 42    // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_LOW_CENTS 41   // stored signed as 0 cents = 64
+#define EXPRESSION_OUT_HIGH_CENTS 42  // stored signed as 0 cents = 64
 #define EXPRESSION_FIXED_CENTER_PRESSURE 43
 #define EXPRESSION_OUT_CLAMP 44   // boolean if outbend should be clamped
-#define EXPRESSION_CURVE_LOW 45      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define EXPRESSION_CURVE_HIGH 46      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define AFTERTOUCH_MPEPLUS  47 
-#define CUSTOM_FINGERING_11 48     // None of these "custom" variables these are used by WARBL2. Can be repurposed.
+#define EXPRESSION_CURVE_LOW 45   // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define EXPRESSION_CURVE_HIGH 46  // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define AFTERTOUCH_MPEPLUS 47
+#define CUSTOM_FINGERING_11 48  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
 #define kEXPRESSIONnVariables 49
 
 // Button combinations/gestures
@@ -232,47 +232,47 @@
 #define PITCH_REGISTER_INPUT_MIN 28
 #define PITCH_REGISTER_INPUT_MAX 29
 #define PITCH_REGISTER_NUMBER 30
-#define Y_PITCHBEND_MODE 31  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
-#define STICKS_MODE 32       // On/off
+#define Y_PITCHBEND_MODE 31            // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define STICKS_MODE 32                 // On/off
 #define Y_SHAKE_MOD_CC 33              // On/Off
 #define Y_SHAKE_MOD_CHPRESS 34         // On/Off
 #define Y_SHAKE_MOD_KEYPRESS 35        // On/Off
 #define Y_SHAKE_MOD_CC_DEPTH 36        // 0-100
 #define Y_SHAKE_MOD_CHPRESS_DEPTH 37   // 0-100
 #define Y_SHAKE_MOD_KEYPRESS_DEPTH 38  // 0-100
-#define Y_SHAKE_MOD_CC_MODE 39        // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only 
-#define Y_SHAKE_MOD_CHPRESS_MODE 40   // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
-#define Y_SHAKE_MOD_KEYPRESS_MODE 41  // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
-#define IMU_ROLL_PITCH_MIN 42 // IMU pitchbend mapping variables
+#define Y_SHAKE_MOD_CC_MODE 39         // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define Y_SHAKE_MOD_CHPRESS_MODE 40    // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define Y_SHAKE_MOD_KEYPRESS_MODE 41   // 0 is Up/Down, 1 is Down/Up, 2 is up only, 3 is down only, 4 is inverted up only, 5, is inverted down only
+#define IMU_ROLL_PITCH_MIN 42          // IMU pitchbend mapping variables
 #define IMU_ROLL_PITCH_MAX 43
 #define IMU_ROLL_PITCH_MIN_HIGH 44
 #define IMU_ROLL_PITCH_MAX_LOW 45
-#define IMU_ROLL_PITCH_OUT_LOW_CENTS 46     // stored signed as 0 cents = 64
-#define IMU_ROLL_PITCH_OUT_HIGH_CENTS 47    // stored signed as 0 cents = 64
-#define IMU_ROLL_PITCH_OUT_CLAMP 48   // boolean if outbend should be clamped
-#define IMU_ROLL_PITCH_CURVE_LOW 49     // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_ROLL_PITCH_OUT_LOW_CENTS 46   // stored signed as 0 cents = 64
+#define IMU_ROLL_PITCH_OUT_HIGH_CENTS 47  // stored signed as 0 cents = 64
+#define IMU_ROLL_PITCH_OUT_CLAMP 48       // boolean if outbend should be clamped
+#define IMU_ROLL_PITCH_CURVE_LOW 49       // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define IMU_ROLL_PITCH_CURVE_HIGH 50      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define IMU_ELEVATION_PITCH_MIN 51 // IMU pitchbend mapping variables
+#define IMU_ELEVATION_PITCH_MIN 51        // IMU pitchbend mapping variables
 #define IMU_ELEVATION_PITCH_MAX 52
 #define IMU_ELEVATION_PITCH_MIN_HIGH 53
 #define IMU_ELEVATION_PITCH_MAX_LOW 54
-#define IMU_ELEVATION_PITCH_OUT_LOW_CENTS 55     // stored signed as 0 cents = 64
-#define IMU_ELEVATION_PITCH_OUT_HIGH_CENTS 56    // stored signed as 0 cents = 64
-#define IMU_ELEVATION_PITCH_OUT_CLAMP 57   // boolean if outbend should be clamped
-#define IMU_ELEVATION_PITCH_CURVE_LOW 58      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_ELEVATION_PITCH_OUT_LOW_CENTS 55   // stored signed as 0 cents = 64
+#define IMU_ELEVATION_PITCH_OUT_HIGH_CENTS 56  // stored signed as 0 cents = 64
+#define IMU_ELEVATION_PITCH_OUT_CLAMP 57       // boolean if outbend should be clamped
+#define IMU_ELEVATION_PITCH_CURVE_LOW 58       // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define IMU_ELEVATION_PITCH_CURVE_HIGH 59      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define IMU_YAW_PITCH_MIN 60 // IMU pitchbend mapping variables
+#define IMU_YAW_PITCH_MIN 60                   // IMU pitchbend mapping variables
 #define IMU_YAW_PITCH_MAX 61
 #define IMU_YAW_PITCH_MIN_HIGH 62
 #define IMU_YAW_PITCH_MAX_LOW 63
-#define IMU_YAW_PITCH_OUT_LOW_CENTS 64     // stored signed as 0 cents = 64
-#define IMU_YAW_PITCH_OUT_HIGH_CENTS 65    // stored signed as 0 cents = 64
-#define IMU_YAW_PITCH_OUT_CLAMP 66   // boolean if outbend should be clamped
-#define IMU_YAW_PITCH_CURVE_LOW 67      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define IMU_YAW_PITCH_OUT_LOW_CENTS 64   // stored signed as 0 cents = 64
+#define IMU_YAW_PITCH_OUT_HIGH_CENTS 65  // stored signed as 0 cents = 64
+#define IMU_YAW_PITCH_OUT_CLAMP 66       // boolean if outbend should be clamped
+#define IMU_YAW_PITCH_CURVE_LOW 67       // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define IMU_YAW_PITCH_CURVE_HIGH 68      // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define MAP_ROLL_TO_PITCHBEND 69 // ON/OFF boolean
-#define MAP_ELEVATION_TO_PITCHBEND 70 // ON/OFF boolean
-#define MAP_YAW_TO_PITCHBEND 71 // ON/OFF boolean
+#define MAP_ROLL_TO_PITCHBEND 69         // ON/OFF boolean
+#define MAP_ELEVATION_TO_PITCHBEND 70    // ON/OFF boolean
+#define MAP_YAW_TO_PITCHBEND 71          // ON/OFF boolean
 #define kIMUnVariables 72
 
 #define Y_PITCHBEND_MODE_UPDOWN 0
@@ -652,10 +652,10 @@
 #define MIDI_CC_109_OFFSET 200  // Value added to received CC 109, to distinguish them from those from CC_104
 
 //IMU Settings Array - see defines above
-#define MIDI_CC_109_VALUE_0 0    // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_1 1    // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_2 2    // Bidirectional. Settings for current instrument: indicates IMUsettings[2] is about to be sent with CC 105.
-#define MIDI_CC_109_VALUE_3 3    // Bidirectional. Settings for current instrument: indicates IMUsettings[3] is about to be sent with CC 105.
+#define MIDI_CC_109_VALUE_0 0  // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105.
+#define MIDI_CC_109_VALUE_1 1  // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105.
+#define MIDI_CC_109_VALUE_2 2  // Bidirectional. Settings for current instrument: indicates IMUsettings[2] is about to be sent with CC 105.
+#define MIDI_CC_109_VALUE_3 3  // Bidirectional. Settings for current instrument: indicates IMUsettings[3] is about to be sent with CC 105.
 // ... up to 62. These defines aren't currently used.
 /* 63-99	unused -- can be used to extend above array or for other variables */
 
@@ -722,14 +722,14 @@
 #define MIDI_CUST_FINGERING_PATTERN_END MIDI_CC_102_VALUE_103    // Bidirectional. WARBL2 custom fingering chart 4
 #define MIDI_ACTION_MIDI_START MIDI_CC_102_VALUE_112             // Bidirectional. send midi note on/note off
 
-#define MIDI_PRESS_SELECT_VARS_START MIDI_CC_104_VALUE_1                // Bidirectional. Settings for current instrument: indicates ""bag threshold"" is about to be sent with CC 105.
-#define MIDI_PRESS_SELECT_VARS_END MIDI_CC_104_VALUE_12                 // Bidirectional. Settings for current instrument: indicates "breath  drop time" is about to be sent with CC 105.
-#define MIDI_ED_VARS_START MIDI_CC_104_VALUE_13                         // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105.
-#define MIDI_ED_VARS_END MIDI_CC_104_VALUE_33                           // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
-#define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                   // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
-#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                     // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
-#define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                        // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                          // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+#define MIDI_PRESS_SELECT_VARS_START MIDI_CC_104_VALUE_1                  // Bidirectional. Settings for current instrument: indicates ""bag threshold"" is about to be sent with CC 105.
+#define MIDI_PRESS_SELECT_VARS_END MIDI_CC_104_VALUE_12                   // Bidirectional. Settings for current instrument: indicates "breath  drop time" is about to be sent with CC 105.
+#define MIDI_ED_VARS_START MIDI_CC_104_VALUE_13                           // Bidirectional. Settings for current instrument: indicates ED[0] is about to be sent with CC 105.
+#define MIDI_ED_VARS_END MIDI_CC_104_VALUE_33                             // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
+#define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
+#define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
+#define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                            // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
@@ -743,8 +743,8 @@
 #define MIDI_WARBL2_SETTINGS_END MIDI_CC_106_VALUE_74      // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
 #define MIDI_BUTTON_ACTIONS_START MIDI_CC_106_VALUE_100    // Bidirectional. Button action 0
 
-#define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                 // Beginning of WARBL2 CustomCharts
-#define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                   // End of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                   // Beginning of WARBL2 CustomCharts
+#define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                     // End of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_OFFSET_START (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_START)  // Beginning of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_OFFSET_END (MIDI_CC_109_OFFSET + MIDI_CUSTOM_CHARTS_END)      // End of WARBL2 CustomCharts
 
