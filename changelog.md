@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixes to tonehole sensor calibration routine.
 
+- Fixed mistake in uilleann pipes "custom" vibrato.
+
+- Fix that prevents the shake pressure IMU feature from modifying if the input pressure is zero.
 
 ### Added
 
