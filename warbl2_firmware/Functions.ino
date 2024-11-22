@@ -1,3 +1,4 @@
+//ToDo: make sure gyro is always turned on when needed
 
 
 // Debug
@@ -17,7 +18,6 @@ void printStuff(void) {
     } 
 */
 }
-
 
 
 
@@ -422,7 +422,7 @@ void shakeForVibrato() {
     unsigned long nowtime = millis();
 
 
-    if (abs(accelFilteredB) > kShakeGestureThresh) {
+    if (abs(accelFilteredB) > kShakeGestureThresh) {  // This is for the shake gesture "button" assignment.
         shakeDetected = true;
     } else {
         shakeDetected = false;
@@ -533,10 +533,6 @@ void shakeForVibrato() {
                 }
                 shakePressureKeyPressMod = (int)(normmodshake * shakeModKeyPressDepth);
             }
-        }
-
-        if (pitchBendMode == kPitchBendNone) {  // If we don't have finger vibrato and/or slide turned on, we need to send the pitchbend now.
-            sendPitchbend();
         }
     }
 }
@@ -1180,11 +1176,6 @@ void getExpression() {
     }
 
     expression = (int)(0.01f * centsOffset * pitchBendPerSemi);  // Expression is in raw pitch bend units.
-
-    if (pitchBendMode == kPitchBendNone && !(IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND])) {  // If we're not using vibrato/slide and not using IMU pitchbend, send the pitchbend now instead of adding it in later.
-        pitchBend = 0;
-        sendPitchbend();
-    }
 }
 
 
@@ -1249,10 +1240,6 @@ void getIMUpitchbend() {
 
             IMUpitchbend += (int)(0.01f * centsOffset * pitchBendPerSemi);  // Add in contribution by roll, pitch, yaw. In raw pitch bend units.
         }
-    }
-    if (pitchBendMode == kPitchBendNone) {  // If we're not using vibrato, send the pitchbend now instead of adding it in later.
-        pitchBend = 0;
-        sendPitchbend();
     }
 }
 
@@ -1377,7 +1364,6 @@ void handleCustomPitchBend() {
             iPitchBend[3] = 0;
         }
     }
-    sendPitchbend();
 }
 
 
@@ -1425,9 +1411,6 @@ void handlePitchBend() {
             }
         }
     }
-
-
-    sendPitchbend();
 }
 
 
@@ -1479,7 +1462,44 @@ void getSlide() {
 
 
 
+void calculateAndSendPitchbend() {
+
+    bool pitchBendUsed = false;
+
+    if (ED[mode][EXPRESSION_ON] && !switches[mode][BAGLESS]) {
+        getExpression();  // If using pitchbend expression, calculate pitchbend based on pressure reading.
+        pitchBendUsed = true;
+    }
+    if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+        getIMUpitchbend();
+        pitchBendUsed = true;
+    }
+    if (!customEnabled && pitchBendMode != kPitchBendNone) {
+        handlePitchBend();
+        pitchBendUsed = true;
+    } else if (customEnabled) {
+        handleCustomPitchBend();
+        pitchBendUsed = true;
+    }
+    shakeForVibrato();  // This always needs to be called to detect the shake "button" gesture.
+    if (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] || IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]) {
+        pitchBendUsed = true;
+    }
+
+    if (pitchBendUsed) {  // Send pitchbend if necessary.
+        sendPitchbend();
+    }
+}
+
+
+
+
+
+
+
+
 void sendPitchbend() {
+
 
     static int prevPitchBend = 8192;  // A record of the previous pitchBend value, so we don't send the same one twice
 
@@ -1512,29 +1532,6 @@ void sendPitchbend() {
     }
 }
 
-
-
-
-
-
-
-
-
-void calculateAndSendPitchbend() {
-    if (ED[mode][EXPRESSION_ON] && !switches[mode][BAGLESS]) {
-        getExpression();  // IF using pitchbend expression, calculate pitchbend based on pressure reading.
-    }
-    if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
-        getIMUpitchbend();
-    }
-
-
-    if (!customEnabled && pitchBendMode != kPitchBendNone) {
-        handlePitchBend();
-    } else if (customEnabled) {
-        handleCustomPitchBend();
-    }
-}
 
 
 
@@ -2999,7 +2996,7 @@ void resetExpressionOverrideDefaults() {
 
 // Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
-  
+
     vibratoHoles = vibratoHolesSelector[mode];
     octaveShift = octaveShiftSelector[mode];
     noteShift = noteShiftSelector[mode];

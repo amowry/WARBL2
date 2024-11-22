@@ -177,7 +177,7 @@ byte switches[3][kSWITCHESnVariables] =              // Settings for the switche
     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
 
-byte IMUsettings[3][kIMUnVariables] =                                                                                                                                                                                                                                   // Settings for mapping and sending IMU readings (see defines)
+byte IMUsettings[3][kIMUnVariables] =                                                                                                                                                                                                                                       // Settings for mapping and sending IMU readings (see defines)
   { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 0
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Instrument 2
@@ -491,7 +491,6 @@ void setup() {
 
 void loop() {
 
-
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
@@ -503,7 +502,7 @@ void loop() {
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
     getShift();                             // Shift the next note up or down based on register and key.
     sendNote();                             // Send the note as soon as we know the note, state, and shift.
-    readMIDI();                             // Read incoming MIDI messages .
+    readMIDI();                             // Read incoming MIDI messages.
 
 
 
@@ -527,8 +526,7 @@ void loop() {
         calibrate();  // Calibrate/continue calibrating if the command has been received.
         checkButtons();
         detectSip();
-        detectShake();
-        shakeForVibrato();           // ~ 200 uS
+        detectShake();               // Gesture detection
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
     }
 
@@ -538,10 +536,9 @@ void loop() {
 
     if ((wakeTime - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
         pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
-        //shakeForVibrato();            // ~ 200 uS
-        calculateAndSendPitchbend();  // 11-200 us depending on whether holes are partially covered.
-        printStuff();                 // Debug
-        sendIMU();                    // ~ 130 us
+        calculateAndSendPitchbend();
+        printStuff();  // Debug
+        sendIMU();     // ~ 130 us
     }
 
 
