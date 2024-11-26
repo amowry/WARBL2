@@ -275,6 +275,7 @@ unsigned long transitionFilter = 0;
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
 int pitchBend = 8192;                                                         // Total current pitchbend value
+bool resetBendFilter = true;
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 float pitchBendPerSemi = 4096.0f;
 int prevChanPressure = 0;
@@ -532,9 +533,11 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 ms if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval. This ensures that we aren't sending pitchbend too much faster than the connection interval.
+    /////////// Things here happen ~ every 9 ms (or 4 when legatoslidevibrato mode is used) if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval.
+    /////////// This ensures that we aren't sending pitchbend too much faster than the connection interval.
+    const int pbsendinterval = (connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : ((pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) ? 4 : 9);
 
-    if ((wakeTime - pitchBendTimer) >= ((connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : 9)) {
+    if ((wakeTime - pitchBendTimer) >= pbsendinterval) {
         pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
         calculateAndSendPitchbend();
         printStuff();  // Debug

@@ -1502,6 +1502,7 @@ void sendPitchbend() {
 
 
     static int prevPitchBend = 8192;  // A record of the previous pitchBend value, so we don't send the same one twice
+    static int prevRawPitchBend = 0;
 
     pitchBend = 0;  // Reset the overall pitchbend in preparation for adding up the contributions from all the toneholes.
     for (byte i = 0; i < 9; i++) {
@@ -1512,6 +1513,23 @@ void sendPitchbend() {
     if (noteon && pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
         noteshift = (notePlaying - shift) - newNote;
         pitchBend += (int)(noteshift * pitchBendPerSemi);
+
+        // we are sending PB at a higher rate in this mode, so we can average the current with the last
+        // to provide the smallest amount of smoothing to the raw note value which avoids artifacts
+        // in some destination sound sources
+
+        const int avgcnt = 2;
+        if (resetBendFilter) {
+            // don't average in this case (happens around a note on)
+            prevRawPitchBend = pitchBend;
+            resetBendFilter = false;
+        }
+        else {
+            int avgbend = (prevRawPitchBend + pitchBend) >> 1;
+            prevRawPitchBend = pitchBend;
+
+            pitchBend = avgbend;
+        }
     }
 
     pitchBend = 8192 - pitchBend + expression + shakeVibrato + IMUpitchbend;  // Add up all sources of pitchbend.
@@ -1593,6 +1611,7 @@ void sendNote() {
         // Set it now so that send pitchbend will operate correctly.
         noteon = 1;  // Keep track of the fact that there's a note turned on.
         notePlaying = newNote + shift;
+        resetBendFilter = true;
 
         // Send pitch bend immediately prior to note if necessary.
         if (switches[mode][IMMEDIATE_PB]) {
