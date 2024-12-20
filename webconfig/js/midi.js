@@ -5479,6 +5479,7 @@ function exportPreset() {
     // Export message proxy
     //
     function exportMessageHandler(byte0, byte1, byte2) {
+		
 
         //console.log("Message #"+nMessages+":"+byte0+" "+byte1+" "+byte2);
 
@@ -5487,7 +5488,12 @@ function exportPreset() {
 
         nMessages++;
 
-        if (nMessages == 135) {
+        //if (nMessages == 135) {
+			
+
+    }
+	
+	function exportFunction() {	
 
             //debugger;
 
@@ -5502,8 +5508,8 @@ function exportPreset() {
             // Do the preset file export
             downloadPreset(theExportObjectJSON, "WARBL_Preset.warbl", "text/plain");
 
-        }
-    }
+        
+	}
 
     // Setup the global export message proxy
     gExportProxy = exportMessageHandler;
@@ -5511,8 +5517,13 @@ function exportPreset() {
     // Tell WARBL to enter communications mode
     // Received bytes will be forwarded to the export message handler instead
     sendToWARBL(MIDI_CC_102, MIDI_ENTER_COMM_MODE);
+	setTimeout(exportFunction, 3000);
 
 }
+
+
+
+
 
 //
 // Capture the incoming pressure
