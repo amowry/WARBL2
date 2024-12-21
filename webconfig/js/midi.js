@@ -5377,15 +5377,17 @@ function importPreset(context) {
             // Send the rest of the data
 
             for (i = 12; i < nMessages; ++i) {
+					
 
                 byte0 = theImportObject.messages[i][0];
                 byte1 = theImportObject.messages[i][1];
                 byte2 = theImportObject.messages[i][2];
-
-                //console.log("Sending Message #"+i+":"+byte0+" "+byte1+" "+byte2);
-
+				
+				
+		if (!(byte1 == 106 && byte2 >= 55 && byte2 <= 57)){ // Ignore WARBL2 settings data that is independent of instrument
+		         //console.log("Sending Message #"+i+":"+byte0+" "+byte1+" "+byte2);
                 sendToWARBL(byte1, byte2);
-
+		}
                 // Synchronous sleep to allow command processing
                 await sleep(delay);
 
