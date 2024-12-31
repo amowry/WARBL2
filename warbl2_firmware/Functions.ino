@@ -1523,8 +1523,7 @@ void sendPitchbend() {
             // don't average in this case (happens around a note on)
             prevRawPitchBend = pitchBend;
             resetBendFilter = false;
-        }
-        else {
+        } else {
             int avgbend = (prevRawPitchBend + pitchBend) >> 1;
             prevRawPitchBend = pitchBend;
 
@@ -2776,7 +2775,11 @@ void sendSettings() {
 
 
     for (byte i = 0; i < 9; i++) {
-        sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + i + (10 * (bitRead(vibratoHolesSelector[mode], i))));  // Send enabled vibrato holes.
+        if (bitRead(vibratoHolesSelector[mode], i)) {
+            sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + i);
+        } else {
+            sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + 10 + i);
+        }
     }
 
     for (byte i = 0; i < kGESTURESnVariables; i++) {

@@ -597,6 +597,7 @@ function sendToWARBL(byte2, byte3) {
             }
 
             var cc = buildMessage(byte2, byte3);
+			//console.log("sendToWARBL",byte2, byte3 );
             if (MIDI_DEBUG) {
                 console.log("sendToWARBL",byte2, byte3 );
             }
@@ -2084,11 +2085,11 @@ function WARBL_Receive(event, source) {
                 if (data1 == MIDI_CC_106 && data2 > MIDI_ACTION_MIDI_CHANNEL_END) {
 
                     if (data2 >= MIDI_ENA_VIBRATO_HOLES_START && data2 <= MIDI_ENA_VIBRATO_HOLES_END) {
-                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_ENA_VIBRATO_HOLES_START)).checked = false;
+                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_ENA_VIBRATO_HOLES_START)).checked = true;
                     }
 
                     if (data2 >= MIDI_DIS_VIBRATO_HOLES_START && data2 <= MIDI_DIS_VIBRATO_HOLES_END) {
-                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_DIS_VIBRATO_HOLES_START)).checked = true;
+                        document.getElementById("vibratoCheckbox" + (data2 - MIDI_DIS_VIBRATO_HOLES_START)).checked = false;
                     }
 
                     if (data2 == MIDI_STARTUP_CALIB) {
@@ -2161,6 +2162,8 @@ function WARBL_Receive(event, source) {
                     }
                     else if (WARBL2SettingsReceive == 1) {
                         document.getElementById("checkbox19").checked = data2;
+						//console.log("setting charging switch:");
+						//console.log(data2);
                     }
                     else if (WARBL2SettingsReceive == 2) {
                         document.getElementById("poweroffSlider").value = data2;
@@ -5384,14 +5387,22 @@ function importPreset(context) {
                 byte2 = theImportObject.messages[i][2];
 				
 				
-		if (!(byte1 == 106 && byte2 >= 55 && byte2 <= 57)){ // Ignore WARBL2 settings data that is independent of instrument
-		         //console.log("Sending Message #"+i+":"+byte0+" "+byte1+" "+byte2);
-                sendToWARBL(byte1, byte2);
-		}
+			if (byte1 == 106){
+				if (byte2 >= 55 && byte2 <= 57){ // Ignore WARBL2 settings data that is independent of instrument
+				WARBL2SettingsReceive = "null";  
+				}
+				else {WARBL2SettingsReceive = 0;
+				}
+			}
+			if (!((byte1 == MIDI_CC_119) || (byte1 == MIDI_CC_106 && (byte2 >= 55 && byte2 <= 99)))) { // Send to WARBL unless we have a WARBL2 setting that shouldn't be changed
+			
+				sendToWARBL(byte1, byte2);
+		
                 // Synchronous sleep to allow command processing
-                await sleep(delay);
+        		await sleep(delay);
 
             }
+			}
 
             // Refresh the UI after a short delay by putting the device back in communications mode
             setTimeout(function () {
@@ -5444,7 +5455,10 @@ function exportPreset() {
     }
 
     var nMessages = 0;
-
+	
+	document.getElementById("modal14-ok").style.opacity = 0.0;
+	document.getElementById("modal14-title").innerHTML = "Exporting...";
+	modal(14);
     // Initialize the export structure
     var theExportObject = {
         signature: "WARBL",  // Used to sanity check imports
