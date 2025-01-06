@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix that prevents the shake pressure IMU feature from modifying if the input pressure is zero.
 
+- Fixed a bug where the vibrato holes selection wasn't being sent properly between the WARBL and the Configuration Tool.
+
 ### Added
 
 - Added mapping of IMU roll/elevation/yaw to pitchbend.
