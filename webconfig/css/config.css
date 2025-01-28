@@ -1931,12 +1931,12 @@ input:disabled + .vibratoSlider:before {
 
 
 #switch8 {
-	top: 275px;
+	top: 285px;
 	left: 160px;
 }
 
 #switch9 {
-	top: 240px;
+	top: 250px;
 	left: 160px;
 }
 
@@ -1949,10 +1949,35 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 40px;
-	top: 243px;
+	top: 253px;
 	z-index: 99;
 	font-size: 14px;
 }
+
+.overblowSemitonesLabel {
+	display: block;
+	position: absolute;
+	left: 35px;
+	top: 213px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#overblowSemitonesInput {
+	display: none;
+}
+
+#overblowSemitonesLabel {
+	display: none;
+}
+
+.overblowSemitonesInputContainer {
+	display: block;
+	position: absolute;
+	left: 180px;
+	top: 210px;
+}
+
 
 .invertR4Label {
 	display: block;
@@ -1967,7 +1992,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 52px;
-	top: 278px;
+	top: 288px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -5117,6 +5142,7 @@ select option {
 	font-size: 14px;
 	width: 50px;
 }
+
 
 .channelInput:disabled {
 	background: var(--disabled-bg-color);

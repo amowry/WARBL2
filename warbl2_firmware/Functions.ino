@@ -897,7 +897,7 @@ void getShift() {
 
     // Overblow if allowed.
     if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + 12;                                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
+        shift = shift + ED[mode][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                       // Add a register jump to the transposition if overblowing.
         if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                             // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
@@ -2802,8 +2802,8 @@ void sendSettings() {
         sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS_START, MIDI_CC_105, ED[mode][i]);
     }
 
-    for (byte i = MIDI_ED_VARS_NUMBER; i < MIDI_ED_VARS2_OFFSET; i++) {  // More settings for expression and drones control panels.
-        sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS2_OFFSET, MIDI_CC_105, ED[mode][i]);
+    for (byte i = MIDI_ED_VARS2_START; i < MIDI_ED_VARS2_END + 1; i++) {  // More settings for expression and drones control panels.
+        sendMIDICouplet(MIDI_CC_104, i, MIDI_CC_105, ED[mode][i - MIDI_ED_VARS2_OFFSET]);
     }
 
     for (byte i = 0; i < 3; i++) {
@@ -3821,6 +3821,12 @@ void checkFirmwareVersion() {
                 writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_ELEVATION_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);
                 writeEEPROM(EEPROM_IMU_SETTINGS_START + i + MAP_YAW_TO_PITCHBEND * 3, 0);
                 writeEEPROM((EEPROM_IMU_SETTINGS_START + i + MAP_YAW_TO_PITCHBEND * 3 + EEPROM_FACTORY_SETTINGS_START), 0);
+            }
+
+            // New overblow semitones setting
+            for (int i = 0; i < 3; ++i) {  // Each mode
+                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3), ED[mode][OVERBLOW_SEMITONES]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3) + EEPROM_FACTORY_SETTINGS_START, ED[mode][OVERBLOW_SEMITONES]);
             }
         }
 

@@ -233,9 +233,10 @@ const MIDI_CC_104 = 104; // from WARBL & from Config Tool. Various values as fol
     const MIDI_CC_104_VALUE_94 = 94; // Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_95 = 95; // Bidirectional. Settings for current instrument: indicates ED[46] is about to be sent with CC 105. 
     const MIDI_CC_104_VALUE_96 = 96; // Bidirectional. Settings for current instrument: indicates ED[47] is about to be sent with CC 105. 
-    const MIDI_CC_104_VALUE_97 = 97; // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105. 
+    const MIDI_CC_104_VALUE_97 = 97; // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+	const MIDI_CC_104_VALUE_98 = 98; // Bidirectional. Settings for current instrument: indicates ED[49] is about to be sent with CC 105.  
 ; //
-    /* 98-127 unused */
+    /* 99-127 unused */
 
 const MIDI_CC_105 = 105; // Bidirectional - From Warbl. Values 0-127. Settings for current instrument: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -434,7 +435,7 @@ const MIDI_CC_109 = 109; // From WARBL. Values as follows:
 
 const MIDI_CC_110 = 110; // From WARBL. Values 0-127	- firmware version
 const MIDI_CC_111 = 111; // Bidirectional. Values 0-127	- note shift for mode 0
-    const MIDI_CC_111_VALUE_109 = 109; // Bidirectional. Hidden sticks mode - Same for 112 and 113
+const MIDI_CC_111_VALUE_109 = 109; // Bidirectional. Hidden sticks mode - Same for 112 and 113
 const MIDI_CC_112 = 112; // Bidirectional. Values 0-127	- note shift for mode 1
 const MIDI_CC_113 = 113; // Bidirectional. Values 0-127	- note shift for mode 2
 
@@ -568,6 +569,7 @@ const MIDI_EXPRESSION_OUT_CLAMP = MIDI_CC_104_VALUE_93; // Bidirectional. Settin
 const MIDI_EXPRESSION_CURVE_LOW = MIDI_CC_104_VALUE_94; // Bidirectional. Settings for current instrument: indicates ED[45] is about to be sent with CC 105.
 const MIDI_EXPRESSION_CURVE_HIGH = MIDI_CC_104_VALUE_95; // Bidirectional. Settings for current instrument: indicates ED[46] is about to be sent with CC 105.
 const MIDI_AFTERTOUCH_MPEPLUS = MIDI_CC_104_VALUE_96;  // Bidirectional. Settings for current instrument: indicates ED[47] is about to be sent with CC 105.
+const MIDI_OVERBLOW_SEMITONES = MIDI_CC_104_VALUE_98;  // Bidirectional. Settings for current instrument: indicates ED[49] is about to be sent with CC 105.
 
 const MIDI_SEND_ROLL = MIDI_CC_109_VALUE_0; // Bidirectional. Settings for current instrument: indicates IMUsettings[0] is about to be sent with CC 105. 
 const MIDI_SEND_PITCH = MIDI_CC_109_VALUE_1; // Bidirectional. Settings for current instrument: indicates IMUsettings[1] is about to be sent with CC 105. 

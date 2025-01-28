@@ -153,6 +153,7 @@ unsigned int vibratoDepth = 1024;                  // Vibrato depth from 0 (no v
 bool useLearnedPressure = 0;                       // Whether we use learned pressure for note on threshold, or we use calibration pressure from startup
 byte midiBendRange = 2;                            // +/- semitones that the midi bend range represents
 byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;  // Current MIDI channel to send notes on
+byte overblowSemitones = 5;                        // Number of semitones for overblowing
 
 
 // These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
@@ -182,10 +183,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                     // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255 } };  // Instrument 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                         // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -273,8 +274,8 @@ unsigned long transitionFilter = 0;
 
 
 // Pitchbend variables
-byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Whether pitchbend is currently turned for for a specific hole
-int pitchBend = 8192;                                                         // Total current pitchbend value
+byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Whether pitchbend is currently turned for for a specific hole
+int pitchBend = 8192;                                // Total current pitchbend value
 bool resetBendFilter = true;
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 float pitchBendPerSemi = 4096.0f;

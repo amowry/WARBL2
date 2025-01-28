@@ -1370,7 +1370,8 @@ function WARBL_Receive(event, source) {
                             //exprhighslider.noUiSlider.set([null, data2]); 
 							exprhighsliderHandleSetting = data2;                        
                         }
-                    }					
+                    }
+						
                     else if (version < 4.0 && jumpFactorWrite >= MIDI_CC_104_VALUE_87 && jumpFactorWrite <= MIDI_ED_VARS2_END) { //custom fingering chart inputs -WARBL1
                         document.getElementById("fingeringInput" + (jumpFactorWrite - 86)).value = data2;
                     }			
@@ -1421,7 +1422,11 @@ function WARBL_Receive(event, source) {
                     else if (jumpFactorWrite == MIDI_ED_VARS2_START +26) {
                         // presure MPE+
                         document.getElementById("pressureMPEplusCheck").checked = data2 > 0;
-                    }					
+                    }	
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +28) {
+						console.log(data2);
+					    document.getElementById("overblowSemitonesInput").value = data2;
+                    }				
                    
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
@@ -1719,6 +1724,9 @@ function WARBL_Receive(event, source) {
 						document.getElementById("IMUpitchMappingControls").style.display = "block";
 						document.getElementById("IMUCCMappingControls").style.top = "-120px";
 						document.getElementById("IMUbottomControls").style.top = "-120px";
+						document.getElementById("IMUpitchMappingControls").style.display = "block";
+						document.getElementById("overblowSemitonesInput").style.display = "block";
+						document.getElementById("overblowSemitonesLabel").style.display = "block";
 					}
 					
 					
@@ -3493,6 +3501,19 @@ function sendOctavePressure(selection) {
         sendToWARBL(MIDI_CC_105, x & 0x7F);
         sendToWARBL(MIDI_CC_104, MIDI_LEARNED_PRESS_MSB);
         sendToWARBL(MIDI_CC_105, x >> 7);
+    }
+
+}
+
+function sendOverblowSemitones(selection) {
+    var x = parseInt(selection);
+    if (x < 0 || x > 24 || isNaN(x)) {
+        alert("Value must be 0 - 24.");
+        document.getElementById("overblowSemitonesInput").value = null;
+    } else {
+        blink(1);
+        sendToWARBL(MIDI_CC_104, MIDI_OVERBLOW_SEMITONES);
+        sendToWARBL(MIDI_CC_105, x);
     }
 
 }

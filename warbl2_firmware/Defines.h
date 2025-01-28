@@ -157,8 +157,9 @@
 #define EXPRESSION_CURVE_LOW 45   // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define EXPRESSION_CURVE_HIGH 46  // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define AFTERTOUCH_MPEPLUS 47
-#define CUSTOM_FINGERING_11 48  // None of these "custom" variables these are used by WARBL2. Can be repurposed.
-#define kEXPRESSIONnVariables 49
+#define CUSTOM_FINGERING_11 48  // This "custom" variable isn't used by WARBL2. Can be repurposed.
+#define OVERBLOW_SEMITONES 49 
+#define kEXPRESSIONnVariables 50
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -432,7 +433,7 @@
 #define MIDI_CC_102_VALUE_123 123  // from Config Tool. save as defaults for current mode
 #define MIDI_CC_102_VALUE_124 124  // from Config Tool. save as defaults for all instruments
 #define MIDI_CC_102_VALUE_125 125  // from Config Tool. restore factory settings
-#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode \
+#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode
                                    // WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
 #define MIDI_CC_102_VALUE_127 127  // from Config Tool. begin autocalibration
 
@@ -478,6 +479,7 @@
 #define MIDI_CC_104_VALUE_31 31  // Bidirectional. Settings for current instrument: indicates ED[18] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_32 32  // Bidirectional. Settings for current instrument: indicates ED[19] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_33 33  // Bidirectional. Settings for current instrument: indicates ED[20] is about to be sent with CC 105.
+
 #define MIDI_CC_104_VALUE_34 34  // Bidirectional. Settings for current instrument: indicates that lsb of learned note trigger pressure is about to be sent on CC 105
 #define MIDI_CC_104_VALUE_35 35  // Bidirectional. Settings for current instrument: indicates that msb of learned note trigger pressure is about to be sent on CC 105
 /* 36-39 unused */
@@ -534,8 +536,9 @@
 #define MIDI_CC_104_VALUE_95 95  // Bidirectional. Settings for current instrument: indicates ED[46] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_96 96  // Bidirectional. Settings for current instrument: indicates ED[47] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_97 97  // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_98 98  // Bidirectional. Settings for current instrument: indicates ED[49] is about to be sent with CC 105.
 //
-/* 98-127 unused */
+/* 99-127 unused */
 
 #define MIDI_CC_105 105  // Bidirectional - From Warbl. Values 0-127. Settings for current instrument: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -729,7 +732,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_97                            // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_98                            // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
@@ -852,8 +855,8 @@
                                             // 343 low byte of vibrato depth  for mode 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
-#define EEPROM_ED_VARS_START 351  // 351-497	expression and drones (ED) variables
-/* 498-599 unused, room for extending above array or other variables */
+#define EEPROM_ED_VARS_START 351  // 351-500	expression and drones (ED) variables
+/* 501-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array
