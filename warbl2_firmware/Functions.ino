@@ -905,7 +905,7 @@ void getShift() {
     // Use the bell sensor to control register if desired.
     if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {
         if (bitRead(holeCovered, 0) == switches[mode][INVERT]) {
-            shift = shift + 12;
+            shift = shift + ED[mode][OVERBLOW_SEMITONES];
             if (modeSelector[mode] == kModeKaval) {
                 shift = shift - 5;
             }
@@ -915,7 +915,7 @@ void getShift() {
     // ToDo: Are there any others that don't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
     else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
-            shift = shift + 12;  // Add an octave jump to the transposition if necessary.
+            shift = shift + ED[mode][OVERBLOW_SEMITONES];  // Add an octave jump to the transposition if necessary.
         }
     }
 }
