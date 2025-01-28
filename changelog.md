@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
-## [4.4] - 2024-11-4
+## [4.4] - 2025-1-28
 
 ### Changed
 
@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added mapping of IMU roll/elevation/yaw to pitchbend.
+- Added an "overblow semitones" setting to allow overblowing of intervals other than an octave (useful for emulating wind instruments that overblow odd intervals, or for overblowing to play accidentals).
 
 ## [Released]
 
