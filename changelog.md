@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added mapping of IMU roll/elevation/yaw to pitchbend.
+  
 - Added an "register semitones" setting to allow interval shifts other than an octave by overblowing, using the thumb, or the bell sensor (useful for emulating wind instruments that overblow odd intervals, or for overblowing to play accidentals).
 
 ## [Released]
