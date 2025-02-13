@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
+
+
+## [Released]
+
 ## [4.4] - 2025-1-28
 
 ### Changed
@@ -23,8 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added mapping of IMU roll/elevation/yaw to pitchbend.
   
 - Added an "register semitones" setting to allow interval shifts other than an octave by overblowing, using the thumb, or the bell sensor (useful for emulating wind instruments that overblow odd intervals, or for overblowing etc. to play accidentals).
-
-## [Released]
 
 ## [4.3] - 2024-10-4
 
