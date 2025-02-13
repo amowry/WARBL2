@@ -10,7 +10,7 @@
 //
 //
 
-const cacheName = "warbl_38";
+const cacheName = "warbl_42";
 
 const contentToCache = [
     "configure.html",

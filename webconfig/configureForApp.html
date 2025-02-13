@@ -48,7 +48,9 @@
 
          // Register service worker (not on iOS or iPad requesting desktop site)
          if ((!isIOS()) && ('serviceWorker' in navigator)){
-            navigator.serviceWorker.register('https://warbl.xyz/service_worker.js',{updateViaCache: "none"})
+            navigator.serviceWorker.register('https://warbl.xyz/service_worker.js', {
+
+    scope: '/configure.html'},{updateViaCache: "none"})
             .then(reg => {
                console.log("Service Worker Registered!");
             })
@@ -69,7 +71,7 @@
          <a href="index.html">Home</a>
          <a href="https://warbl.xyz/documentation.html">Documentation</a>
          <a class="toplink" href="https://warbl.xyz/videos.html">Videos</a>
-         <a href="https://warbl.xyz/purchase.html">Purchase</a>
+         <a href="https://warbl.xyz/Store/">Purchase</a>
          <a href="https://warbl.xyz/FAQ.html">FAQ</a>
          <a href="https://warbl.xyz/contact.html">Contact</a>
          <a href="https://warbl.xyz/Bio.html" >Bio</a>
@@ -692,9 +694,9 @@
                      </fieldset>
                   </div>
                    <div class="overblowSemitonesInputContainer">
-                     <input class="channelInput" type="text" onChange="sendOverblowSemitones(value)" id="overblowSemitonesInput" value="" />
+                     <input class="channelInput" type="text" onChange="sendOverblowSemitones(value)" id="overblowSemitonesInput" value="12" />
                   </div>
-                  <div class="overblowSemitonesLabel" id="overblowSemitonesLabel" noTouch">Register semitones</div> 
+                  <div class="overblowSemitonesLabel" id="overblowSemitonesLabel" noTouch">Register semitones:</div> 
                   <div class="invertLabel noTouch">Invert thumb/bell</div>
                   <label class="switch" id="switch9">
                   <input type="checkbox" class="checkboxes" id="checkbox9" onChange="sendInvert(this.checked)" />
@@ -2130,6 +2132,9 @@
                      You can play in a single register or choose from several options for controlling the register. Choosing <b>1. Single register</b> will allow you to use breath or bag pressure to start/stop notes, but will only allow access to one register. The pressure sensor can be used to mimic the way that whistles, flutes, and some bagpipes can be "overblown" to reach the second octave. To use this feature, select <b>2. Overblow</b>. For fingering patterns that don't use the left thumb, you can instead select <b>3. Thumb register</b> to allow you use that finger to control the register, which will be familiar to players of many woodwind instruments. To play the upper register, simply uncover the thumb hole. Finally, you can use the "bell" sensor to select the register by choosing <b>4. Bell register</b>. Uncovering the bell sensor (lifting it off your knee), will access the second register. The functionality for either of these two options can be reversed by turning on the <b>Invert thumb/bell</b> switch. Then covering the left thumb hole or covering the bell sensor will allow playing in the second register, depending on whether option 3 or 4 is selected. In the case of the thumb hole, this will be more familiar to players of instruments with a register key.
                   </p>
                   <p>
+                  Starting with firmware v. 4.4, you can select the number of semitones in a register. The default is 12, which means that all three above methods of controlling the register will change the pitch by one octave. You can change this to any number of semitones (up to 24), which is useful for emulating wind instruments like the kaval that naturally overblow at an interval less than an octave. It also can serve other purposes, like playing accidentals using the above methods.
+                  </p>
+                  <p>
                      Note you can also use the IMU (elevation angle) to control the register. This is discussed in the <b>Pressure and IMU Mapping</b> section.
                   </p>
                   <p>
@@ -2574,10 +2579,15 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
                   <p>
                     Roll, elevation, and yaw can be mapped to pitch bend based on pressure with two segments:
                     <ul> 
-                        <li>A low input range, whose min and max input determine a bend along with the low range output bend, and...
-                        <li> A high input range, whose min and max input determine a bend along with the high range output bend. If the input is greater than the high range max input, it will either be clamped at the specified bend amount (if <b>clamp upper bend</b> is on), or it will continue with the same bend slope with higher values of roll/elevation/yaw.
+                        <li>A low IMU angle range, whose min and max input angle are mapped to the low range bend output.
+                        <li>A high IMU angle range, whose min and max input angle are mapped to the high range bend output.
                     </ul>
-                    The low and high input ranges will not overlap. Any gap between the low range max, and the high range min will be a stable portion of the roll/elevation/yaw range where no pitch bend occurs.     
+                    </p>
+                    <p>
+                    If the angle exceeds the high range max input angle or is less than the low range minimum input angle, it will either be clamped at the specified bend amount (if the <b>Clamp bends</b> switch is on), or it will continue to map the same bend slope in the outer angle ranges. Turning off <b>Clamp bends</b> can be useful for sending more than one semitone (100 cents) of pitch bend.
+                    </p>
+                    <p>
+The low and high ranges will not overlap. Any gap between the low range max and the high range min will be a stable portion of the IMU angle range where no pitch bend occurs. This is useful for "playing in tune" when no pitch bend is desired. You can use the pitch bend display in the <b>Finger Vibrato and Slide</b> panel to see the results of the IMU mapping. The display may concurrently show other pitch bend that the WARBL2 is sending (for example finger vibrato or IMU shake vibrato) because the pitch bend messages are cumulative.
                   </p>
 				<p>
 The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mapping the low and high input ranges to pitch bend. The value shown represents the exponent of the power equation used for mapping. Linear mapping will be used if the slider is positioned at "1.00". Double-clicking (or double-tapping) the sliders will return them to the linear setting.
@@ -2591,13 +2601,16 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
             <h1>IMU Mapping</h1>
             <div>
                <p>
-                  The Inertial Measurement Unit (IMU) continuously tracks acceleration and  angular rotation in three dimensions. This information is converted to roll, elevation angle ("pitch"), and yaw, which can be then mapped to MIDI messages. 
+                  The Inertial Measurement Unit (IMU) continuously tracks acceleration and  angular rotation in three dimensions. This information is converted to roll, elevation angle ("pitch"), and yaw, which can then be mapped to MIDI CC messages and/or pitch bend.  
                </p>
                <p>
                   There is also an option to play pitch bend vibrato by shaking the WARBL2 along its long axis. You can adjust the amount of <b>shake vibrato</b> and also select the "direction" of pitch bend: selecting <b>up/down</b> means that the pitch will be altered both above and below the normal pitch for the note, corresponding to the direction of movement of the WARBL2. <b>Down/up</b> has the same effect but opposite the direction of the movement of the device. <b>Up only</b> causes the pitch to only be raised above the current note, and <b>down only</b> causes the pitch to only be flattened.
                </p>
+            <p>
+               With firmware 4.4 or higher, IMU rotation can be mapped to MIDI pitch bend messages to "bend" notes by rotating the WARBL2.
+               </p>
                <p>
-                  To map <b>roll, elevation, or yaw to CC messages</b>, turn on the appropriate switch and then click <b>Map</b>.
+                  To map <b>roll, elevation, or yaw to CC or pitch bend messages</b>, turn on the appropriate switch and then click <b>Map...</b>.
                </p>
             </div>
          </div>
@@ -2615,7 +2628,7 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
                </p>
                <p>
                   The yaw has a tendency to drift slightly over time, so you may want to occasionally <b>recenter the yaw</b> (set it to zero). It is also often desirable to recenter the yaw depending on the rotation of your body. There are three ways to recenter the yaw: There is a button in the WARBL2 Settings panel to recenter it instantly, you can assign a button action to recenter it (see the Button Behavior panel documentation), or you can use the <b>auto-center yaw option</b> in the yaw mapping panel. The auto-center yaw option will reset the yaw to zero when you begin playing after a pause of a certain length of time. You can choose the length of the pause with the <b>Minimum pause slider</b>.
-               </p>
+               </p>               
             </div>
          </div>
       </div>

@@ -39,7 +39,7 @@ var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
 
-var currentVersion = 43; // Current version of the WARBL2 firmware
+var currentVersion = 44; // Current version of the WARBL2 firmware
 var currentVersionOriginal = 21; // Current version of the original WARBL firmware
 var previousVersion = 0; //Used to keep track of which version of WARBL is connected so that the page will refresh if a different WARBL with an older firmware version is connected.
 
@@ -1720,13 +1720,12 @@ function WARBL_Receive(event, source) {
                     //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
 					
 					
-					if (version > 4.3) {
-						document.getElementById("IMUpitchMappingControls").style.display = "block";
-						document.getElementById("IMUCCMappingControls").style.top = "-120px";
-						document.getElementById("IMUbottomControls").style.top = "-120px";
-						document.getElementById("IMUpitchMappingControls").style.display = "block";
-						document.getElementById("overblowSemitonesInput").style.display = "block";
-						document.getElementById("overblowSemitonesLabel").style.display = "block";
+					if (version < 4.4) {
+						document.getElementById("IMUpitchMappingControls").style.display = "none";
+						document.getElementById("IMUCCMappingControls").style.top = "-80px";
+						document.getElementById("IMUbottomControls").style.top = "-160px";
+						document.getElementById("overblowSemitonesInput").style.display = "none";
+						document.getElementById("overblowSemitonesLabel").style.display = "none";
 					}
 					
 					
