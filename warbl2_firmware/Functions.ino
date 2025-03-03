@@ -1501,7 +1501,6 @@ void calculateAndSendPitchbend() {
 void sendPitchbend() {
 
 
-    static int prevPitchBend = 8192;  // A record of the previous pitchBend value, so we don't send the same one twice
     static int prevRawPitchBend = 0;
 
     pitchBend = 0;  // Reset the overall pitchbend in preparation for adding up the contributions from all the toneholes.
@@ -3047,12 +3046,15 @@ void loadPrefs() {
     }
 
     pitchBend = 8192;
+    prevPitchBend = 8192;
     expression = 0;
     shakeVibrato = 0;
+    IMUpitchbend = 0;
     shakePressureCCMod = 0;
     shakePressureChanPressMod = 0.0f;
     shakePressureKeyPressMod = 0;
-    prevHoleCovered = 1;  // Necessary so we know to call getNote() again if the fingerin chart has been changed.
+    prevHoleCovered = 1;  // Necessary so we know to call getNote() again if the fingering chart has been changed.
+
 
     sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
 
