@@ -276,7 +276,7 @@ unsigned long transitionFilter = 0;
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Whether pitchbend is currently turned for for a specific hole
 int pitchBend = 8192;                                // Total current pitchbend value
-int prevPitchBend = 8192;  // A record of the previous pitchBend value, so we don't send the same one twice
+int prevPitchBend = 8192;                            // A record of the previous pitchBend value, so we don't send the same one twice
 bool resetBendFilter = true;
 int iPitchBend[] = { 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192 };  // Current pitchbend value for each tonehole
 float pitchBendPerSemi = 4096.0f;
@@ -294,6 +294,8 @@ int expression = 0;                                                             
 int IMUpitchbend = 0;                                                              // Pitchbend from IMU orientation
 bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
+bool halfholePitchbend = true;                                                     // Whether halfhole pitchbend is enabled
+bool snapped[9];                                                                   // Whether currently snapped to semitone
 
 
 // Variables for managing MIDI note output
