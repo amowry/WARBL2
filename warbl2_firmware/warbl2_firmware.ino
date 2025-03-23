@@ -131,6 +131,8 @@ bool shakeDetected = 0;
 byte yawOutput;                         // This is global because it used by both yaw mapping and sticks mode.
 byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
+bool registerHold = false;              // Locked into the current regsister, preventing overblowinng.
+bool enableRegisterHold = false;        // Whether register hold is curently enabled.
 
 // Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -295,7 +297,7 @@ int IMUpitchbend = 0;                                                           
 bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
 int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
 bool halfholePitchbend = true;                                                     // Whether halfhole pitchbend is enabled
-bool snapped[9];                                                                   // Whether currently snapped to semitone
+bool snapped[9];                                                                   // Whether snapped to halfhole pitchbend
 
 
 // Variables for managing MIDI note output

@@ -257,7 +257,7 @@ void readIMU(void) {
 
 
 
-// Calibrate the IMU when the command is received from the Config Tool.
+// Calibrate the gyroscope when the command is received from the Config Tool.
 void calibrateIMU() {
 
     sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
@@ -925,10 +925,33 @@ void getShift() {
 
 
 
+// TODO: Not sure to restart in the upper register or lower if we are locked in to the upper, stop blowing, and then start again. The curent behavior is to restart in the lower register.
+// Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
+void getRegisterHold() {
+
+    const float holdAngle = -45.0f;  // Elevation angle below which the register will be locked.
+
+    if (enableRegisterHold) {
+        if (pitch < holdAngle) {
+            registerHold = true;
+        } else {
+            registerHold = false;
+        }
+    }
+}
+
+
+
+
+
+
+
 
 // State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
 // The current jump/drop behavior is from Louis Barman
 void getState() {
+
+    getRegisterHold();
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
     unsigned int tempHoleCovered = holeCovered;
@@ -965,17 +988,17 @@ void getState() {
         if (breathMode == kPressureBreath) {  // If overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
-            if (sensorValue > upperBoundHigh) {
+            if (sensorValue > upperBoundHigh && !registerHold) {
                 newState = TOP_REGISTER;
                 holdoffActive = false;
-            } else if (sensorValue <= upperBoundLow) {
+            } else if (sensorValue <= upperBoundLow && !registerHold) {
                 newState = BOTTOM_REGISTER;
             }
 
             // Wait to decide about jump or drop if necessary.
             if (currentState == SILENCE && newState == BOTTOM_REGISTER) {
                 newState = delayStateChange(JUMP, sensorValue, upperBoundHigh);
-            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
+            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20 && !registerHold) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
                 newState = delayStateChange(DROP, sensorValue, upperBoundLow);
             }
         }
@@ -1469,25 +1492,28 @@ void getSlide() {
 // Snap pitchbend to a semitone and calculate slide to smoothly integrate.
 void getHalfholePitchbend(byte i) {
 
+    int heightOffset = 40;     // 0-127. Height offset above (64-127) or below (0-63)  the "natural" semitone point where the halfhole region is centered.
+    int width = 40;            // 0-127. The size of each half of the halfhole region. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int fingerRate = 100;      // 0-127. The finger movement rate (in sensor counts per reading / 2) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+    const int hysteresis = 3;  // Hysteresis for the target region
+    bool inTargetRegion;       // Whether the finger is in the assigned halfhole region
     const int offsetSteps = -2;
     static int prevToneholeRead[9];  // For calculating rate of finger movement
-    const int heightOffset = -40;    // Offset above (if positive) or below the "natural" semitone point where the halfhole region is centered
-    const int width = 100;           // The size of each half of the halfhole region, in sensor counts. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
-    const int fingerRate = 150;      // The finger movement rate (in sensor counts per reading) below which we'll snap to the semitone.
-    const int hysteresis = 3;        // Hysteresis for the target region
-    bool inTargetRegion;             // Whether the finger is in the assigned halfhole region
 
     int change = (sqrt(abs(toneholeRead[i] - prevToneholeRead[i]))) * 10;  // Absolute rate of finger movement, linearized. Typically ranges from 10-160+.
-    int center = (toneholeCovered[i] - senseDistance) >> 1;                // Center sensor value for current slide hole (midpont of sensor readings)
     prevToneholeRead[i] = toneholeRead[i];
+    int center = (toneholeCovered[i] - senseDistance) >> 1;  // Center sensor value for current slide hole (midpont of sensor readings)
+    heightOffset = ((heightOffset - 64) * center) >> 6;      // Convert offset from 0-127 to a sensor value.
+    width = (width * center) >> 7;                           // Convert width from 0-127 to a sensor value.
+    fingerRate = fingerRate >> 1;                            // Double to give plenty of overhead. A maximum setting of 127 (doubled to 256) indicates that change rate will be ignored and snapping to the semitone will occur instantly when inside the target region.
 
-    //Serial.println(change);
+    //Serial.println(fingerRate);
 
     // Determine if the finger is in the target region.
     if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
         if (abs(toneholeRead[i] - center + heightOffset) < width) {
             inTargetRegion = true;
-        } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis) {  // Use hysteresis to exit target region to avoid oscillations.
+        } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
         }
     } else if (toneholeRead[i] > (center - heightOffset - width)) {  // If we're not using sliding, the halfhole region extends all the way down to the fully covered hole.
@@ -1496,25 +1522,26 @@ void getHalfholePitchbend(byte i) {
         inTargetRegion = false;
     }
 
-    if (change < fingerRate && inTargetRegion) {  // Snap to halfhole if the slide range is one semitone, if the finger is moving slowly, and it is within the defined halfhole region.
-        snapped[i] = true;                        // Locked into halfhole bend
+    if ((change < fingerRate || fingerRate == 256) && inTargetRegion) {  // Snap to halfhole if the slide range is one semitone, if the finger is moving slowly, and it is within the defined halfhole region.
+        snapped[i] = true;                                               // Snap to semitone. We do this in case we're using halfhole pitchbend without sliding.
     }
-
 
     if (!inTargetRegion) {
         snapped[i] = false;  // Unlock.
     }
-    if (snapped[i] == true) {
-        iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone.
 
-        // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the center of the target region at one semitone. If the halfhole resion is narrow this gives a relatively smooth transition from sliding to semitone snap.
-    } else if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
-        if (toneholeRead[i] < (center - heightOffset)) {                                                                                       // The sensor value is lower than the target region.
-            toneholeScale[i] = (((16383.0f / midiBendRange)) / max((center - heightOffset) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the center point or below it.
+    if (snapped[i] == true) {
+        iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone
+    }
+
+    // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
+    if (!snapped[i] && pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
+        if (toneholeRead[i] < (center - heightOffset)) {                                                                                               // The sensor value is lower than the target region.
+            toneholeScale[i] = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the center point or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));
         } else {  // The sensor value is higher than the target region.
-            toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - (center - heightOffset), 1) / 4.0f);
-            iPitchBend[i] = pitchBendPerSemi + ((((int)((toneholeRead[i] - (center - heightOffset)) * toneholeScale[i])) * -offsetSteps));
+            toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - (center - heightOffset + width), 1) / 4.0f);
+            iPitchBend[i] = pitchBendPerSemi + ((((int)((toneholeRead[i] - (center - heightOffset + width)) * toneholeScale[i])) * -offsetSteps));
         }
     }
 }
@@ -3181,7 +3208,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+    if (enableRegisterHold || IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     }
 

@@ -159,6 +159,9 @@
 #define AFTERTOUCH_MPEPLUS 47
 #define CUSTOM_FINGERING_11 48  // This "custom" variable isn't used by WARBL2. Can be repurposed.
 #define OVERBLOW_SEMITONES 49 
+
+
+
 #define kEXPRESSIONnVariables 50
 
 // Button combinations/gestures
