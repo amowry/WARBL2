@@ -925,15 +925,19 @@ void getShift() {
 
 
 
-// TODO: Not sure to restart in the upper register or lower if we are locked in to the upper, stop blowing, and then start again. The curent behavior is to restart in the lower register.
+
 // Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
 void getRegisterHold() {
 
-    const float holdAngle = -45.0f;  // Elevation angle below which the register will be locked.
+    const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked.
+    const float upperHoldAngle = 60.0f;   // Elevation angle above which the register will be locked.
 
     if (enableRegisterHold) {
-        if (pitch < holdAngle) {
-            registerHold = true;
+        if (pitch < lowerHoldAngle || pitch > upperHoldAngle) {
+            if (!registerHold && newState != SILENCE) {
+                registerHold = true;
+                heldRegister = newState;
+            }
         } else {
             registerHold = false;
         }
@@ -950,8 +954,6 @@ void getRegisterHold() {
 // State machine that models the way that a tinwhistle etc. begins sounding and jumps octaves in response to breath pressure.
 // The current jump/drop behavior is from Louis Barman
 void getState() {
-
-    getRegisterHold();
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
     unsigned int tempHoleCovered = holeCovered;
@@ -988,20 +990,24 @@ void getState() {
         if (breathMode == kPressureBreath) {  // If overblowing is enabled
             upperBoundHigh = calcHysteresis(upperBound, true);
             upperBoundLow = calcHysteresis(upperBound, false);
-            if (sensorValue > upperBoundHigh && !registerHold) {
+            if (sensorValue > upperBoundHigh) {
                 newState = TOP_REGISTER;
                 holdoffActive = false;
-            } else if (sensorValue <= upperBoundLow && !registerHold) {
+            } else if (sensorValue <= upperBoundLow) {
                 newState = BOTTOM_REGISTER;
             }
 
             // Wait to decide about jump or drop if necessary.
             if (currentState == SILENCE && newState == BOTTOM_REGISTER) {
                 newState = delayStateChange(JUMP, sensorValue, upperBoundHigh);
-            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20 && !registerHold) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
+            } else if (currentState == TOP_REGISTER && newState == BOTTOM_REGISTER && (millis() - fingeringChangeTimer) > 20) {  // Only delay for drop if the note has been playing for a bit. This fixes erroneous high-register notes.
                 newState = delayStateChange(DROP, sensorValue, upperBoundLow);
             }
         }
+    }
+
+    if (registerHold && newState != SILENCE) {  // If register is locked, only allow silence or the held register.
+        newState = heldRegister;
     }
 
     currentState = newState;
@@ -1511,7 +1517,7 @@ void getHalfholePitchbend(byte i) {
 
     // Determine if the finger is in the target region.
     if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
-        if (abs(toneholeRead[i] - center + heightOffset) < width) {
+        if (abs(toneholeRead[i] - center + heightOffset) < width) {  // If we're using slide, there's also a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
         } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
@@ -1522,22 +1528,22 @@ void getHalfholePitchbend(byte i) {
         inTargetRegion = false;
     }
 
-    if ((change < fingerRate || fingerRate == 256) && inTargetRegion) {  // Snap to halfhole if the slide range is one semitone, if the finger is moving slowly, and it is within the defined halfhole region.
-        snapped[i] = true;                                               // Snap to semitone. We do this in case we're using halfhole pitchbend without sliding.
+    if ((change < fingerRate || fingerRate == 256) && inTargetRegion) {  // Snap to halfhole if the finger is moving slowly enough and it is within the defined region.
+        snapped[i] = true;                                               // Snapped to semitone.
     }
 
     if (!inTargetRegion) {
-        snapped[i] = false;  // Unlock.
+        snapped[i] = false;  // Unlock. This could be used elsewhere, e.g. we theoretically could send a new note instead of using pitchbend if desired.
     }
 
     if (snapped[i] == true) {
-        iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone
+        iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone.
     }
 
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
     if (!snapped[i] && pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
         if (toneholeRead[i] < (center - heightOffset)) {                                                                                               // The sensor value is lower than the target region.
-            toneholeScale[i] = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the center point or below it.
+            toneholeScale[i] = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));
         } else {  // The sensor value is higher than the target region.
             toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - (center - heightOffset + width), 1) / 4.0f);

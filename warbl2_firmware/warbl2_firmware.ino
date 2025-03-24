@@ -132,7 +132,8 @@ byte yawOutput;                         // This is global because it used by bot
 byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
 bool registerHold = false;              // Locked into the current regsister, preventing overblowinng.
-bool enableRegisterHold = false;        // Whether register hold is curently enabled.
+bool enableRegisterHold = true;        // Whether register hold is curently enabled.
+byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
 
 // Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -527,10 +528,11 @@ void loop() {
 
     if ((wakeTime - timerE) >= 5) {
         timerE = wakeTime;
-        readIMU();    // Takes about 145 us using SensorFusion's Mahony.
-        blink();      // Blink any LED if necessary.
-        pulse();      // Pulse any LED if necessary.
-        calibrate();  // Calibrate/continue calibrating if the command has been received.
+        readIMU();          // Takes about 145 us using SensorFusion's Mahony.
+        getRegisterHold();  // See if we need to lock in the current register to pause overblowing.
+        blink();            // Blink any LED if necessary.
+        pulse();            // Pulse any LED if necessary.
+        calibrate();        // Calibrate/continue calibrating if the command has been received.
         checkButtons();
         detectSip();
         detectShake();               // Gesture detection
