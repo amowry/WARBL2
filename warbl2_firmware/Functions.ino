@@ -929,12 +929,14 @@ void getShift() {
 // Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
 void getRegisterHold() {
 
+    // settings (to be moved to Config Tool):
+    const byte registerHoldMode = 3;      // 1 = hold both registers, 2 = hold low register only, 3 = hold high register only.
     const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked.
-    const float upperHoldAngle = 60.0f;   // Elevation angle above which the register will be locked.
+    const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked.
 
     if (enableRegisterHold) {
         if (pitch < lowerHoldAngle || pitch > upperHoldAngle) {
-            if (!registerHold && newState != SILENCE) {
+            if (!registerHold && newState != SILENCE && (newState == registerHoldMode || registerHoldMode == 1)) {
                 registerHold = true;
                 heldRegister = newState;
             }
@@ -1498,20 +1500,22 @@ void getSlide() {
 // Snap pitchbend to a semitone and calculate slide to smoothly integrate.
 void getHalfholePitchbend(byte i) {
 
-    int heightOffset = 40;     // 0-127. Height offset above (64-127) or below (0-63)  the "natural" semitone point where the halfhole region is centered.
-    int width = 40;            // 0-127. The size of each half of the halfhole region. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
-    int fingerRate = 100;      // 0-127. The finger movement rate (in sensor counts per reading / 2) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-    const int hysteresis = 3;  // Hysteresis for the target region
-    bool inTargetRegion;       // Whether the finger is in the assigned halfhole region
-    const int offsetSteps = -2;
+    // settings (to be moved to Config Tool):
+    int heightOffset = 40;  // 0-127. Height offset above (64-127) or below (0-63)  the "natural" semitone point where the halfhole region is centered.
+    int width = 60;         // 0-127. The size of the halfhole region. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int fingerRate = 80;   // 0-127. Only used if not using sllide too. The finger movement rate (in sensor counts per reading / 2) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+
+    const int hysteresis = 3;        // Hysteresis for the target region
+    bool inTargetRegion;             // Whether the finger is in the assigned halfhole region
+    const int offsetSteps = -2;      // This is always true because there is a full step drop for the holes we use for halfholing.
     static int prevToneholeRead[9];  // For calculating rate of finger movement
 
     int change = (sqrt(abs(toneholeRead[i] - prevToneholeRead[i]))) * 10;  // Absolute rate of finger movement, linearized. Typically ranges from 10-160+.
     prevToneholeRead[i] = toneholeRead[i];
     int center = (toneholeCovered[i] - senseDistance) >> 1;  // Center sensor value for current slide hole (midpont of sensor readings)
-    heightOffset = ((heightOffset - 64) * center) >> 6;      // Convert offset from 0-127 to a sensor value.
+    heightOffset = ((heightOffset - 64) * center) >> 6;      // Convert offset from 0-127 to a sensor value. The bitmath is an approximation.
     width = (width * center) >> 7;                           // Convert width from 0-127 to a sensor value.
-    fingerRate = fingerRate >> 1;                            // Double to give plenty of overhead. A maximum setting of 127 (doubled to 256) indicates that change rate will be ignored and snapping to the semitone will occur instantly when inside the target region.
+    fingerRate = fingerRate << 1;                            // Double to give plenty of overhead. A maximum setting of 127 (doubled to 256) indicates that change rate will be ignored and snapping to the semitone will occur instantly when inside the target region.
 
     //Serial.println(fingerRate);
 
