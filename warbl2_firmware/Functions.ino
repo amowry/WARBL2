@@ -1503,7 +1503,7 @@ void getHalfholePitchbend(byte i) {
     // settings (to be moved to Config Tool):
     int heightOffset = 40;  // 0-127. Height offset above (64-127) or below (0-63)  the "natural" semitone point where the halfhole region is centered.
     int width = 60;         // 0-127. The size of the halfhole region. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
-    int fingerRate = 80;   // 0-127. Only used if not using sllide too. The finger movement rate (in sensor counts per reading / 2) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+    int fingerRate = 80;    // 0-127. Only used if not using slide too. The finger movement rate (in sensor counts per reading / 2) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
 
     const int hysteresis = 3;        // Hysteresis for the target region
     bool inTargetRegion;             // Whether the finger is in the assigned halfhole region
@@ -1517,11 +1517,9 @@ void getHalfholePitchbend(byte i) {
     width = (width * center) >> 7;                           // Convert width from 0-127 to a sensor value.
     fingerRate = fingerRate << 1;                            // Double to give plenty of overhead. A maximum setting of 127 (doubled to 256) indicates that change rate will be ignored and snapping to the semitone will occur instantly when inside the target region.
 
-    //Serial.println(fingerRate);
-
     // Determine if the finger is in the target region.
     if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
-        if (abs(toneholeRead[i] - center + heightOffset) < width) {  // If we're using slide, there's also a "not halfhole" space both above and below the halfhole region.
+        if (abs(toneholeRead[i] - center + heightOffset) < width) {  // If we're using slide, there's a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
         } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
@@ -1532,8 +1530,8 @@ void getHalfholePitchbend(byte i) {
         inTargetRegion = false;
     }
 
-    if ((change < fingerRate || fingerRate == 256) && inTargetRegion) {  // Snap to halfhole if the finger is moving slowly enough and it is within the defined region.
-        snapped[i] = true;                                               // Snapped to semitone.
+    if ((change < fingerRate || fingerRate == 256 || pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && inTargetRegion) {  // Snap to halfhole if the finger is moving slowly enough or we're using slide and it is within the defined region.
+        snapped[i] = true;                                                                                                                                                                       // Snapped to semitone.
     }
 
     if (!inTargetRegion) {
@@ -1545,13 +1543,13 @@ void getHalfholePitchbend(byte i) {
     }
 
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
-    if (!snapped[i] && pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
-        if (toneholeRead[i] < (center - heightOffset)) {                                                                                               // The sensor value is lower than the target region.
-            toneholeScale[i] = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
-            iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));
+    if (!snapped[i] && (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato)) {
+        if (toneholeRead[i] < (center - heightOffset)) {                                                                                                      // The sensor value is lower than the target region.
+            float tempToneholeScale = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
+            iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * tempToneholeScale)) * -offsetSteps));
         } else {  // The sensor value is higher than the target region.
-            toneholeScale[i] = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - (center - heightOffset + width), 1) / 4.0f);
-            iPitchBend[i] = pitchBendPerSemi + ((((int)((toneholeRead[i] - (center - heightOffset + width)) * toneholeScale[i])) * -offsetSteps));
+            float tempToneholeScale = (((16383.0f / midiBendRange)) / max(toneholeCovered[i] - (center - heightOffset + width), 1) / 4.0f);
+            iPitchBend[i] = pitchBendPerSemi + ((((int)((toneholeRead[i] - (center - heightOffset + width)) * tempToneholeScale)) * -offsetSteps));
         }
     }
 }
