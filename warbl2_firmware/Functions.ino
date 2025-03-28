@@ -1501,8 +1501,8 @@ void getSlide() {
 void getHalfholePitchbend(byte i) {
 
     // settings (to be moved to Config Tool):
-    int heightOffset = 40;  // 0-127. Height offset above (64-127) or below (0-63)  the "natural" semitone point where the halfhole region is centered.
-    int width = 60;         // 0-127. The size of the halfhole region. Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int heightOffset = 60;  // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
+    int width = 40;         // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
     int fingerRate = 80;    // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
 
     const int hysteresis = 3;        // Hysteresis for the target region
@@ -1514,9 +1514,8 @@ void getHalfholePitchbend(byte i) {
 
     prevToneholeRead[i] = toneholeRead[i];
     int center = (toneholeCovered[i] - senseDistance) >> 1;  // Center sensor value for current slide hole (midpont of sensor readings)
-    heightOffset = ((heightOffset - 64) * center) >> 6;      // Convert offset from 0-127 to a sensor value. The bitmath is an approximation.
-    width = (width * center) >> 7;                           // Convert width from 0-127 to a sensor value.
-    fingerRate = fingerRate;                                 // Double to give plenty of overhead. A maximum setting of 127 indicates that change rate will be ignored and snapping to the semitone will occur instantly when inside the target region.
+    heightOffset = -((heightOffset - 50) * center) / 50;     // Convert offset to a positive or negative sensor value.
+    width = (width * (center + heightOffset)) / 100;         // Convert width to a sensor value.
 
     // Determine if the finger is in the target region.
     if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
@@ -1531,12 +1530,12 @@ void getHalfholePitchbend(byte i) {
         inTargetRegion = false;
     }
 
-    if ((change < fingerRate || fingerRate == 127 || pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && inTargetRegion) {  // Snap to halfhole if the finger is moving slowly enough or we're using slide and it is within the defined region.
+    if ((change < fingerRate || fingerRate == 127 || pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && inTargetRegion) {  // Snap to halfhole if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;                                                                                                                                                                       // Snapped to semitone.
     }
 
     if (!inTargetRegion) {
-        snapped[i] = false;  // Unlock. This could be used elsewhere, e.g. we theoretically could send a new note instead of using pitchbend if desired.
+        snapped[i] = false;  // Unlock. snapped[i] be used elsewhere, e.g. we theoretically could send a new note instead of using pitchbend if desired.
     }
 
     if (snapped[i] == true) {
