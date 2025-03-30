@@ -931,8 +931,8 @@ void getRegisterHold() {
 
     // settings (to be moved to Config Tool):
     const byte registerHoldMode = 3;      // 1 = hold both registers, 2 = hold low register only, 3 = hold high register only.
-    const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked.
-    const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked.
+    const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked (can be set at -90 for no lower lock zone).
+    const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked (can be set at 90 for no upper lock zone).
 
     if (enableRegisterHold) {
         if (pitch < lowerHoldAngle || pitch > upperHoldAngle) {

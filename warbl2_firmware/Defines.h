@@ -55,7 +55,7 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeBansuriWARBL 23  // Currently unused
+#define kModeBansuriWARBL 23  // Not currently unused
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69

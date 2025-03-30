@@ -2353,7 +2353,7 @@ const byte charts[kModeNModes - 4][256] =
         60   //11111111
       },
 
-      // Bansuri WARBL (not currently used)
+      // Bansuri WARBL
       {
         68,  //00000000
         68,  //00000001
