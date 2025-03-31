@@ -929,18 +929,29 @@ void getShift() {
 // Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
 void getRegisterHold() {
 
-    // settings (to be moved to Config Tool):
-    const byte registerHoldMode = 3;      // 1 = hold both registers, 2 = hold low register only, 3 = hold high register only.
-    const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked (can be set at -90 for no lower lock zone).
-    const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked (can be set at 90 for no upper lock zone).
-
     if (enableRegisterHold) {
-        if (pitch < lowerHoldAngle || pitch > upperHoldAngle) {
-            if (!registerHold && newState != SILENCE && (newState == registerHoldMode || registerHoldMode == 1)) {
+
+        // settings (to be moved to Config Tool):
+        const byte registerHoldMode = 4;      // 1 = hold both registers (both tilt zones), 2 = hold low register only (both tilt zones), 3 = hold high register only (both tilt zones), 4 = hold low register with low tilt zone and high register with high tilt zone.
+        const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked (can be set at -90 for no lower lock zone).
+        const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked (can be set at 90 for no upper lock zone).
+
+        bool inTiltZone = false;
+
+        if ((registerHoldMode == 1 || (registerHoldMode < 4 && registerHoldMode == newState)) && (pitch < lowerHoldAngle || pitch > upperHoldAngle)) {  // Modes 1-3
+            inTiltZone = true;
+        }
+
+        if (registerHoldMode == 4 && ((pitch < lowerHoldAngle && newState == 2) || (pitch > upperHoldAngle && newState == 3))) {  // Mode 4
+            inTiltZone = true;
+        }
+
+        if (inTiltZone) {
+            if (!registerHold && newState != SILENCE) {
                 registerHold = true;
                 heldRegister = newState;
             }
-        } else {
+        } else if ((registerHoldMode < 4 && pitch >= lowerHoldAngle && pitch <= upperHoldAngle) || (registerHoldMode == 4 && ((pitch >= lowerHoldAngle && heldRegister == 2) || (pitch <= upperHoldAngle && heldRegister == 3)))) {  // Reset if we've exited the hold zones.
             registerHold = false;
         }
     }
