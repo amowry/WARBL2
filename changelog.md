@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed Bansuri fingering chart.
 
-- For constistency, all buttons actions now cause the LED to flash green (except when the "Momentary" switch is turned on.
+- For constistency, all buttons actions now cause the LED to flash green (except when the "Momentary" switch is turned on).
 
 
 ### Added
