@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Halfhole pitchbend feature where covering a hole halfway will lower the pitch one semitone (assuming covering the hole completely would play a note a whole step lower).
   
-- Register hold feature that prevents overblowing if the WARRBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
+- Register hold feature that prevents overblowing if the WARBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
 
 - Moving the "Auto power off time" slider to the max now represents an "infinity" setting, preventing the WARBL from shutting down automatically.
 
