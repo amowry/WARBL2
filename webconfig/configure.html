@@ -12,7 +12,7 @@
       <meta name="description" content="WARBL Configuration Tool" />
       <meta name="author" content="Andrew Mowry" />
       <link href="css/nouislider.css" rel="stylesheet" type="text/css" />
-      <link href="css/config.min.css" rel="stylesheet" type="text/css" />
+      <link href="css/config.css" rel="stylesheet" type="text/css" />
       <link href="css/modal.css" rel="stylesheet" type="text/css" />
       <link rel="manifest" href="https://warbl.xyz/manifest.json">
       <style>
@@ -819,6 +819,9 @@
                      <button type="button" class="smallbutton noTouch pressureOkay" onClick="pressureOkay()">OK</button>
                   </h2>
                </div>
+               
+               
+               
                <div class="smallcontrolbox" id="box5">
                   <h2 class="controlboxtitle noTouch">
                      Finger Vibrato and Slide
@@ -843,8 +846,7 @@
                            <label for="pitchbendradio3"><span><span></span></span>4. Legato Slide / Vibrato</label>
                         </div>
                      </fieldset>
-                  </div>
-                  
+                  </div>         
                   <div class="receivedPBLabel noTouch">Received pitch&nbspbend:</div>
                   <div class="receivedPB noTouch" id="receivedPB"></div>
                   <div class="receivedPBCents noTouch" id="receivedPBCents"></div>
@@ -856,9 +858,9 @@
                   <div id="PBZeromarker"></div>
                   <div id="topPBlevelContainer">
                      <div id="topPBlevel"></div>
-                  </div>
-                  
-                  <div class="customLabel noTouch">Custom vibrato</div>
+                  </div> 
+
+                  <div id="customLabel" class="customLabel noTouch">Custom vibrato</div>
                   <label class="switch" id="switch5">
                   <input type="checkbox" class="checkboxes" id="checkbox5" onChange="sendCustom(this.checked)" />
                   <span class="slider round"></span>
@@ -904,6 +906,8 @@
                   <span class="vibratoSlider round"></span>
                   </label>
                </div>
+               
+               
                <div class="smallcontrolbox" id="box4">
                   <h2 class="controlboxtitle noTouch">
                      Advanced Pitch Bend Settings
@@ -940,7 +944,109 @@
                   <input type="checkbox" class="checkboxes" id="checkbox15" onChange="sendHack2(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+               </div>          
+               
+               
+               <div class="thirdRowControlbox" id="halfHoleSetupBox">
+                  <h2 class="controlboxtitle noTouch">
+                     Half-hole Assist
+                     <button type="button" class="infocircle" onClick="modal(7)">  <img  class = "info" src="img/info-circle.svg"></img></button>
+                  </h2>
+                  <div class="halfholeLabel noTouch">Half-hole assist</div>
+                  <label class="switch" id="switch31">
+                  <input type="checkbox" class="checkboxes" id="checkbox31" onChange="sendHalfhole(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
+                  <div class="halfholeMIDILabel noTouch">Use MIDI note</div>
+                  <label class="switch" id="switch32">
+                  <input type="checkbox" class="checkboxes" id="checkbox32" onChange="sendHalfholeMIDI(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
+                  <div class="halfholeThumbLabel noTouch">Invert half thumb</div>
+                  <label class="switch" id="switch33">
+                  <input type="checkbox" class="checkboxes" id="checkbox33" onChange="sendHalfholeThumb(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+  
+                  <div class="halfHoleControls">
+                    <div class="halfholeDirectionLabel noTouch">&larr; difficult&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;Ability to half hole&nbsp;--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;easy &rarr;</div>
+
+                 
+                   <div class="slidecontainer2" id="halfholeOffsetContainer">
+                   <input type="range" min="0" max="100" value="50" class="ranger" id="halfholeOffset" onChange="sendhalfholeOffset(value)" />
+                   </div>
+                   <div class="halfholeOffsetlabel noTouch">Half-hole region height (%)</div>
+                   
+                   <div class="slidecontainer2" id="halfholeSizeContainer">
+                   <input type="range" min="0" max="100" value="50" class="ranger" id="halfholeSize" onChange="sendhalfholeSize(value)" />
+                   </div>
+                   <div class="halfholeSizeLabel noTouch">Half-hole region size (%)</div>
+                   
+                   <div class="slidecontainer2" id="halfholeRateContainer">
+                   <input type="range" min="0" max="127" value="100" class="ranger" id="halfholeRate" onChange="sendhalfholeRate(value)" />
+                   </div>
+                   <div class="halfholeRatelabel noTouch">Finger speed</div>
+                   
+                    <div class="jumpvalues noTouch jumpvalue19" id="jumpValue19">
+                    <p><span id="demo19"></span></p>
+                    </div>
+                    
+                    <div class="jumpvalues noTouch jumpvalue20" id="jumpValue20">
+                    <p><span id="demo20"></span></p>
+                    </div>
+                    
+                    <div class="jumpvalues noTouch jumpvalue21" id="jumpValue21">
+                    <p><span id="demo21"></span></p>
+                    </div>
+                 </div>
+                 
+                  <div class="vibratoHolesLabel noTouch">Select half-hole holes:</div>
+                  <div class="vibratoHolesLT noTouch">L thumb</div>
+                  <div class="vibratoHolesBell noTouch">Bell</div>
+                  <label class="vibratoSwitch vibratoHoles hole8" id="halfHolesHole7">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox7" onChange="sendHalfHoles(7, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole7" id="halfHolesHole6">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox6" onChange="sendHalfHoles(6, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole6" id="halfHolesHole5">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox5" onChange="sendHalfHoles(5, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole5" id="halfHolesHole4">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox4" onChange="sendHalfHoles(4, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole4" id="halfHolesHole3">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox3" onChange="sendHalfHoles(3, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole3" id="halfHolesHole2">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox2" onChange="sendHalfHoles(2, this.checked)" checked=checked />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole2" id="halfHolesHole1">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox1" onChange="sendHalfHoles(1, this.checked)" checked=checked />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole1" id="halfHolesHole0">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox0" onChange="sendHalfHoles(0, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole0" id="halfHolesHole9">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox9" disabled />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                 
                </div>
+               
+               
+               
+               
                <div class="smallcontrolbox expressionBox" id="expressionPressureBox">
                   <div class="pitchExpressionBox" id="pitchExpressionBox"></div>
                   <h2 class="controlboxtitle noTouch">
@@ -1199,7 +1305,6 @@
                         <line fill="none" stroke="#c3c0c0" stroke-miterlimit="10" x1="162.655" y1="198.241" x2="187.655" y2="198.241" />
                         <path fill="none" stroke="#c3c0c0" stroke-miterlimit="10" d="M162.655,173.241v25c4.343-12.5,9.783-20.295,25.601-23.418" />
                      </svg>
-                     y
                   </div>
                   <div class="radiogroup7">
                      <fieldset>
@@ -2858,8 +2963,8 @@ The <b>Curve low</b> and <b>Curve high</b> sliders determine the curve for mappi
    </script>
    <script src='js/WebAudioFontPlayer.js'></script>
    <script src='js/0650_SBLive_sf2.js'></script>
-   <script src="js/constants.min.js"></script>
-   <script src="js/midi.min.js"></script>
+   <script src="js/constants.js"></script>
+   <script src="js/midi.js"></script>
    <script src="js/d3.min.js"></script>
    <script src="js/daypilot-modal.min-3.10.1.js"></script>
    <script src="js/update.js"></script>

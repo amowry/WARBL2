@@ -132,7 +132,7 @@ byte yawOutput;                         // This is global because it used by bot
 byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
 bool registerHold = false;              // Locked into the current regsister, preventing overblowinng.
-bool enableRegisterHold = true;        // Whether register hold is curently enabled.
+bool enableRegisterHold = true;         // Whether register hold is curently enabled.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
 
 // Instrument
@@ -186,10 +186,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                         // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12 } };  // Instrument 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                               // Settings for the Expression and Drones Control panels in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 3, 15, 0, 0 },    // Instrument 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 3, 15, 0, 0 },    // Instrument 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 3, 15, 0, 0 } };  // Instrument 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
@@ -287,18 +287,19 @@ int prevChanPressure = 0;
 int prevChanPressureLSB = 0;
 int prevCCPressure = 0;
 int prevPolyPressure = 0;
-unsigned long noteOnTimestamp = 0;                                                 // When the note was activated
-byte vibratoEnable = 0;                                                            // If non-zero, send vibrato pitch bend
-unsigned int holeLatched = 0b000000000;                                            // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
-unsigned int vibratoHoles = 0b111111111;                                           // Holes to be used for vibrato, left thumb on left, bell sensor far right.
-float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // A scale for normalizing the range of each sensor, for sliding
-float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };   // Same as above but for vibrato
-int expression = 0;                                                                // Pitchbend up or down from current note based on pressure
-int IMUpitchbend = 0;                                                              // Pitchbend from IMU orientation
-bool customEnabled = 0;                                                            // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
-int adjvibdepth;                                                                   // Vibrato depth scaled to MIDI bend range.
-bool halfholePitchbend = true;                                                     // Whether halfhole pitchbend is enabled
-bool snapped[9];                                                                   // Whether snapped to halfhole pitchbend
+unsigned long noteOnTimestamp = 0;                                                         // When the note was activated
+byte vibratoEnable = 0;                                                                    // If non-zero, send vibrato pitch bend
+unsigned int holeLatched = 0b000000000;                                                    // Holes that are disabled for vibrato because they were covered when the note was triggered. They become unlatched (0) when the finger is removed all the way.
+unsigned int vibratoHoles = 0b111111111;                                                   // Holes to be used for vibrato, left thumb on left, bell sensor far right.
+float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };          // A scale for normalizing the range of each sensor, for sliding
+float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };           // Same as above but for vibrato
+int expression = 0;                                                                        // Pitchbend up or down from current note based on pressure
+int IMUpitchbend = 0;                                                                      // Pitchbend from IMU orientation
+bool customEnabled = 0;                                                                    // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
+int adjvibdepth;                                                                           // Vibrato depth scaled to MIDI bend range.
+bool snapped[9];                                                                           // Whether snapped to halfhole pitchbend
+bool halfHoleShift[] = { false, false, false, false, false, false, false, false, false };  // Whether we have shifted the MIDI note by half holing.
+bool thumbHalfHole = true;                                                                // Whether the register is currently shfted by the thumb inthe halfhole position.
 
 
 // Variables for managing MIDI note output

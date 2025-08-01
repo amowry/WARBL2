@@ -1213,6 +1213,7 @@ fieldset {
 	display: block;
 	clear: both;
 	height: 1855px;
+	//height: 2320px;
 	border-radius: 5px;
 }
 
@@ -1285,8 +1286,26 @@ fieldset {
 	box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
 }
 
+.thirdRowControlbox {
+	background-color: var(--main-bg-color);
+	padding-top: 0px;
+	padding-bottom: 50px;
+	width: 463px;
+	height: 375px;
+	float: right;
+	position: absolute;
+	top: 1390px;
+	border-radius: 5px;
+	border: solid 2px var(--box-border-color);
+	border-radius: 5px;
+	-webkit-box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
+	-moz-box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
+	box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
+}
+
 #buttonBox{
 	top: 1390px;
+	//top: 1850px;
 }
 
 #box1 {
@@ -1927,9 +1946,197 @@ input:disabled + .vibratoSlider:before {
 	left: 377px;
 }
 
+#switch31 {
+	top: 68px;
+	left: 100px;
+}
+
+#switch32 {
+	top: 68px;
+	left: 235px;
+}
+
+#switch33 {
+	top: 68px;
+	left: 380px;
+}
+
+.halfholeLabel {
+	display: block;
+	position: absolute;
+	left: 28px;
+	top: 62px;
+	width: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfholeMIDILabel {
+	display: block;
+	position: absolute;
+	left: 160px;
+	top: 62px;
+	width: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfholeThumbLabel {
+	display: block;
+	position: absolute;
+	left: 300px;
+	top: 62px;
+	width: 80px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+
+#halfHoleSetupBox {
+	left: 30px;
+	display: none;
+}
+
+.halfHoleControls {
+	display: block;
+	position: relative;
+	top: -70px;
+}
+
+.totalRegionRect {
+	display: block;
+	position: absolute;
+	left: 40px;
+	top: 150px;
+	width: 30px;
+	height: 100px;
+	border: solid 2px;
+	border-color: var(--console-border-color);
+	z-index: 999999;
+}
+
+#halfholeRegionRect {
+	display: block;
+	position: absolute;
+	left: 42px;
+	top: 150px;
+	width: 30px;
+	height: 50px;
+	//border: solid 2px;
+	//border-color: var(--console-border-color);
+	background-color: var(--primary-color);
+	z-index: 999999;
+}
+
+
+.halfhole8 {
+	left: 40px;
+}
+
+.halfhole7 {
+	left: 85px;
+}
+
+.halfhole6 {
+	left: 130px;
+}
+
+.halfhole5 {
+	left: 175px;
+}
+
+.halfhole4 {
+	left: 220px;
+}
+
+.halfhole3 {
+	left: 265px;
+}
+
+.halfhole2 {
+	left: 310px;
+}
+
+.halfhole1 {
+	left: 355px;
+}
+
+.halfhole0 {
+	left: 400px;
+}
+
+#halfholeOffsetContainer {
+	display: block;
+	position: absolute;
+	left: 120px;
+	top: 120px;
+	z-index: 99;
+}
+
+#halfholeSizeContainer {
+	display: block;
+	position: absolute;
+	left: 120px;
+	top: 180px;
+	z-index: 99;
+}
+
+#halfholeRateContainer {
+	display: block;
+	position: absolute;
+	left: 120px;
+	top: 240px;
+	z-index: 99;
+}
+
+.halfholeDirectionLabel {
+	display: block;
+	position: absolute;
+	left: 90px;
+	top: 65px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfholeOffsetlabel {
+	display: block;
+	position: absolute;
+	left: 161px;
+	top: 95px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfholeSizeLabel {
+	display: block;
+	position: absolute;
+	left: 170px;
+	top: 157px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.halfholeRatelabel {
+	display: block;
+	position: absolute;
+	left: 200px;
+	top: 215px;
+	z-index: 99;
+	font-size: 14px;
+}
+
 #switch5 {
-	top: 268px;
-	left: 365px;
+	top: 258px;
+	left: 355px;
+}
+
+.customLabel {
+	display: block;
+	position: absolute;
+	left: 248px;
+	top: 262px;
+	z-index: 99;
+	font-size: 14px;
 }
 
 
@@ -2000,14 +2207,6 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
-.customLabel {
-	display: block;
-	position: absolute;
-	left: 258px;
-	top: 272px;
-	z-index: 99;
-	font-size: 14px;
-}
 
 .ventedLabel {
 	display: block;
@@ -2074,7 +2273,7 @@ input:disabled + .vibratoSlider:before {
 	height: 40px;
 	width: 110px;
 	top: 250px;
-	left: 70px;
+	left: 55px;
 }
 
 .advancedOkayPB {
@@ -3173,6 +3372,21 @@ h3 {
 .jumpvalue18 {
 	left: 255px;
 	top: 220px;
+}
+
+.jumpvalue19 {
+	left: 365px;
+	top: 105px;
+}
+
+.jumpvalue20 {
+	left: 365px;
+	top: 165px;
+}
+
+.jumpvalue21 {
+	left: 365px;
+	top: 225px;
 }
 
 

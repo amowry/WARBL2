@@ -19,6 +19,9 @@ var inputSliderMin = [0, 0, 0, 0, -90, -90, -90]; //settings for pressure and IM
 var inputSliderMax = [100, 100, 100, 100, 90, 90, 90];
 var outputSliderMin = [0, 0, 0, 0, 0, 0, 0];
 var outputSliderMax = [127, 127, 127, 127, 127, 127, 127];
+var halfHoles = 255;
+var halfholesLow4bits;
+var halfholesHigh4bits;
 
 // Settings for IMU to pitchbend mapping panel (initialized with defaults): PITCH_MIN, PITCH_MAX, PITCH_MIN_HIGH, PITCH_MAX_LOW, PITCH_OUT_LOW_CENTS, PITCH_OUT_HIGH_CENTS, PITCH_OUT_CLAMP, PITCH_CURVE_LOW, PITCH_CURVE_HIGH
 var IMURolltoPitchSettingsDefaults = [11, 25, 16, 20, 14, 114, 1, 64, 64]; // Defaults for resetting
@@ -965,7 +968,7 @@ function WARBL_Receive(event, source) {
                         document.getElementById("key0").style.display = "none";
                         document.getElementById("key1").style.display = "block";
                         document.getElementById("key2").style.display = "none";
-                        advancedOkay(); //turn off the advanced tab	
+                        advancedOkay(); //turn off the advanced tab
                         pressureOkay();
                         updateCells();
                         advancedOkayPB();
@@ -1003,18 +1006,6 @@ function WARBL_Receive(event, source) {
                         customFingeringOkay();
                     }
 
-                    // if (data2 == MIDI_DEFAULT_MODE_START) { //receive and handle default instrument settings
-                    //     defaultInstr = 0;
-                    //     handleDefault();
-                    // }
-                    // if (data2 == MIDI_DEFAULT_MODE_START +1) {
-                    //     defaultInstr = 1;
-                    //     handleDefault();
-                    // }
-                    // if (data2 == MIDI_DEFAULT_MODE_START+2) {
-                    //     defaultInstr = 2;
-                    //     handleDefault();
-                    // }
                     for (var i = 0; i < 3; i++)  { //receive and handle default instrument settings
                         if (data2 == MIDI_DEFAULT_MODE_START +i) {
                             defaultInstr = i;
@@ -1022,26 +1013,6 @@ function WARBL_Receive(event, source) {
                         }
                     }
 
-                    // if (data2 == MIDI_PB_MODE_START) {
-                    //     document.getElementById("pitchbendradio0").checked = true;
-                    //     updateCustom();
-                    //     updateCustom();
-                    // }
-                    // if (data2 == 71) {
-                    //     document.getElementById("pitchbendradio1").checked = true;
-                    //     updateCustom();
-                    //     updateCustom();
-                    // }
-                    // if (data2 == 72) {
-                    //     document.getElementById("pitchbendradio2").checked = true;
-                    //     updateCustom();
-                    //     updateCustom();
-                    // }
-                    // if (data2 == 73) {
-                    //     document.getElementById("pitchbendradio3").checked = true;
-                    //     updateCustom();
-                    //     updateCustom();
-                    // }
                     for (var i = 0; i < 4; i++)  { //receive and handle Pitchbend mode
                         if (data2 == MIDI_PB_MODE_START +i) {
                             document.getElementById("pitchbendradio" + i.toString()).checked = true;
@@ -1050,19 +1021,6 @@ function WARBL_Receive(event, source) {
                         }
                     }
 
-
-                    // if (data2 == 80) {
-                    //     document.getElementById("sensorradio0").checked = true;
-                    // }
-                    // if (data2 == 81) {
-                    //     document.getElementById("sensorradio1").checked = true;
-                    // }
-                    // if (data2 == 82) {
-                    //     document.getElementById("sensorradio2").checked = true;
-                    // }
-                    // if (data2 == 83) {
-                    //     document.getElementById("sensorradio3").checked = true;
-                    // }
                     for (var i = 0; i < 4; i++)  { //receive and handle Breath mode
                         if (data2 == MIDI_BREATH_MODE_START +i) {
                             document.getElementById("sensorradio" + i.toString()).checked = true;
@@ -1424,9 +1382,54 @@ function WARBL_Receive(event, source) {
                         document.getElementById("pressureMPEplusCheck").checked = data2 > 0;
                     }	
 					else if (jumpFactorWrite == MIDI_ED_VARS2_START +28) {
-						console.log(data2);
 					    document.getElementById("overblowSemitonesInput").value = data2;
-                    }				
+                    }	
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +29) {
+					   document.getElementById("checkbox31").checked = data2;
+                    }	
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +30) {
+					   document.getElementById("halfholeOffset").value = data2;
+					    var k = document.getElementById("halfholeOffset");
+            			k.dispatchEvent(new Event('input'));
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +31) {
+					   document.getElementById("halfholeSize").value = data2;
+					   	var k = document.getElementById("halfholeSize");
+            			k.dispatchEvent(new Event('input'));
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +32) {
+					   document.getElementById("halfholeRate").value = data2;
+					   	var k = document.getElementById("halfholeRate");
+            			k.dispatchEvent(new Event('input'));
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +33) {
+					   halfholesLow4bits = data2;
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +34) {
+					   halfholesHigh4bits = data2;
+					   	const sanitizedHigherNibble = halfholesHigh4bits & 0xF;
+  						const sanitizedLowerNibble = halfholesLow4bits & 0xF;
+  						const shiftedHigherNibble = sanitizedHigherNibble << 4;
+  						halfholes = shiftedHigherNibble | sanitizedLowerNibble;
+						
+						document.getElementById("halfHolesCheckbox0").checked = (halfholes >> 0) & 1;
+						document.getElementById("halfHolesCheckbox1").checked = (halfholes >> 1) & 1;
+						document.getElementById("halfHolesCheckbox2").checked = (halfholes >> 2) & 1;
+						document.getElementById("halfHolesCheckbox3").checked = (halfholes >> 3) & 1;
+						document.getElementById("halfHolesCheckbox4").checked = (halfholes >> 4) & 1;
+						document.getElementById("halfHolesCheckbox5").checked = (halfholes >> 5) & 1;
+						document.getElementById("halfHolesCheckbox6").checked = (halfholes >> 6) & 1;
+						document.getElementById("halfHolesCheckbox7").checked = (halfholes >> 7) & 1;		
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +35) {
+					   document.getElementById("checkbox32").checked = data2;
+                    }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +36) {
+					   document.getElementById("checkbox33").checked = data2;
+                    }
+					
+					
+								 			
                    
 
                     else if (jumpFactorWrite >=  MIDI_CC_109_OFFSET) { //receiving WARBL2 IMU settings
@@ -1658,8 +1661,6 @@ function WARBL_Receive(event, source) {
 
 
 
-                /* MrMep: Should this be 33 instead of 23? */
-                // else if (data1 == MIDI_CC_109 && data2 < 23) { //Indicates WARBL2 IMU setting will be received on CC105
                 else if (data1 == MIDI_CC_109 && data2 <= MIDI_IMU_SETTINGS_END) { //Indicates WARBL2 IMU setting will be received on CC105
                     jumpFactorWrite = data2 + MIDI_CC_109_OFFSET;
                 }
@@ -1675,7 +1676,8 @@ function WARBL_Receive(event, source) {
 
                     communicationMode = true; //moved above
                     previousVersion = version;
-					
+				
+				
 
                     if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
                         document.getElementById("current").innerHTML = "Your firmware is up to date.";
@@ -1717,7 +1719,28 @@ function WARBL_Receive(event, source) {
                     //Lots of UI changes based on the current firmware version of the connected WARBL
 
 
-                    //add new items that should only be visible with newer software versions and didable ones that are for newer version than the current one.
+                    //add new items that should only be visible with newer software versions and disable ones that are for newer version than the current one.
+					
+					if (version > 4.4) {
+						
+						document.getElementById("topcontrolbox").style.height = "2320px";
+						document.getElementById("buttonBox").style.top = "1850px";
+						document.getElementById("halfHoleSetupBox").style.display = "block";
+						document.getElementById("box9").style.display = "none";
+						document.getElementById("box3").style.top = "1390px";
+						document.getElementById("box3").style.height = "375px";
+						document.getElementById("box10").style.display = "block";
+						document.getElementById("box10").style.left = "527px";
+						document.getElementById("box11").style.left = "527px";
+						document.getElementById("box13").style.left = "527px";
+						document.getElementById("box12").style.left = "527px";
+						document.getElementById("backPressureButton").style.display = "none";
+						document.getElementById("backIMUButton").style.display = "none";
+						
+						
+					}
+					
+					
 					
 					
 					if (version < 4.4) {
@@ -2090,12 +2113,16 @@ function WARBL_Receive(event, source) {
 
 
                 if (data1 == MIDI_CC_106 && data2 > MIDI_ACTION_MIDI_CHANNEL_END) {
+					
+					
 
                     if (data2 >= MIDI_ENA_VIBRATO_HOLES_START && data2 <= MIDI_ENA_VIBRATO_HOLES_END) {
+						//console.log(data2);
                         document.getElementById("vibratoCheckbox" + (data2 - MIDI_ENA_VIBRATO_HOLES_START)).checked = true;
                     }
 
                     if (data2 >= MIDI_DIS_VIBRATO_HOLES_START && data2 <= MIDI_DIS_VIBRATO_HOLES_END) {
+						//console.log(data2);
                         document.getElementById("vibratoCheckbox" + (data2 - MIDI_DIS_VIBRATO_HOLES_START)).checked = false;
                     }
 
@@ -2554,8 +2581,6 @@ function updateSelected() {
     }
 }
 
-
-
 function sendSenseDistance(selection) {
     blink(1);
     selection = parseFloat(selection);
@@ -2563,6 +2588,38 @@ function sendSenseDistance(selection) {
     sendToWARBL(MIDI_CC_103, x);
 }
 
+function sendhalfholeOffset(selection) {
+    blink(1);
+	adjustHalfholeDiagram();
+    selection = parseFloat(selection);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 30);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendhalfholeSize(selection) {
+    blink(1);
+	adjustHalfholeDiagram();
+    selection = parseFloat(selection);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 31);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function adjustHalfholeDiagram() {
+	var offset = document.getElementById("halfholeOffset").value
+	var width = document.getElementById("halfholeSize").value
+	var widthPx = width  + "px";
+	var offsetPx = (150 + (100 - offset) - (width / 2))  + "px";
+	document.getElementById("halfholeRegionRect").style.height = widthPx;
+	document.getElementById("halfholeRegionRect").style.top = offsetPx;
+	
+}
+
+function sendhalfholeRate(selection) {
+    blink(1);
+    selection = parseFloat(selection);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 32);
+    sendToWARBL(MIDI_CC_105, selection);
+}
 
 function sendDepth(selection) {
     blink(1);
@@ -3545,6 +3602,53 @@ function sendVibratoHoles(holeNumber, selection) {
     sendToWARBL(MIDI_CC_106, (MIDI_DIS_VIBRATO_HOLES_START - (selection * 10)) + holeNumber);
 }
 
+function sendVibratoHoles(holeNumber, selection) {
+    selection = +selection; //convert true/false to 1/0
+    sendToWARBL(MIDI_CC_106, (MIDI_DIS_VIBRATO_HOLES_START - (selection * 10)) + holeNumber);
+}
+
+function sendHalfHoles(holeNumber, selection) {
+    if (selection == true) 
+	{
+		halfHoles = setBit(halfHoles, holeNumber);
+	}
+	else {
+		halfHoles = clearBit(halfHoles, holeNumber);
+	}
+	
+	const low4Bits = halfHoles & 0x0F;
+	const high4Bits = (halfHoles & 0xF0) >> 4;
+
+	
+   	sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +33);
+    sendToWARBL(MIDI_CC_105, low4Bits);
+	
+	sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +34);
+    sendToWARBL(MIDI_CC_105, high4Bits);
+}
+
+
+
+
+
+
+
+
+function setBit(number, bitPosition) {
+  // Create a mask with only the target bit set to 1
+  const mask = 1 << bitPosition; 
+  // Use bitwise OR to set the bit
+  return number | mask; 
+}
+
+function clearBit(number, bitPosition) {
+  // Create a mask with the target bit set to 0 and others to 1
+  const mask = ~(1 << bitPosition); 
+  // Use bitwise AND to clear the bit
+  return number & mask;
+}
+
+
 function updateCustom() { //keep correct settings enabled/disabled with respect to the custom vibrato switch and send pressure as CC switches.
 
 
@@ -3554,12 +3658,9 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
         document.getElementById("checkbox5").disabled = false;
         document.getElementById("switch5").style.cursor = "pointer";
     } else {
-        //document.getElementById("checkbox5").checked = false;
         document.getElementById("checkbox5").disabled = true;
         document.getElementById("switch5").style.cursor = "default";
-        //sendToWARBL(MIDI_CC_104,44); //if custom is disabled, tell WARBL to turn it off
-        //sendToWARBL(MIDI_CC_105, 0);
-        //blink(1);
+
     }
     if (document.getElementById("checkbox5").checked == true && document.getElementById("checkbox5").disabled == false) {
         for (var i = 0; i < 9; i++) {
@@ -3623,6 +3724,7 @@ function advancedOkay() {
     document.getElementById("box1").style.display = "block";
 }
 
+
 function advancedPB() {
     if (version > 1.8 || version == "Unknown") {
         document.getElementById("box4").style.display = "block";
@@ -3643,7 +3745,7 @@ function mapIMU() {
 
 
 function backPressure() {
-    if (version > 3.9 || version == "Unknown") {
+    if ((version > 3.9 && version < 4.5)|| version == "Unknown") {
         document.getElementById("expressionPressureBox").style.display = "none";
         document.getElementById("box9").style.display = "block";
     }
@@ -3651,12 +3753,14 @@ function backPressure() {
 
 
 function backIMU() {
-
-    document.getElementById("box10").style.display = "none";
-    if (version > 3.9 || version == "Unknown") {
+	if (version < 4.5){ 
+    	document.getElementById("box10").style.display = "none";
+	}
+    if ((version > 3.9 && version < 4.5)|| version == "Unknown") {
         document.getElementById("box9").style.display = "block";
     }
 }
+
 
 
 function overRideExpression() {
@@ -3747,6 +3851,7 @@ function customFingeringOkay() {
     document.getElementById("customControls").style.display = "none";
     document.getElementById("WARBL2customControls").style.display = "none";
     document.getElementById("topControls").style.display = "block";
+		if (version < 3.9) {
     document.getElementById("box1").style.top = "440px";
     document.getElementById("box2").style.top = "440px";
     document.getElementById("box4").style.top = "440px";
@@ -3758,8 +3863,9 @@ function customFingeringOkay() {
     document.getElementById("box10").style.top = "900px";
     document.getElementById("box7").style.top = "900px";
     document.getElementById("box8").style.top = "900px";
-    document.getElementById("buttonBox").style.top = "1390px";
     document.getElementById("topcontrolbox").style.height = "1855px";
+	document.getElementById("buttonBox").style.top = "1390px";
+	}
     document.getElementById("customFingeringFill").value = "12";
 }
 
@@ -4285,6 +4391,27 @@ function sendCustom(selection) {
     blink(1);
     updateCustom();
     sendToWARBL(MIDI_CC_104, MIDI_SWITCHES_VARS_START +4);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfhole(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +29);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfholeMIDI(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +35);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
+function sendHalfholeThumb(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +36);
     sendToWARBL(MIDI_CC_105, selection);
 }
 
@@ -4929,6 +5056,27 @@ var jumpSlider12 = document.getElementById('jumpFactor12');
 jumpSlider12.addEventListener('input', slider12Change);
 function slider12Change() {
     output12.innerHTML = jumpSlider12.value;
+}
+
+var output19 = document.getElementById("demo19");
+var jumpSlider19 = document.getElementById('halfholeOffset');
+jumpSlider19.addEventListener('input', slider19Change);
+function slider19Change() {
+    output19.innerHTML = jumpSlider19.value;
+}
+
+var output20 = document.getElementById("demo20");
+var jumpSlider20 = document.getElementById('halfholeSize');
+jumpSlider20.addEventListener('input', slider20Change);
+function slider20Change() {
+    output20.innerHTML = jumpSlider20.value;
+}
+
+var output21 = document.getElementById("demo21");
+var jumpSlider21 = document.getElementById('halfholeRate');
+jumpSlider21.addEventListener('input', slider21Change);
+function slider21Change() {
+    output21.innerHTML = jumpSlider21.value;
 }
 
 var outputPoweroff = document.getElementById("poweroffValue");

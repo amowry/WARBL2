@@ -4,6 +4,10 @@
 // Debug
 void printStuff(void) {
 
+    //Serial.println(thumbHalfHole);
+    //Serial.println(ED[mode][HALFHOLE_FINGERRATE]);
+    //Serial.println("");
+
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
     //This can be used to print out the currently selected fingering chart (all 256 possible values) when button 1 is clicked.
@@ -791,6 +795,9 @@ void debounceFingerHoles() {
 #endif
 
             newNote = tempNewNote;
+            if (ED[mode][HALFHOLE_PITCHBEND] && ED[mode][HALFHOLE_USE_MIDI_NOTE]) {  // If we're halfholing to change the MIDI note, we need to calculate pitchbend again right before sending a note to avoid sending two notes rapidfire.
+                calculateAndSendPitchbend();
+            }
             getState();  // Get state again if the note has changed.
         }
     }
@@ -886,13 +893,19 @@ byte getNote(unsigned int fingerPattern) {
 void getShift() {
 
     byte pitchShift;
+    byte totalHalfHoleShift = 0;
+
+    for (byte i = 0; i < 9; i++) {
+        if (halfHoleShift[i] == true) {  // See if any hole contributes to halfHole MIDI note shift.
+            totalHalfHoleShift = -1;
+        }
+    }
 
     if (IMUsettings[mode][PITCH_REGISTER] == true) {
         pitchShift = pitchRegister();
     }
 
-
-    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12));  // Adjust for key and octave shift.
+    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12) + totalHalfHoleShift);  // Adjust for key and octave shift.
 
     // Overblow if allowed.
     if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
@@ -911,13 +924,52 @@ void getShift() {
         }
     }
 
-    // ToDo: Are there any others that don't use the thumb that can be added here? For custom charts the thumb needs to hard-coded instead.
-    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {  // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-        if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
-            shift = shift + ED[mode][OVERBLOW_SEMITONES];  // Add an octave jump to the transposition if necessary.
-        }
+    // ToDo: Are there any others that don't use the thumb that can be added here?
+    // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
+    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4 || modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {
+        byte thumbShift = getThumbHalfHoleShift();                    // Number of registers shifted by thumb
+        shift = shift + (thumbShift * ED[mode][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
 }
+
+
+
+
+
+
+
+
+
+// Get the number of registers shifted by the thumb.
+byte getThumbHalfHoleShift() {
+
+    /* Thumb halfhole function (table from MrPep)
+_________________________________________________________________________________________________
+|   Invert Thumb/Bell	|   Half Invert Thumb |  1st octave	|   2nd octave  |   3rd octave  |
+_________________________________________________________________________________________________
+|         off	        |         off	        |     closed	|      open	    |      half     |
+|         on	        |         off	        |      open	  |     closed	  |      half     |
+|         off	        |         on	        |     closed	|      half	    |      open     |
+|         on	        |         on	        |      open	  |      half	    |     closed    |
+_________________________________________________________________________________________________
+*/
+    const byte lookup[4][3] = { { 1, 2, 3 }, { 1, 3, 2 }, { 2, 1, 3 }, { 3, 1, 2 } };       // Lookup table for thumb halfhole functionality.
+    byte combinedSwitches = switches[mode][INVERT] << 1 | ED[mode][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension o fthe lookup table.
+    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 half, 2 open
+
+    if (!(ED[mode][HALFHOLE_PITCHBEND] && bitRead(ED[mode][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
+        if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    else {  // If thumb halfhole is being used
+        return lookup[combinedSwitches][thumbPosition] - 1;
+    }
+}
+
 
 
 
@@ -1315,7 +1367,7 @@ void handleCustomPitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || halfholePitchbend) {  // Calculate slide and halfhole if necessary.
+    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[mode][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
         getSlide();
     }
 
@@ -1423,7 +1475,7 @@ void handlePitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || halfholePitchbend) {  // Calculate slide and halfhole if necessary.
+    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[mode][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
         getSlide();
     }
 
@@ -1434,7 +1486,6 @@ void handlePitchBend() {
             if (bitRead(holeLatched, i) == 1 && toneholeRead[i] < senseDistance) {
                 (bitWrite(holeLatched, i, 0));  // We "unlatch" (enable for vibrato) a hole if it was covered when the note was triggered but now the finger has been completely removed.
             }
-
 
             if (bitRead(vibratoHoles, i) == 1 && bitRead(holeLatched, i) == 0  // If this is a vibrato hole and we're in a mode that uses vibrato, and the hole is unlatched
                 && (iPitchBend[i] == 0)) {                                     // ...and not already being used for slide or halfhole
@@ -1469,33 +1520,41 @@ void handlePitchBend() {
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
 
+    byte halfHoleEnabled = (ED[mode][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[mode][HALFHOLE_HOLES_LOW4BITS];
 
     for (byte i = 0; i < 9; i++) {
-        if (toneholeRead[i] > senseDistance && transitionFilter == 0) {
+        if (toneholeRead[i] > senseDistance && bitRead(holeCovered, i) != 1 && transitionFilter == 0) {  // Does transitionFilter really need to be zero here? AM
             const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
+            int trueOffsetSteps = offsetSteps;
 
-            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that on the original WARBL.
+            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
                 offsetSteps = -offsetLimit;
             }
+            if (breathMode == kPressureThumb && i == 8 && (bitRead(halfHoleEnabled, 7) == 1) && bitRead(holeCovered, 8) != 1) {  // If we're using the thumb for register shift, go ahead and detect that now.
+                getHalfholePitchbend(i);
+            }
 
-            if (offsetSteps != 0 && bitRead(holeCovered, i) != 1 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
-                if (!(halfholePitchbend && offsetSteps == -2)) {  // Calculate slide normally if halfhole doesn't apply.
+            else if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
+                if (!(ED[mode][HALFHOLE_PITCHBEND] && ED[mode][HALFHOLE_USE_MIDI_NOTE]) && !(ED[mode][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
                     if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
                     }
-                }
-
-                else {  // Calculate halfhole pitchbend if this hole causes a shift in pitch of 2 semitones.
+                } else if (trueOffsetSteps == -2) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
                     getHalfholePitchbend(i);
                 }
-
             } else {
                 iPitchBend[i] = 0;
+                snapped[i] = false;
+                halfHoleShift[i] = false;
+                if (i == 8) { thumbHalfHole = false; }
             }
         } else {
             iPitchBend[i] = 0;
+            snapped[i] = false;
+            halfHoleShift[i] = false;
+            if (i == 8) { thumbHalfHole = false; }
         }
     }
 }
@@ -1511,31 +1570,32 @@ void getSlide() {
 // Snap pitchbend to a semitone and calculate slide to smoothly integrate.
 void getHalfholePitchbend(byte i) {
 
-    // settings (to be moved to Config Tool):
-    int heightOffset = 60;  // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
-    int width = 40;         // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
-    int fingerRate = 80;    // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-
-    const int hysteresis = 3;        // Hysteresis for the target region
-    bool inTargetRegion;             // Whether the finger is in the assigned halfhole region
-    const int offsetSteps = -2;      // This is always true because there is a full step drop for the holes we use for halfholing.
-    static int prevToneholeRead[9];  // For calculating rate of finger movement
+    int heightOffset = ED[mode][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
+    int width = ED[mode][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int fingerRate = ED[mode][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+    const int hysteresis = 3;                              // Hysteresis for the target region
+    bool inTargetRegion;                                   // Whether the finger is in the assigned halfhole region
+    const int offsetSteps = -2;                            // This is always true because there is a full step drop for the holes we use for halfholing.
+    static int prevToneholeRead[9];                        // For calculating rate of finger movement
+    bool MIDInoteShifted = false;
 
     float change = (abs(sqrt(float(toneholeRead[i])) - sqrt(float(prevToneholeRead[i])))) * 30;  // Absolute rate of finger movement, linearized. Typically ranges from 0-100.
 
     prevToneholeRead[i] = toneholeRead[i];
-    int center = (toneholeCovered[i] - senseDistance) >> 1;  // Center sensor value for current slide hole (midpont of sensor readings)
-    heightOffset = -((heightOffset - 50) * center) / 50;     // Convert offset to a positive or negative sensor value.
-    width = (width * (center + heightOffset)) / 100;         // Convert width to a sensor value.
+    int center = ((toneholeCovered[i] - senseDistance) >> 1) + senseDistance;  // Center sensor value for current slide hole (midpoint of sensor readings)
+
+    heightOffset = ((heightOffset - 50) * center) / 50;  // Convert offset to a positive or negative sensor value.
+    width = (width * (center + heightOffset)) / 100;     // Convert width to a sensor value.
 
     // Determine if the finger is in the target region.
-    if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
+    if ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !ED[mode][HALFHOLE_USE_MIDI_NOTE] && !(kPressureThumb && i == 8)) {
         if (abs(toneholeRead[i] - center + heightOffset) < width) {  // If we're using slide, there's a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
+
         } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
         }
-    } else if (toneholeRead[i] > (center - heightOffset - width)) {  // If we're not using sliding, the halfhole region extends all the way down to the fully covered hole.
+    } else if (toneholeRead[i] > (center - heightOffset - width)) {  // If we're not using sliding, if we're using MIDI notes for pitchbend, or using the thumb for register, the halfhole region extends all the way down to the fully-covered hole.
         inTargetRegion = true;
     } else if (toneholeRead[i] < (center - heightOffset - width - hysteresis)) {
         inTargetRegion = false;
@@ -1546,15 +1606,27 @@ void getHalfholePitchbend(byte i) {
     }
 
     if (!inTargetRegion) {
-        snapped[i] = false;  // Unlock. snapped[i] be used elsewhere, e.g. we theoretically could send a new note instead of using pitchbend if desired.
+        snapped[i] = false;
+        if (i == 8 && breathMode == kPressureThumb) {  // If we're using the thumb for register control
+            thumbHalfHole = false;
+        }
+        if (halfHoleShift[i] == true) {
+            halfHoleShift[i] = false;
+        }
     }
 
     if (snapped[i] == true) {
-        iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone.
+        if (i == 8 && breathMode == kPressureThumb) {  // If we're using the thumb for register control and it's in the halfhole region...
+            thumbHalfHole = true;                      // Shift the register.
+        } else if (!ED[mode][HALFHOLE_USE_MIDI_NOTE]) {
+            iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone if not using MIDI note instead.
+        } else {
+            halfHoleShift[i] = true;  // Or shift MIDI note.
+        }
     }
 
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
-    if (!snapped[i] && (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato)) {
+    if (!snapped[i] && !ED[mode][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb)) {
         if (toneholeRead[i] < (center - heightOffset)) {                                                                                                      // The sensor value is lower than the target region.
             float tempToneholeScale = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * tempToneholeScale)) * -offsetSteps));
@@ -1586,7 +1658,7 @@ void calculateAndSendPitchbend() {
         getIMUpitchbend();
         pitchBendUsed = true;
     }
-    if (pitchBendMode != kPitchBendNone || halfholePitchbend) {
+    if (pitchBendMode != kPitchBendNone || ED[mode][HALFHOLE_PITCHBEND]) {
         if (!customEnabled) {
             handlePitchBend();
         } else {
@@ -1602,6 +1674,8 @@ void calculateAndSendPitchbend() {
         sendPitchbend();
     }
 }
+
+
 
 
 
@@ -2467,6 +2541,7 @@ void performAction(byte action) {
                     sendMIDI(NOTE_OFF, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
                     noteOnOffToggle[action] = 0;
                 }
+                blinkNumber[GREEN_LED] = 1;
             }
 
 
@@ -2476,10 +2551,12 @@ void performAction(byte action) {
                 } else {
                     sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0);  // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
                 }
+                blinkNumber[GREEN_LED] = 1;
             }
 
             if (buttonPrefs[mode][action][1] == 2) {
                 sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3]);
+                blinkNumber[GREEN_LED] = 1;
             }
 
             if (buttonPrefs[mode][action][1] == 3) {  // Increase program change
@@ -2514,6 +2591,7 @@ void performAction(byte action) {
 
         case PLAY_STOP:
             play = !play;  // Bagless mode
+            blinkNumber[GREEN_LED] = 1;
             break;
 
         case OCTAVE_SHIFT_UP:
@@ -2539,6 +2617,7 @@ void performAction(byte action) {
                 sendMIDI(CONTROL_CHANGE, i, MIDI_CC_123, 0);
                 dronesOn = 0;  // Remember that drones are off, because MIDI panic will have most likely turned them off in all apps.
             }
+            blinkNumber[GREEN_LED] = 1;
             break;
 
         case CHANGE_REGISTER_CONTROL_MODE:
@@ -2568,6 +2647,7 @@ void performAction(byte action) {
         case SEMI_SHIFT_UP:
             if (!momentary[mode][action]) {
                 noteShift++;  // Shift up if we're not in momentary mode
+                blinkNumber[GREEN_LED] = 1;
             } else {
                 noteShift--;  // Shift down if we're in momentary mode, because the button is being released and a previous press has shifted up.
             }
@@ -2577,6 +2657,7 @@ void performAction(byte action) {
         case SEMI_SHIFT_DOWN:
             if (!momentary[mode][action]) {
                 noteShift--;  // Shift down if we're not in momentary mode
+                blinkNumber[GREEN_LED] = 1;
             } else {
                 noteShift++;  // Shift up if we're in momentary mode, because the button is being released and a previous press has shifted down.
             }
@@ -2595,6 +2676,7 @@ void performAction(byte action) {
 
         case RECENTER_YAW:
             centerIMU();
+            blinkNumber[GREEN_LED] = 1;
             break;
 
 
