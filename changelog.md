@@ -8,18 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Fixed a bug where pitchbend wasn't being resert to zero after IMU pitchbend was turned off.
+- Fixed a bug where pitchbend wasn't being reset to zero after IMU pitchbend was turned off.
 
 - Fixed Bansuri fingering chart.
+
+- For constistency, all buttons actions now cause the LED to flash green (except when the "Momentary" switch is turned on).
 
 
 ### Added
 
 - Halfhole pitchbend feature where covering a hole halfway will lower the pitch one semitone (assuming covering the hole completely would play a note a whole step lower).
   
-- Register hold feature that prevents overblowing if the WARRBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
+- Register hold feature that prevents overblowing if the WARBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
 
-- Moving the "Auto power off time" slider to the max now represents an "inifinity" setting, preventing the WARBL from shutting down automatically.
+- Moving the "Auto power off time" slider to the max now represents an "infinity" setting, preventing the WARBL from shutting down automatically.
 
 ## [Released]
 
