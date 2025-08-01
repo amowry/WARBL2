@@ -28,7 +28,7 @@ Advanced users can use the Arduino IDE to modify and upload the code. Modify the
   
 *  After installing this boards package, it is currently necessary to downgrade the package to v. 1.6.0 (in the Boards Manager in the IDE) because of a bug in TinyUSB. Alternatively, you can edit TinyUSB as described here: https://github.com/amowry/WARBL2/issues/1#issuecomment-2212604645
 
-* Download the WARBL2 code from this repository, and move the boards.local.txt file from the "firmware" directory into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
+* Download the WARBL2 code from this repository (I recommend using the most recent *release* code, *NOT* the current main branch), and move the boards.local.txt file from the "firmware" directory into the directory on your machine that contains the boards.txt file for the Adafruit NR52 boards, typically found here:
    
    * Windows: `C:\Users\(username)\AppData\Local\Arduino15\packages\adafruit\hardware\nrf52\1.6.0` 
    
