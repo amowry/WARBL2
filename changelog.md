@@ -17,7 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Halfhole pitchbend feature where covering a hole halfway will lower the pitch one semitone (assuming covering the hole completely would play a note a whole step lower).
+- Halfhole pitchbend feature where covering a hole halfway will lower the pitch one semitone (assuming covering the hole completely would play a note a whole step lower). The pitch can be changed either by using pitchbend or by changing the MIDI note. If the thumb is being used to control the register, it can now be covered halfwy to play three registers (see documentation for controlling the order of the registers).
+
+- The "Thumb register" setting now works with custom charts by only looking at the first half of the chart (the half with the thumb hole open). You still need to enter placeholder values for the bottom half of the custom chart but it doesn't matter what the values are.
   
 - Register hold feature that prevents overblowing if the WARBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
 
