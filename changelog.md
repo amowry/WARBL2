@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - The "Thumb register" setting now works with custom charts by only looking at the first half of the chart (the half with the thumb hole open). You still need to enter placeholder values for the bottom half of the custom chart but it doesn't matter what the values are.
   
-- Register hold feature that prevents overblowing if the WARBL is tilted below a given elevation angle. This allows for finer control of dynamics in the current register without having overblowing interfere.
+- New button/gesture action: "Register hold" feature that temporarily disables overblowing. This allows for finer control of dynamics in the current register without having overblowing interfere.
 
 - Moving the "Auto power off time" slider to the max now represents an "infinity" setting, preventing the WARBL from shutting down automatically.
 
