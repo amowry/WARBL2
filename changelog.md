@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Moving the "Auto power off time" slider to the max now represents an "infinity" setting, preventing the WARBL from shutting down automatically.
 
+- There is now a "Use thumb for slide" switch (off by default) that allows to to enable/disable using the thumb for sliding.
+
 ## [Released]
 
 ## [4.4] - 2025-1-28
