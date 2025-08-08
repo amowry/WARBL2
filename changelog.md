@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed Bansuri fingering chart.
 
-- For constistency, all buttons actions now cause the LED to flash green (except when the "Momentary" switch is turned on).
+- For consistency, all buttons actions now cause the LED to flash green (except when the "Momentary" switch is turned on).
 
 - Reorganization of the Configuration Tool: Import/Export buttons are now at the top so it is more clear that they apply only to the current instrument. Pressure and IMU mapping panels are now separate, to make access easier.
 
