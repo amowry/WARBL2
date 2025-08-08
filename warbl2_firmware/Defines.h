@@ -3,7 +3,7 @@
 //#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 45  // Firmware version (without decimal point)
-//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
 
@@ -55,12 +55,13 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeBansuriWARBL 23  // Not currently unused
+#define kModeEVI2 23  
+#define kModeEVI3 24  
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
 #define kWARBL2Custom4 70
-#define kModeNModes 28
+#define kModeNModes 29
 
 // Pitch bend modes
 #define kPitchBendSlideVibrato 0
@@ -167,7 +168,8 @@
 #define HALFHOLE_HOLES_HIGH4BITS 55
 #define HALFHOLE_USE_MIDI_NOTE 56  // Boolean, send a new MIDI note instead of pitchbend when halfholing.
 #define HALFHOLE_INVERT_THUMB 57   // Boolean, invert the thumb halfhole register functionality.
-#define kEXPRESSIONnVariables 58
+#define USE_THUMB_FOR_SLIDE 58   // Boolean
+#define kEXPRESSIONnVariables 59
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -200,7 +202,8 @@
 #define POWER_DOWN 13
 #define RECENTER_YAW 14
 #define SHOW_BATTERY_LEVEL 15
-#define kACTIONSnVariables 16
+#define REGISTER_HOLD 16
+#define kACTIONSnVariables 17
 
 // Variables in the WARBL2settings array (independent of mode)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
@@ -382,7 +385,9 @@
 #define MIDI_CC_102_VALUE_53 53  // Bidirectional. Bombarde
 #define MIDI_CC_102_VALUE_54 54  // Bidirectional. Baroque flute
 #define MIDI_CC_102_VALUE_55 55  // Bidirectional. Medieval bagpipes
-                                 /* 56-59 unused */
+#define MIDI_CC_102_VALUE_56 56  // Bidirectional. EVI2
+#define MIDI_CC_102_VALUE_57 57  // Bidirectional. EVI3
+                                 /* 58-59 unused */
 
 #define MIDI_CC_102_VALUE_60 60  // Bidirectional. Current instrument (mode variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. Current instrument is 1
@@ -553,8 +558,9 @@
 #define MIDI_CC_104_VALUE_104 104  // Bidirectional. Settings for current instrument: indicates ED[55] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_105 105  // Bidirectional. Settings for current instrument: indicates ED[56] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_106 106  // Bidirectional. Settings for current instrument: indicates ED[57] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_107 107  // Bidirectional. Settings for current instrument: indicates ED[58] is about to be sent with CC 105.
 //
-/* 107-127 unused */
+/* 108-127 unused */
 
 #define MIDI_CC_105 105  // Bidirectional - From Warbl. Values 0-127. Settings for current instrument: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -731,7 +737,7 @@
 #define MIDI_MAX_CALIB_MSGS_END MIDI_CC_102_VALUE_28             // End of Calibration max values reached messages
 #define MIDI_FINGERING_PATTERN_MODE_START MIDI_CC_102_VALUE_30   // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 #define MIDI_FINGERING_PATTERN_START MIDI_CC_102_VALUE_33        // Bidirectional. first fingering pattern is tin whistle
-#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_55          // Bidirectional. Medieval bagpipes
+#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_57          // Bidirectional. EVI2
 #define MIDI_CURRENT_MODE_START MIDI_CC_102_VALUE_60             // Bidirectional. current instrument (mode variable) is  0
 #define MIDI_PB_MODE_START MIDI_CC_102_VALUE_70                  // Bidirectional. Settings for current instrument: Pitchbend mode 0
 #define MIDI_BREATH_MODE_START MIDI_CC_102_VALUE_80              // Bidirectional. Settings for current instrument: Breath mode 0
@@ -748,7 +754,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_106                           // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_107                           // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 

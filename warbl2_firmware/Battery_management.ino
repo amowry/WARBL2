@@ -223,7 +223,7 @@ void manageBattery(bool send) {
 
 
     // Check to see if we've been idle long enough to power down.
-    if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000)) {
+    if (battPower && (nowtime - powerDownTimer > WARBL2settings[POWERDOWN_TIME] * 60000) && (WARBL2settings[POWERDOWN_TIME] < 25)) {
         powerDown(false);  // This line can be commented out to disable auto power off, for testing the battery.
     }
 
@@ -233,7 +233,7 @@ void manageBattery(bool send) {
         analogWrite(LEDpins[RED_LED], 1023);                       // Long red LED to indicate shutdown because of low battery
         delay(5000);
         powerDown(true);  // Power down and reset the total run time available on a full charge (because we have just measured it by using up a full charge). ToDo: Decide if the run time should only be reset if there hasn't been a partial charge during the run cycle. The run time will be a little less accurate if there have been partial charges since the last termination.
-    //ToDo: The battery percentage needs to be reset to 0 when the voltage drops to 1.0.
+        //ToDo: The battery percentage needs to be reset to 0 when the voltage drops to 1.0.
     }
 }
 
