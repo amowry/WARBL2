@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - There is now a "Use thumb for slide" switch (off by default) that allows to to enable/disable using the thumb for sliding.
 
+- Two new EVI fingering charts, more similar to standardized EVI charts on other devices.
+
 ## [Released]
 
 ## [4.4] - 2025-1-28
