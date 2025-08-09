@@ -1579,8 +1579,9 @@ void getHalfholePitchbend(byte i) {
     int heightOffset = ED[mode][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
     int width = ED[mode][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
     int fingerRate = ED[mode][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-    const int hysteresis = 3;                              // Hysteresis for the target region
-    bool inTargetRegion;                                   // Whether the finger is in the assigned halfhole region
+    const int hysteresis = 3;                        // Hysteresis for the target region
+    static bool inTargetRegionState[9];              // last state for hysteresis purpose
+    bool inTargetRegion = inTargetRegionState[i];    // Whether the finger is in the assigned halfhole region, initialized with last state
     const int offsetSteps = -2;                            // This is always true because there is a full step drop for the holes we use for halfholing.
     static int prevToneholeRead[9];                        // For calculating rate of finger movement
     bool MIDInoteShifted = false;
@@ -1607,6 +1608,8 @@ void getHalfholePitchbend(byte i) {
     } else if (toneholeRead[i] < (center - heightOffset - width - hysteresis)) {
         inTargetRegion = false;
     }
+
+    inTargetRegionState[i] = inTargetRegion;
 
     if ((change < fingerRate || fingerRate == 127 || pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;
