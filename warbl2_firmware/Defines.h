@@ -169,7 +169,8 @@
 #define HALFHOLE_USE_MIDI_NOTE 56  // Boolean, send a new MIDI note instead of pitchbend when halfholing.
 #define HALFHOLE_INVERT_THUMB 57   // Boolean, invert the thumb halfhole register functionality.
 #define USE_THUMB_FOR_SLIDE 58   // Boolean
-#define kEXPRESSIONnVariables 59
+#define ENABLE_REGISTER_HOLD 59   // Boolean -- If IMU register hold mode is enabled (currently not included in Config Tool)
+#define kEXPRESSIONnVariables 60
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -559,8 +560,9 @@
 #define MIDI_CC_104_VALUE_105 105  // Bidirectional. Settings for current instrument: indicates ED[56] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_106 106  // Bidirectional. Settings for current instrument: indicates ED[57] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_107 107  // Bidirectional. Settings for current instrument: indicates ED[58] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_108 108  // Bidirectional. Settings for current instrument: indicates ED[59] is about to be sent with CC 105.
 //
-/* 108-127 unused */
+/* 109-127 unused */
 
 #define MIDI_CC_105 105  // Bidirectional - From Warbl. Values 0-127. Settings for current instrument: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -754,7 +756,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current instrument: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current instrument: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current instrument: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_107                           // Bidirectional. Settings for current instrument: indicates ED[48] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_108                           // Bidirectional. Settings for current instrument: indicates ED[] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 

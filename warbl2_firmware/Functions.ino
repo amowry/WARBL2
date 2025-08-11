@@ -4,8 +4,6 @@
 // Debug
 void printStuff(void) {
 
-    //Serial.println(registerHold);
-    //Serial.println(ED[mode][HALFHOLE_PITCHBEND]);
     //Serial.println("");
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
@@ -217,7 +215,8 @@ void readIMU(void) {
 #endif
 
 
-    // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note off messages are sent.
+    // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note-off messages are sent.
+    // This mode is "hidden" -- to turn it on select "-18" in the transpose menu and then click "Auto-caibrate bell sensor only" within 10 seconds.
     if (IMUsettings[mode][STICKS_MODE]) {
         static bool armed = 0;
         static float maxGyro;
@@ -955,7 +954,7 @@ byte getThumbHalfHoleShift() {
 
     /* Thumb halfhole function (table from MrMep)
 _________________________________________________________________________________________________
-|   Invert Thumb/Bell	|   Half Invert Thumb |  1st octave	|   2nd octave  |   3rd octave  |
+|   Invert Thumb/Bell	|   Invert Half Thumb |  1st octave	|   2nd octave  |   3rd octave  |
 _________________________________________________________________________________________________
 |         off	        |         off	        |     closed	|      open	    |      half     |
 |         on	        |         off	        |      open	  |     closed	  |      half     |
@@ -964,7 +963,7 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________
 */
     const byte lookup[4][3] = { { 1, 2, 3 }, { 1, 3, 2 }, { 2, 1, 3 }, { 3, 1, 2 } };       // Lookup table for thumb halfhole functionality.
-    byte combinedSwitches = switches[mode][INVERT] << 1 | ED[mode][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension o fthe lookup table.
+    byte combinedSwitches = switches[mode][INVERT] << 1 | ED[mode][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
     byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 half, 2 open
 
     if (!(ED[mode][HALFHOLE_PITCHBEND] && bitRead(ED[mode][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
@@ -987,16 +986,16 @@ ________________________________________________________________________________
 
 
 
-
+// This mode is currently "hidden" -- to turn it on select "-18" in the transpose menu and then click "Learn" in the drones control panel within 10 seconds.
 // Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
 void getRegisterHold() {
 
-    if (enableRegisterHold) {
+    if (ED[mode][ENABLE_REGISTER_HOLD]) {
 
-        // settings (to be moved to Config Tool):
+        // Settings
         const byte registerHoldMode = 4;      // 1 = hold both registers (both tilt zones), 2 = hold low register only (both tilt zones), 3 = hold high register only (both tilt zones), 4 = hold low register with low tilt zone and high register with high tilt zone.
-        const float lowerHoldAngle = -60.0f;  // Elevation angle below which the register will be locked (can be set at -90 for no lower lock zone).
-        const float upperHoldAngle = 0.0f;    // Elevation angle above which the register will be locked (can be set at 90 for no upper lock zone).
+        const float lowerHoldAngle = -75.0f;  // Elevation angle below which the register will be locked (can be set at -90 for no lower lock zone).
+        const float upperHoldAngle = -20.0f;  // Elevation angle above which the register will be locked (can be set at 90 for no upper lock zone).
 
         bool inTiltZone = false;
 
@@ -1553,7 +1552,7 @@ void getSlide() {
                     }
                 } else if (trueOffsetSteps == -2) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
                     getHalfholePitchbend(i);
-                } 
+                }
             } else {
                 iPitchBend[i] = 0;
                 snapped[i] = false;
@@ -1585,7 +1584,7 @@ void getHalfholePitchbend(byte i) {
     int heightOffset = ED[mode][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
     int width = ED[mode][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
     int fingerRate = ED[mode][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-    const int hysteresis = 3;                        // Hysteresis for the target region
+    const int hysteresis = 3;                              // Hysteresis for the target region
     bool inTargetRegion = halfHoleTargetRegionState[i];    // Whether the finger is in the assigned halfhole region, initialized with last state
     const int offsetSteps = -2;                            // This is always true because there is a full step drop for the holes we use for halfholing.
     static int prevToneholeRead[9];                        // For calculating rate of finger movement
@@ -1613,8 +1612,7 @@ void getHalfholePitchbend(byte i) {
             //Serial.print(i);
             //Serial.print(" - SlideTargetRegion FALS : ");
             //Serial.println(toneholeRead[i]);
-        }
-        else {
+        } else {
             inSlideHyst = toneholeRead[i] <= (senseDistance + hysteresis);
             /*
             Serial.print(i);
@@ -1688,7 +1686,7 @@ void getHalfholePitchbend(byte i) {
 
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
     if (!snapped[i] && !inSlideHyst && !ED[mode][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && (breathMode == kPressureThumb || !ED[mode][USE_THUMB_FOR_SLIDE]))) {
-        if (toneholeRead[i] < (center - heightOffset)) {  // The sensor value is lower than the target region.
+        if (toneholeRead[i] < (center - heightOffset)) {                                                                                                      // The sensor value is lower than the target region.
             float tempToneholeScale = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * tempToneholeScale)) * -offsetSteps));
         } else {  // The sensor value is higher than the target region.
@@ -2308,19 +2306,35 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                         sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + mode), noteShiftSelector[mode]);
                         loadPrefs();
                         return;
+                    } else {
+                        calibration = 2;
                     }
-                    calibration = 2;
 
                 }
 
 
                 else if (value == MIDI_LEARN_DRONES_PRESSURE) {
-                    int tempPressure = sensorValue;
-                    ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
-                    ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
 
-                    sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
-                    sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_MSB, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
+                    if ((millis() - sticksModeTimer) < 10000) {  // Hidden way to turn on IMU register hold mode.
+                        ED[mode][ENABLE_REGISTER_HOLD] = !ED[mode][ENABLE_REGISTER_HOLD];
+                        if (ED[mode][ENABLE_REGISTER_HOLD] == true) {
+                            blinkNumber[GREEN_LED] = 3;
+                        } else {
+                            blinkNumber[GREEN_LED] = 1;
+                        }
+                        noteShiftSelector[mode] = prevKey;  // Reset the key to the previous value because it was only changed to toggle registerHold.
+                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + mode), noteShiftSelector[mode]);
+                        loadPrefs();
+                        return;
+                    } else {
+
+                        int tempPressure = sensorValue;
+                        ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
+                        ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
+
+                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
+                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_MSB, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
+                    }
                 }
 
 
@@ -3389,7 +3403,7 @@ void loadPrefs() {
     curve[2] = ED[mode][AFTERTOUCH_CURVE];
     curve[3] = ED[mode][POLY_CURVE];
 
-    if (enableRegisterHold || IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+    if (ED[mode][ENABLE_REGISTER_HOLD] || IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     }
 
@@ -4106,11 +4120,11 @@ void checkFirmwareVersion() {
             }
         }
 
-        if (currentVersion < 45) {             // Manage all changes made in version 45.
-            for (int i = 0; i < 3; ++i) {      // Each mode
-                for (int n = 0; n < 9; ++n) {  // Cycle through 8 new variables
-                writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3), ED[mode][(HALFHOLE_PITCHBEND + n)]);
-                writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3) + EEPROM_FACTORY_SETTINGS_START, ED[mode][(HALFHOLE_PITCHBEND + n)]);
+        if (currentVersion < 45) {              // Manage all changes made in version 45.
+            for (int i = 0; i < 3; ++i) {       // Each mode
+                for (int n = 0; n < 10; ++n) {  // Cycle through 10 new variables
+                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3), ED[mode][(HALFHOLE_PITCHBEND + n)]);
+                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3) + EEPROM_FACTORY_SETTINGS_START, ED[mode][(HALFHOLE_PITCHBEND + n)]);
                 }
             }
         }
