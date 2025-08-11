@@ -55,8 +55,8 @@
 #define kModeBombarde 20
 #define kModeBaroqueFlute 21
 #define kModeMedievalPipes 22
-#define kModeEVI2 23  
-#define kModeEVI3 24  
+#define kModeEVI2 23
+#define kModeEVI3 24
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
@@ -168,8 +168,8 @@
 #define HALFHOLE_HOLES_HIGH4BITS 55
 #define HALFHOLE_USE_MIDI_NOTE 56  // Boolean, send a new MIDI note instead of pitchbend when halfholing.
 #define HALFHOLE_INVERT_THUMB 57   // Boolean, invert the thumb halfhole register functionality.
-#define USE_THUMB_FOR_SLIDE 58   // Boolean
-#define ENABLE_REGISTER_HOLD 59   // Boolean -- If IMU register hold mode is enabled (currently not included in Config Tool)
+#define USE_THUMB_FOR_SLIDE 58     // Boolean
+#define ENABLE_REGISTER_HOLD 59    // Boolean -- If IMU register hold mode is enabled (currently not included in Config Tool)
 #define kEXPRESSIONnVariables 60
 
 // Button combinations/gestures

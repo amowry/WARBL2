@@ -954,17 +954,18 @@ byte getThumbHalfHoleShift() {
 
     /* Thumb halfhole function (table from MrMep)
 _________________________________________________________________________________________________
-|   Invert Thumb/Bell	|   Invert Half Thumb |  1st octave	|   2nd octave  |   3rd octave  |
+|   Invert Thumb/Bell |   Invert Half Thumb |  1st octave |   2nd octave  |   3rd octave  |
 _________________________________________________________________________________________________
-|         off	        |         off	        |     closed	|      open	    |      half     |
-|         on	        |         off	        |      open	  |     closed	  |      half     |
-|         off	        |         on	        |     closed	|      half	    |      open     |
-|         on	        |         on	        |      open	  |      half	    |     closed    |
+|         off         |         off          |     closed  |      half     |      open     |
+|         on          |         off          |      open   |      half     |     closed    |
+|         off         |         on           |     closed  |      open     |      half     |
+|         on          |         on           |      open   |     closed    |      half     |
 _________________________________________________________________________________________________
+
 */
-    const byte lookup[4][3] = { { 1, 2, 3 }, { 1, 3, 2 }, { 2, 1, 3 }, { 3, 1, 2 } };       // Lookup table for thumb halfhole functionality.
+    const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };       // Lookup table for thumb halfhole functionality.
     byte combinedSwitches = switches[mode][INVERT] << 1 | ED[mode][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
-    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 half, 2 open
+    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
     if (!(ED[mode][HALFHOLE_PITCHBEND] && bitRead(ED[mode][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
         if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
