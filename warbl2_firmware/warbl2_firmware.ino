@@ -61,6 +61,9 @@ ResponsiveAnalogRead analogPressure(A0, true);
 ResponsiveAnalogRead analogPressure(A1, true);
 #endif
 
+// just used for filtering
+ResponsiveAnalogRead filterToneholes[9];
+
 // Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
     static const bool Use1ByteParsing = false;  //parse more than 1 byte per MIDI.read()
@@ -134,6 +137,7 @@ unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of ente
 bool registerHold = false;              // Locked into the current regsister, preventing overblowinng.
 bool enableRegisterHold = false;         // Whether IMU register hold is curently enabled.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
+bool halfHoleTargetRegionState[9] = {false};
 
 // Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -394,6 +398,13 @@ void setup() {
     analogPressure.setSnapMultiplier(snapmult);
     analogPressure.setActivityThreshold(actthresh);
     analogPressure.setAnalogResolution(1 << adcBits);
+
+    for (int i=0; i < 9; ++i) {
+        filterToneholes[i].setSnapMultiplier(0.01f);
+        filterToneholes[i].setActivityThreshold(2.0f);
+        filterToneholes[i].setAnalogResolution(1 << 10);
+        filterToneholes[i].enableSleep();
+    }
 
     // USB MIDI stuff
     usb_midi.setStringDescriptor("WARBL USB MIDI");
