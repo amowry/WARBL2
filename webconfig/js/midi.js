@@ -179,7 +179,14 @@ function updatePlatform()
     //hide some stuff for app version
     document.getElementById("myTopnav").style.display = newdisp;
     document.getElementById("topLogo").style.display = newdisp;
-    document.getElementById("importexport").style.display = newdisp;
+    //document.getElementById("importexport").style.display = newdisp; // old
+	document.getElementById("importExportTopWrapper").style.display = newdisp;
+	if (platform == "app") {
+		document.getElementById("headerbuttonwrapper").style.top = "280px";
+		document.getElementById("headerbuttonwrapper2").style.top = "280px";
+		document.getElementById("headerbuttonwrapper3").style.top = "280px";
+	}
+	
 
     let newdispleg =  (platform == "app") ? "none" : "block";
     document.getElementById("midiSelector").style.display = newdispleg;
@@ -208,7 +215,7 @@ function showWARBLNotDetected() {
 
 
     // Disable the import preset button
-    $('#importPreset').attr('disabled', 'disabled');
+   // $('#importPreset').attr('disabled', 'disabled');
 
 }
 
@@ -224,7 +231,7 @@ function showWARBLUnknown() {
 
 
     // Disable the import preset button
-    $('#importPreset').attr('disabled', 'disabled');
+    //$('#importPreset').attr('disabled', 'disabled');
 
 }
 
@@ -866,7 +873,7 @@ function WARBL_Receive(event, source) {
                 //console.log("WARBL_Receive: "+data0+" "+data1+" "+data2);
 
                 // Enable the import preset button
-                $('#importPreset').removeAttr('disabled')
+                //$('#importPreset').removeAttr('disabled')
 
 				/*
 				if (communicationMode == false){ // If we think we're disconnected but receive a message from the WARBL, try to reconnect.
@@ -1427,6 +1434,9 @@ function WARBL_Receive(event, source) {
 					else if (jumpFactorWrite == MIDI_ED_VARS2_START +36) {
 					   document.getElementById("checkbox33").checked = data2;
                     }
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +37) {
+					   document.getElementById("checkbox34").checked = data2;
+                    }
 					
 					
 								 			
@@ -1736,11 +1746,24 @@ function WARBL_Receive(event, source) {
 						document.getElementById("box12").style.left = "527px";
 						document.getElementById("backPressureButton").style.display = "none";
 						document.getElementById("backIMUButton").style.display = "none";
+						document.getElementById("switch34").style.display = "block";
+						document.getElementById("useThumbLabel").style.display = "block";
 						
 						
 					}
 					
+					if (version < 4.5) {
 					
+						for (i = 0; i < 8; ++i) {
+                            document.getElementById("row" + i).options[16].disabled = true; //disable register hold option
+						}
+                        document.getElementById("fingeringSelect0").options[22].disabled = true;
+                        document.getElementById("fingeringSelect0").options[23].disabled = true;
+                        document.getElementById("fingeringSelect1").options[22].disabled = true;
+                        document.getElementById("fingeringSelect1").options[23].disabled = true;
+                        document.getElementById("fingeringSelect2").options[22].disabled = true;
+                        document.getElementById("fingeringSelect2").options[23].disabled = true;
+					}	
 					
 					
 					if (version < 4.4) {
@@ -1779,18 +1802,18 @@ function WARBL_Receive(event, source) {
 						document.getElementById("slidelimitlabel").style.display = "none";
 						document.getElementById("advancedPBsliders").style.top = "50px";
                         document.getElementById("backPressureButton").style.display = "none";
-                        document.getElementById("fingeringSelect0").options[22].disabled = true;
-                        document.getElementById("fingeringSelect0").options[23].disabled = true;
                         document.getElementById("fingeringSelect0").options[24].disabled = true;
                         document.getElementById("fingeringSelect0").options[25].disabled = true;
-                        document.getElementById("fingeringSelect1").options[22].disabled = true;
-                        document.getElementById("fingeringSelect1").options[23].disabled = true;
+                        document.getElementById("fingeringSelect0").options[26].disabled = true;
+                        document.getElementById("fingeringSelect0").options[27].disabled = true;
                         document.getElementById("fingeringSelect1").options[24].disabled = true;
                         document.getElementById("fingeringSelect1").options[25].disabled = true;
-                        document.getElementById("fingeringSelect2").options[22].disabled = true;
-                        document.getElementById("fingeringSelect2").options[23].disabled = true;
+                        document.getElementById("fingeringSelect1").options[26].disabled = true;
+                        document.getElementById("fingeringSelect1").options[27].disabled = true;
                         document.getElementById("fingeringSelect2").options[24].disabled = true;
-                        document.getElementById("fingeringSelect2").options[25].disabled = true;	
+                        document.getElementById("fingeringSelect2").options[25].disabled = true;
+                        document.getElementById("fingeringSelect2").options[26].disabled = true;
+                        document.getElementById("fingeringSelect2").options[27].disabled = true;	
 						
 						document.getElementById("keyLabel").innerHTML = "Key";
 						document.getElementById("keyLabel").style.left = "305px";
@@ -2201,7 +2224,11 @@ function WARBL_Receive(event, source) {
                     }
                     else if (WARBL2SettingsReceive == 2) {
                         document.getElementById("poweroffSlider").value = data2;
-                        document.getElementById("poweroffValue").innerHTML = data2;
+						var value = data2;
+						if (version > 4.4 && value == 25) {
+							value = "∞";
+						}
+                        document.getElementById("poweroffValue").innerHTML = value;
                     }
                     else if (WARBL2SettingsReceive == 15) {
                         var x = (data2 + 50) / 100;
@@ -2590,7 +2617,6 @@ function sendSenseDistance(selection) {
 
 function sendhalfholeOffset(selection) {
     blink(1);
-	adjustHalfholeDiagram();
     selection = parseFloat(selection);
     sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 30);
     sendToWARBL(MIDI_CC_105, selection);
@@ -2598,21 +2624,11 @@ function sendhalfholeOffset(selection) {
 
 function sendhalfholeSize(selection) {
     blink(1);
-	adjustHalfholeDiagram();
     selection = parseFloat(selection);
     sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 31);
     sendToWARBL(MIDI_CC_105, selection);
 }
 
-function adjustHalfholeDiagram() {
-	var offset = document.getElementById("halfholeOffset").value
-	var width = document.getElementById("halfholeSize").value
-	var widthPx = width  + "px";
-	var offsetPx = (150 + (100 - offset) - (width / 2))  + "px";
-	document.getElementById("halfholeRegionRect").style.height = widthPx;
-	document.getElementById("halfholeRegionRect").style.top = offsetPx;
-	
-}
 
 function sendhalfholeRate(selection) {
     blink(1);
@@ -4415,6 +4431,13 @@ function sendHalfholeThumb(selection) {
     sendToWARBL(MIDI_CC_105, selection);
 }
 
+function sendUseThumb(selection) {
+    selection = +selection; //convert true/false to 1/0
+    blink(1);
+    sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START +37);
+    sendToWARBL(MIDI_CC_105, selection);
+}
+
 
 function sendExpression(selection) {
     selection = +selection; //convert true/false to 1/0
@@ -5083,7 +5106,11 @@ var outputPoweroff = document.getElementById("poweroffValue");
 var poweroffSlider = document.getElementById('poweroffSlider');
 poweroffSlider.addEventListener('input', poweroffSliderChange);
 function poweroffSliderChange() {
-    outputPoweroff.innerHTML = poweroffSlider.value;
+var value = poweroffSlider.value;
+if (version > 4.4 && value == 25) {
+	value = "∞";
+}
+    outputPoweroff.innerHTML = value;
 }
 
 var pressureShakeModDepthValue = document.getElementById("pressureShakeModDepthValue");
@@ -5176,12 +5203,12 @@ function updateCells() {
 
         var z = document.getElementById("row" + i).value;
 		
-        if (((y == 0 || (version > 4.1 && y == 1)) && i < 3 && x == 1) || ((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
+        if (((y == 0 || (version > 4.1 && y == 1)) && i < 3 && x == 1) || ((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11 || z == 16))) {
             document.getElementById("checkbox" + i).disabled = false;
             document.getElementById("switch" + i).style.cursor = "pointer";
         }
 
-        if (((((y != 0 && version <= 4.1) || (version > 4.1 && y > 1)) && i < 3) || (i < 3 && (x == 0 || x > 1))) && !((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11))) {
+        if (((((y != 0 && version <= 4.1) || (version > 4.1 && y > 1)) && i < 3) || (i < 3 && (x == 0 || x > 1))) && !((version > 1.4 || version == "Unknown") && i < 3 && (z == 5 || z == 6 || z == 10 || z == 11 || z == 16))) {
             document.getElementById("checkbox" + i).disabled = true;
             document.getElementById("switch" + i).style.cursor = "default";
             document.getElementById("checkbox" + i).checked = false;

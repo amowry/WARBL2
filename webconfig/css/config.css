@@ -680,7 +680,6 @@ input {
 	z-index:100;
 }
 
-
 #customControls {
 	display: none;
 	position: absolute;
@@ -700,7 +699,6 @@ input {
 	left: 50px;
 	z-index:210;
 }
-
 
 .notechannellabel {
 	display: block;
@@ -723,7 +721,7 @@ input {
 	display: block;
 	position: absolute;
 	width: 160px;
-	top: 280px;
+	top: 260px;
 	left: 430px;
 }
 
@@ -731,7 +729,7 @@ input {
 	display: block;
 	position: absolute;
 	width: 160px;
-	top: 280px;
+	top: 260px;
 	left: 630px;
 }
 
@@ -739,8 +737,44 @@ input {
 	display: block;
 	position: absolute;
 	width: 160px;
-	top: 280px;
+	top: 260px;
 	left: 830px;
+}
+
+.importExportTopWrapper {
+	display: block;
+	position: absolute;
+	width: 370px;
+	top: 330px;
+	left: 430px;
+}
+
+.importexportbutton {
+	margin-left: 90px;
+	width: 120px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--primary-color);
+	color: var(--button-text-color);
+	padding: 10px;
+}
+
+.importPreset {
+	width: 120px;
+	height: 30px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--primary-color);
+	color: var(--button-text-color);
+	padding: 10px;
 }
 
 .headerbuttons {
@@ -1964,8 +1998,8 @@ input:disabled + .vibratoSlider:before {
 .halfholeLabel {
 	display: block;
 	position: absolute;
-	left: 28px;
-	top: 62px;
+	left: 26px;
+	top: 70px;
 	width: 80px;
 	z-index: 99;
 	font-size: 14px;
@@ -2001,6 +2035,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: relative;
 	top: -70px;
+	left: -25px;
 }
 
 .totalRegionRect {
@@ -2126,7 +2161,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch5 {
-	top: 258px;
+	top: 248px;
 	left: 355px;
 }
 
@@ -2134,9 +2169,31 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 248px;
-	top: 262px;
+	top: 252px;
 	z-index: 99;
 	font-size: 14px;
+}
+
+#switch34 {
+	display: none;
+	top: 278px;
+	left: 355px;
+}
+
+.useThumbLabel {
+	display: none;
+	position: absolute;
+	left: 223px;
+	top: 282px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#thumbTable {
+	display: block;
+	position: relative;
+	left: -15px;
+	top: 0px;
 }
 
 
@@ -5500,10 +5557,6 @@ select option {
 	border-radius: 5px 5px 0px 0px;
 }
 
-.importexportbutton {
-	margin: 20px;
-}
-
 .warbl-preset-import::before {
 	content: "Import Preset:";
 	margin-right: 10px;
@@ -5525,20 +5578,6 @@ select option {
 
 input[type="file"] {
 	display: none;
-}
-
-.importPreset {
-	width: 120px;
-	height: 50px;
-	text-align: center;
-	text-decoration: none;
-	font-size: 14px;
-	cursor: pointer;
-	border: none;
-	border-radius: 5px;
-	background-color: var(--primary-color);
-	color: var(--button-text-color);
-	padding: 16px;
 }
 
 #d3PressureGraph{

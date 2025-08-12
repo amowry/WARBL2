@@ -416,6 +416,8 @@
                            <option value="21">Baroque flute</option>
                            <option value="22">Medieval bagpipes</option>
                            <option value="9">Bansuri</option>
+                           <option value="23">EVI2</option>
+                           <option value="24">EVI3</option>
                            <option value="67">Custom 1</option>
                            <option value="68">Custom 2</option>
                            <option value="69">Custom 3</option>
@@ -625,15 +627,24 @@
                      <input class="expressionInput" type="text" onChange="sendBendRange(value)" id="midiBendRange" value="2" />
                   </div>
                   <button type="button" class="headerbuttons noTouch" id="configureCustomFingering" onClick="configureCustomFingering()">Configure custom fingering...</button>
-                  <div class="headerbuttonwrapper">
+                  <div class="headerbuttonwrapper" id="headerbuttonwrapper">
                      <button type="button" class="headerbuttons noTouch" id="saveasdefaults" onClick="modal(2)">Save settings for current instrument</button>
                   </div>
-                  <div class="headerbuttonwrapper2">
+                  <div class="headerbuttonwrapper2" id="headerbuttonwrapper2">
                      <button type="button" class="headerbuttons noTouch" id="saveforallmodes" onClick="modal(3)">Apply settings to all instruments</button>
                   </div>
-                  <div class="headerbuttonwrapper3">
+                  <div class="headerbuttonwrapper3" id="headerbuttonwrapper3">
                      <button type="button" class="headerbuttons noTouch" id="restoreall" onClick="modal(4)">Restore all factory settings</button>
                   </div>
+                  
+                  <div class="importExportTopWrapper" id="importExportTopWrapper">
+            <label for="importPreset" class="importPreset"> 
+            Import Preset
+            </label>
+            <input id="importPreset" type="file" accept=".warbl" onChange="importPreset(this)" />
+            <button type="button" class="noTouch importexportbutton" id="exportPreset" onClick="exportPreset()">Export Preset</button>
+                  </div>
+                  
                </div>
                <div class="smallcontrolbox" id="box1">
                   <h2 class="controlboxtitle noTouch">
@@ -819,6 +830,9 @@
                      <button type="button" class="smallbutton noTouch pressureOkay" onClick="pressureOkay()">OK</button>
                   </h2>
                </div>
+               
+               
+               
                <div class="smallcontrolbox" id="box5">
                   <h2 class="controlboxtitle noTouch">
                      Finger Vibrato and Slide
@@ -843,8 +857,7 @@
                            <label for="pitchbendradio3"><span><span></span></span>4. Legato Slide / Vibrato</label>
                         </div>
                      </fieldset>
-                  </div>
-                  
+                  </div>         
                   <div class="receivedPBLabel noTouch">Received pitch&nbspbend:</div>
                   <div class="receivedPB noTouch" id="receivedPB"></div>
                   <div class="receivedPBCents noTouch" id="receivedPBCents"></div>
@@ -856,9 +869,14 @@
                   <div id="PBZeromarker"></div>
                   <div id="topPBlevelContainer">
                      <div id="topPBlevel"></div>
-                  </div>
+                  </div> 
                   
-                  <div class="customLabel noTouch">Custom vibrato</div>
+                  <div id="useThumbLabel" class="useThumbLabel" noTouch">Use thumb for slide</div>
+                  <label class="switch" id="switch34">
+                  <input type="checkbox" class="checkboxes" id="checkbox34" onChange="sendUseThumb(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  <div id="customLabel" class="customLabel noTouch">Custom vibrato</div>
                   <label class="switch" id="switch5">
                   <input type="checkbox" class="checkboxes" id="checkbox5" onChange="sendCustom(this.checked)" />
                   <span class="slider round"></span>
@@ -871,6 +889,7 @@
                   <input type="checkbox" class="vibratoCheckboxes" id="vibratoCheckbox8" onChange="sendVibratoHoles(8, this.checked)" />
                   <span class="vibratoSlider round"></span>
                   </label>
+
                   <label class="vibratoSwitch vibratoHoles hole7" id="vibratoHole7">
                   <input type="checkbox" class="vibratoCheckboxes" id="vibratoCheckbox7" onChange="sendVibratoHoles(7, this.checked)" />
                   <span class="vibratoSlider round"></span>
@@ -904,6 +923,8 @@
                   <span class="vibratoSlider round"></span>
                   </label>
                </div>
+               
+               
                <div class="smallcontrolbox" id="box4">
                   <h2 class="controlboxtitle noTouch">
                      Advanced Pitch Bend Settings
@@ -940,7 +961,109 @@
                   <input type="checkbox" class="checkboxes" id="checkbox15" onChange="sendHack2(this.checked)" />
                   <span class="slider round"></span>
                   </label>
+               </div>          
+               
+               
+               <div class="thirdRowControlbox" id="halfHoleSetupBox">
+                  <h2 class="controlboxtitle noTouch">
+                     Half hole
+                     <button type="button" class="infocircle" onClick="modal(15)">  <img  class = "info" src="img/info-circle.svg"></img></button>
+                  </h2>
+                  <div class="halfholeLabel noTouch">Half Hole</div>
+                  <label class="switch" id="switch31">
+                  <input type="checkbox" class="checkboxes" id="checkbox31" onChange="sendHalfhole(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
+                  <div class="halfholeMIDILabel noTouch">Use MIDI note</div>
+                  <label class="switch" id="switch32">
+                  <input type="checkbox" class="checkboxes" id="checkbox32" onChange="sendHalfholeMIDI(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+                  
+                  <div class="halfholeThumbLabel noTouch">Invert half thumb</div>
+                  <label class="switch" id="switch33">
+                  <input type="checkbox" class="checkboxes" id="checkbox33" onChange="sendHalfholeThumb(this.checked)" />
+                  <span class="slider round"></span>
+                  </label>
+  
+                  <div class="halfHoleControls">
+                    <div class="halfholeDirectionLabel noTouch">&larr; difficult&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;Ability to half hole&nbsp;--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;easy &rarr;</div>
+
+                 
+                   <div class="slidecontainer2" id="halfholeOffsetContainer">
+                   <input type="range" min="1" max="100" value="50" class="ranger" id="halfholeOffset" onChange="sendhalfholeOffset(value)" />
+                   </div>
+                   <div class="halfholeOffsetlabel noTouch">Half-hole region height (%)</div>
+                   
+                   <div class="slidecontainer2" id="halfholeSizeContainer">
+                   <input type="range" min="1" max="100" value="50" class="ranger" id="halfholeSize" onChange="sendhalfholeSize(value)" />
+                   </div>
+                   <div class="halfholeSizeLabel noTouch">Half-hole region size (%)</div>
+                   
+                   <div class="slidecontainer2" id="halfholeRateContainer">
+                   <input type="range" min="1" max="127" value="100" class="ranger" id="halfholeRate" onChange="sendhalfholeRate(value)" />
+                   </div>
+                   <div class="halfholeRatelabel noTouch">Finger speed</div>
+                   
+                    <div class="jumpvalues noTouch jumpvalue19" id="jumpValue19">
+                    <p><span id="demo19"></span></p>
+                    </div>
+                    
+                    <div class="jumpvalues noTouch jumpvalue20" id="jumpValue20">
+                    <p><span id="demo20"></span></p>
+                    </div>
+                    
+                    <div class="jumpvalues noTouch jumpvalue21" id="jumpValue21">
+                    <p><span id="demo21"></span></p>
+                    </div>
+                 </div>
+                 
+                  <div class="vibratoHolesLabel noTouch">Select half-hole holes:</div>
+                  <div class="vibratoHolesLT noTouch">L thumb</div>
+                  <div class="vibratoHolesBell noTouch">Bell</div>
+                  <label class="vibratoSwitch vibratoHoles hole8" id="halfHolesHole7">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox7" onChange="sendHalfHoles(7, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole7" id="halfHolesHole6">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox6" onChange="sendHalfHoles(6, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole6" id="halfHolesHole5">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox5" onChange="sendHalfHoles(5, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole5" id="halfHolesHole4">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox4" onChange="sendHalfHoles(4, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole4" id="halfHolesHole3">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox3" onChange="sendHalfHoles(3, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole3" id="halfHolesHole2">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox2" onChange="sendHalfHoles(2, this.checked)" checked=checked />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole2" id="halfHolesHole1">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox1" onChange="sendHalfHoles(1, this.checked)" checked=checked />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole1" id="halfHolesHole0">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox0" onChange="sendHalfHoles(0, this.checked)" />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                  <label class="vibratoSwitch vibratoHoles hole0" id="halfHolesHole9">
+                  <input type="checkbox" class="vibratoCheckboxes" id="halfHolesCheckbox9" disabled />
+                  <span class="vibratoSlider round"></span>
+                  </label>
+                 
                </div>
+               
+               
+               
+               
                <div class="smallcontrolbox expressionBox" id="expressionPressureBox">
                   <div class="pitchExpressionBox" id="pitchExpressionBox"></div>
                   <h2 class="controlboxtitle noTouch">
@@ -1199,7 +1322,6 @@
                         <line fill="none" stroke="#c3c0c0" stroke-miterlimit="10" x1="162.655" y1="198.241" x2="187.655" y2="198.241" />
                         <path fill="none" stroke="#c3c0c0" stroke-miterlimit="10" d="M162.655,173.241v25c4.343-12.5,9.783-20.295,25.601-23.418" />
                      </svg>
-                     y
                   </div>
                   <div class="radiogroup7">
                      <fieldset>
@@ -1556,6 +1678,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1576,6 +1699,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1596,6 +1720,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1616,6 +1741,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1636,6 +1762,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1656,6 +1783,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1676,6 +1804,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="styled-select blue semi-square">
@@ -1696,6 +1825,7 @@
                            <option value="13">Power down</option>
                            <option value="14">Recenter yaw</option>
                            <option value="15">Show battery level</option>
+                           <option value="16">Register Hold</option>
                         </select>
                      </div>
                      <div class="WARBL2Elements">
@@ -1717,6 +1847,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Register Hold</option>
                            </select>
                         </div>
                         <div class="styled-select blue semi-square">
@@ -1737,6 +1868,7 @@
                               <option value="13">Power down</option>
                               <option value="14">Recenter yaw</option>
                               <option value="15">Show battery level</option>
+                              <option value="16">Register Hold</option>
                            </select>
                         </div>
                      </div>
@@ -2073,25 +2205,13 @@
                   </div>
                </fieldset>
                <div class="slidecontainer" id="poweroffContainer">
-                  <input type="range" min="1" max="20" value="5" class="ranger" id="poweroffSlider" onChange="sendPoweroff(value)" />
+                  <input type="range" min="1" max="25" value="5" class="ranger" id="poweroffSlider" onChange="sendPoweroff(value)" />
                </div>
                <div id="poweroffLabel" class="noTouch poweroffLabel">Auto power off time (minutes)</div>
                <div class="noTouch poweroffValue">
                   <p><span id="poweroffValue"></span></p>
                </div>
             </div>
-         </div>
-         <div id="importexport" class="importexportbox">
-            <h2 class="importexportboxtitle noTouch">
-               Preset Import/Export
-               <button type="button" class="infocircle" onClick="modal(15)">  <img  class = "info" src="img/info-circle.svg"></img></button> 
-            </h2>
-            <!-- <input type="file" name="importPreset" id="importPreset" class="warbl-preset-import" accept=".warbl" onChange="importPreset(this)">  -->
-            <label for="importPreset" class="importPreset">
-            Import Preset
-            </label>
-            <input id="importPreset" type="file" accept=".warbl" onChange="importPreset(this)" disabled=disabled />
-            <button type="button" class="smallbutton noTouch importexportbutton" id="exportPreset" onClick="exportPreset()">Export Preset</button>
          </div>
          <div id="open-modal2" onClick="" class="modal-window">
             <div id="modal-center2">
@@ -2129,7 +2249,10 @@
                <h1>Note Trigger and Register Control</h1>
                <div>
                   <p>
-                     You can play in a single register or choose from several options for controlling the register. Choosing <b>1. Single register</b> will allow you to use breath or bag pressure to start/stop notes, but will only allow access to one register. The pressure sensor can be used to mimic the way that whistles, flutes, and some bagpipes can be "overblown" to reach the second octave. To use this feature, select <b>2. Overblow</b>. For fingering patterns that don't use the left thumb, you can instead select <b>3. Thumb register</b> to allow you use that finger to control the register, which will be familiar to players of many woodwind instruments. To play the upper register, simply uncover the thumb hole. Finally, you can use the "bell" sensor to select the register by choosing <b>4. Bell register</b>. Uncovering the bell sensor (lifting it off your knee), will access the second register. The functionality for either of these two options can be reversed by turning on the <b>Invert thumb/bell</b> switch. Then covering the left thumb hole or covering the bell sensor will allow playing in the second register, depending on whether option 3 or 4 is selected. In the case of the thumb hole, this will be more familiar to players of instruments with a register key.
+                     You can play in a single register or choose from several options for controlling the register. Choosing <b>1. Single register</b> will allow you to use breath or bag pressure to start/stop notes, but will only allow access to one register. The pressure sensor can be used to mimic the way that whistles, flutes, and some bagpipes can be "overblown" to reach the second octave. To use this feature, select <b>2. Overblow</b>. For fingering patterns that don't use the left thumb, you can instead select <b>3. Thumb register</b> to allow you use that finger to control the register, which will be familiar to players of many woodwind instruments. To play the upper register, simply uncover the thumb hole. <b>Note:</b> starting with firmware v.4.5, with the <b>Thumb register</b> option selected (with or without using the thumb for half holes), if you are using a custom fingering chart, the thumb position in your chart will be ignored and only the first half of the chart will be used. You do need to have values in the second half of the chart (the part with the thumb hole covered), but those values will be ignored.
+                         </p>
+                  <p>
+                  Finally, you can use the "bell" sensor to select the register by choosing <b>4. Bell register</b>. Uncovering the bell sensor (lifting it off your knee), will access the second register. The functionality for either the thumb register or bell register option can be reversed by turning on the <b>Invert thumb/bell</b> switch. Then covering the left thumb hole or covering the bell sensor will allow playing in the second register, depending on whether option 3 or 4 is selected. In the case of the thumb hole, this will be more familiar to players of instruments with a register key.
                   </p>
                   <p>
                   Starting with firmware v. 4.4, you can select the number of semitones in a register. The default is 12, which means that all three above methods of controlling the register will change the pitch by one octave. You can change this to any number of semitones (up to 24), which is useful for emulating wind instruments like the kaval that naturally overblow at an interval less than an octave. It also can serve other purposes, like playing accidentals using the above methods.
@@ -2175,6 +2298,12 @@
                   <p>
                      Note that custom vibrato is not available when any unsupported fingering pattern has been chosen.
                   </p>
+                  <p>
+                  If you'd like to prevent the thumb hole from being used for slide, you can turn off the <b>Use thumb for slide</b> switch.
+                 </p>
+                  <p>
+The pitch bend value received from the WARBL is shown at the right, along with a "wheel"-type display. Note that any received pitch bend messages will be displayed here, including those resulting from IMU vibrato or pitch expression, which are controlled in other panels.
+				</p>
                </div>
             </div>
          </div>
@@ -2245,6 +2374,9 @@
                   <p>
                      On WARBL2 you can also set a button action to <b>recenter the yaw</b>, or <b>show the battery level</b>. When triggered, the latter will blink the LED in a turquoise color from 1-10 times according to the battery level percentage. If the battery level is lower than 10%, the LED will blink once in red.
                   </p>
+                   <p>
+                     The <b>Register hold</b> option (WARBL2) allows to you to temporarily prevent the register from changing by overblowing. This can be useful for changing the dynamics in the current register without accidentally changing the register. 
+                  </p>
                   <p>
                      The "<b>double-click</b>" option applies to the first three gestures: when active, the corresponding action will take place only after a quick double press of the button. This is intended to avoid accidental clicks while playing. When enabled, the "momentary" option takes precedence.
                   </p>
@@ -2293,6 +2425,27 @@
                   </p>
                   <p>
                      Selecting the tab for each instrument allows you to change the settings for that instrument. <b>Please note</b> that WARBL responds immediately to changes to settings for each instrument, but if you don't save them, those changes will be lost when you power down WARBL.  You can choose to apply changes to settings to the current instrument (by clicking <b>Save settings for current instrument</b>), or you can choose to apply them to all three instruments (click <b>Apply to all instruments</b>).This can be useful if you want to make three instruments that are the same except for minor differences (which can be changed after applying the initial settings to all three instruments). You can also restore the original factory settings. You can set the <b>Default instrument</b> that will be active when WARBL is plugged in. This prevents having to click a button to switch instruments if your current favorite instrument is not instrument 1. To set the default instrument, simply click the tab for that instrument and then click <b>Set as Default</b>.  This change will be saved immediately.
+                  </p>
+                  <p>
+                     The <b>Preset Import and Export</b> buttons <b>(not available in iOS devices)</b> allow you to exchange your WARBL instrument settings with other users or to archive settings for one instrument for later import back into the WARBL Configuration Tool.
+                  </p>
+                  <p>
+                     WARBL settings for the currently selected instrument may be exported to a file using the <b>Export Preset</b> button.
+                  </p>
+                  <p>
+                     The exported file will be named "WARBL_Preset.warbl" and can be found in the "Downloads" directory on your computer. If there is already an existing export file in that directory, Chrome will save the file with incrementing numbers after the "WARBL_Preset" name.
+                  </p>
+                  <p>
+                     To load an existing WARBL preset file into the current instrument tab, click the <b>Import Preset</b> button.
+                  </p>
+                  <p>
+                     Select a .warbl settings file from your computer to import. The imported data will be loaded into your WARBL, but not saved permanently to allow you to make additional changes if desired.
+                  </p>
+                  <p>
+                     To permanently save the settings for the current instrument in your WARBL, click the "Save settings for the current instrument" button at the top of the screen.
+                  </p>
+                  <p>
+                     <b>Note:</b> It is not possible to import settings from an original WARBL to a WARBL2 or vice versa because they use different commands for communicating with the Configuration Tool.
                   </p>
                   <p>
                      The <b>MIDI note</b> display will show what MIDI note is currently being played, and the <b>MIDI Console</b> will show the most recent 300 MIDI messages that have been received. These are both useful for troubleshooting.
@@ -2403,32 +2556,33 @@
          <div id="open-modal15" onClick="" class="modal-window">
             <div id="modal-center15">
                <h2 title="Close" onClick="modalclose(15)" class="modal-close">Close</h2>
-               <h1>Preset Import/Export</h1>
+               <h1>Half Hole</h1>
                <div>
+<p>&nbsp;</p>
+<p>Turning on the <strong>Half hole</strong> switch makes it possible to play semitones or use the thumb to play three registers by covering holes halfway. &nbsp;You can select which finger to use for half holes at the bottom of the panel.</p>
+<p>&nbsp;</p>
+<p><strong>Playing semitones</strong></p>
+<p>When using half holes to play semitones, the pitch is normally changed by using MIDI pitch-bend messages. To send new MIDI notes for semitones instead of using pitch bend, turn on the <strong>Use MIDI note </strong>switch. When this switch is turned on, the <strong>slide</strong> feature will be disabled, because sliding doesn&rsquo;t work as well when many MIDI notes are triggered rapidly.</p>
+<p>If using pitch bend to play semitones (with the <strong>Use MIDI note</strong> turned off), half holes can be used with any of the <strong>Finger Vibrato and Slide </strong>modes (any combination of vibrato and slide). When lowering a finger over a hole when using both <strong>slide</strong> and <strong>half hole</strong>, the pitch will gradually bend until the finger is in the half hole region (see below) and then the pitch will be locked to the semitone. Similarly, the pitch will bend if the finger is below the half-hole region.</p>
+<p>Semitones can be played by half holing using any hole that normally cause a pitch change of a full tone (whole step) with your selected fingering chart (including custom charts).</p>
+<p>&nbsp;</p>
+<p><strong>The half-hole region</strong></p>
+<p>The <strong>half-hole region height</strong> <strong>(%) </strong>and <strong>Half-hole region size (%)</strong> sliders allow you to control the size and position of the region above the tone hole where your finger will trigger a semitone.&nbsp; The region height is the height of the center of the region above the tonehole, as a percentage of the full finger-sensing distance. The region size is also a percentage of the overall range. Note that depending on the settings chosen for both parameters, the half-hole region may extend to the top or bottom of the full sensing range (or both). For example, if the half-hole region size is set close to 100% the finger might trigger a semitone anywhere in the sensing range. <strong>Note: </strong>If using MIDI notes to play semitones (the <strong>Use MIDI note</strong> is turned on), the half-hole region always continues down to the closed hole.</p>
+<p>The <strong>Finger speed</strong> slider acts as a filter to make it possible to transition from an open hole to a closed hole (or vice versa) quickly without playing a semitone in between. The speed of the finger is monitored as it is moved through the full finger-sensing range. With the slider moved to the right, a semitone will be triggered while the finger is moving more quickly, making it easier to play semitones. When the slide is moved to the left, the finger needs to be moving more slowly to trigger a semitone, so it is easier to move between whole tones without triggering a semitone in between. &nbsp;The <strong>Finger speed</strong> slide is somewhat similar in functionality to the <strong>Transient filter</strong> but is applied only to half holes. You can use both sliders together to filter out brief half holes as well as other brief notes. <strong>Note: </strong>The <strong>Finger speed</strong> slider has no effect if using <strong>slide</strong> in conjunction with half holes.</p>
+<p>&nbsp;</p>
+<p><strong>Controlling register with the thumb</strong></p>
+<p>The thumb can be used to play three registers in the closed, half, and open positions. This is possible with custom charts and existing charts that don&rsquo;t normally use the thumb.</p>
+<p>To enable this feature, select <strong>Thumb register</strong> in the <strong>Note Trigger and Register Control </strong>panel. Then, make sure the thumb hole is enabled at the bottom of the <strong>Half Hole</strong> panel.</p>
+<p>When using the thumb for playing half holes, it&rsquo;s usually best to set the <strong>Finger speed</strong> slider fairly high.</p>
+<p><strong>Note: </strong>With the <strong>Thumb register</strong> option selected (with or without using the thumb for half holes), if you are using a custom fingering chart, the thumb position in your chart will be ignored and only the first half of the chart will be used. You do need to have values in the second half of the chart (the part with the thumb hole covered), but those values will be ignored.</p>
+<p>You can choose&nbsp; whether each of the three thumb positions (closed, half, and open) plays the first, second, or third register using a combination of the <strong>Invert half thumb </strong>switch (in the <strong>Half Hole panel</strong>) and the <strong>Invert thumb/bell</strong> switch (in the <strong>Note Trigger and Register Control </strong>panel). The combined effect of these switches is shown in the table below:</p>
                   <p>
-                     Use the Preset Import and Export button to exchange your WARBL instrument settings with other users or to archive an instrument setting for later import back into the WARBL Configuration Tool.
-                  </p>
-                  <p>
-                     These features are only available when the WARBL is connected.
-                  </p>
-                  <p>
-                     WARBL settings for the currently selected instrument may be exported to a file using the <b>Export Preset</b> button.
-                  </p>
-                  <p>
-                     The exported file will be named "WARBL_Preset.warbl" and can be found in the "Downloads" directory on your computer. If there is already an existing export file in that directory, Chrome will save the file with incrementing numbers after the "WARBL_Preset" name.
-                  </p>
-                  <p>
-                     To load an existing WARBL preset file into the current instrument tab, click the <b>Import Preset</b> file selector button.
-                  </p>
-                  <p>
-                     Select a .warbl settings file from your computer to import. The imported data will be loaded into your WARBL, but not saved permanently to allow you to make additional changes if desired.
-                  </p>
-                  <p>
-                     To permanently save the settings for the current instrument in your WARBL, click the "Save settings for the current instrument" button at the top of the screen.
-                  </p>
-                  <p>
-                     <b>Note:</b> It is not possible to import settings from an original WARBL to a WARBL2 or vice versa because they use different commands for communicating with the Configuration Tool.
-                  </p>
+      <div id="thumbTable">     
+         <img src="img/thumb_table.svg"/>
+      </div>
+</p>
+                  
+                  
                </div>
             </div>
          </div>

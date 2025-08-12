@@ -1661,7 +1661,7 @@ void getHalfholePitchbend(byte i) {
 
     halfHoleTargetRegionState[i] = inTargetRegion;
 
-    if ((change < fingerRate || fingerRate == 127 || pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
+    if ((change < fingerRate || ED[mode][HALFHOLE_FINGERRATE] == 127 || ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[mode][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;
     }
 
