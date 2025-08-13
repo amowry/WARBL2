@@ -1247,7 +1247,7 @@ fieldset {
 	display: block;
 	clear: both;
 	height: 1855px;
-	//height: 2320px;
+	height: 2320px;
 	border-radius: 5px;
 }
 
@@ -1338,8 +1338,8 @@ fieldset {
 }
 
 #buttonBox{
-	top: 1390px;
-	//top: 1850px;
+	//top: 1390px;
+	top: 1850px;
 }
 
 #box1 {
@@ -1353,8 +1353,10 @@ fieldset {
 
 #box3 {
 	left: 527px;
-	top: 900px;
-	height: 405px;
+	//top: 900px;
+	top: 1390px;
+	//height: 405px;
+	height: 375px;
 }
 
 #box6 {
@@ -1374,34 +1376,31 @@ fieldset {
 }
 
 #box9 {
+	display: none;
 	left: 30px;
 	top: 900px;
 	height: 405px;
 }
 
 #box10 {
-	left: 30px;
+	left: 527px;
 	top: 900px;
 	height: 405px;
-	display: none;
+	display: block;
 }
 
 #box11 {
-	left: 30px;
+	left: 527px;
 	top: 900px;
 	height: 405px;
 	display: none;
 }
 
 #box12 {
-	left: 30px;
+	left: 527px;
 	top: 900px;
 	height: 405px;
 	display: none;
-}
-
-#box13 {
-	height: 405px;
 }
 
 #pressuregraph {
@@ -1638,7 +1637,8 @@ fieldset {
 #box13 {
 	display: none;
 	top: 900px;
-	left: 30px;
+	left: 527px;
+	height: 405px;
 }
 
 .pitchbend {
@@ -2028,7 +2028,7 @@ input:disabled + .vibratoSlider:before {
 
 #halfHoleSetupBox {
 	left: 30px;
-	display: none;
+	display: block;
 }
 
 .halfHoleControls {
@@ -2175,13 +2175,13 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch34 {
-	display: none;
+	display: block;
 	top: 278px;
 	left: 355px;
 }
 
 .useThumbLabel {
-	display: none;
+	display: block;
 	position: absolute;
 	left: 223px;
 	top: 282px;
@@ -2350,6 +2350,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 .backPressure {
+	display: none;
 	position: absolute;
 	height: 30px;
 	width: 100px;
@@ -2358,6 +2359,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 .backIMU {
+	display: none;
 	position: absolute;
 	height: 30px;
 	width: 100px;
@@ -3623,7 +3625,7 @@ h3 {
 	left: 30px;
 	top: 900px;
 	height: 405px;
-	display: none;
+	display: block;
 }
 
 #pitchExpressionBox {

@@ -42,7 +42,7 @@ var numberOfGestures = 10; //Number of button gestures
 
 var midiNotes = [];
 
-var currentVersion = 44; // Current version of the WARBL2 firmware
+var currentVersion = 45; // Current version of the WARBL2 firmware
 var currentVersionOriginal = 21; // Current version of the original WARBL firmware
 var previousVersion = 0; //Used to keep track of which version of WARBL is connected so that the page will refresh if a different WARBL with an older firmware version is connected.
 
@@ -485,7 +485,7 @@ function setToDisconnected()
     WARBLout = null;
     WARBLin = null;
     communicationMode = false;
-    previousVersion = 0;
+    //previousVersion = 0;
     document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text    
 }
 
@@ -1679,14 +1679,17 @@ function WARBL_Receive(event, source) {
                 else if (data1 == MIDI_CC_110) { //receiving firmware version from WARBL
 
                     version = data2;
+					
+					console.log("Previous version = " + previousVersion);
+					console.log("Version = " + version);
 
                     if (previousVersion != 0 && version != previousVersion) { //If the version has changed because a different WARBL has connected
                         document.location.reload(false); //refresh the page without reloading to revert the settings
+						console.log("Firmware version has changed, refreshing page");
                     }
 
                     communicationMode = true; //moved above
-                    previousVersion = version;
-				
+                    if (version != 0) {previousVersion = version};
 				
 
                     if ((version >= 40 && version >= currentVersion) || (version < 40 && version >= currentVersionOriginal)) { //display the appropriate messages
@@ -1724,33 +1727,10 @@ function WARBL_Receive(event, source) {
 
 
 
-
-
                     //Lots of UI changes based on the current firmware version of the connected WARBL
 
 
                     //add new items that should only be visible with newer software versions and disable ones that are for newer version than the current one.
-					
-					if (version > 4.4) {
-						
-						document.getElementById("topcontrolbox").style.height = "2320px";
-						document.getElementById("buttonBox").style.top = "1850px";
-						document.getElementById("halfHoleSetupBox").style.display = "block";
-						document.getElementById("box9").style.display = "none";
-						document.getElementById("box3").style.top = "1390px";
-						document.getElementById("box3").style.height = "375px";
-						document.getElementById("box10").style.display = "block";
-						document.getElementById("box10").style.left = "527px";
-						document.getElementById("box11").style.left = "527px";
-						document.getElementById("box13").style.left = "527px";
-						document.getElementById("box12").style.left = "527px";
-						document.getElementById("backPressureButton").style.display = "none";
-						document.getElementById("backIMUButton").style.display = "none";
-						document.getElementById("switch34").style.display = "block";
-						document.getElementById("useThumbLabel").style.display = "block";
-						
-						
-					}
 					
 					if (version < 4.5) {
 					
@@ -1763,6 +1743,23 @@ function WARBL_Receive(event, source) {
                         document.getElementById("fingeringSelect1").options[23].disabled = true;
                         document.getElementById("fingeringSelect2").options[22].disabled = true;
                         document.getElementById("fingeringSelect2").options[23].disabled = true;
+						
+						document.getElementById("topcontrolbox").style.height = "1855px";
+						document.getElementById("buttonBox").style.top = "1390px";
+						document.getElementById("halfHoleSetupBox").style.display = "none";
+						document.getElementById("box9").style.display = "block";
+						document.getElementById("box3").style.top = "900px";
+						document.getElementById("box3").style.height = "405px";
+						document.getElementById("box10").style.display = "none";
+						document.getElementById("box10").style.left = "30px";
+						document.getElementById("box11").style.left = "30px";
+						document.getElementById("box13").style.left = "30px";
+						document.getElementById("box12").style.left = "30px";
+						document.getElementById("backPressureButton").style.display = "block";
+						document.getElementById("backIMUButton").style.display = "block";
+						document.getElementById("switch34").style.display = "none";
+						document.getElementById("useThumbLabel").style.display = "none";
+						document.getElementById("expressionPressureBox").style.display = "none";				
 					}	
 					
 					
@@ -3761,10 +3758,14 @@ function mapIMU() {
 
 
 function backPressure() {
-    if ((version > 3.9 && version < 4.5)|| version == "Unknown") {
+    if (version > 3.9 && version < 4.5) {
         document.getElementById("expressionPressureBox").style.display = "none";
         document.getElementById("box9").style.display = "block";
     }
+	if (version == "Unknown") {
+		document.getElementById("expressionPressureBox").style.display = "block";
+        document.getElementById("box9").style.display = "none";
+	}
 }
 
 
@@ -3772,9 +3773,13 @@ function backIMU() {
 	if (version < 4.5){ 
     	document.getElementById("box10").style.display = "none";
 	}
-    if ((version > 3.9 && version < 4.5)|| version == "Unknown") {
+    if (version > 3.9 && version < 4.5) {
         document.getElementById("box9").style.display = "block";
     }
+	if (version == "Unknown") {
+	document.getElementById("box10").style.display = "block";
+	document.getElementById("box9").style.display = "none";
+		}
 }
 
 
