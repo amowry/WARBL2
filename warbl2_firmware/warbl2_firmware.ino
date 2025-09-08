@@ -136,7 +136,7 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
-bool halfHoleTargetRegionState[9] = {false};
+bool halfHoleTargetRegionState[9] = { false };
 
 // Instrument
 byte mode = 0;         // The current mode (instrument), from 0-2.
@@ -189,7 +189,7 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Instrument 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                               // Many settings in the Configuration Tool (see defines).
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                             // Many settings in the Configuration Tool (see defines).
   { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Instrument 0
     { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Instrument 1
     { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 } };  // Instrument 2
@@ -302,7 +302,8 @@ bool customEnabled = 0;                                                         
 int adjvibdepth;                                                                           // Vibrato depth scaled to MIDI bend range.
 bool snapped[9];                                                                           // Whether snapped to halfhole pitchbend
 bool halfHoleShift[] = { false, false, false, false, false, false, false, false, false };  // Whether we have shifted the MIDI note by half holing.
-bool thumbHalfHole = true;                                                                // Whether the register is currently shfted by the thumb inthe halfhole position.
+bool thumbHalfHole = true;                                                                 // Whether the register is currently shfted by the thumb inthe halfhole position.
+byte previousTonehole = 255;                                                               // For halfhole finger rate: Remember whhich hole was used for the previous sensor reading so we are sure to get two consecutive readings from the same hole.
 
 
 // Variables for managing MIDI note output
@@ -398,7 +399,7 @@ void setup() {
     analogPressure.setActivityThreshold(actthresh);
     analogPressure.setAnalogResolution(1 << adcBits);
 
-    for (int i=0; i < 9; ++i) {
+    for (int i = 0; i < 9; ++i) {
         filterToneholes[i].setSnapMultiplier(0.01f);
         filterToneholes[i].setActivityThreshold(2.0f);
         filterToneholes[i].setAnalogResolution(1 << 10);

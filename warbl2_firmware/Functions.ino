@@ -1533,7 +1533,13 @@ void getSlide() {
     byte halfHoleEnabled = (ED[mode][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[mode][HALFHOLE_HOLES_LOW4BITS];
 
     for (byte i = 0; i < 9; i++) {
+
+        if ((bitRead(holeCovered, i) == 1) && i == previousTonehole) {  // For half hole: If a hole is covered, make sure two new sensor readings will be obtained for calculating finger rate.
+            previousTonehole = 255;
+        }
+
         if (toneholeRead[i] > senseDistance && bitRead(holeCovered, i) != 1 && transitionFilter == 0) {  // Does transitionFilter really need to be zero here? AM
+
             const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
@@ -1591,10 +1597,16 @@ void getHalfholePitchbend(byte i) {
     static int prevToneholeRead[9];                        // For calculating rate of finger movement
     bool MIDInoteShifted = false;
     bool inSlideHyst = false;
+    float change = 999;  // Rate of finger movement
 
-    float change = (abs(sqrt(float(toneholeRead[i])) - sqrt(float(prevToneholeRead[i])))) * 30;  // Absolute rate of finger movement, linearized to account for exponential sensor/distance relationship. Typically ranges from 0-100.
 
-    prevToneholeRead[i] = toneholeRead[i];
+    if (i == previousTonehole) {
+        change = (abs(sqrt(float(toneholeRead[i])) - sqrt(float(prevToneholeRead[i])))) * 30;  // Absolute rate of finger movement, linearized to account for exponential sensor/distance relationship. Typically ranges from 0-100.
+        prevToneholeRead[i] = toneholeRead[i];
+    }
+
+    previousTonehole = i;
+
     int center = ((toneholeCovered[i] - senseDistance) >> 1) + senseDistance;  // Center sensor value for current slide hole (midpoint of sensor readings).
     // Note that sensor values increase exponentially with distance so the center sensor value is not the center of the distance from the tone hole.
 
@@ -1606,7 +1618,7 @@ void getHalfholePitchbend(byte i) {
         if (abs(toneholeRead[i] - center + heightOffset) < width && toneholeRead[i] > (senseDistance + hysteresis)) {  // If we're using slide, there's a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
             //Serial.print(i);
-            //Serial.print(" - SlideTargetRegion TRUE : ");
+            //Serial.println(" - SlideTargetRegion TRUE : ");
             //Serial.println(toneholeRead[i]);
         } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis && toneholeRead[i] > (senseDistance + hysteresis)) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
@@ -1660,9 +1672,9 @@ void getHalfholePitchbend(byte i) {
     */
 
     halfHoleTargetRegionState[i] = inTargetRegion;
-
-    if ((change < fingerRate || ED[mode][HALFHOLE_FINGERRATE] == 127 || ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[mode][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
+    if (((change < fingerRate) || (ED[mode][HALFHOLE_FINGERRATE] == 127) || ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[mode][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;
+        //Serial.println("snapped");
     }
 
     if (!inTargetRegion) {
