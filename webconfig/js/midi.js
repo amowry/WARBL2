@@ -3641,12 +3641,6 @@ function sendHalfHoles(holeNumber, selection) {
 }
 
 
-
-
-
-
-
-
 function setBit(number, bitPosition) {
   // Create a mask with only the target bit set to 1
   const mask = 1 << bitPosition; 
@@ -4347,6 +4341,7 @@ function sendChannel(rowNum) {
 }
 
 function sendByte2(rowNum) {
+	
     blink(1);
     MIDIvalueChange();
     sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);

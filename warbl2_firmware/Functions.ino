@@ -4,6 +4,10 @@
 // Debug
 void printStuff(void) {
 
+    //Serial.println(buttonPrefs[mode][8][2]);
+    //Serial.println(buttonPrefs[mode][8][3]);
+    //Serial.println(buttonPrefs[mode][8][4]);
+
     //Serial.println("");
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
@@ -2110,6 +2114,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
+
                     if (buttonReceiveMode == i) {
                         for (byte k = 0; k < 5; k++) {  // Update column 1 (MIDI action).
                             if (value == 112 + k) {
@@ -2383,7 +2388,6 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 else if (value >= MIDI_BUTTON_ACTIONS_START) {
                     for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
                         if (buttonReceiveMode == i) {
-
                             for (byte j = 0; j < 27; j++) {  // Update column 0 (action).
                                 if (value == MIDI_BUTTON_ACTIONS_START + j) {
                                     buttonPrefs[mode][i][0] = j;
@@ -2406,8 +2410,8 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             }
 
 
-
-            for (byte i = 0; i < 8; i++) {  // Update channel, byte 2, byte 3 for MIDI message for button MIDI command for row i
+            /////// Special cases for CC 106, 107, 108
+            for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update channel, byte 2, byte 3 for MIDI message for button MIDI command for row i
                 if (buttonReceiveMode == i) {
                     if (number == MIDI_CC_106 && value <= MIDI_ACTION_MIDI_CHANNEL_END) {
                         buttonPrefs[mode][i][2] = value;

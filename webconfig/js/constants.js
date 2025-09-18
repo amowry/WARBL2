@@ -107,8 +107,8 @@ const MIDI_CC_102_VALUE_0 = 0; // unused
     const MIDI_CC_102_VALUE_95 = 95; // Bidirectional. longpress 1
     const MIDI_CC_102_VALUE_96 = 96; // Bidirectional. longpress 2
     const MIDI_CC_102_VALUE_97 = 97; // Bidirectional. longpress 3
-    const MIDI_CC_102_VALUE_98 = 98; // unused
-    const MIDI_CC_102_VALUE_99 = 99; // unused (previously disconnect command)
+    const MIDI_CC_102_VALUE_98 = 98; // Bidirectional. Sip
+    const MIDI_CC_102_VALUE_99 = 99; // Bidirectional. Shake
     /* Follow with data to populate indicated button combination:
     * CC 106	values 100-127 (see below) 
     * (was previously CC 102 100-111 but ran out of room here)
