@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
+## [4.6] - 2025-9-18
+
+### Changed
+
+- Fixed a bug where neither "Sip Mouthpiece" nor "Shake" were correctly able to send MIDI messages (channel, byte 2, and byte 3 weren't being sent from the Configuration Tool to the WARBL2).
+
+### Added
 
 ## [Released]
 
