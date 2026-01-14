@@ -787,7 +787,6 @@
 #define MIDI_BLE_INTERVAL_LSB MIDI_CC_106_VALUE_72  // from WARBL. WARBL2 BLE connection interval low byte
 #define MIDI_BLE_INTERVAL_MSB MIDI_CC_106_VALUE_73  // from WARBL. WARBL2 BLE connection interval high byte
 
-#define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100  // Beginning of WARBL2 CustomCharts
 
 /* General sendMidi Args - NO VALUE - <CONTROL_CHANGE, MIDI channel, CC Number> */
 #define MIDI_SEND_CC CONTROL_CHANGE, MIDI_CONFIG_TOOL_CHANNEL
@@ -879,8 +878,8 @@
                                             // 343 low byte of vibrato depth  for mode 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
-#define EEPROM_ED_VARS_START 351  // 351-526	expression and drones (ED) variables
-/* 527-599 unused, room for extending above array or other variables */
+#define EEPROM_ED_VARS_START 351  // 351-530	expression and drones (ED) variables
+/* 531-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array

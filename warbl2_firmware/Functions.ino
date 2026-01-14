@@ -8,6 +8,7 @@ void printStuff(void) {
     //Serial.println(buttonPrefs[mode][8][3]);
     //Serial.println(buttonPrefs[mode][8][4]);
 
+//Serial.println(smoothed_pressure);
     //Serial.println("");
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
