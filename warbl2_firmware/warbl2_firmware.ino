@@ -115,7 +115,9 @@ float accelX = 0.0f;
 float accelY = 0.0f;
 float accelZ = 0.0f;
 float currYaw = 0.0f;
+float currAxisHeading = 0.0f;
 float yawOffset = 0.0f;
+float axisHeadingOffset;
 float IMUtemp = 0.0f;
 float gyroXCalibration = 0.0f;
 float gyroYCalibration = 0.0f;
@@ -123,6 +125,7 @@ float gyroZCalibration = 0.0f;
 float roll;
 float pitch;
 float yaw;
+float axisHeading;                 // Compass direction of the long axis of the WARBL
 int shakeVibrato;                  // Shake vibrato depth, from -8192 to 8192
 int shakePressureCCMod;            // Shake pressure for CC mod: -127 to 127
 float shakePressureChanPressMod;   // Shake pressure for chan pressure mod: -127 to 127

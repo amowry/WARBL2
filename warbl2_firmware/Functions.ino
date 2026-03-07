@@ -8,8 +8,10 @@ void printStuff(void) {
     //Serial.println(buttonPrefs[mode][8][3]);
     //Serial.println(buttonPrefs[mode][8][4]);
 
-//Serial.println(smoothed_pressure);
+    //Serial.println(roll);
     //Serial.println("");
+
+
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
@@ -148,7 +150,6 @@ void readIMU(void) {
     float deltat = sfusion.deltatUpdate();
     deltat = constrain(deltat, 0.001f, 0.01f);
 
-    // Serial.println(deltat, 4);
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
@@ -156,17 +157,6 @@ void readIMU(void) {
     roll = sfusion.getPitchRadians();
     pitch = sfusion.getRollRadians();
     yaw = sfusion.getYawRadians();
-
-
-#if 0
-    float * quat = sfusion.getQuat();
-    for (int i=0; i < 4; ++i) {
-        Serial.print(quat[i], 4);
-        Serial.print(", ");
-    }
-    Serial.println(" 1.1, -1.1");
-#endif
-
 
     currYaw = yaw;  // Needs to be the unadjusted value
 
@@ -186,6 +176,7 @@ void readIMU(void) {
     roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
+
 
 
 
@@ -218,6 +209,103 @@ void readIMU(void) {
     rollLocal -= correctionFactor;
     roll = rollLocal;
 #endif
+
+
+
+
+#if 0
+    //ChatGPT version (this seems a bit worse)
+        // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This is more useful/intuitive than the "roll" Euler angle.
+    float rollGravity = roll;
+
+    static float rollLocal = 0.0f;
+    static float prevYaw = 0.0f;
+    static float prevRollGravity = 0.0f;
+    static bool rollLocalInitialized = false;
+
+    const float zeroSnapGain = 0.12f;
+
+    auto wrap180 = [](float a) -> float {
+        while (a > 180.0f) a -= 360.0f;
+        while (a < -180.0f) a += 360.0f;
+        return a;
+    };
+
+    if (!rollLocalInitialized) {
+        rollLocal = rollGravity;
+        prevRollGravity = rollGravity;
+        rollLocalInitialized = true;
+    }
+
+    if ((signbit(yaw - prevYaw) == signbit(rollGravity - prevRollGravity) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(rollGravity - prevRollGravity) && pitch > 0) || (fabsf(pitch) >= 85.0f)) {
+
+        rollLocal += (gyroY * RAD_TO_DEG) * deltat;
+    }
+
+    if (fabsf(pitch) < 85.0f) {
+        bool crossedZero =
+          (signbit(rollGravity) != signbit(prevRollGravity)) && (fabsf(rollGravity - prevRollGravity) < 90.0f);
+
+        if (crossedZero) {
+            rollLocal -= zeroSnapGain * rollLocal;
+        }
+    }
+
+    rollLocal = wrap180(rollLocal);
+
+    prevYaw = yaw;
+    prevRollGravity = rollGravity;
+
+    roll = rollLocal;
+
+#endif
+
+
+
+
+
+    // Compute compass heading of the long axis of the WARBL because it is independent of the "local" roll.
+
+    static bool axisHeadingInitialized = false;
+
+    float* quat = sfusion.getQuat();
+    float q0 = quat[0];
+    float q1 = quat[1];
+    float q2 = quat[2];
+    float q3 = quat[3];
+
+    // World-frame direction of body +Y axis (WARBL long axis)
+    float vx = 2.0f * (q1 * q2 - q0 * q3);
+    float vy = 1.0f - 2.0f * (q1 * q1 + q3 * q3);
+    float vz = 2.0f * (q2 * q3 + q0 * q1);
+
+    // Don't calculate heading if the WARBL is too close to vertical.
+    // In that case, keep the previous valid heading.
+    const float maxAbsVz = 0.995f;
+
+    if (fabsf(vz) < maxAbsVz) {
+        axisHeading = atan2f(vx, vy) * RAD_TO_DEG;
+
+        while (axisHeading > 180.0f) axisHeading -= 360.0f;
+        while (axisHeading < -180.0f) axisHeading += 360.0f;
+
+        currAxisHeading = axisHeading;  // Save raw heading for recentering
+
+        axisHeading += axisHeadingOffset;
+
+        while (axisHeading > 180.0f) axisHeading -= 360.0f;
+        while (axisHeading < -180.0f) axisHeading += 360.0f;
+
+        axisHeadingInitialized = true;
+    } else if (!axisHeadingInitialized) {
+        axisHeading = 0.0f;
+        currAxisHeading = 0.0f;
+    }
+
+
+
+
+
 
 
     // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note-off messages are sent.
@@ -299,6 +387,7 @@ void calibrateIMU() {
 // Reset heading 0 to current heading
 void centerIMU() {
     yawOffset = -currYaw;
+    axisHeadingOffset = -currAxisHeading;
 }
 
 
@@ -382,7 +471,8 @@ void sendIMU() {
             upperConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
         }
 
-        yawOutput = constrain(map((yaw + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
+        yawOutput = constrain(map((axisHeading + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
 
         if (prevYawCC != yawOutput && IMUsettings[mode][SEND_YAW]) {
             sendMIDI(CONTROL_CHANGE, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
@@ -644,7 +734,10 @@ void checkButtons() {
             integrator[j] = MAXIMUM;  // Defensive code if integrator got corrupted
 
             if (prevOutput[j] == 1 && !longPressUsed[j]) {
-                released[j] = 1;  // The button has just been released.
+                released[j] = 1;                // The button has just been released.
+                for (byte k = 0; k < 3; k++) {  //If any button has been released, reset all the long-press counters in case a button was being held only for the "hold 2 + click 1 or 3" gestures.
+                    longPressCounter[k] = 0;    //
+                }
                 buttonUsed = 1;
             }
 
@@ -2508,12 +2601,11 @@ void handleButtons() {
 
     if (shiftState == 1 && released[1] == 1) {  // If button 1 was only being used along with another button, we clear the just-released flag for button 1 so it doesn't trigger another control change.
         released[1] = 0;
-        //buttonUsed = 0;  // Clear the button activity flag, so we won't handle them again until there's been new button activity.
         shiftState = 0;
     }
 
 
-    // Then, a few hard-coded actions that can't be changed by the configuration tool:
+    // Then, a few hard-coded actions that can't be changed by the Configuration Tool:
     //_______________________________________________________________________________
 
     if (justPressed[0] && !pressed[2] && !pressed[1]) {
@@ -2579,7 +2671,6 @@ void handleButtons() {
             performAction(5 + i);
             longPressUsed[i] = 1;
             longPress[i] = 0;
-            //longPressCounter[i] = 0;
         }
 
 

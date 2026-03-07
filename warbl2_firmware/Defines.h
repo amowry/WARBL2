@@ -447,7 +447,7 @@
 #define MIDI_CC_102_VALUE_123 123  // from Config Tool. save as defaults for current mode
 #define MIDI_CC_102_VALUE_124 124  // from Config Tool. save as defaults for all instruments
 #define MIDI_CC_102_VALUE_125 125  // from Config Tool. restore factory settings
-#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode \
+#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode
                                    // WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
 #define MIDI_CC_102_VALUE_127 127  // from Config Tool. begin autocalibration
 
