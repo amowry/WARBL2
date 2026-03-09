@@ -153,6 +153,7 @@ void readIMU(void) {
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
+
     // Pitch and roll are swapped due to PCB sensor orientation.
     roll = sfusion.getPitchRadians();
     pitch = sfusion.getRollRadians();
@@ -208,57 +209,10 @@ void readIMU(void) {
 
     rollLocal -= correctionFactor;
     roll = rollLocal;
-#endif
-
-
-
-
-#if 0
-    //ChatGPT version (this seems a bit worse)
-        // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This is more useful/intuitive than the "roll" Euler angle.
-    float rollGravity = roll;
-
-    static float rollLocal = 0.0f;
-    static float prevYaw = 0.0f;
-    static float prevRollGravity = 0.0f;
-    static bool rollLocalInitialized = false;
-
-    const float zeroSnapGain = 0.12f;
-
-    auto wrap180 = [](float a) -> float {
-        while (a > 180.0f) a -= 360.0f;
-        while (a < -180.0f) a += 360.0f;
-        return a;
-    };
-
-    if (!rollLocalInitialized) {
-        rollLocal = rollGravity;
-        prevRollGravity = rollGravity;
-        rollLocalInitialized = true;
-    }
-
-    if ((signbit(yaw - prevYaw) == signbit(rollGravity - prevRollGravity) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(rollGravity - prevRollGravity) && pitch > 0) || (fabsf(pitch) >= 85.0f)) {
-
-        rollLocal += (gyroY * RAD_TO_DEG) * deltat;
-    }
-
-    if (fabsf(pitch) < 85.0f) {
-        bool crossedZero =
-          (signbit(rollGravity) != signbit(prevRollGravity)) && (fabsf(rollGravity - prevRollGravity) < 90.0f);
-
-        if (crossedZero) {
-            rollLocal -= zeroSnapGain * rollLocal;
-        }
-    }
-
-    rollLocal = wrap180(rollLocal);
-
-    prevYaw = yaw;
-    prevRollGravity = rollGravity;
-
-    roll = rollLocal;
+    roll *= 1.2f;  // Rough correction for unknown error in gyro integration (perhaps error in gyro scale factor in LSM6D library??)
 
 #endif
+
 
 
 
@@ -295,6 +249,8 @@ void readIMU(void) {
 
         while (axisHeading > 180.0f) axisHeading -= 360.0f;
         while (axisHeading < -180.0f) axisHeading += 360.0f;
+
+        axisHeading *= 1.2f;  // Rough correction for unknown error in gyro integration (perhaps error in gyro scale factor in LSM6D library??)
 
         axisHeadingInitialized = true;
     } else if (!axisHeadingInitialized) {
@@ -1400,8 +1356,8 @@ void getIMUpitchbend() {
             if (i == 1) {
                 IMUvalue = ((constrain(pitch, -90, 90) + 90) * 5) + 100;  // Pitch
             }
-            if (i == 2) {
-                IMUvalue = ((constrain(yaw, -180, 180) + 180) * 2.5f) + 100;  // Yaw (full 360 degree range)
+            if (i == 2) { // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
+                IMUvalue = ((constrain(axisHeading, -180, 180) + 180) * 2.5f) + 100;  // Yaw (full 360 degree range)
             }
             int lowIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MIN + (i * 9)] * 25) + 100;  // Values received from the Config Tool range from 0-36 and we scale them up to 900 here to make it easy to re-use the calculations from the expression override function above.
             int lowIMUmax = (IMUsettings[mode][IMU_ROLL_PITCH_MIN_HIGH + (i * 9)] * 25) + 100;
