@@ -1356,7 +1356,7 @@ void getIMUpitchbend() {
             if (i == 1) {
                 IMUvalue = ((constrain(pitch, -90, 90) + 90) * 5) + 100;  // Pitch
             }
-            if (i == 2) { // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
+            if (i == 2) {                                                             // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
                 IMUvalue = ((constrain(axisHeading, -180, 180) + 180) * 2.5f) + 100;  // Yaw (full 360 degree range)
             }
             int lowIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MIN + (i * 9)] * 25) + 100;  // Values received from the Config Tool range from 0-36 and we scale them up to 900 here to make it easy to re-use the calculations from the expression override function above.
@@ -2037,7 +2037,7 @@ void pulse() {
         } else if (prevPulseState[i] == true) {
             prevPulseState[i] = false;
             analogWrite(LEDpins[i], 0);  // If pulsing was just turned off, write 0.
-            in[i] = 4.712f;              // Reset so we'll start from 0 bext time pulse is turned on.
+            in[i] = 4.712f;              // Reset so we'll start from 0 next time pulse is turned on.
         }
     }
 }
@@ -2495,7 +2495,7 @@ void detectSip() {
     static byte debounce = 20;   // Number of high pressure readings required to turn sip off
 
     if (sensorValue < (sensorCalibration - sipThreshold) && !sip) {  //Immediately trigger sip if we've crossed the threshold.
-        performAction(8);
+        performAction(8, 127);
         sip = true;
     }
 
@@ -2527,7 +2527,7 @@ void detectShake() {
 
     if (shakeDetected) {  //Immediately trigger shake if detected by the IMU
         if (!shake) {
-            performAction(9);
+            performAction(9, 127);
             shake = true;
         }
     }
@@ -2607,14 +2607,14 @@ void handleButtons() {
                     if (waitingSecondClick[i]) {                                   //We already had a first click
                         waitingSecondClick[i] = false;
                         if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL) {  //Timer has not expired yet, we had second clic
-                            performAction(i);
+                            performAction(i, i);
                         }     //The else is managed above in checkButtons()
                     } else {  //This is the first click, activate timer
                         waitingSecondClick[i] = true;
                         doubleClickTimer = 0;
                     }
                 } else {
-                    performAction(i);
+                    performAction(i, i);
                 }  // We ignore it if the button was just used for a hard-coded command involving a combination of fingerholes.
             }
             released[i] = 0;
@@ -2623,8 +2623,7 @@ void handleButtons() {
 
 
         if (longPress[i] && (pressed[0] + pressed[1] + pressed[2] == 1) && !momentary[mode][i]) {  // Do action for long press, assuming no other button is pressed.
-
-            performAction(5 + i);
+            performAction(5 + i, i);
             longPressUsed[i] = 1;
             longPress[i] = 0;
         }
@@ -2642,13 +2641,13 @@ void handleButtons() {
         if (released[0] && !momentary[mode][0]) {  // Do action for button 1 held and button 0 released
             released[0] = 0;
             shiftState = 1;
-            performAction(3);
+            performAction(3, 0);
         }
 
         if (released[2] && !momentary[mode][1]) {  // Do action for button 1 held and button 2 released
             released[2] = 0;
             shiftState = 1;
-            performAction(4);
+            performAction(4, 1);
         }
     }
 }
@@ -2660,7 +2659,7 @@ void handleButtons() {
 
 
 // Perform desired action in response to buttons
-void performAction(byte action) {
+void performAction(byte action, byte button) {
 
     if (communicationMode) {
         sendMIDICouplet(MIDI_SEND_BUTTON_ACTION, action);
@@ -2686,7 +2685,7 @@ void performAction(byte action) {
 
 
             if (buttonPrefs[mode][action][1] == 1) {
-                if (!momentary[mode][action]) {
+                if (button != 127 && !momentary[mode][button]) {  // Check if the that triggered this is in momentary mode. 127 is used for sip and shake, which don't have momentary mode.
                     sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
                 } else {
                     sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0);  // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
@@ -2735,7 +2734,8 @@ void performAction(byte action) {
             break;
 
         case OCTAVE_SHIFT_UP:
-            if (!momentary[mode][action]) {  // Shift up unless we're in momentary mode, otherwise shift down.
+
+            if (button != 127 && !momentary[mode][button]) {  // Shift up unless we're in momentary mode, otherwise shift down.
                 octaveShiftUp();
                 blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
@@ -2744,7 +2744,8 @@ void performAction(byte action) {
             break;
 
         case OCTAVE_SHIFT_DOWN:
-            if (!momentary[mode][action]) {  // Shift down unless we're in momentary mode, otherwise shift up.
+
+            if (button != 127 && !momentary[mode][button]) {  // Shift down unless we're in momentary mode, otherwise shift up.
                 octaveShiftDown();
                 blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
@@ -2785,7 +2786,7 @@ void performAction(byte action) {
 
 
         case SEMI_SHIFT_UP:
-            if (!momentary[mode][action]) {
+            if (button != 127 && !momentary[mode][button]) {
                 noteShift++;  // Shift up if we're not in momentary mode
                 blinkNumber[GREEN_LED] = 1;
             } else {
@@ -2795,7 +2796,7 @@ void performAction(byte action) {
 
 
         case SEMI_SHIFT_DOWN:
-            if (!momentary[mode][action]) {
+            if (button != 127 && !momentary[mode][button]) {
                 noteShift--;  // Shift down if we're not in momentary mode
                 blinkNumber[GREEN_LED] = 1;
             } else {
@@ -2833,7 +2834,7 @@ void performAction(byte action) {
             }
 
         case REGISTER_HOLD:
-            if (!momentary[mode][action]) {
+            if (button != 127 && !momentary[mode][button]) {
                 blinkNumber[GREEN_LED] = 1;
                 if (!(newState == 1 && !registerHold)) {  // Hold the current register if we're currently playing a note.
                     registerHold = !registerHold;
