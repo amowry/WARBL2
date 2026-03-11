@@ -13,8 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where neither "Sip Mouthpiece" nor "Shake" weren't correctly able to send MIDI messages (channel, byte 2, and byte 3 weren't being sent from the Configuration Tool to the WARBL2).
 - Reset the long-press counter when any button is released so that a long press of button 2 isn't registered if it was only being held in combination with a click of 1 or 3.
 - Fixed longstanding bug where certain button actions didn't work properly because of an incorrect check for momentary mode. This particularly affected instruments (presets) 2 and 3.
+- "Control register with elevation" now uses the "Register semitones" setting in the "Note trigger and register control" panel to determine the number of semitones in each register. This allows using elevation for a more versatile transpose method.
+- Fixed bug where the WARBL would send CC messages back when told by CC to switch presets, even when not connected to the Config Tool. When not connected, the WARBL still responds to CC messages on channel 7 but won't send any replies.
 
 ### Added
+
+- It is now possible to send Program Changes messages (1, 2, or 3) on any channel to tell the WARBL to change to preset (instrument) 1, 2, or 3 respectively. The WARBL will not send any messages back unless it is currently connected to the Config Tool (in that case it will be sending CC messages on channel 7 to keep the Config Tool in sync).
 
 ## [Released]
 
