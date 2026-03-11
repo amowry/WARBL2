@@ -968,7 +968,7 @@ void getShift() {
         pitchShift = pitchRegister();
     }
 
-    shift = ((octaveShift * 12) + noteShift + (pitchShift * 12) + totalHalfHoleShift);  // Adjust for key and octave shift.
+    shift = ((octaveShift * 12) + noteShift + (pitchShift * ED[mode][OVERBLOW_SEMITONES]) + totalHalfHoleShift);  // Adjust for key and octave shift.
 
     // Overblow if allowed.
     if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
