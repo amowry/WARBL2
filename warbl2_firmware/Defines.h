@@ -1,6 +1,6 @@
 
 
-//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 46  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
@@ -447,8 +447,7 @@
 #define MIDI_CC_102_VALUE_123 123  // from Config Tool. save as defaults for current mode
 #define MIDI_CC_102_VALUE_124 124  // from Config Tool. save as defaults for all instruments
 #define MIDI_CC_102_VALUE_125 125  // from Config Tool. restore factory settings
-#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode
-                                   // WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
+#define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode. WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
 #define MIDI_CC_102_VALUE_127 127  // from Config Tool. begin autocalibration
 
 

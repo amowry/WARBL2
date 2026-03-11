@@ -2048,16 +2048,67 @@ void pulse() {
 
 
 
-//Incoming message from USB
+
+
+
+//Incoming CC message from USB
 void handleControlChangeFromUSB(byte channel, byte number, byte value) {
     handleControlChange(MIDI_SOURCE_USB, channel, number, value);
 }
-//Incoming message from BLE
+
+
+//Incoming PC message from USB
+void handleProgramChangeFromUSB(byte channel, byte value) {
+    handleProgramChange(MIDI_SOURCE_BLE, channel, value);
+}
+
+
+//Incoming CC message from BLE
 void handleControlChangeFromBLE(byte channel, byte number, byte value) {
     handleControlChange(MIDI_SOURCE_BLE, channel, number, value);
 }
 
-// Check for and handle incoming MIDI messages from the WARBL Configuration Tool.
+
+//Incoming PC message from BLE
+void handleProgramChangeFromBLE(byte channel, byte value) {
+    handleProgramChange(MIDI_SOURCE_BLE, channel, value);
+}
+
+
+
+
+
+
+
+
+
+// Handle incoming program messages.
+void handleProgramChange(byte source, byte channel, byte value) {
+
+    // Listen to all channels for now.
+    //if (channel == mainMidiChannel) {  // If the received PC is on the same channel that WARBL is sending on,
+    if (value < 3) {
+        mode = value;  // change the preset.
+        play = 0;
+        loadPrefs();  // Load the correct user settings based on current instrument.
+        blinkNumber[GREEN_LED] = abs(mode) + 1;
+        if (communicationMode) {
+            sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
+        }
+    }
+    //}
+}
+
+
+
+
+
+
+
+
+
+
+// Handle incoming CC messages from the Configuration Tool.
 void handleControlChange(byte source, byte channel, byte number, byte value) {
     //Serial.println(channel);
     //Serial.println(number);
@@ -2077,7 +2128,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     int hindex = (value >> 1) - 1;
                     if ((value & 1) == 0) {
                         toneholeCovered[hindex] -= 5;
-                        if ((toneholeCovered[hindex] - toneholeBaseline[hindex] - 4) < 5) {  //if the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
+                        if ((toneholeCovered[hindex] - toneholeBaseline[hindex] - 4) < 5) {  // If the tonehole calibration gets set too low so that it would never register as being uncovered, send a message to the configuration tool.
                             sendMIDI(MIDI_CC_102_MSG, (MIDI_MAX_CALIB_MSGS_START + (hindex)));
                         }
                     } else {
@@ -2098,6 +2149,8 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 else if (value == MIDI_ENTER_COMM_MODE) {  // When communication is established, send all current settings to tool.
                     communicationMode = 1;
                     communicationModeSource = source;
+
+
 #if DEBUG_CONFIG_TOOL
                     Serial.print("Entering CommMode from ");
                     Serial.println(communicationModeSource);
@@ -2134,8 +2187,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     if (value == MIDI_CURRENT_MODE_START + i) {
                         mode = i;
                         play = 0;
-                        loadPrefs();     // Load the correct user settings based on current instrument.
-                        sendSettings();  // Send settings for new mode to tool.
+                        loadPrefs();  // Load the correct user settings based on current instrument.
+                        if (communicationMode) {
+                            sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
+                        }
                         blinkNumber[GREEN_LED] = abs(mode) + 1;
                     }
                 }

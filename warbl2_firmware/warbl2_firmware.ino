@@ -414,6 +414,7 @@ void setup() {
     MIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call usb_midi's begin().
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChangeFromUSB);  // Handle received MIDI CC messages.
+    MIDI.setHandleProgramChange(handleProgramChangeFromUSB);  // Handle received MIDI PC messages.
 
     //delay(2000); // Makes it so button 3 must be held down for two seconds to power on.
 
@@ -446,6 +447,7 @@ void setup() {
     BLEMIDI.begin(MIDI_CHANNEL_OMNI);  // Initialize MIDI, and listen to all MIDI channels. This will also call blemidi service's begin().
     BLEMIDI.turnThruOff();
     BLEMIDI.setHandleControlChange(handleControlChangeFromBLE);   // Handle received MIDI CC messages.
+    BLEMIDI.setHandleProgramChange(handleProgramChangeFromBLE);   // Handle received MIDI PC messages.
     Bluefruit.Periph.setConnectCallback(connect_callback);        // Get connection information and handle indication.
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
     startAdv();                                                   // Set up and start advertising. Comment this out for testing without BLE on.
