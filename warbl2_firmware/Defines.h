@@ -206,7 +206,7 @@
 #define REGISTER_HOLD 16
 #define kACTIONSnVariables 17
 
-// Variables in the WARBL2settings array (independent of mode)
+// Variables in the WARBL2settings array (independent of PRESET)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
 #define CHARGE_FROM_HOST 1  // Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
@@ -390,7 +390,7 @@
 #define MIDI_CC_102_VALUE_57 57  // Bidirectional. EVI3
                                  /* 58-59 unused */
 
-#define MIDI_CC_102_VALUE_60 60  // Bidirectional. Current instrument (mode variable) is 0
+#define MIDI_CC_102_VALUE_60 60  // Bidirectional. Current instrument (preset variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. Current instrument is 1
 #define MIDI_CC_102_VALUE_62 62  // Bidirectional. Current instrument is 2
 /* 63-69 unused */
@@ -444,7 +444,7 @@
 #define MIDI_CC_102_VALUE_120 120  // from WARBL. Bell sensor disconnected (no longer used by WARBL2)
 #define MIDI_CC_102_VALUE_121 121  // from WARBL. Bell sensor connected (no longer used by WARBL2)
 /* 122 unused */
-#define MIDI_CC_102_VALUE_123 123  // from Config Tool. save as defaults for current mode
+#define MIDI_CC_102_VALUE_123 123  // from Config Tool. save as defaults for current preset
 #define MIDI_CC_102_VALUE_124 124  // from Config Tool. save as defaults for all instruments
 #define MIDI_CC_102_VALUE_125 125  // from Config Tool. restore factory settings
 #define MIDI_CC_102_VALUE_126 126  // from Config Tool. enter communication mode. WARBL enters communication mode (until it is shut off or user clicks "Disconnect") and responds by sending settings for currently selected instrument.
@@ -625,9 +625,9 @@
 #define MIDI_CC_106_VALUE_52 52  // from WARBL. Indicates end of three-byte message
 #define MIDI_CC_106_VALUE_53 53  // Bidirectional. Used to tell the Config Tool to include the uilleann regulators fingering pattern (used in a custom version of the code)
 #define MIDI_CC_106_VALUE_54 54  // from Config Tool. WARBL2 calibrate IMU
-#define MIDI_CC_106_VALUE_55 55  // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
-#define MIDI_CC_106_VALUE_56 56  // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
-#define MIDI_CC_106_VALUE_57 57  // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+#define MIDI_CC_106_VALUE_55 55  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
+#define MIDI_CC_106_VALUE_56 56  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
+#define MIDI_CC_106_VALUE_57 57  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
 /* 58-59 unused */
 #define MIDI_CC_106_VALUE_60 60  // from Config Tool. WARBL2 recenter yaw
 #define MIDI_CC_106_VALUE_61 61  // from Config Tool. WARBL2 reset pitch expression override to default
@@ -694,10 +694,10 @@
 
 
 #define MIDI_CC_110 110            // From WARBL. Values 0-127	- firmware version
-#define MIDI_CC_111 111            // Bidirectional. Values 0-127	- note shift for mode 0
+#define MIDI_CC_111 111            // Bidirectional. Values 0-127	- note shift for preset 0
 #define MIDI_CC_111_VALUE_109 109  // Bidirectional. Hidden sticks mode - Same for 112 and 113
-#define MIDI_CC_112 112            // Bidirectional. Values 0-127	- note shift for mode 1
-#define MIDI_CC_113 113            // Bidirectional. Values 0-127	- note shift for mode 2
+#define MIDI_CC_112 112            // Bidirectional. Values 0-127	- note shift for preset 1
+#define MIDI_CC_113 113            // Bidirectional. Values 0-127	- note shift for preset 2
 
 #define MIDI_CC_114 114  // From WARBL. Values 0-127	- highest 2 bytes of holeCovered (int indicating which holes are currently covered)
 #define MIDI_CC_115 115  // From WARBL. Values 0-127	- lowest 7 bytes of holeCovered
@@ -712,7 +712,7 @@
 //Human readable constants
 /* Commands - VALUES ONLY */
 #define MIDI_SAVE_CALIB MIDI_CC_102_VALUE_19                 // from Config Tool. Save optical sensor calibration
-#define MIDI_EXIT_COMM_MODE MIDI_CC_102_VALUE_104            // from Config Tool. exit communication mode (previously 102 99)
+#define MIDI_EXIT_COMM_MODE MIDI_CC_102_VALUE_104            // from Config Tool. exit communication preset (previously 102 99)
 #define MIDI_SAVE_AS_DEFAULTS_CURRENT MIDI_CC_102_VALUE_123  // from Config Tool. save as defaults for current mode
 #define MIDI_SAVE_AS_DEFAULTS_ALL MIDI_CC_102_VALUE_124      // from Config Tool. save as defaults for  all instruments
 #define MIDI_RESTORE_FACTORY MIDI_CC_102_VALUE_125           // from Config Tool. restore factory settings
@@ -739,10 +739,10 @@
 #define MIDI_FINGERING_PATTERN_MODE_START MIDI_CC_102_VALUE_30   // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 #define MIDI_FINGERING_PATTERN_START MIDI_CC_102_VALUE_33        // Bidirectional. first fingering pattern is tin whistle
 #define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_57          // Bidirectional. EVI2
-#define MIDI_CURRENT_MODE_START MIDI_CC_102_VALUE_60             // Bidirectional. current instrument (mode variable) is  0
+#define MIDI_CURRENT_PRESET_START MIDI_CC_102_VALUE_60             // Bidirectional. current instrument (preset variable) is  0
 #define MIDI_PB_MODE_START MIDI_CC_102_VALUE_70                  // Bidirectional. Settings for current instrument: Pitchbend mode 0
 #define MIDI_BREATH_MODE_START MIDI_CC_102_VALUE_80              // Bidirectional. Settings for current instrument: Breath mode 0
-#define MIDI_DEFAULT_MODE_START MIDI_CC_102_VALUE_85             // Bidirectional. default instrument is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current instrument as default)
+#define MIDI_DEFAULT_PRESET_START MIDI_CC_102_VALUE_85             // Bidirectional. default instrument is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current instrument as default)
 #define MIDI_GESTURE_START MIDI_CC_102_VALUE_90                  // Bidirectional. Sending data for click 1 (dropdown row 0)
 #define MIDI_CUST_FINGERING_PATTERN_START MIDI_CC_102_VALUE_100  // Bidirectional. WARBL2 custom fingering chart 1
 #define MIDI_CUST_FINGERING_PATTERN_END MIDI_CC_102_VALUE_103    // Bidirectional. WARBL2 custom fingering chart 4
@@ -765,8 +765,8 @@
 #define MIDI_ENA_VIBRATO_HOLES_END MIDI_CC_106_VALUE_28    // Bidirectional. Enable vibrato hole, 8
 #define MIDI_DIS_VIBRATO_HOLES_START MIDI_CC_106_VALUE_30  // Bidirectional. Disable vibrato hole, 0
 #define MIDI_DIS_VIBRATO_HOLES_END MIDI_CC_106_VALUE_38    // Bidirectional. Disable vibrato hole, 8
-#define MIDI_WARBL2_SETTINGS_START MIDI_CC_106_VALUE_55    // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
-#define MIDI_WARBL2_SETTINGS_END MIDI_CC_106_VALUE_74      // Bidirectional. WARBL2 settings array (for settings that are independent of mode)
+#define MIDI_WARBL2_SETTINGS_START MIDI_CC_106_VALUE_55    // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
+#define MIDI_WARBL2_SETTINGS_END MIDI_CC_106_VALUE_74      // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
 #define MIDI_BUTTON_ACTIONS_START MIDI_CC_106_VALUE_100    // Bidirectional. Button action 0
 
 #define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                   // Beginning of WARBL2 CustomCharts
@@ -842,7 +842,7 @@
 /* 43 unused */
 #define EEPROM_SETTINGS_SAVED 44  // value 3 indicates settings have been saved - this will be reset to indicate that a factory reset needs to be done.
 /* 45-47 unused */
-#define EEPROM_DEFAULT_MODE 48  // default mode (instrument)
+#define EEPROM_DEFAULT_PRESET 48  // default PRESET (instrument)
 /* 49 unused */
 #define EEPROM_SENS_DISTANCE_START 50   // values 0-255	finger-sensing distance - 3 bytes 50-52
 #define EEPROM_NOTE_SHIFT_SEL_START 53  // values 0-1 note shift selector - 3 bytes 53-55
@@ -851,16 +851,16 @@
  * 100-247	unused (previously button prefs)
  * 248-249	unused
 */
-#define EEPROM_MOMENTARY_MODE_START 250  // values 0-1 momentary mode 0  - 3 bytes 250-252 \
-                                         // values 0-1 momentary mode 1  - 3 bytes 253-255 \
-                                         // values 0-1 momentary mode 2  - 3 bytes 256-258
+#define EEPROM_MOMENTARY_MODE_START 250  // values 0-1 momentary preset 0  - 3 bytes 250-252 \
+                                         // values 0-1 momentary preset 1  - 3 bytes 253-255 \
+                                         // values 0-1 momentary preset 2  - 3 bytes 256-258
 /* 259 unused */
-#define EEPROM_PRESSURE_SETTINGS_START 260  // 261-272		pressure settings for mode 0 \
-                                            // 281-292		pressure settings for mode 1 \
-                                            // 301-312		pressure settings for mode 2
-#define EEPROM_LEARNED_PRESSURE_START 273   // values 0-255 low byte of learned pressure for mode 0 (274 high byte) \
-                                            // 275 low byte of learned pressure for mode 1 (276 high byte) \
-                                            // 277 low byte of learned pressure for mode 2 (278 high byte)
+#define EEPROM_PRESSURE_SETTINGS_START 260  // 261-272		pressure settings for PRESET 0 \
+                                            // 281-292		pressure settings for PRESET 1 \
+                                            // 301-312		pressure settings for PRESET 2
+#define EEPROM_LEARNED_PRESSURE_START 273   // values 0-255 low byte of learned pressure for PRESET 0 (274 high byte) \
+                                            // 275 low byte of learned pressure for PRESET 1 (276 high byte) \
+                                            // 277 low byte of learned pressure for PRESET 2 (278 high byte)
 /* 279-280 unused 
  * 293-300 unused
 */
@@ -869,12 +869,12 @@
 #define EEPROM_MIDI_BEND_RANGE_START 319  // MIDI bend range - 3 bytes 319-321
 #define EEPROM_MIDI_CHANNEL_START 322     // MIDI channel - 3 bytes 322-324
 /* 325-332 unused */
-#define EEPROM_VIBRATO_HOLES_START 333      // values 0-1 low byte of enabled vibrato holes for mode 0 (334 high byte) \
-                                            // 335 low byte of enabled vibrato holes for mode 1 (336 high byte) \
-                                            // 337 low byte of enabled vibrato holes for mode 2 (338 high byte)
-#define EEPROM_VIBRATO_DEPTH_START 339      // values 0-255 low byte of evibrato depth  for mode 0 (340 high byte) \
-                                            // 341 low byte of vibrato depth  for mode 1 (342 high byte) \
-                                            // 343 low byte of vibrato depth  for mode 2 (344 high byte)
+#define EEPROM_VIBRATO_HOLES_START 333      // values 0-1 low byte of enabled vibrato holes for PRESET 0 (334 high byte) \
+                                            // 335 low byte of enabled vibrato holes for PRESET 1 (336 high byte) \
+                                            // 337 low byte of enabled vibrato holes for PRESET 2 (338 high byte)
+#define EEPROM_VIBRATO_DEPTH_START 339      // values 0-255 low byte of evibrato depth  for PRESET 0 (340 high byte) \
+                                            // 341 low byte of vibrato depth  for PRESET 1 (342 high byte) \
+                                            // 343 low byte of vibrato depth  for PRESET 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
 #define EEPROM_ED_VARS_START 351  // 351-530	expression and drones (ED) variables

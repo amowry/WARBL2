@@ -4,9 +4,9 @@
 // Debug
 void printStuff(void) {
 
-    //Serial.println(buttonPrefs[mode][8][2]);
-    //Serial.println(buttonPrefs[mode][8][3]);
-    //Serial.println(buttonPrefs[mode][8][4]);
+    //Serial.println(buttonPrefs[preset][8][2]);
+    //Serial.println(buttonPrefs[preset][8][3]);
+    //Serial.println(buttonPrefs[preset][8][4]);
 
     //Serial.println(roll);
     //Serial.println("");
@@ -266,7 +266,7 @@ void readIMU(void) {
 
     // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note-off messages are sent.
     // This mode is "hidden" -- to turn it on select "-18" in the transpose menu and then click "Auto-caibrate bell sensor only" within 10 seconds.
-    if (IMUsettings[mode][STICKS_MODE]) {
+    if (IMUsettings[preset][STICKS_MODE]) {
         static bool armed = 0;
         static float maxGyro;
         static byte LEDCounter = 0;  // Time how long the LED is on.
@@ -362,76 +362,76 @@ void sendIMU() {
 
     // The min and max settings from the Config Tool range from 0-36 and are scaled up to the maximum range of angles for each DOF.
 
-    if (IMUsettings[mode][SEND_ROLL]) {
+    if (IMUsettings[preset][SEND_ROLL]) {
 
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][ROLL_OUTPUT_MIN] > IMUsettings[mode][ROLL_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
-            lowerConstraint = IMUsettings[mode][ROLL_OUTPUT_MAX];
-            upperConstraint = IMUsettings[mode][ROLL_OUTPUT_MIN];
+        if (IMUsettings[preset][ROLL_OUTPUT_MIN] > IMUsettings[preset][ROLL_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[preset][ROLL_OUTPUT_MAX];
+            upperConstraint = IMUsettings[preset][ROLL_OUTPUT_MIN];
         }
 
         else {
-            lowerConstraint = IMUsettings[mode][ROLL_OUTPUT_MIN];
-            upperConstraint = IMUsettings[mode][ROLL_OUTPUT_MAX];
+            lowerConstraint = IMUsettings[preset][ROLL_OUTPUT_MIN];
+            upperConstraint = IMUsettings[preset][ROLL_OUTPUT_MAX];
         }
 
-        byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[mode][ROLL_INPUT_MIN] * 5000, IMUsettings[mode][ROLL_INPUT_MAX] * 5000, IMUsettings[mode][ROLL_OUTPUT_MIN], IMUsettings[mode][ROLL_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        byte rollOutput = constrain(map((roll + 90) * 1000, IMUsettings[preset][ROLL_INPUT_MIN] * 5000, IMUsettings[preset][ROLL_INPUT_MAX] * 5000, IMUsettings[preset][ROLL_OUTPUT_MIN], IMUsettings[preset][ROLL_OUTPUT_MAX]), lowerConstraint, upperConstraint);
 
         if (prevRollCC != rollOutput) {
-            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][ROLL_CC_CHANNEL], IMUsettings[mode][ROLL_CC_NUMBER], rollOutput);
+            sendMIDI(CONTROL_CHANGE, IMUsettings[preset][ROLL_CC_CHANNEL], IMUsettings[preset][ROLL_CC_NUMBER], rollOutput);
             prevRollCC = rollOutput;
         }
     }
 
 
 
-    if (IMUsettings[mode][SEND_PITCH]) {
+    if (IMUsettings[preset][SEND_PITCH]) {
 
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][PITCH_OUTPUT_MIN] > IMUsettings[mode][PITCH_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
-            lowerConstraint = IMUsettings[mode][PITCH_OUTPUT_MAX];
-            upperConstraint = IMUsettings[mode][PITCH_OUTPUT_MIN];
+        if (IMUsettings[preset][PITCH_OUTPUT_MIN] > IMUsettings[preset][PITCH_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[preset][PITCH_OUTPUT_MAX];
+            upperConstraint = IMUsettings[preset][PITCH_OUTPUT_MIN];
         }
 
         else {
-            lowerConstraint = IMUsettings[mode][PITCH_OUTPUT_MIN];
-            upperConstraint = IMUsettings[mode][PITCH_OUTPUT_MAX];
+            lowerConstraint = IMUsettings[preset][PITCH_OUTPUT_MIN];
+            upperConstraint = IMUsettings[preset][PITCH_OUTPUT_MAX];
         }
 
-        byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[mode][PITCH_INPUT_MIN] * 5000, IMUsettings[mode][PITCH_INPUT_MAX] * 5000, IMUsettings[mode][PITCH_OUTPUT_MIN], IMUsettings[mode][PITCH_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        byte pitchOutput = constrain(map((pitch + 90) * 1000, IMUsettings[preset][PITCH_INPUT_MIN] * 5000, IMUsettings[preset][PITCH_INPUT_MAX] * 5000, IMUsettings[preset][PITCH_OUTPUT_MIN], IMUsettings[preset][PITCH_OUTPUT_MAX]), lowerConstraint, upperConstraint);
 
         if (prevPitchCC != pitchOutput) {
-            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][PITCH_CC_CHANNEL], IMUsettings[mode][PITCH_CC_NUMBER], pitchOutput);
+            sendMIDI(CONTROL_CHANGE, IMUsettings[preset][PITCH_CC_CHANNEL], IMUsettings[preset][PITCH_CC_NUMBER], pitchOutput);
             prevPitchCC = pitchOutput;
         }
     }
 
 
 
-    if (IMUsettings[mode][SEND_YAW] || IMUsettings[mode][STICKS_MODE]) {
+    if (IMUsettings[preset][SEND_YAW] || IMUsettings[preset][STICKS_MODE]) {
 
         byte lowerConstraint;
         byte upperConstraint;
 
-        if (IMUsettings[mode][YAW_OUTPUT_MIN] > IMUsettings[mode][YAW_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
-            lowerConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
-            upperConstraint = IMUsettings[mode][YAW_OUTPUT_MIN];
+        if (IMUsettings[preset][YAW_OUTPUT_MIN] > IMUsettings[preset][YAW_OUTPUT_MAX]) {  // Flip the constraints if the lower output is greater than the upper output, so the output can be inverted.
+            lowerConstraint = IMUsettings[preset][YAW_OUTPUT_MAX];
+            upperConstraint = IMUsettings[preset][YAW_OUTPUT_MIN];
         }
 
         else {
-            lowerConstraint = IMUsettings[mode][YAW_OUTPUT_MIN];
-            upperConstraint = IMUsettings[mode][YAW_OUTPUT_MAX];
+            lowerConstraint = IMUsettings[preset][YAW_OUTPUT_MIN];
+            upperConstraint = IMUsettings[preset][YAW_OUTPUT_MAX];
         }
 
         // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
-        yawOutput = constrain(map((axisHeading + 180) * 1000, IMUsettings[mode][YAW_INPUT_MIN] * 10000, IMUsettings[mode][YAW_INPUT_MAX] * 10000, IMUsettings[mode][YAW_OUTPUT_MIN], IMUsettings[mode][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
+        yawOutput = constrain(map((axisHeading + 180) * 1000, IMUsettings[preset][YAW_INPUT_MIN] * 10000, IMUsettings[preset][YAW_INPUT_MAX] * 10000, IMUsettings[preset][YAW_OUTPUT_MIN], IMUsettings[preset][YAW_OUTPUT_MAX]), lowerConstraint, upperConstraint);
 
-        if (prevYawCC != yawOutput && IMUsettings[mode][SEND_YAW]) {
-            sendMIDI(CONTROL_CHANGE, IMUsettings[mode][YAW_CC_CHANNEL], IMUsettings[mode][YAW_CC_NUMBER], yawOutput);
+        if (prevYawCC != yawOutput && IMUsettings[preset][SEND_YAW]) {
+            sendMIDI(CONTROL_CHANGE, IMUsettings[preset][YAW_CC_CHANNEL], IMUsettings[preset][YAW_CC_NUMBER], yawOutput);
             prevYawCC = yawOutput;
         }
     }
@@ -462,10 +462,10 @@ void shakeForVibrato() {
 
     //accelFilteredB = highPassY;  // (Don't) temporarily eliminate this lowpass to see if speeds up response noticeably.
 
-    const float shakeBendDepth = 4.0f * IMUsettings[mode][Y_PITCHBEND_DEPTH] / 100.0f;                   // Adjust the vibrato depth range based on the Config Tool setting.
-    const float shakeModCCDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;              // Adjust the pressure CC out depth range based on the Config Tool setting.
-    const float shakeModChanPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure ChanPress out depth range based on the Config Tool setting.
-    const float shakeModKeyPressDepth = 64.0f * IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure KeyPress out depth range based on the Config Tool setting.
+    const float shakeBendDepth = 4.0f * IMUsettings[preset][Y_PITCHBEND_DEPTH] / 100.0f;                   // Adjust the vibrato depth range based on the Config Tool setting.
+    const float shakeModCCDepth = 64.0f * IMUsettings[preset][Y_SHAKE_MOD_CC_DEPTH] / 100.0f;              // Adjust the pressure CC out depth range based on the Config Tool setting.
+    const float shakeModChanPressDepth = 64.0f * IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_DEPTH] / 100.0f;  // Adjust the pressure ChanPress out depth range based on the Config Tool setting.
+    const float shakeModKeyPressDepth = 64.0f * IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_DEPTH] / 100.0f;  // Adjust the pressure KeyPress out depth range based on the Config Tool setting.
     const float kShakeStartThresh = 0.5f;
     const float kShakeFinishThresh = 0.35f;
     const long kShakeFinishTimeMs = 400;
@@ -485,7 +485,7 @@ void shakeForVibrato() {
         shakeDetected = false;
     }
 
-    bool doShake = (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] || IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]);
+    bool doShake = (IMUsettings[preset][Y_SHAKE_PITCHBEND] || IMUsettings[preset][Y_SHAKE_MOD_CC] || IMUsettings[preset][Y_SHAKE_MOD_CHPRESS] || IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS]);
     if (doShake) {  // Do this part only if one of the shake mod options is turned on.
 
         shakeVibrato = 0;
@@ -529,63 +529,63 @@ void shakeForVibrato() {
             const float basenormshake = constrain(accelFilteredB * 0.06666f, -1.0f, 1.0f);
             float normshake = basenormshake;
 
-            if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+            if (IMUsettings[preset][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                 normshake *= -1.0f;  // reverse phase
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+            } else if (IMUsettings[preset][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                 normshake = constrain(normshake, -1.0f, 0.0f);
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+            } else if (IMUsettings[preset][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                 normshake = constrain(-1.0f * normshake, 0.0f, 1.0f);
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+            } else if (IMUsettings[preset][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
                 normshake = constrain(-1.0f * normshake, -1.0f, 0.0f);
-            } else if (IMUsettings[mode][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+            } else if (IMUsettings[preset][Y_PITCHBEND_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
                 normshake = constrain(normshake, 0.0f, 1.0f);
             }
 
-            if (IMUsettings[mode][Y_SHAKE_PITCHBEND]) {
+            if (IMUsettings[preset][Y_SHAKE_PITCHBEND]) {
                 shakeVibrato = (int)(normshake * shakeBendDepth * pitchBendPerSemi);
             }
 
-            if (IMUsettings[mode][Y_SHAKE_MOD_CC]) {
+            if (IMUsettings[preset][Y_SHAKE_MOD_CC]) {
                 float normmodshake = basenormshake;
-                if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                if (IMUsettings[preset][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                     normmodshake *= -1.0f;  // reverse phase
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                     normmodshake = constrain(normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                     normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
                     normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CC_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
                     normmodshake = constrain(normmodshake, 0.0f, 1.0f);
                 }
                 shakePressureCCMod = (int)(normmodshake * shakeModCCDepth);
             }
-            if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS]) {
+            if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS]) {
                 float normmodshake = basenormshake;
-                if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                     normmodshake *= -1.0f;  // reverse phase
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                     normmodshake = constrain(normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                     normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
                     normmodshake = constrain(-1.0f * normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_CHPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
                     normmodshake = constrain(normmodshake, 0.0f, 1.0f);
                 }
                 shakePressureChanPressMod = (normmodshake * shakeModChanPressDepth);
             }
-            if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]) {
+            if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS]) {
                 float normmodshake = basenormshake;
-                if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
+                if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPDOWN) {
                     normmodshake *= -1.0f;  // reverse phase
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY) {
                     normmodshake = constrain(normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY) {
                     normmodshake = constrain(-1.0f * normmodshake, 0.0f, 1.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_DOWNONLY_INV) {
                     normmodshake = constrain(1.0f * normmodshake, -1.0f, 0.0f);
-                } else if (IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
+                } else if (IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS_MODE] == Y_PITCHBEND_MODE_UPONLY_INV) {
                     normmodshake = constrain(normmodshake, 0.0f, 1.0f);
                 }
                 shakePressureKeyPressMod = (int)(normmodshake * shakeModKeyPressDepth);
@@ -605,8 +605,8 @@ void shakeForVibrato() {
 // Return number of registers to jump based on IMU pitch (elevation).
 int pitchRegister() {
 
-    for (byte i = 1; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
-        if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[mode][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  // See if IMU pitch is within the bounds for each register.
+    for (byte i = 1; i < IMUsettings[preset][PITCH_REGISTER_NUMBER] + 1; i++) {
+        if (pitch < pitchRegisterBounds[i] || (i == IMUsettings[preset][PITCH_REGISTER_NUMBER] && pitch >= pitchRegisterBounds[i])) {  // See if IMU pitch is within the bounds for each register.
             return i - 1;
         }
     }
@@ -852,7 +852,7 @@ void debounceFingerHoles() {
 #endif
 
             newNote = tempNewNote;
-            if (ED[mode][HALFHOLE_PITCHBEND] && ED[mode][HALFHOLE_USE_MIDI_NOTE]) {  // If we're halfholing to change the MIDI note, we need to calculate pitchbend again right before sending a note to avoid sending two notes rapidfire.
+            if (ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) {  // If we're halfholing to change the MIDI note, we need to calculate pitchbend again right before sending a note to avoid sending two notes rapidfire.
                 calculateAndSendPitchbend();
             }
             getState();  // Get state again if the note has changed.
@@ -915,11 +915,11 @@ byte getNote(unsigned int fingerPattern) {
     uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
 
     // Read the MIDI note for the current fingering (all charts except the custom ones).
-    if (modeSelector[mode] < kWARBL2Custom1) {
-        if (breathMode == kPressureThumb && (modeSelector[mode] == kModeEVI2 || modeSelector[mode] == kModeEVI3)) {  // Here we can put fingering charts that hsve the thumb hard-coded but we want to optionally be able to ignore the second half of the chart and use the thumb register and halfhole functionality instead.
+    if (modeSelector[preset] < kWARBL2Custom1) {
+        if (breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3)) {  // Here we can put fingering charts that hsve the thumb hard-coded but we want to optionally be able to ignore the second half of the chart and use the thumb register and halfhole functionality instead.
             bitClear(tempCovered, 7);
         }
-        ret = charts[modeSelector[mode]][tempCovered];
+        ret = charts[modeSelector[preset]][tempCovered];
     } else {                                 // Otherwise read from the currently selected custom chart.
         if (breathMode == kPressureThumb) {  // If we're using the thumb for register control we only look at the first half of the custom chart (ignoring the half with the thumb hole covered).
             bitClear(tempCovered, 7);
@@ -928,15 +928,15 @@ byte getNote(unsigned int fingerPattern) {
     }
 
     // For whistle and uilleann also read the vibrato flag for the current fingering.
-    if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
+    if (modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic) {
         vibratoEnable = whistleVibrato[tempCovered];
     }
 
-    if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
+    if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard) {
         vibratoEnable = uilleannVibrato[tempCovered];
     }
 
-    if ((modeSelector[mode] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && holeCovered == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
+    if ((modeSelector[preset] == kModeNorthumbrian && ret == 63) || (breathMode != kPressureBell && holeCovered == 0b111111111))  // Play silence if all holes incuding bell sensor are covered, or if we're in Northumbrian mode and all top sense and thumb are covered. That simulates the closed pipe.
     {
         ret = 0;  // Silence
     }
@@ -964,24 +964,24 @@ void getShift() {
         }
     }
 
-    if (IMUsettings[mode][PITCH_REGISTER] == true) {
+    if (IMUsettings[preset][PITCH_REGISTER] == true) {
         pitchShift = pitchRegister();
     }
 
-    shift = ((octaveShift * 12) + noteShift + (pitchShift * ED[mode][OVERBLOW_SEMITONES]) + totalHalfHoleShift);  // Adjust for key and octave shift.
+    shift = ((octaveShift * 12) + noteShift + (pitchShift * ED[preset][OVERBLOW_SEMITONES]) + totalHalfHoleShift);  // Adjust for key and octave shift.
 
     // Overblow if allowed.
-    if (newState == TOP_REGISTER && !(modeSelector[mode] == kModeEVI || (modeSelector[mode] == kModeSax && newNote < 58) || (modeSelector[mode] == kModeSaxBasic && newNote < 70) || (modeSelector[mode] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + ED[mode][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                       // Add a register jump to the transposition if overblowing.
-        if (modeSelector[mode] == kModeKaval) {                                                                                                                                                                                                                                                                                                             // Kaval only plays a fifth higher in the second register.
+    if (newState == TOP_REGISTER && !(modeSelector[preset] == kModeEVI || (modeSelector[preset] == kModeSax && newNote < 58) || (modeSelector[preset] == kModeSaxBasic && newNote < 70) || (modeSelector[preset] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
+        shift = shift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                       // Add a register jump to the transposition if overblowing.
+        if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                             // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
     }
     // Use the bell sensor to control register if desired.
-    if (breathMode == kPressureBell && modeSelector[mode] != kModeUilleann && modeSelector[mode] != kModeUilleannStandard) {
-        if (bitRead(holeCovered, 0) == switches[mode][INVERT]) {
-            shift = shift + ED[mode][OVERBLOW_SEMITONES];
-            if (modeSelector[mode] == kModeKaval) {
+    if (breathMode == kPressureBell && modeSelector[preset] != kModeUilleann && modeSelector[preset] != kModeUilleannStandard) {
+        if (bitRead(holeCovered, 0) == switches[preset][INVERT]) {
+            shift = shift + ED[preset][OVERBLOW_SEMITONES];
+            if (modeSelector[preset] == kModeKaval) {
                 shift = shift - 5;
             }
         }
@@ -989,9 +989,9 @@ void getShift() {
 
     // ToDo: Are there any others that don't use the thumb that can be added here?
     // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
-    else if ((breathMode == kPressureThumb && (modeSelector[mode] == kModeEVI2 || modeSelector[mode] == kModeEVI3 || modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4 || modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic || modeSelector[mode] == kModeNAF))) {
+    else if ((breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3 || modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4 || modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic || modeSelector[preset] == kModeNAF))) {
         byte thumbShift = getThumbHalfHoleShift();                    // Number of registers shifted by thumb
-        shift = shift + (thumbShift * ED[mode][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
+        shift = shift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
 }
 
@@ -1018,11 +1018,11 @@ ________________________________________________________________________________
 
 */
     const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };       // Lookup table for thumb halfhole functionality.
-    byte combinedSwitches = switches[mode][INVERT] << 1 | ED[mode][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
+    byte combinedSwitches = switches[preset][INVERT] << 1 | ED[preset][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
     byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
-    if (!(ED[mode][HALFHOLE_PITCHBEND] && bitRead(ED[mode][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
-        if (bitRead(holeCovered, 8) == switches[mode][INVERT]) {
+    if (!(ED[preset][HALFHOLE_PITCHBEND] && bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
+        if (bitRead(holeCovered, 8) == switches[preset][INVERT]) {
             return 1;
         } else {
             return 0;
@@ -1045,7 +1045,7 @@ ________________________________________________________________________________
 // Use IMU elevation angle to prevent overblowing from changing the current register (allow finer control of dynamics within the current register).
 void getRegisterHold() {
 
-    if (ED[mode][ENABLE_REGISTER_HOLD]) {
+    if (ED[preset][ENABLE_REGISTER_HOLD]) {
 
         // Settings
         const byte registerHoldMode = 4;      // 1 = hold both registers (both tilt zones), 2 = hold low register only (both tilt zones), 3 = hold high register only (both tilt zones), 4 = hold low register with low tilt zone and high register with high tilt zone.
@@ -1092,13 +1092,13 @@ void getState() {
         scalePosition = 70;
     }
 
-    if (ED[mode][DRONES_CONTROL_MODE] == 3) {  // Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
+    if (ED[preset][DRONES_CONTROL_MODE] == 3) {  // Use pressure to control drones if that option has been selected. There's a small amount of hysteresis added.
 
-        if (!dronesOn && sensorValue > 5 + (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
+        if (!dronesOn && sensorValue > 5 + (ED[preset][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[preset][DRONES_PRESSURE_LOW_BYTE])) {
             startDrones();
         }
 
-        else if (dronesOn && sensorValue < (ED[mode][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[mode][DRONES_PRESSURE_LOW_BYTE])) {
+        else if (dronesOn && sensorValue < (ED[preset][DRONES_PRESSURE_HIGH_BYTE] << 7 | ED[preset][DRONES_PRESSURE_LOW_BYTE])) {
             stopDrones();
         }
     }
@@ -1141,7 +1141,7 @@ void getState() {
 
     currentState = newState;
 
-    if (switches[mode][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
+    if (switches[preset][SEND_VELOCITY]) {  // If we're sending NoteOn velocity based on pressure,
         if (prevState == SILENCE && newState != SILENCE) {
             velocityDelayTimer = millis();  // reset the delay timer used for calculating velocity when a note is turned on after silence.
         }
@@ -1272,18 +1272,18 @@ inline float curveValToExponent(int val) {
 // Calculate the bend in a low and high pressure range segments, with a stable (no-bend) range between.
 void getExpression() {
 
-    int lowPressureMin = (ED[mode][EXPRESSION_MIN] * 9) + 100;
-    int lowPressureMax = (ED[mode][EXPRESSION_MIN_HIGH] * 9) + 100;
-    int highPressureMin = (ED[mode][EXPRESSION_MAX_LOW] * 9) + 100;
-    int highPressureMax = (ED[mode][EXPRESSION_MAX] * 9) + 100;
-    int centsLowOffset = 2 * (ED[mode][EXPRESSION_OUT_LOW_CENTS] - 64);
-    int centsHighOffset = 2 * (ED[mode][EXPRESSION_OUT_HIGH_CENTS] - 64);
-    float lowCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_LOW]);
-    float highCurveExp = curveValToExponent(ED[mode][EXPRESSION_CURVE_HIGH]);
-    bool doClamp = ED[mode][EXPRESSION_OUT_CLAMP] > 0;
+    int lowPressureMin = (ED[preset][EXPRESSION_MIN] * 9) + 100;
+    int lowPressureMax = (ED[preset][EXPRESSION_MIN_HIGH] * 9) + 100;
+    int highPressureMin = (ED[preset][EXPRESSION_MAX_LOW] * 9) + 100;
+    int highPressureMax = (ED[preset][EXPRESSION_MAX] * 9) + 100;
+    int centsLowOffset = 2 * (ED[preset][EXPRESSION_OUT_LOW_CENTS] - 64);
+    int centsHighOffset = 2 * (ED[preset][EXPRESSION_OUT_HIGH_CENTS] - 64);
+    float lowCurveExp = curveValToExponent(ED[preset][EXPRESSION_CURVE_LOW]);
+    float highCurveExp = curveValToExponent(ED[preset][EXPRESSION_CURVE_HIGH]);
+    bool doClamp = ED[preset][EXPRESSION_OUT_CLAMP] > 0;
 
     // Fixed non-override options or overblow mode
-    if (!switches[mode][OVERRIDE] || (breathMode == kPressureBreath)) {
+    if (!switches[preset][OVERRIDE] || (breathMode == kPressureBreath)) {
         if (newState == TOP_REGISTER) {
             lowPressureMin = upperBoundLow;                                                  // sensorThreshold[0];  // Otherwise use boundaries based on the pressure range of the current register.
             highPressureMax = upperBoundLow + ((upperBoundHigh - sensorThreshold[0]) >> 1);  // Get the register boundary taking hysteresis into consideration.
@@ -1292,7 +1292,7 @@ void getExpression() {
             if (breathMode == kPressureBreath) {
                 highPressureMax = upperBoundHigh;
             } else {
-                int centerPressure = (ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] * 9) + 100;
+                int centerPressure = (ED[preset][EXPRESSION_FIXED_CENTER_PRESSURE] * 9) + 100;
                 highPressureMax = 2 * (centerPressure - lowPressureMin) + lowPressureMin;
             }
         }
@@ -1301,8 +1301,8 @@ void getExpression() {
         lowPressureMax = highPressureMin = ((highPressureMax + lowPressureMin) >> 1);
 
         // May need to play with these - XXX
-        centsLowOffset = -20 * ED[mode][EXPRESSION_DEPTH];  // -20 cents at least
-        centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[mode][EXPRESSION_DEPTH];
+        centsLowOffset = -20 * ED[preset][EXPRESSION_DEPTH];  // -20 cents at least
+        centsHighOffset = ((breathMode == kPressureBreath) ? 10 : 20) * ED[preset][EXPRESSION_DEPTH];
         doClamp = true;
         lowCurveExp = 1.0f;
         highCurveExp = 1.0f;
@@ -1348,7 +1348,7 @@ void getIMUpitchbend() {
     IMUpitchbend = 0;  // Reset.
 
     for (byte i = 0; i < 3; i++) {
-        if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND + i]) {  // Calculate pitchbend separately for roll, pitch, and yaw if necessary.
+        if (IMUsettings[preset][MAP_ROLL_TO_PITCHBEND + i]) {  // Calculate pitchbend separately for roll, pitch, and yaw if necessary.
             int IMUvalue;
             if (i == 0) {
                 IMUvalue = ((constrain(roll, -90, 90) + 90) * 5) + 100;  // Constrain roll to 180 degrees and map to same range as pressure sensor, for re-using expression calculations.
@@ -1359,15 +1359,15 @@ void getIMUpitchbend() {
             if (i == 2) {                                                             // Changed by AM 3/26 to use compass direction (axisHeading) rather than yaw.
                 IMUvalue = ((constrain(axisHeading, -180, 180) + 180) * 2.5f) + 100;  // Yaw (full 360 degree range)
             }
-            int lowIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MIN + (i * 9)] * 25) + 100;  // Values received from the Config Tool range from 0-36 and we scale them up to 900 here to make it easy to re-use the calculations from the expression override function above.
-            int lowIMUmax = (IMUsettings[mode][IMU_ROLL_PITCH_MIN_HIGH + (i * 9)] * 25) + 100;
-            int highIMUmin = (IMUsettings[mode][IMU_ROLL_PITCH_MAX_LOW + (i * 9)] * 25) + 100;
-            int highIMUmax = (IMUsettings[mode][IMU_ROLL_PITCH_MAX + (i * 9)] * 25) + 100;
-            int centsLowOffset = 2 * (IMUsettings[mode][IMU_ROLL_PITCH_OUT_LOW_CENTS + (i * 9)] - 64);
-            int centsHighOffset = 2 * (IMUsettings[mode][IMU_ROLL_PITCH_OUT_HIGH_CENTS + (i * 9)] - 64);
-            float lowCurveExp = curveValToExponent(IMUsettings[mode][IMU_ROLL_PITCH_CURVE_LOW + (i * 9)]);
-            float highCurveExp = curveValToExponent(IMUsettings[mode][IMU_ROLL_PITCH_CURVE_HIGH + (i * 9)]);
-            bool doClamp = IMUsettings[mode][IMU_ROLL_PITCH_OUT_CLAMP + (i * 9)] > 0;
+            int lowIMUmin = (IMUsettings[preset][IMU_ROLL_PITCH_MIN + (i * 9)] * 25) + 100;  // Values received from the Config Tool range from 0-36 and we scale them up to 900 here to make it easy to re-use the calculations from the expression override function above.
+            int lowIMUmax = (IMUsettings[preset][IMU_ROLL_PITCH_MIN_HIGH + (i * 9)] * 25) + 100;
+            int highIMUmin = (IMUsettings[preset][IMU_ROLL_PITCH_MAX_LOW + (i * 9)] * 25) + 100;
+            int highIMUmax = (IMUsettings[preset][IMU_ROLL_PITCH_MAX + (i * 9)] * 25) + 100;
+            int centsLowOffset = 2 * (IMUsettings[preset][IMU_ROLL_PITCH_OUT_LOW_CENTS + (i * 9)] - 64);
+            int centsHighOffset = 2 * (IMUsettings[preset][IMU_ROLL_PITCH_OUT_HIGH_CENTS + (i * 9)] - 64);
+            float lowCurveExp = curveValToExponent(IMUsettings[preset][IMU_ROLL_PITCH_CURVE_LOW + (i * 9)]);
+            float highCurveExp = curveValToExponent(IMUsettings[preset][IMU_ROLL_PITCH_CURVE_HIGH + (i * 9)]);
+            bool doClamp = IMUsettings[preset][IMU_ROLL_PITCH_OUT_CLAMP + (i * 9)] > 0;
             float centsOffset = 0.0f;
             float ratio = 0.0f;
             int lowRangeSpan = max(lowIMUmax - lowIMUmin, 1);
@@ -1431,7 +1431,7 @@ void handleCustomPitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[mode][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
+    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[preset][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
         getSlide();
     }
 
@@ -1441,7 +1441,7 @@ void handleCustomPitchBend() {
         int slideHoleIndex = iPitchBend[2] != 0 ? 2 : iPitchBend[3] != 0 ? 3
                                                                          : 0;
 
-        if (modeSelector[mode] != kModeGHB && modeSelector[mode] != kModeNorthumbrian) {  // Only used for whistle and uilleann
+        if (modeSelector[preset] != kModeGHB && modeSelector[preset] != kModeNorthumbrian) {  // Only used for whistle and uilleann
             if (vibratoEnable == 1) {                                                     // If it's a vibrato fingering pattern
                 if (iPitchBend[2] == 0) {
                     iPitchBend[2] = adjvibdepth;  // Just assign max vibrato depth to a hole that isn't being used for sliding (it doesn't matter which hole, it's just so it will be added in later).
@@ -1455,7 +1455,7 @@ void handleCustomPitchBend() {
 
             if (vibratoEnable == 2) {  // Used for whistle and uilleann, indicates that it's a pattern where lowering finger 2 or 3 partway would trigger progressive vibrato.
 
-                if (modeSelector[mode] == kModeWhistle || modeSelector[mode] == kModeChromatic) {
+                if (modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic) {
                     for (byte i = 2; i < 4; i++) {
                         if ((toneholeRead[i] > senseDistance) && (bitRead(holeCovered, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
                             iPitchBend[i] = (int)((toneholeRead[i] - senseDistance) * vibratoScale[i]);
@@ -1469,7 +1469,7 @@ void handleCustomPitchBend() {
                     }
                 }
 
-                else if (modeSelector[mode] == kModeUilleann || modeSelector[mode] == kModeUilleannStandard) {
+                else if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard) {
 
                     if ((holeCovered & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
                         if (bitRead(holeCovered, 3) == 1) {
@@ -1496,7 +1496,7 @@ void handleCustomPitchBend() {
         }
 
 
-        else if (modeSelector[mode] == kModeGHB || modeSelector[mode] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
+        else if (modeSelector[preset] == kModeGHB || modeSelector[preset] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
             for (byte i = 2; i < 4; i++) {                                                     // Use holes 2 and 3 for vibrato.
                 if (i != slideHoleIndex || (holeCovered & 0b100000000) == 0) {
                     static unsigned int testNote;                        // The hypothetical note that would be played if a finger were lowered all the way.
@@ -1539,7 +1539,7 @@ void handlePitchBend() {
         iPitchBend[i] = 0;
     }
 
-    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[mode][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
+    if (pitchBendMode == kPitchBendSlideVibrato || pitchBendMode == kPitchBendLegatoSlideVibrato || ED[preset][HALFHOLE_PITCHBEND]) {  // Calculate slide and halfhole if necessary.
         getSlide();
     }
 
@@ -1584,7 +1584,7 @@ void handlePitchBend() {
 // Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
 
-    byte halfHoleEnabled = (ED[mode][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[mode][HALFHOLE_HOLES_LOW4BITS];
+    byte halfHoleEnabled = (ED[preset][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[preset][HALFHOLE_HOLES_LOW4BITS];
 
     for (byte i = 0; i < 9; i++) {
 
@@ -1594,12 +1594,12 @@ void getSlide() {
 
         if (toneholeRead[i] > senseDistance && bitRead(holeCovered, i) != 1 && transitionFilter == 0) {  // Does transitionFilter really need to be zero here? AM
 
-            const int offsetLimit = constrain(ED[mode][SLIDE_LIMIT_MAX], 0, midiBendRange);
+            const int offsetLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
             int offsetSteps = findStepsOffsetFor(i);
             int trueOffsetSteps = offsetSteps;
 
-            if (pitchBendModeSelector[mode] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
+            if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
                 offsetSteps = -offsetLimit;
             }
             if (breathMode == kPressureThumb && i == 8 && (bitRead(halfHoleEnabled, 7) == 1) && bitRead(holeCovered, 8) != 1) {  // If we're using the thumb for register shift, go ahead and detect that now.
@@ -1607,8 +1607,8 @@ void getSlide() {
             }
 
             else if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
-                if (!(ED[mode][HALFHOLE_PITCHBEND] && ED[mode][HALFHOLE_USE_MIDI_NOTE]) && !(ED[mode][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
-                    if ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(!ED[mode][USE_THUMB_FOR_SLIDE] && i == 8)) {
+                if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
+                    if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
                     }
                 } else if (trueOffsetSteps == -2) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
@@ -1642,9 +1642,9 @@ void getSlide() {
 // Snap pitchbend to a semitone (or optionally apply a shift to the MIDI note) and optionally calculate slide to smoothly integrate.
 void getHalfholePitchbend(byte i) {
 
-    int heightOffset = ED[mode][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
-    int width = ED[mode][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
-    int fingerRate = ED[mode][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+    int heightOffset = ED[preset][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
+    int width = ED[preset][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int fingerRate = ED[preset][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
     const int hysteresis = 3;                              // Hysteresis for the target region
     bool inTargetRegion = halfHoleTargetRegionState[i];    // Whether the finger is in the assigned halfhole region, initialized with last state
     const int offsetSteps = -2;                            // This is always true because there is a full step drop for the holes we use for halfholing.
@@ -1668,7 +1668,7 @@ void getHalfholePitchbend(byte i) {
     width = (width * (center + heightOffset)) / 100;     // Convert width to a sensor value.
 
     // Determine if the finger is in the target region.
-    if ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !ED[mode][HALFHOLE_USE_MIDI_NOTE] && !(kPressureThumb && i == 8)) {
+    if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !ED[preset][HALFHOLE_USE_MIDI_NOTE] && !(kPressureThumb && i == 8)) {
         if (abs(toneholeRead[i] - center + heightOffset) < width && toneholeRead[i] > (senseDistance + hysteresis)) {  // If we're using slide, there's a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
             //Serial.print(i);
@@ -1726,7 +1726,7 @@ void getHalfholePitchbend(byte i) {
     */
 
     halfHoleTargetRegionState[i] = inTargetRegion;
-    if (((change < fingerRate) || (ED[mode][HALFHOLE_FINGERRATE] == 127) || ((pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[mode][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
+    if (((change < fingerRate) || (ED[preset][HALFHOLE_FINGERRATE] == 127) || ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[preset][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;
         //Serial.println("snapped");
     }
@@ -1744,7 +1744,7 @@ void getHalfholePitchbend(byte i) {
     if (snapped[i] == true) {
         if (i == 8 && breathMode == kPressureThumb) {  // If we're using the thumb for register control and it's in the halfhole region...
             thumbHalfHole = true;                      // Shift the register.
-        } else if (!ED[mode][HALFHOLE_USE_MIDI_NOTE]) {
+        } else if (!ED[preset][HALFHOLE_USE_MIDI_NOTE]) {
             iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone if not using MIDI note instead.
         } else {
             halfHoleShift[i] = true;  // Or shift MIDI note.
@@ -1752,7 +1752,7 @@ void getHalfholePitchbend(byte i) {
     }
 
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
-    if (!snapped[i] && !inSlideHyst && !ED[mode][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[mode] == kPitchBendSlideVibrato || pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) && !(i == 8 && (breathMode == kPressureThumb || !ED[mode][USE_THUMB_FOR_SLIDE]))) {
+    if (!snapped[i] && !inSlideHyst && !ED[preset][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(i == 8 && (breathMode == kPressureThumb || !ED[preset][USE_THUMB_FOR_SLIDE]))) {
         if (toneholeRead[i] < (center - heightOffset)) {                                                                                                      // The sensor value is lower than the target region.
             float tempToneholeScale = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * tempToneholeScale)) * -offsetSteps));
@@ -1776,15 +1776,15 @@ void calculateAndSendPitchbend() {
 
     bool pitchBendUsed = false;
 
-    if (ED[mode][EXPRESSION_ON] && !switches[mode][BAGLESS]) {
+    if (ED[preset][EXPRESSION_ON] && !switches[preset][BAGLESS]) {
         getExpression();  // If using pitchbend expression, calculate pitchbend based on pressure reading.
         pitchBendUsed = true;
     }
-    if (IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+    if (IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
         getIMUpitchbend();
         pitchBendUsed = true;
     }
-    if (pitchBendMode != kPitchBendNone || ED[mode][HALFHOLE_PITCHBEND]) {
+    if (pitchBendMode != kPitchBendNone || ED[preset][HALFHOLE_PITCHBEND]) {
         if (!customEnabled) {
             handlePitchBend();
         } else {
@@ -1793,7 +1793,7 @@ void calculateAndSendPitchbend() {
         pitchBendUsed = true;
     }
     shakeForVibrato();  // This always needs to be called to detect the shake "button" gesture.
-    if (IMUsettings[mode][Y_SHAKE_PITCHBEND] || IMUsettings[mode][Y_SHAKE_MOD_CC] || IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS]) {
+    if (IMUsettings[preset][Y_SHAKE_PITCHBEND] || IMUsettings[preset][Y_SHAKE_MOD_CC] || IMUsettings[preset][Y_SHAKE_MOD_CHPRESS] || IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS]) {
         pitchBendUsed = true;
     }
     if (pitchBendUsed) {  // Send pitchbend if necessary.
@@ -1821,7 +1821,7 @@ void sendPitchbend() {
     }
 
     int noteshift = 0;
-    if (noteon && pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) {
+    if (noteon && pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) {
         noteshift = (notePlaying - shift) - newNote;
         pitchBend += (int)(noteshift * pitchBendPerSemi);
 
@@ -1870,15 +1870,15 @@ void sendPitchbend() {
 
 // Send MIDI NoteOn/NoteOff events when necessary.
 void sendNote() {
-    const int velDelayMs = switches[mode][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // Keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
+    const int velDelayMs = switches[preset][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // Keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
 
     if (        // Several conditions to tell if we need to turn on a new note.
       (!noteon  // If there wasn't any note playing or the current note is different than the previous one
-       || (pitchBendModeSelector[mode] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
-       || (pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
+       || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
+       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
       && newNote != 0                                                                                 // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
-      && ((newState > 1 && !switches[mode][BAGLESS]) || (switches[mode][BAGLESS] && play)) &&         // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
-      !(switches[mode][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
+      && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play)) &&         // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
+      !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
     {
 
         int notewason = noteon;
@@ -1887,33 +1887,33 @@ void sendNote() {
 
         // If this is a fresh/tongued note calculate pressure now to get the freshest initial velocity/pressure
         if (!notewason) {
-            if (ED[mode][SEND_PRESSURE]) {
+            if (ED[preset][SEND_PRESSURE]) {
                 calculatePressure(0);
             }
-            if (switches[mode][SEND_VELOCITY]) {
+            if (switches[preset][SEND_VELOCITY]) {
                 calculatePressure(1);
             }
-            if (switches[mode][SEND_AFTERTOUCH] & 1) {
+            if (switches[preset][SEND_AFTERTOUCH] & 1) {
                 calculatePressure(2);
             }
-            if (switches[mode][SEND_AFTERTOUCH] & 2) {
+            if (switches[preset][SEND_AFTERTOUCH] & 2) {
                 calculatePressure(3);
             }
 
-            if (IMUsettings[mode][AUTOCENTER_YAW] == true && (millis() - autoCenterYawTimer) > (IMUsettings[mode][AUTOCENTER_YAW_INTERVAL] * 250)) {  // Recenter yaw when we send a new note if there has been enough silence.
+            if (IMUsettings[preset][AUTOCENTER_YAW] == true && (millis() - autoCenterYawTimer) > (IMUsettings[preset][AUTOCENTER_YAW_INTERVAL] * 250)) {  // Recenter yaw when we send a new note if there has been enough silence.
                 centerIMU();
             }
         }
 
 
-        if (notewason && !switches[mode][LEGATO]) {  // Send prior noteoff now if legato is selected.
+        if (notewason && !switches[preset][LEGATO]) {  // Send prior noteoff now if legato is selected.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);
             notewason = 0;
         }
 
 
         if (WARBL2settings[MIDI_DESTINATION] == 0 || connIntvl == 0) {                                                         // Only send here if not connected to BLE (to reduce jitter). I can't detect much difference, if any. (AM)
-            if (ED[mode][SEND_PRESSURE] == 1 || switches[mode][SEND_AFTERTOUCH] != 0 || switches[mode][SEND_VELOCITY] == 1) {  // Need to send pressure prior to note, in case we are using it for velocity.
+            if (ED[preset][SEND_PRESSURE] == 1 || switches[preset][SEND_AFTERTOUCH] != 0 || switches[preset][SEND_VELOCITY] == 1) {  // Need to send pressure prior to note, in case we are using it for velocity.
                 sendPressure(true);
             }
         }
@@ -1924,7 +1924,7 @@ void sendNote() {
         resetBendFilter = true;
 
         // Send pitch bend immediately prior to note if necessary.
-        if (switches[mode][IMMEDIATE_PB]) {
+        if (switches[preset][IMMEDIATE_PB]) {
             calculateAndSendPitchbend();
         }
 
@@ -1942,7 +1942,7 @@ void sendNote() {
 
         prevNote = newNote;
 
-        if (ED[mode][DRONES_CONTROL_MODE] == 2 && !dronesOn) {  // Start drones if drones are being controlled with chanter on/off.
+        if (ED[preset][DRONES_CONTROL_MODE] == 2 && !dronesOn) {  // Start drones if drones are being controlled with chanter on/off.
             startDrones();
         }
     }
@@ -1950,13 +1950,13 @@ void sendNote() {
 
     if (noteon) {  // Several conditions to turn a note off
         if (
-          ((newState == SILENCE && !switches[mode][BAGLESS]) || newNote == 0 || (switches[mode][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
-          (modeSelector[mode] == kModeNorthumbrian && newNote == 63) ||                                                 // Or closed Northumbrian pipe.
+          ((newState == SILENCE && !switches[preset][BAGLESS]) || newNote == 0 || (switches[preset][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
+          (modeSelector[preset] == kModeNorthumbrian && newNote == 63) ||                                                 // Or closed Northumbrian pipe.
           (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                                // Or completely closed pipe with any fingering chart.
             sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                       // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
                                                                                                                         // Keep track.
 
-            if (IMUsettings[mode][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
+            if (IMUsettings[preset][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
                 autoCenterYawTimer = millis();
             }
 
@@ -1965,7 +1965,7 @@ void sendNote() {
 
             noteon = 0;
 
-            if (ED[mode][DRONES_CONTROL_MODE] == 2 && dronesOn) {  // Stop drones if drones are being controlled with chanter on/off
+            if (ED[preset][DRONES_CONTROL_MODE] == 2 && dronesOn) {  // Stop drones if drones are being controlled with chanter on/off
                 stopDrones();
             }
         }
@@ -2088,12 +2088,12 @@ void handleProgramChange(byte source, byte channel, byte value) {
     // Listen to all channels for now.
     //if (channel == mainMidiChannel) {  // If the received PC is on the same channel that WARBL is sending on,
     if (value < 3) {
-        mode = value;  // change the preset.
+        preset = value;  // change the preset.
         play = 0;
         loadPrefs();  // Load the correct user settings based on current instrument.
-        blinkNumber[GREEN_LED] = abs(mode) + 1;
+        blinkNumber[GREEN_LED] = abs(preset) + 1;
         if (communicationMode) {
-            sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
+            sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
         }
     }
     //}
@@ -2183,21 +2183,21 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
 
-                for (byte i = 0; i < 3; i++) {  // Update current mode (instrument) if directed.
-                    if (value == MIDI_CURRENT_MODE_START + i) {
-                        mode = i;
+                for (byte i = 0; i < 3; i++) {  // Update current preset (instrument) if directed.
+                    if (value == MIDI_CURRENT_PRESET_START + i) {
+                        preset = i;
                         play = 0;
                         loadPrefs();  // Load the correct user settings based on current instrument.
                         if (communicationMode) {
-                            sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
+                            sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
                         }
-                        blinkNumber[GREEN_LED] = abs(mode) + 1;
+                        blinkNumber[GREEN_LED] = abs(preset) + 1;
                     }
                 }
 
                 for (byte i = 0; i < 4; i++) {  // Update current pitchbend mode if directed.
                     if (value == MIDI_PB_MODE_START + i) {
-                        pitchBendModeSelector[mode] = i;
+                        pitchBendModeSelector[preset] = i;
                         loadPrefs();
                         blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
                     }
@@ -2205,13 +2205,13 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
                 for (byte i = 0; i < 5; i++) {  // Update current breath mode if directed.
                     if (value == MIDI_BREATH_MODE_START + i) {
-                        breathModeSelector[mode] = i;
+                        breathModeSelector[preset] = i;
                         loadPrefs();  // Load the correct user settings based on current instrument.
                         blinkNumber[GREEN_LED] = abs(breathMode) + 1;
                     }
                 }
 
-                for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button receive mode (this indicates the row in the button settings for which the next received byte will be).
+                for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button receive preset (this indicates the row in the button settings for which the next received byte will be).
                     if (value == MIDI_GESTURE_START + i) {
                         buttonReceiveMode = i;
                         blinkNumber[GREEN_LED] = 0;
@@ -2223,7 +2223,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     if (buttonReceiveMode == i) {
                         for (byte k = 0; k < 5; k++) {  // Update column 1 (MIDI action).
                             if (value == 112 + k) {
-                                buttonPrefs[mode][i][1] = k;
+                                buttonPrefs[preset][i][1] = k;
                             }
                         }
                     }
@@ -2232,23 +2232,23 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 for (byte i = 0; i < 3; i++) {  // Update momentary
                     if (buttonReceiveMode == i) {
                         if (value == MIDI_MOMENTARY_OFF) {
-                            momentary[mode][i] = 0;
+                            momentary[preset][i] = 0;
                             noteOnOffToggle[i] = 0;
                         } else if (value == MIDI_MOMENTARY_ON) {
-                            momentary[mode][i] = 1;
+                            momentary[preset][i] = 1;
                             noteOnOffToggle[i] = 0;
                         }
                     }
                 }
 
-                if (value == MIDI_DEFAULT_MODE_START) {  // Set current Instrument as default and save default to settings.
-                    defaultMode = mode;
-                    writeEEPROM(EEPROM_DEFAULT_MODE, defaultMode);
+                if (value == MIDI_DEFAULT_PRESET_START) {  // Set current Instrument as default and save default to settings.
+                    defaultPreset = preset;
+                    writeEEPROM(EEPROM_DEFAULT_PRESET, defaultPreset);
                 }
 
 
                 if (value == MIDI_SAVE_AS_DEFAULTS_CURRENT) {  // Save settings as the defaults for the current instrument
-                    saveSettings(mode);
+                    saveSettings(preset);
                     blinkNumber[GREEN_LED] = 3;
                 }
 
@@ -2258,7 +2258,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                         saveSettings(k);
                     }
                     loadFingering();
-                    loadSettingsForAllModes();
+                    loadSettingsForAllPresets();
                     loadPrefs();
                     blinkNumber[GREEN_LED] = 3;
 
@@ -2275,13 +2275,13 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
             /////// CC 103
             else if (number == MIDI_CC_103) {
-                senseDistanceSelector[mode] = value;
+                senseDistanceSelector[preset] = value;
                 loadPrefs();
             }
 
             else if (number == MIDI_CC_117) {
                 unsigned long v = value * 8191UL / 100;
-                vibratoDepthSelector[mode] = v;  // Scale vibrato depth in cents up to pitchbend range of 0-8191.
+                vibratoDepthSelector[preset] = v;  // Scale vibrato depth in cents up to pitchbend range of 0-8191.
                 loadPrefs();
             }
 
@@ -2290,7 +2290,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 if (number == MIDI_CC_111 + i) {
                     if (value == MIDI_STICKS_MODE) {
                         sticksModeTimer = millis();         // We will be toggling hidden "sticks" mode, if "autocalibrate bell sensor only" is clicked within 10 seconds.
-                        prevKey = noteShiftSelector[mode];  // Remember the current key because we'll need to reset it if we're entering or exiting sticks mode.
+                        prevKey = noteShiftSelector[preset];  // Remember the current key because we'll need to reset it if we're entering or exiting sticks mode.
                     }
                     if (value < 50) {
                         noteShiftSelector[i] = value;
@@ -2314,12 +2314,12 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             else if (number == MIDI_CC_105) {
 
                 if (pressureReceiveMode <= MIDI_PRESS_SELECT_VARS_END) {
-                    pressureSelector[mode][pressureReceiveMode - 1] = value;  // Advanced pressure values
+                    pressureSelector[preset][pressureReceiveMode - 1] = value;  // Advanced pressure values
                     loadPrefs();
                 }
 
                 else if (pressureReceiveMode <= MIDI_ED_VARS_END) {
-                    ED[mode][pressureReceiveMode - MIDI_ED_VARS_START] = value;  // Expression and drones settings
+                    ED[preset][pressureReceiveMode - MIDI_ED_VARS_START] = value;  // Expression and drones settings
                     loadPrefs();
                 }
 
@@ -2329,33 +2329,33 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (pressureReceiveMode == MIDI_LEARNED_PRESS_MSB) {
-                    learnedPressureSelector[mode] = (value << 7) | LSBlearnedPressure;
+                    learnedPressureSelector[preset] = (value << 7) | LSBlearnedPressure;
                     loadPrefs();
                 }
 
 
                 else if (pressureReceiveMode <= MIDI_SWITCHES_VARS_END) {
-                    switches[mode][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
+                    switches[preset][pressureReceiveMode - MIDI_SWITCHES_VARS_START] = value;  // Switches in the slide/vibrato and register control panels.
                     loadPrefs();
                 }
 
                 else if (pressureReceiveMode == MIDI_BEND_RANGE) {
-                    midiBendRangeSelector[mode] = value;
+                    midiBendRangeSelector[preset] = value;
                     loadPrefs();
                 }
 
                 else if (pressureReceiveMode == MIDI_MIDI_CHANNEL) {
-                    midiChannelSelector[mode] = value;
+                    midiChannelSelector[preset] = value;
                     loadPrefs();
                 }
 
                 else if (pressureReceiveMode <= MIDI_ED_VARS2_END) {
-                    ED[mode][pressureReceiveMode - MIDI_ED_VARS2_OFFSET] = value;  // More expression and drones settings.
+                    ED[preset][pressureReceiveMode - MIDI_ED_VARS2_OFFSET] = value;  // More expression and drones settings.
                     loadPrefs();
                 }
 
                 else if (pressureReceiveMode >= MIDI_CC_109_OFFSET && pressureReceiveMode < (kIMUnVariables + MIDI_CC_109_OFFSET)) {
-                    IMUsettings[mode][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
+                    IMUsettings[preset][pressureReceiveMode - MIDI_CC_109_OFFSET] = value;  // IMU settings
                     loadPrefs();
                 }
 
@@ -2390,43 +2390,43 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             if (number == MIDI_CC_106 && value > MIDI_ACTION_MIDI_CHANNEL_END) {
 
                 if (value >= MIDI_ENA_VIBRATO_HOLES_START && value <= MIDI_ENA_VIBRATO_HOLES_END) {  // Update enabled vibrato holes for "universal" vibrato.
-                    bitSet(vibratoHolesSelector[mode], value - MIDI_ENA_VIBRATO_HOLES_START);
+                    bitSet(vibratoHolesSelector[preset], value - MIDI_ENA_VIBRATO_HOLES_START);
                     loadPrefs();
                 }
 
                 else if (value >= MIDI_DIS_VIBRATO_HOLES_START && value <= MIDI_DIS_VIBRATO_HOLES_END) {
-                    bitClear(vibratoHolesSelector[mode], value - MIDI_DIS_VIBRATO_HOLES_START);
+                    bitClear(vibratoHolesSelector[preset], value - MIDI_DIS_VIBRATO_HOLES_START);
                     loadPrefs();
                 }
 
                 else if (value == MIDI_STARTUP_CALIB) {
-                    useLearnedPressureSelector[mode] = 0;
+                    useLearnedPressureSelector[preset] = 0;
                     loadPrefs();
                 }
 
                 else if (value == MIDI_USE_LEARNED_CALIB) {
-                    useLearnedPressureSelector[mode] = 1;
+                    useLearnedPressureSelector[preset] = 1;
                     loadPrefs();
                 }
 
                 else if (value == MIDI_LEARN_INITIAL_NOTE_PRESS) {
-                    learnedPressureSelector[mode] = sensorValue;
-                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressureSelector[mode] & 0x7F);  // Send LSB of learned pressure.
-                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressureSelector[mode] >> 7);    // Send MSB of learned pressure.
+                    learnedPressureSelector[preset] = sensorValue;
+                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_LSB, learnedPressureSelector[preset] & 0x7F);  // Send LSB of learned pressure.
+                    sendMIDICouplet(MIDI_SEND_LEARNED_PRESSURE_MSB, learnedPressureSelector[preset] >> 7);    // Send MSB of learned pressure.
                     loadPrefs();
                 }
 
                 else if (value == MIDI_CALIB_BELL_SENSOR) {  // Autocalibrate bell sensor only, or turn on stick mode using "hidden" Config Tool sequence.
                     blinkNumber[GREEN_LED] = 0;
                     if ((millis() - sticksModeTimer) < 10000) {  // Hidden way to turn on sticks mode.
-                        IMUsettings[mode][STICKS_MODE] = !IMUsettings[mode][STICKS_MODE];
-                        if (IMUsettings[mode][STICKS_MODE] == true) {
+                        IMUsettings[preset][STICKS_MODE] = !IMUsettings[preset][STICKS_MODE];
+                        if (IMUsettings[preset][STICKS_MODE] == true) {
                             blinkNumber[GREEN_LED] = 3;
                         } else {
                             blinkNumber[GREEN_LED] = 1;
                         }
-                        noteShiftSelector[mode] = prevKey;  // Reset the key to the previous value because it was only changed to toggle sticksMode.
-                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + mode), noteShiftSelector[mode]);
+                        noteShiftSelector[preset] = prevKey;  // Reset the key to the previous value because it was only changed to toggle sticksMode.
+                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + preset), noteShiftSelector[preset]);
                         loadPrefs();
                         return;
                     } else {
@@ -2439,24 +2439,24 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 else if (value == MIDI_LEARN_DRONES_PRESSURE) {
 
                     if ((millis() - sticksModeTimer) < 10000) {  // Hidden way to turn on IMU register hold mode.
-                        ED[mode][ENABLE_REGISTER_HOLD] = !ED[mode][ENABLE_REGISTER_HOLD];
-                        if (ED[mode][ENABLE_REGISTER_HOLD] == true) {
+                        ED[preset][ENABLE_REGISTER_HOLD] = !ED[preset][ENABLE_REGISTER_HOLD];
+                        if (ED[preset][ENABLE_REGISTER_HOLD] == true) {
                             blinkNumber[GREEN_LED] = 3;
                         } else {
                             blinkNumber[GREEN_LED] = 1;
                         }
-                        noteShiftSelector[mode] = prevKey;  // Reset the key to the previous value because it was only changed to toggle registerHold.
-                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + mode), noteShiftSelector[mode]);
+                        noteShiftSelector[preset] = prevKey;  // Reset the key to the previous value because it was only changed to toggle registerHold.
+                        sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + preset), noteShiftSelector[preset]);
                         loadPrefs();
                         return;
                     } else {
 
                         int tempPressure = sensorValue;
-                        ED[mode][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
-                        ED[mode][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
+                        ED[preset][DRONES_PRESSURE_LOW_BYTE] = tempPressure & 0x7F;
+                        ED[preset][DRONES_PRESSURE_HIGH_BYTE] = tempPressure >> 7;
 
-                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[mode][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
-                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_MSB, ED[mode][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
+                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_LSB, ED[preset][DRONES_PRESSURE_LOW_BYTE]);   // Send LSB of learned drones pressure
+                        sendMIDICouplet(MIDI_SEND_DRONES_PRESSURE_MSB, ED[preset][DRONES_PRESSURE_HIGH_BYTE]);  // Send MSB of learned drones pressure
                     }
                 }
 
@@ -2495,7 +2495,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                         if (buttonReceiveMode == i) {
                             for (byte j = 0; j < 27; j++) {  // Update column 0 (action).
                                 if (value == MIDI_BUTTON_ACTIONS_START + j) {
-                                    buttonPrefs[mode][i][0] = j;
+                                    buttonPrefs[preset][i][0] = j;
                                 }
                             }
                         }
@@ -2509,7 +2509,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             /////// CC 119
             if (number == MIDI_CC_119) {
                 WARBL2settings[WARBL2settingsReceiveMode] = value;
-                for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array each time it is changed by the Config Tool because it is independent of mode.
+                for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array each time it is changed by the Config Tool because it is independent of preset.
                     writeEEPROM(EEPROM_WARBL2_SETTINGS_START + r, WARBL2settings[r]);
                 }
             }
@@ -2519,11 +2519,11 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update channel, byte 2, byte 3 for MIDI message for button MIDI command for row i
                 if (buttonReceiveMode == i) {
                     if (number == MIDI_CC_106 && value <= MIDI_ACTION_MIDI_CHANNEL_END) {
-                        buttonPrefs[mode][i][2] = value;
+                        buttonPrefs[preset][i][2] = value;
                     } else if (number == MIDI_CC_107) {
-                        buttonPrefs[mode][i][3] = value;
+                        buttonPrefs[preset][i][3] = value;
                     } else if (number == MIDI_CC_108) {
-                        buttonPrefs[mode][i][4] = value;
+                        buttonPrefs[preset][i][4] = value;
                     }
                 }
             }
@@ -2620,7 +2620,7 @@ void handleButtons() {
     //_______________________________________________________________________________
 
     if (justPressed[0] && !pressed[2] && !pressed[1]) {
-        if (ED[mode][DRONES_CONTROL_MODE] == 1) {
+        if (ED[preset][DRONES_CONTROL_MODE] == 1) {
             if (holeCovered >> 1 == 0b00001000) {  // Turn drones on/off if button 0 is pressed and fingering pattern is 0 0001000.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
@@ -2632,7 +2632,7 @@ void handleButtons() {
             }
         }
 
-        if (switches[mode][SECRET]) {
+        if (switches[preset][SECRET]) {
             if (holeCovered >> 1 == 0b00010000) {  // Change pitchbend mode if button 0 is pressed and fingering pattern is 0 0000010.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
@@ -2655,10 +2655,10 @@ void handleButtons() {
     for (byte i = 0; i < 3; i++) {
 
 
-        if (released[i] && (momentary[mode][i] || (pressed[0] + pressed[1] + pressed[2] == 0))) {  // Do action for a button release ("click") NOTE: button array is zero-indexed, so "button 1" in all documentation is button 0 here (same for others).
+        if (released[i] && (momentary[preset][i] || (pressed[0] + pressed[1] + pressed[2] == 0))) {  // Do action for a button release ("click") NOTE: button array is zero-indexed, so "button 1" in all documentation is button 0 here (same for others).
             if (!specialPressUsed[i]) {
                 //20240629 MrMep DoubleClick handling
-                if (switches[mode][BUTTON_DOUBLE_CLICK] && !momentary[mode][i]) {  //Double click is active on buttons, and this button is not in momentary
+                if (switches[preset][BUTTON_DOUBLE_CLICK] && !momentary[preset][i]) {  //Double click is active on buttons, and this button is not in momentary
                     if (waitingSecondClick[i]) {                                   //We already had a first click
                         waitingSecondClick[i] = false;
                         if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL) {  //Timer has not expired yet, we had second clic
@@ -2677,7 +2677,7 @@ void handleButtons() {
         }
 
 
-        if (longPress[i] && (pressed[0] + pressed[1] + pressed[2] == 1) && !momentary[mode][i]) {  // Do action for long press, assuming no other button is pressed.
+        if (longPress[i] && (pressed[0] + pressed[1] + pressed[2] == 1) && !momentary[preset][i]) {  // Do action for long press, assuming no other button is pressed.
             performAction(5 + i, i);
             longPressUsed[i] = 1;
             longPress[i] = 0;
@@ -2693,13 +2693,13 @@ void handleButtons() {
 
 
     if (pressed[1]) {
-        if (released[0] && !momentary[mode][0]) {  // Do action for button 1 held and button 0 released
+        if (released[0] && !momentary[preset][0]) {  // Do action for button 1 held and button 0 released
             released[0] = 0;
             shiftState = 1;
             performAction(3, 0);
         }
 
-        if (released[2] && !momentary[mode][1]) {  // Do action for button 1 held and button 2 released
+        if (released[2] && !momentary[preset][1]) {  // Do action for button 1 held and button 2 released
             released[2] = 0;
             shiftState = 1;
             performAction(4, 1);
@@ -2720,56 +2720,56 @@ void performAction(byte action, byte button) {
         sendMIDICouplet(MIDI_SEND_BUTTON_ACTION, action);
     }
 
-    switch (buttonPrefs[mode][action][0]) {
+    switch (buttonPrefs[preset][action][0]) {
 
         case NO_ACTION:
             break;
 
         case SEND_MIDI_MESSAGE:
 
-            if (buttonPrefs[mode][action][1] == 0) {
+            if (buttonPrefs[preset][action][1] == 0) {
                 if (noteOnOffToggle[action] == 0) {
-                    sendMIDI(NOTE_ON, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+                    sendMIDI(NOTE_ON, buttonPrefs[preset][action][2], buttonPrefs[preset][action][3], buttonPrefs[preset][action][4]);
                     noteOnOffToggle[action] = 1;
                 } else if (noteOnOffToggle[action] == 1) {
-                    sendMIDI(NOTE_OFF, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+                    sendMIDI(NOTE_OFF, buttonPrefs[preset][action][2], buttonPrefs[preset][action][3], buttonPrefs[preset][action][4]);
                     noteOnOffToggle[action] = 0;
                 }
                 blinkNumber[GREEN_LED] = 1;
             }
 
 
-            if (buttonPrefs[mode][action][1] == 1) {
-                if (button != 127 && !momentary[mode][button]) {  // Check if the that triggered this is in momentary mode. 127 is used for sip and shake, which don't have momentary mode.
-                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], buttonPrefs[mode][action][4]);
+            if (buttonPrefs[preset][action][1] == 1) {
+                if (button != 127 && !momentary[preset][button]) {  // Check if the that triggered this is in momentary mode. 127 is used for sip and shake, which don't have momentary mode.
+                    sendMIDI(CONTROL_CHANGE, buttonPrefs[preset][action][2], buttonPrefs[preset][action][3], buttonPrefs[preset][action][4]);
                 } else {
-                    sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3], 0);  // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
+                    sendMIDI(CONTROL_CHANGE, buttonPrefs[preset][action][2], buttonPrefs[preset][action][3], 0);  // If momentary is turned on, when a button is released we send a CC of 0. This allows temporarily turning on CC "switches" like CC 64-69.
                 }
                 blinkNumber[GREEN_LED] = 1;
             }
 
-            if (buttonPrefs[mode][action][1] == 2) {
-                sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], buttonPrefs[mode][action][3]);
+            if (buttonPrefs[preset][action][1] == 2) {
+                sendMIDI(PROGRAM_CHANGE, buttonPrefs[preset][action][2], buttonPrefs[preset][action][3]);
                 blinkNumber[GREEN_LED] = 1;
             }
 
-            if (buttonPrefs[mode][action][1] == 3) {  // Increase program change
+            if (buttonPrefs[preset][action][1] == 3) {  // Increase program change
                 if (program < 127) {
                     program++;
                 } else {
                     program = 0;
                 }
-                sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], program);
+                sendMIDI(PROGRAM_CHANGE, buttonPrefs[preset][action][2], program);
                 blinkNumber[GREEN_LED] = 1;
             }
 
-            if (buttonPrefs[mode][action][1] == 4) {  // Decrease program change
+            if (buttonPrefs[preset][action][1] == 4) {  // Decrease program change
                 if (program > 0) {
                     program--;
                 } else {
                     program = 127;
                 }
-                sendMIDI(PROGRAM_CHANGE, buttonPrefs[mode][action][2], program);
+                sendMIDI(PROGRAM_CHANGE, buttonPrefs[preset][action][2], program);
                 blinkNumber[GREEN_LED] = 1;
             }
 
@@ -2790,7 +2790,7 @@ void performAction(byte action, byte button) {
 
         case OCTAVE_SHIFT_UP:
 
-            if (button != 127 && !momentary[mode][button]) {  // Shift up unless we're in momentary mode, otherwise shift down.
+            if (button != 127 && !momentary[preset][button]) {  // Shift up unless we're in momentary mode, otherwise shift down.
                 octaveShiftUp();
                 blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
@@ -2800,7 +2800,7 @@ void performAction(byte action, byte button) {
 
         case OCTAVE_SHIFT_DOWN:
 
-            if (button != 127 && !momentary[mode][button]) {  // Shift down unless we're in momentary mode, otherwise shift up.
+            if (button != 127 && !momentary[preset][button]) {  // Shift down unless we're in momentary mode, otherwise shift up.
                 octaveShiftDown();
                 blinkNumber[GREEN_LED] = abs(octaveShift);
             } else {
@@ -2817,9 +2817,9 @@ void performAction(byte action, byte button) {
             break;
 
         case CHANGE_REGISTER_CONTROL_MODE:
-            breathModeSelector[mode]++;
-            if (breathModeSelector[mode] == kPressureNModes) {
-                breathModeSelector[mode] = kPressureSingle;
+            breathModeSelector[preset]++;
+            if (breathModeSelector[preset] == kPressureNModes) {
+                breathModeSelector[preset] = kPressureSingle;
             }
             loadPrefs();
             play = 0;
@@ -2841,7 +2841,7 @@ void performAction(byte action, byte button) {
 
 
         case SEMI_SHIFT_UP:
-            if (button != 127 && !momentary[mode][button]) {
+            if (button != 127 && !momentary[preset][button]) {
                 noteShift++;  // Shift up if we're not in momentary mode
                 blinkNumber[GREEN_LED] = 1;
             } else {
@@ -2851,7 +2851,7 @@ void performAction(byte action, byte button) {
 
 
         case SEMI_SHIFT_DOWN:
-            if (button != 127 && !momentary[mode][button]) {
+            if (button != 127 && !momentary[preset][button]) {
                 noteShift--;  // Shift down if we're not in momentary mode
                 blinkNumber[GREEN_LED] = 1;
             } else {
@@ -2889,7 +2889,7 @@ void performAction(byte action, byte button) {
             }
 
         case REGISTER_HOLD:
-            if (button != 127 && !momentary[mode][button]) {
+            if (button != 127 && !momentary[preset][button]) {
                 blinkNumber[GREEN_LED] = 1;
                 if (!(newState == 1 && !registerHold)) {  // Hold the current register if we're currently playing a note.
                     registerHold = !registerHold;
@@ -2913,8 +2913,8 @@ void performAction(byte action, byte button) {
 
 void octaveShiftUp() {
     if (octaveShift < 3) {
-        octaveShiftSelector[mode]++;  // Adjust octave shift up, within reason
-        octaveShift = octaveShiftSelector[mode];
+        octaveShiftSelector[preset]++;  // Adjust octave shift up, within reason
+        octaveShift = octaveShiftSelector[preset];
     }
 }
 
@@ -2926,8 +2926,8 @@ void octaveShiftUp() {
 
 void octaveShiftDown() {
     if (octaveShift > -4) {
-        octaveShiftSelector[mode]--;
-        octaveShift = octaveShiftSelector[mode];
+        octaveShiftSelector[preset]--;
+        octaveShift = octaveShiftSelector[preset];
     }
 }
 
@@ -2940,9 +2940,9 @@ void octaveShiftDown() {
 
 // Cycle through pitchbend modes
 void changePitchBend() {
-    pitchBendModeSelector[mode]++;
-    if (pitchBendModeSelector[mode] == kPitchBendNModes) {
-        pitchBendModeSelector[mode] = kPitchBendSlideVibrato;
+    pitchBendModeSelector[preset]++;
+    if (pitchBendModeSelector[preset] == kPitchBendNModes) {
+        pitchBendModeSelector[preset] = kPitchBendSlideVibrato;
     }
     loadPrefs();
     blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
@@ -2960,15 +2960,15 @@ void changePitchBend() {
 
 // Cycle through instruments
 void changeInstrument() {
-    mode++;  //set instrument
-    if (mode == 3) {
-        mode = 0;
+    preset++;  //set instrument
+    if (preset == 3) {
+        preset = 0;
     }
     play = 0;
     loadPrefs();  // Load the correct user settings based on current instrument.
-    blinkNumber[GREEN_LED] = abs(mode) + 1;
+    blinkNumber[GREEN_LED] = abs(preset) + 1;
     if (communicationMode) {
-        sendSettings();  // Tell communications tool to switch mode and send all settings for current instrument.
+        sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
     }
 }
 
@@ -2980,34 +2980,34 @@ void changeInstrument() {
 
 
 void handleMomentary(byte button) {
-    if (momentary[mode][button]) {
-        if (buttonPrefs[mode][button][0] == 1 && buttonPrefs[mode][button][1] == 0) {  // Handle momentary press if we're sending a MIDI message
-            sendMIDI(NOTE_ON, buttonPrefs[mode][button][2], buttonPrefs[mode][button][3], buttonPrefs[mode][button][4]);
+    if (momentary[preset][button]) {
+        if (buttonPrefs[preset][button][0] == 1 && buttonPrefs[preset][button][1] == 0) {  // Handle momentary press if we're sending a MIDI message
+            sendMIDI(NOTE_ON, buttonPrefs[preset][button][2], buttonPrefs[preset][button][3], buttonPrefs[preset][button][4]);
             noteOnOffToggle[button] = 1;
         }
 
-        if (buttonPrefs[mode][button][0] == 1 && buttonPrefs[mode][button][1] == 1) {
-            sendMIDI(CONTROL_CHANGE, buttonPrefs[mode][button][2], buttonPrefs[mode][button][3], buttonPrefs[mode][button][4]);
+        if (buttonPrefs[preset][button][0] == 1 && buttonPrefs[preset][button][1] == 1) {
+            sendMIDI(CONTROL_CHANGE, buttonPrefs[preset][button][2], buttonPrefs[preset][button][3], buttonPrefs[preset][button][4]);
         }
 
         // Handle presses for shifting the octave or semitone up or down
-        if (buttonPrefs[mode][button][0] == 5) {
+        if (buttonPrefs[preset][button][0] == 5) {
             octaveShiftUp();
         }
 
-        if (buttonPrefs[mode][button][0] == 6) {
+        if (buttonPrefs[preset][button][0] == 6) {
             octaveShiftDown();
         }
 
-        if (buttonPrefs[mode][button][0] == 10) {
+        if (buttonPrefs[preset][button][0] == 10) {
             noteShift++;
         }
 
-        if (buttonPrefs[mode][button][0] == 11) {
+        if (buttonPrefs[preset][button][0] == 11) {
             noteShift--;
         }
 
-        if (buttonPrefs[mode][button][0] == 16) {
+        if (buttonPrefs[preset][button][0] == 16) {
             if (!(newState == 1 && !registerHold)) {  // Hold the current register if we're currently playing a note.
                 registerHold = true;
                 heldRegister = newState;
@@ -3025,15 +3025,15 @@ void handleMomentary(byte button) {
 
 void startDrones() {
     dronesOn = 1;
-    switch (ED[mode][DRONES_ON_COMMAND]) {
+    switch (ED[preset][DRONES_ON_COMMAND]) {
         case 0:
-            sendMIDI(NOTE_ON, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
+            sendMIDI(NOTE_ON, ED[preset][DRONES_ON_CHANNEL], ED[preset][DRONES_ON_BYTE2], ED[preset][DRONES_ON_BYTE3]);
             break;
         case 1:
-            sendMIDI(NOTE_OFF, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
+            sendMIDI(NOTE_OFF, ED[preset][DRONES_ON_CHANNEL], ED[preset][DRONES_ON_BYTE2], ED[preset][DRONES_ON_BYTE3]);
             break;
         case 2:
-            sendMIDI(CONTROL_CHANGE, ED[mode][DRONES_ON_CHANNEL], ED[mode][DRONES_ON_BYTE2], ED[mode][DRONES_ON_BYTE3]);
+            sendMIDI(CONTROL_CHANGE, ED[preset][DRONES_ON_CHANNEL], ED[preset][DRONES_ON_BYTE2], ED[preset][DRONES_ON_BYTE3]);
             break;
     }
 }
@@ -3047,15 +3047,15 @@ void startDrones() {
 
 void stopDrones() {
     dronesOn = 0;
-    switch (ED[mode][DRONES_OFF_COMMAND]) {
+    switch (ED[preset][DRONES_OFF_COMMAND]) {
         case 0:
-            sendMIDI(NOTE_ON, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
+            sendMIDI(NOTE_ON, ED[preset][DRONES_OFF_CHANNEL], ED[preset][DRONES_OFF_BYTE2], ED[preset][DRONES_OFF_BYTE3]);
             break;
         case 1:
-            sendMIDI(NOTE_OFF, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
+            sendMIDI(NOTE_OFF, ED[preset][DRONES_OFF_CHANNEL], ED[preset][DRONES_OFF_BYTE2], ED[preset][DRONES_OFF_BYTE3]);
             break;
         case 2:
-            sendMIDI(CONTROL_CHANGE, ED[mode][DRONES_OFF_CHANNEL], ED[mode][DRONES_OFF_BYTE2], ED[mode][DRONES_OFF_BYTE3]);
+            sendMIDI(CONTROL_CHANGE, ED[preset][DRONES_OFF_CHANNEL], ED[preset][DRONES_OFF_BYTE2], ED[preset][DRONES_OFF_BYTE3]);
             break;
     }
 }
@@ -3093,11 +3093,11 @@ byte findleftmostunsetbit(uint16_t n) {
 // This is used the first time the software is run, to copy all the default settings to EEPROM.
 void saveFactorySettings() {
     for (byte i = 0; i < 3; i++) {  // Save all the current settings for all three instruments.
-        mode = i;
+        preset = i;
         saveSettings(i);
     }
 
-    writeEEPROM(EEPROM_DEFAULT_MODE, defaultMode);  // Save default mode
+    writeEEPROM(EEPROM_DEFAULT_PRESET, defaultPreset);  // Save default preset
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  // Save the WARBL2settings array
         writeEEPROM(EEPROM_WARBL2_SETTINGS_START + r, WARBL2settings[r]);
@@ -3134,7 +3134,7 @@ void restoreFactorySettings() {
 
     loadFingering();  // Load the newly restored settings
     loadCalibration();
-    loadSettingsForAllModes();
+    loadSettingsForAllPresets();
     loadPrefs();
     communicationMode = 1;  // We are connected to the Config Tool because that's what initiated restoring settings.
     sendSettings();         // Send the new settings.
@@ -3163,8 +3163,8 @@ void sendSettings() {
         }
     }
 
-    sendMIDI(MIDI_CC_102_MSG, MIDI_CURRENT_MODE_START + mode);         // Send current instrument.
-    sendMIDI(MIDI_CC_102_MSG, MIDI_DEFAULT_MODE_START + defaultMode);  // Send default instrument.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CURRENT_PRESET_START + preset);         // Send current instrument.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_DEFAULT_PRESET_START + defaultPreset);  // Send default instrument.
 
     sendMIDI(MIDI_CC_103_MSG, senseDistance);  // Send sense distance
 
@@ -3183,7 +3183,7 @@ void sendSettings() {
 
 
     for (byte i = 0; i < 9; i++) {
-        if (bitRead(vibratoHolesSelector[mode], i)) {
+        if (bitRead(vibratoHolesSelector[preset], i)) {
             sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + i);
         } else {
             sendMIDI(MIDI_CC_106_MSG, MIDI_ENA_VIBRATO_HOLES_START + 10 + i);
@@ -3191,35 +3191,35 @@ void sendSettings() {
     }
 
     for (byte i = 0; i < kGESTURESnVariables; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[mode][i][0]);  // Send  data for button commands row i (click 1, click 2, etc.).
+        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[preset][i][0]);  // Send  data for button commands row i (click 1, click 2, etc.).
 
         //This would require a "quadruplet mutex"...
-        if (buttonPrefs[mode][i][0] == 1) {  // If the action is a MIDI command, send the rest of the MIDI info for that row.
-            sendMIDI(MIDI_CC_102_MSG, MIDI_ACTION_MIDI_START + buttonPrefs[mode][i][1]);
-            sendMIDI(MIDI_CC_106_MSG, buttonPrefs[mode][i][2]);
-            sendMIDI(MIDI_CC_107_MSG, buttonPrefs[mode][i][3]);
-            sendMIDI(MIDI_CC_108_MSG, buttonPrefs[mode][i][4]);
+        if (buttonPrefs[preset][i][0] == 1) {  // If the action is a MIDI command, send the rest of the MIDI info for that row.
+            sendMIDI(MIDI_CC_102_MSG, MIDI_ACTION_MIDI_START + buttonPrefs[preset][i][1]);
+            sendMIDI(MIDI_CC_106_MSG, buttonPrefs[preset][i][2]);
+            sendMIDI(MIDI_CC_107_MSG, buttonPrefs[preset][i][3]);
+            sendMIDI(MIDI_CC_108_MSG, buttonPrefs[preset][i][4]);
         }
     }
 
     for (byte i = 0; i < kSWITCHESnVariables; i++) {  // Send settings for switches in the slide/vibrato and register control panels.
-        sendMIDICouplet(MIDI_CC_104, i + MIDI_SWITCHES_VARS_START, MIDI_CC_105, switches[mode][i]);
+        sendMIDICouplet(MIDI_CC_104, i + MIDI_SWITCHES_VARS_START, MIDI_CC_105, switches[preset][i]);
     }
 
     for (byte i = 0; i < MIDI_ED_VARS_NUMBER; i++) {  // Send settings for expression and drones control panels.
-        sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS_START, MIDI_CC_105, ED[mode][i]);
+        sendMIDICouplet(MIDI_CC_104, i + MIDI_ED_VARS_START, MIDI_CC_105, ED[preset][i]);
     }
 
     for (byte i = MIDI_ED_VARS2_START; i < MIDI_ED_VARS2_END + 1; i++) {  // More settings for expression and drones control panels.
-        sendMIDICouplet(MIDI_CC_104, i, MIDI_CC_105, ED[mode][i - MIDI_ED_VARS2_OFFSET]);
+        sendMIDICouplet(MIDI_CC_104, i, MIDI_CC_105, ED[preset][i - MIDI_ED_VARS2_OFFSET]);
     }
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_102, MIDI_MOMENTARY_OFF + momentary[mode][i]);  // Send  data for momentary.
+        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_102, MIDI_MOMENTARY_OFF + momentary[preset][i]);  // Send  data for momentary.
     }
 
     for (byte i = 0; i < 12; i++) {
-        sendMIDICouplet(MIDI_CC_104, i + MIDI_PRESS_SELECT_VARS_START, MIDI_CC_105, pressureSelector[mode][i]);  // Send pressure variable
+        sendMIDICouplet(MIDI_CC_104, i + MIDI_PRESS_SELECT_VARS_START, MIDI_CC_105, pressureSelector[preset][i]);  // Send pressure variable
     }
 
     sendMIDI(MIDI_CC_102_MSG, MIDI_CC_102_VALUE_121);  // Tell the Config Tool that the bell sensor is present (always on this version of the WARBL).
@@ -3234,7 +3234,7 @@ void sendSettings() {
     sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7);    // high low byte of the connection interval.
 
     for (byte i = 0; i < kIMUnVariables; i++) {  // IMU settings
-        sendMIDICouplet(MIDI_CC_109, i, MIDI_CC_105, IMUsettings[mode][i]);
+        sendMIDICouplet(MIDI_CC_109, i, MIDI_CC_105, IMUsettings[preset][i]);
     }
 }
 
@@ -3277,50 +3277,50 @@ void loadFingering() {
 
 // Save settings for current instrument as defaults for given instrument (i).
 void saveSettings(byte i) {
-    writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[mode]);
-    writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[mode]);
-    writeEEPROM(EEPROM_SENS_DISTANCE_START + i, senseDistanceSelector[mode]);
+    writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[preset]);
+    writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[preset]);
+    writeEEPROM(EEPROM_SENS_DISTANCE_START + i, senseDistanceSelector[preset]);
 
     for (byte n = 0; n < kSWITCHESnVariables; n++) {  // Saved in this format, we can add more variables to the arrays without overwriting the existing EEPROM locations.
-        writeEEPROM((EEPROM_SWITCHES_START + i + (n * 3)), switches[mode][n]);
+        writeEEPROM((EEPROM_SWITCHES_START + i + (n * 3)), switches[preset][n]);
     }
 
-    writeEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2), lowByte(vibratoHolesSelector[mode]));
-    writeEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2), highByte(vibratoHolesSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_HOLES_START + (i * 2), lowByte(vibratoHolesSelector[preset]));
+    writeEEPROM(EEPROM_VIBRATO_HOLES_START + 1 + (i * 2), highByte(vibratoHolesSelector[preset]));
 
-    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2), lowByte(vibratoDepthSelector[mode]));
-    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2), highByte(vibratoDepthSelector[mode]));
+    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + (i * 2), lowByte(vibratoDepthSelector[preset]));
+    writeEEPROM(EEPROM_VIBRATO_DEPTH_START + 1 + (i * 2), highByte(vibratoDepthSelector[preset]));
 
-    writeEEPROM(EEPROM_USE_LEARNED_PRESS_START + i, useLearnedPressureSelector[mode]);
+    writeEEPROM(EEPROM_USE_LEARNED_PRESS_START + i, useLearnedPressureSelector[preset]);
 
-    for (byte j = 0; j < 5; j++) {  // Save button configuration for current mode
+    for (byte j = 0; j < 5; j++) {  // Save button configuration for current preset
         for (byte k = 0; k < kGESTURESnVariables; k++) {
-            writeEEPROM(EEPROM_BUTTON_PREFS_START + (i * 50) + (j * 10) + k, buttonPrefs[mode][k][j]);
+            writeEEPROM(EEPROM_BUTTON_PREFS_START + (i * 50) + (j * 10) + k, buttonPrefs[preset][k][j]);
         }
     }
 
     for (byte h = 0; h < 3; h++) {
-        writeEEPROM(EEPROM_MOMENTARY_MODE_START + (i * 3) + h, momentary[mode][h]);
+        writeEEPROM(EEPROM_MOMENTARY_MODE_START + (i * 3) + h, momentary[preset][h]);
     }
 
     for (byte q = 0; q < 12; q++) {
-        writeEEPROM((EEPROM_PRESSURE_SETTINGS_START + q + (i * 20)), pressureSelector[mode][q]);
+        writeEEPROM((EEPROM_PRESSURE_SETTINGS_START + q + (i * 20)), pressureSelector[preset][q]);
     }
 
-    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2), lowByte(learnedPressureSelector[mode]));
-    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + 1 + (i * 2), highByte(learnedPressureSelector[mode]));
+    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + (i * 2), lowByte(learnedPressureSelector[preset]));
+    writeEEPROM(EEPROM_LEARNED_PRESSURE_START + 1 + (i * 2), highByte(learnedPressureSelector[preset]));
 
-    writeEEPROM(EEPROM_PB_MODE_START + i, pitchBendModeSelector[mode]);
-    writeEEPROM(EEPROM_BREATH_MODE_START + i, breathModeSelector[mode]);
-    writeEEPROM(EEPROM_MIDI_BEND_RANGE_START + i, midiBendRangeSelector[mode]);
-    writeEEPROM(EEPROM_MIDI_CHANNEL_START + i, midiChannelSelector[mode]);
+    writeEEPROM(EEPROM_PB_MODE_START + i, pitchBendModeSelector[preset]);
+    writeEEPROM(EEPROM_BREATH_MODE_START + i, breathModeSelector[preset]);
+    writeEEPROM(EEPROM_MIDI_BEND_RANGE_START + i, midiBendRangeSelector[preset]);
+    writeEEPROM(EEPROM_MIDI_CHANNEL_START + i, midiChannelSelector[preset]);
 
     for (byte n = 0; n < kEXPRESSIONnVariables; n++) {
-        writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), ED[mode][n]);
+        writeEEPROM((EEPROM_ED_VARS_START + i + (n * 3)), ED[preset][n]);
     }
 
     for (byte n = 0; n < kIMUnVariables; n++) {
-        writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3)), IMUsettings[mode][n]);
+        writeEEPROM((EEPROM_IMU_SETTINGS_START + i + (n * 3)), IMUsettings[preset][n]);
     }
 }
 
@@ -3333,9 +3333,9 @@ void saveSettings(byte i) {
 
 
 // Load settings for all three instruments from EEPROM.
-void loadSettingsForAllModes() {
-    // Some things that are independent of mode.
-    defaultMode = readEEPROM(EEPROM_DEFAULT_MODE);  // Load default mode.
+void loadSettingsForAllPresets() {
+    // Some things that are independent of preset.
+    defaultPreset = readEEPROM(EEPROM_DEFAULT_PRESET);  // Load default preset.
 
     for (byte r = 0; r < kWARBL2SETTINGSnVariables; r++) {  //Load the WARBL2settings array.
         WARBL2settings[r] = readEEPROM(EEPROM_WARBL2_SETTINGS_START + r);
@@ -3350,7 +3350,7 @@ void loadSettingsForAllModes() {
         getEEPROM(EEPROM_ZGYRO_CALIB_START, gyroZCalibration);
     }
 
-    // Do all this for each mode.
+    // Do all this for each preset.
     for (byte i = 0; i < 3; i++) {
         senseDistanceSelector[i] = readEEPROM(EEPROM_SENS_DISTANCE_START + i);
 
@@ -3400,21 +3400,21 @@ void loadSettingsForAllModes() {
 
 
 
-// Resets current mode's expression override defaults.
+// Resets current preset's expression override defaults.
 // Useful for populating older devices after first installing the version that has them and for manually restoring to a "sane" default for the new setup.
 void resetExpressionOverrideDefaults() {
 
-    ED[mode][EXPRESSION_MIN] = 0;
-    ED[mode][EXPRESSION_MIN_HIGH] = 7;
-    ED[mode][EXPRESSION_FIXED_CENTER_PRESSURE] = 8;
-    ED[mode][EXPRESSION_MAX_LOW] = 11;
-    ED[mode][EXPRESSION_MAX] = 20;
+    ED[preset][EXPRESSION_MIN] = 0;
+    ED[preset][EXPRESSION_MIN_HIGH] = 7;
+    ED[preset][EXPRESSION_FIXED_CENTER_PRESSURE] = 8;
+    ED[preset][EXPRESSION_MAX_LOW] = 11;
+    ED[preset][EXPRESSION_MAX] = 20;
     // 2x cents signed where 64 = 0, and 64+10 = +20 cents, and 64-10 = -20 cents for example
-    ED[mode][EXPRESSION_OUT_LOW_CENTS] = 64 - 25;   // -50 cents
-    ED[mode][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50;  // +100 cents
-    ED[mode][EXPRESSION_OUT_CLAMP] = 1;             // boolean
-    ED[mode][EXPRESSION_CURVE_LOW] = 64;            // linear
-    ED[mode][EXPRESSION_CURVE_HIGH] = 64;           // linear
+    ED[preset][EXPRESSION_OUT_LOW_CENTS] = 64 - 25;   // -50 cents
+    ED[preset][EXPRESSION_OUT_HIGH_CENTS] = 64 + 50;  // +100 cents
+    ED[preset][EXPRESSION_OUT_CLAMP] = 1;             // boolean
+    ED[preset][EXPRESSION_CURVE_LOW] = 64;            // linear
+    ED[preset][EXPRESSION_CURVE_HIGH] = 64;           // linear
 }
 
 
@@ -3424,33 +3424,33 @@ void resetExpressionOverrideDefaults() {
 
 
 
-// Load the correct user settings for the current mode (instrument). This is used at startup and any time settings are changed.
+// Load the correct user settings for the current preset (instrument). This is used at startup and any time settings are changed.
 void loadPrefs() {
 
-    vibratoHoles = vibratoHolesSelector[mode];
-    octaveShift = octaveShiftSelector[mode];
-    noteShift = noteShiftSelector[mode];
-    pitchBendMode = pitchBendModeSelector[mode];
-    useLearnedPressure = useLearnedPressureSelector[mode];
-    learnedPressure = learnedPressureSelector[mode];
-    senseDistance = senseDistanceSelector[mode];
-    vibratoDepth = vibratoDepthSelector[mode];
-    breathMode = breathModeSelector[mode];
-    midiBendRange = midiBendRangeSelector[mode];
-    mainMidiChannel = midiChannelSelector[mode];
-    transientFilterDelay = (pressureSelector[mode][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
+    vibratoHoles = vibratoHolesSelector[preset];
+    octaveShift = octaveShiftSelector[preset];
+    noteShift = noteShiftSelector[preset];
+    pitchBendMode = pitchBendModeSelector[preset];
+    useLearnedPressure = useLearnedPressureSelector[preset];
+    learnedPressure = learnedPressureSelector[preset];
+    senseDistance = senseDistanceSelector[preset];
+    vibratoDepth = vibratoDepthSelector[preset];
+    breathMode = breathModeSelector[preset];
+    midiBendRange = midiBendRangeSelector[preset];
+    mainMidiChannel = midiChannelSelector[preset];
+    transientFilterDelay = (pressureSelector[preset][9] + 1) / 1.25;  // This variable was formerly used for vented dropTime (unvented is now unused). Includes a correction for milliseconds
 
     // Set these variables depending on whether "vented" is selected
-    offset = pressureSelector[mode][(switches[mode][VENTED] * 6) + 0];
-    multiplier = pressureSelector[mode][(switches[mode][VENTED] * 6) + 1];
-    hysteresis = pressureSelector[mode][(switches[mode][VENTED] * 6) + 2];
-    jumpTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 4]) + 1) / 1.25;  // Includes a correction for milliseconds
-    dropTime = ((pressureSelector[mode][(switches[mode][VENTED] * 6) + 5]) + 1) / 1.25;  // Includes a correction for milliseconds
+    offset = pressureSelector[preset][(switches[preset][VENTED] * 6) + 0];
+    multiplier = pressureSelector[preset][(switches[preset][VENTED] * 6) + 1];
+    hysteresis = pressureSelector[preset][(switches[preset][VENTED] * 6) + 2];
+    jumpTime = ((pressureSelector[preset][(switches[preset][VENTED] * 6) + 4]) + 1) / 1.25;  // Includes a correction for milliseconds
+    dropTime = ((pressureSelector[preset][(switches[preset][VENTED] * 6) + 5]) + 1) / 1.25;  // Includes a correction for milliseconds
 
     // Read a custom chart from EEPROM if we're using one.
-    if (modeSelector[mode] == kWARBL2Custom1 || modeSelector[mode] == kWARBL2Custom2 || modeSelector[mode] == kWARBL2Custom3 || modeSelector[mode] == kWARBL2Custom4) {
+    if (modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4) {
         for (int i = 0; i < 256; i++) {
-            WARBL2CustomChart[i] = readEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (modeSelector[mode] - 67))) + i);
+            WARBL2CustomChart[i] = readEEPROM((EEPROM_CUSTOM_FINGERING_START + (256 * (modeSelector[preset] - 67))) + i);
         }
     }
 
@@ -3472,11 +3472,11 @@ void loadPrefs() {
         pitchBendOn[i] = 0;
     }
 
-    if (switches[mode][CUSTOM] && pitchBendMode != kPitchBendNone) {
+    if (switches[preset][CUSTOM] && pitchBendMode != kPitchBendNone) {
         customEnabled = 1;
     } else (customEnabled = 0);  // Decide here whether custom vibrato can currently be used, so we don't have to do it every time we need to check pitchBend.
 
-    if (switches[mode][FORCE_MAX_VELOCITY]) {
+    if (switches[preset][FORCE_MAX_VELOCITY]) {
         velocity = 127;  // Set velocity
     } else {
         velocity = 64;
@@ -3501,38 +3501,38 @@ void loadPrefs() {
     adjvibdepth = vibratoDepth / midiBendRange;  // Precalculations for pitchbend range
     pitchBendPerSemi = 8192.0f / midiBendRange;
 
-    inputPressureBounds[0][0] = (ED[mode][INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as CC.
-    inputPressureBounds[0][1] = (ED[mode][INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[1][0] = (ED[mode][VELOCITY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as velocity.
-    inputPressureBounds[1][1] = (ED[mode][VELOCITY_INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[2][0] = (ED[mode][AFTERTOUCH_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as aftertouch.
-    inputPressureBounds[2][1] = (ED[mode][AFTERTOUCH_INPUT_PRESSURE_MAX] * 9);
-    inputPressureBounds[3][0] = (ED[mode][POLY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as poly.
-    inputPressureBounds[3][1] = (ED[mode][POLY_INPUT_PRESSURE_MAX] * 9);
+    inputPressureBounds[0][0] = (ED[preset][INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as CC.
+    inputPressureBounds[0][1] = (ED[preset][INPUT_PRESSURE_MAX] * 9);
+    inputPressureBounds[1][0] = (ED[preset][VELOCITY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as velocity.
+    inputPressureBounds[1][1] = (ED[preset][VELOCITY_INPUT_PRESSURE_MAX] * 9);
+    inputPressureBounds[2][0] = (ED[preset][AFTERTOUCH_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as aftertouch.
+    inputPressureBounds[2][1] = (ED[preset][AFTERTOUCH_INPUT_PRESSURE_MAX] * 9);
+    inputPressureBounds[3][0] = (ED[preset][POLY_INPUT_PRESSURE_MIN] * 9);  // Precalculate input and output pressure ranges for sending pressure as poly.
+    inputPressureBounds[3][1] = (ED[preset][POLY_INPUT_PRESSURE_MAX] * 9);
 
-    outputBounds[0][0] = ED[mode][OUTPUT_PRESSURE_MIN];  // Move all these variables to a more logical order so they can be accessed in FOR loops.
-    outputBounds[0][1] = ED[mode][OUTPUT_PRESSURE_MAX];
-    outputBounds[1][0] = ED[mode][VELOCITY_OUTPUT_PRESSURE_MIN];
-    outputBounds[1][1] = ED[mode][VELOCITY_OUTPUT_PRESSURE_MAX];
-    outputBounds[2][0] = ED[mode][AFTERTOUCH_OUTPUT_PRESSURE_MIN];
-    outputBounds[2][1] = ED[mode][AFTERTOUCH_OUTPUT_PRESSURE_MAX];
-    outputBounds[3][0] = ED[mode][POLY_OUTPUT_PRESSURE_MIN];
-    outputBounds[3][1] = ED[mode][POLY_OUTPUT_PRESSURE_MAX];
+    outputBounds[0][0] = ED[preset][OUTPUT_PRESSURE_MIN];  // Move all these variables to a more logical order so they can be accessed in FOR loops.
+    outputBounds[0][1] = ED[preset][OUTPUT_PRESSURE_MAX];
+    outputBounds[1][0] = ED[preset][VELOCITY_OUTPUT_PRESSURE_MIN];
+    outputBounds[1][1] = ED[preset][VELOCITY_OUTPUT_PRESSURE_MAX];
+    outputBounds[2][0] = ED[preset][AFTERTOUCH_OUTPUT_PRESSURE_MIN];
+    outputBounds[2][1] = ED[preset][AFTERTOUCH_OUTPUT_PRESSURE_MAX];
+    outputBounds[3][0] = ED[preset][POLY_OUTPUT_PRESSURE_MIN];
+    outputBounds[3][1] = ED[preset][POLY_OUTPUT_PRESSURE_MAX];
 
-    curve[0] = ED[mode][CURVE];
-    curve[1] = ED[mode][VELOCITY_CURVE];
-    curve[2] = ED[mode][AFTERTOUCH_CURVE];
-    curve[3] = ED[mode][POLY_CURVE];
+    curve[0] = ED[preset][CURVE];
+    curve[1] = ED[preset][VELOCITY_CURVE];
+    curve[2] = ED[preset][AFTERTOUCH_CURVE];
+    curve[3] = ED[preset][POLY_CURVE];
 
-    if (ED[mode][ENABLE_REGISTER_HOLD] || IMUsettings[mode][SEND_ROLL] || IMUsettings[mode][SEND_PITCH] || IMUsettings[mode][SEND_YAW] || IMUsettings[mode][PITCH_REGISTER] || IMUsettings[mode][STICKS_MODE] || IMUsettings[mode][MAP_ROLL_TO_PITCHBEND] || IMUsettings[mode][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[mode][MAP_YAW_TO_PITCHBEND]) {
+    if (ED[preset][ENABLE_REGISTER_HOLD] || IMUsettings[preset][SEND_ROLL] || IMUsettings[preset][SEND_PITCH] || IMUsettings[preset][SEND_YAW] || IMUsettings[preset][PITCH_REGISTER] || IMUsettings[preset][STICKS_MODE] || IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     }
 
     // Calculate upper and lower bounds for IMU pitch (elevation) register mapping.
-    byte pitchPerRegister = (IMUsettings[mode][PITCH_REGISTER_INPUT_MAX] - IMUsettings[mode][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[mode][PITCH_REGISTER_NUMBER];  // Number of degrees per register
-    IMUsettings[mode][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[mode][PITCH_REGISTER_NUMBER], 2, 5);                                                                // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
-    for (byte i = 0; i < IMUsettings[mode][PITCH_REGISTER_NUMBER] + 1; i++) {
-        pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[mode][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
+    byte pitchPerRegister = (IMUsettings[preset][PITCH_REGISTER_INPUT_MAX] - IMUsettings[preset][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[preset][PITCH_REGISTER_NUMBER];  // Number of degrees per register
+    IMUsettings[preset][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[preset][PITCH_REGISTER_NUMBER], 2, 5);                                                                // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
+    for (byte i = 0; i < IMUsettings[preset][PITCH_REGISTER_NUMBER] + 1; i++) {
+        pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[preset][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
     }
 }
 
@@ -3669,18 +3669,18 @@ void loadCalibration() {
 
 
 void calculateAndSendPressure() {
-    bool shakemod = IMUsettings[mode][Y_SHAKE_MOD_CHPRESS] || IMUsettings[mode][Y_SHAKE_MOD_KEYPRESS] || IMUsettings[mode][Y_SHAKE_MOD_CC];
+    bool shakemod = IMUsettings[preset][Y_SHAKE_MOD_CHPRESS] || IMUsettings[preset][Y_SHAKE_MOD_KEYPRESS] || IMUsettings[preset][Y_SHAKE_MOD_CC];
     if (abs(prevSensorValue - smoothed_pressure) > 1 || shakemod) {  // If pressure has changed more than a little, send it.
-        if (ED[mode][SEND_PRESSURE]) {
+        if (ED[preset][SEND_PRESSURE]) {
             calculatePressure(0);
         }
-        if (switches[mode][SEND_VELOCITY]) {
+        if (switches[preset][SEND_VELOCITY]) {
             calculatePressure(1);
         }
-        if (switches[mode][SEND_AFTERTOUCH] & 1) {
+        if (switches[preset][SEND_AFTERTOUCH] & 1) {
             calculatePressure(2);
         }
-        if (switches[mode][SEND_AFTERTOUCH] & 2) {
+        if (switches[preset][SEND_AFTERTOUCH] & 2) {
             calculatePressure(3);
         }
 
@@ -3772,16 +3772,16 @@ byte calculatePressureInterval(void) {
 // Send pressure data.
 void sendPressure(bool force) {
 
-    if (ED[mode][SEND_PRESSURE] == 1) {
+    if (ED[preset][SEND_PRESSURE] == 1) {
         const int usedmod = inputPressureBounds[0][3] > 0 ? shakePressureCCMod : 0;
         int sendp = constrain((int)inputPressureBounds[0][3] + usedmod, 0, 127);
         if (sendp != prevCCPressure || force) {
-            sendMIDI(CONTROL_CHANGE, ED[mode][PRESSURE_CHANNEL], ED[mode][PRESSURE_CC], sendp);  // Send MSB of pressure mapped to the output range.
+            sendMIDI(CONTROL_CHANGE, ED[preset][PRESSURE_CHANNEL], ED[preset][PRESSURE_CC], sendp);  // Send MSB of pressure mapped to the output range.
             prevCCPressure = sendp;
         }
     }
 
-    if ((switches[mode][SEND_AFTERTOUCH] & 1)) {
+    if ((switches[preset][SEND_AFTERTOUCH] & 1)) {
         // hack
         const float usedmod = mappedPressureHiRes[2] > 0.0f ? shakePressureChanPressMod : 0.0f;
         float hiresOut = constrain(mappedPressureHiRes[2] + usedmod, 0.0f, 127.0f);
@@ -3789,11 +3789,11 @@ void sendPressure(bool force) {
         int sendl = (int)(modf(hiresOut, &ipart) * 128);
         sendl = (!noteon && sensorValue <= 100) ? 0 : sendl;
         int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)ipart, 0, 127);
-        if (sendm != prevChanPressure || (ED[mode][AFTERTOUCH_MPEPLUS] && sendl != prevChanPressureLSB) || force) {
+        if (sendm != prevChanPressure || (ED[preset][AFTERTOUCH_MPEPLUS] && sendl != prevChanPressureLSB) || force) {
 
 
             // A bit of midi bandwidth optimization to not bother sending LSB if the MSB has a large jumps (moving fast).
-            if (ED[mode][AFTERTOUCH_MPEPLUS] && abs(sendm - prevChanPressure) < 16) {
+            if (ED[preset][AFTERTOUCH_MPEPLUS] && abs(sendm - prevChanPressure) < 16) {
                 // MPE+ uses CC 87 sent just prior as LSB
                 sendMIDI(CONTROL_CHANGE, mainMidiChannel, 87, sendl);  // Send LSB
                 prevChanPressureLSB = sendl;
@@ -3804,7 +3804,7 @@ void sendPressure(bool force) {
     }
 
     // Poly aftertouch uses 2nd lowest bit of ED flag.
-    if ((switches[mode][SEND_AFTERTOUCH] & 2) && noteon) {
+    if ((switches[preset][SEND_AFTERTOUCH] & 2) && noteon) {
         // Hack
         const int usedmod = inputPressureBounds[3][3] > 0 ? shakePressureKeyPressMod : 0;
         int sendm = (!noteon && sensorValue <= 100) ? 0 : constrain((int)inputPressureBounds[3][3] + usedmod, 0, 127);
@@ -4089,7 +4089,7 @@ void watchdogReset() {
 
 
 // Make any necessary changes to EEPROM when new firmware is installed.
-// Note: This is called before loadSettingsForAllModes() (before variables are filled from EEPROM) so we can use initialized values of variables for writing defaults to EEPROM.
+// Note: This is called before loadSettingsForAllPresets() (before variables are filled from EEPROM) so we can use initialized values of variables for writing defaults to EEPROM.
 void checkFirmwareVersion() {
     byte currentVersion = readEEPROM(EEPROM_FIRMWARE_VERSION);  // Previous firmware version.
 
@@ -4205,7 +4205,7 @@ void checkFirmwareVersion() {
             }
 
             // New IMU settings
-            for (int i = 0; i < 3; ++i) {      // Each mode
+            for (int i = 0; i < 3; ++i) {      // Each preset
                 for (int n = 0; n < 3; ++n) {  // Roll, pitch, yaw settings, taken from IMUsettings initialized values.
                     writeEEPROM(EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3), IMUsettings[i][IMU_ROLL_PITCH_MIN + (n * 9)]);
                     writeEEPROM((EEPROM_IMU_SETTINGS_START + i + ((IMU_ROLL_PITCH_MIN + (n * 9)) * 3) + EEPROM_FACTORY_SETTINGS_START), IMUsettings[i][IMU_ROLL_PITCH_MIN + (n * 9)]);
@@ -4235,17 +4235,17 @@ void checkFirmwareVersion() {
             }
 
             // New overblow semitones setting
-            for (int i = 0; i < 3; ++i) {  // Each mode
-                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3), ED[mode][OVERBLOW_SEMITONES]);
-                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3) + EEPROM_FACTORY_SETTINGS_START, ED[mode][OVERBLOW_SEMITONES]);
+            for (int i = 0; i < 3; ++i) {  // Each preset
+                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3), ED[preset][OVERBLOW_SEMITONES]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (OVERBLOW_SEMITONES * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][OVERBLOW_SEMITONES]);
             }
         }
 
         if (currentVersion < 45) {              // Manage all changes made in version 45.
-            for (int i = 0; i < 3; ++i) {       // Each mode
+            for (int i = 0; i < 3; ++i) {       // Each preset
                 for (int n = 0; n < 10; ++n) {  // Cycle through 10 new variables
-                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3), ED[mode][(HALFHOLE_PITCHBEND + n)]);
-                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3) + EEPROM_FACTORY_SETTINGS_START, ED[mode][(HALFHOLE_PITCHBEND + n)]);
+                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3), ED[preset][(HALFHOLE_PITCHBEND + n)]);
+                    writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][(HALFHOLE_PITCHBEND + n)]);
                 }
             }
         }

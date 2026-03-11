@@ -134,16 +134,16 @@ unsigned long autoCenterYawTimer;  // For determining when to auto-recenter the 
 bool pitchRegisterShifted;         // Whether the register has been shifted by IMU pitch
 int pitchRegisterBounds[6];        // Pitch boundaries (in degrees) between registers, i.e. lower bound of register 1, upper bound of register 1, etc. for up to five registers.
 bool shakeDetected = 0;
-byte yawOutput;                         // This is global because it used by both yaw mapping and sticks mode.
-byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks mode.
-unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks mode.
+byte yawOutput;                         // This is global because it used by both yaw mapping and sticks preset.
+byte prevKey = 0;                       // Used to remember the current key because we'll need to reset it if we're just using it as the hidden way of entering or exiting sticks preset.
+unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
 bool halfHoleTargetRegionState[9] = { false };
 
 // Instrument
-byte mode = 0;         // The current mode (instrument), from 0-2.
-byte defaultMode = 0;  // The default mode, from 0-2.
+byte preset = 0;         // The current preset (instrument), from 0-2.
+byte defaultPreset = 0;  // The default preset, from 0-2.
 
 
 // WARBL2 variables that are independent of instrument
@@ -165,8 +165,8 @@ byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;  // Current MIDI channel to se
 byte overblowSemitones = 5;                        // Number of semitones for overblowing
 
 
-// These are containers for the above variables, storing the value used by the three different instruments (modes).  First variable in array is for instrument 0, etc.
-byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three instruments.
+// These are containers for the above variables, storing the value used by the three different instruments (presets).  First variable in array is for instrument 0, etc.
+byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three presets.
 int8_t octaveShiftSelector[] = { 0, 0, 0 };
 int8_t noteShiftSelector[] = { 0, 0, 0 };
 byte pitchBendModeSelector[] = { 1, 1, 1 };
@@ -180,7 +180,7 @@ unsigned int vibratoDepthSelector[] = { 1024, 1024, 1024 };
 byte midiBendRangeSelector[] = { 2, 2, 2 };
 byte midiChannelSelector[] = { 1, 1, 1 };
 
-bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is mode (instrument), dimension 1 is button 0,1,2.
+bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is preset (instrument), dimension 1 is button 0,1,2.
 
 byte switches[3][kSWITCHESnVariables] =              // Settings for the switches in various Config Tool panels (see defines)
   { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 0
@@ -212,7 +212,7 @@ uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                
 unsigned long wakeTime = 0;        // When we woke from sleep
 byte blinkNumber[] = { 0, 0, 0 };  // The number of time to blink LEDs R, G, B.
 bool LEDon[] = { 0, 0, 0 };        // Whether each LED is currently on
-bool play = 0;                     // Turns sound off and on (with the use of a button action) when in bagless mode.
+bool play = 0;                     // Turns sound off and on (with the use of a button action) when in bagless preset.
 byte program = 0;                  // Current MIDI program change value. This always starts at 0 but can be increased/decreased with assigned buttons.
 bool dronesState = 0;              // Keeps track of whether we're above or below the pressure threshold for turning drones on.
 bool pulseLED[] = { 0, 0, 0 };     // Whether currently pulsing LEDs
@@ -301,7 +301,7 @@ float toneholeScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
 float vibratoScale[] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };           // Same as above but for vibrato
 int expression = 0;                                                                        // Pitchbend up or down from current note based on pressure
 int IMUpitchbend = 0;                                                                      // Pitchbend from IMU orientation
-bool customEnabled = 0;                                                                    // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend mode.
+bool customEnabled = 0;                                                                    // Whether the custom vibrato above is currently enabled based on fingering pattern and pitchbend preset.
 int adjvibdepth;                                                                           // Vibrato depth scaled to MIDI bend range.
 bool snapped[9];                                                                           // Whether snapped to halfhole pitchbend
 bool halfHoleShift[] = { false, false, false, false, false, false, false, false, false };  // Whether we have shifted the MIDI note by half holing.
@@ -338,8 +338,8 @@ bool communicationMode = 0;                       // Whether we are currently co
 byte communicationModeSource = MIDI_SOURCE_NONE;  // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
 byte buttonReceiveMode = 100;                     // Which row in the button configuration matrix for which we're currently receiving data.
 int pressureReceiveMode = 100;                    // Indicates the variable for which we're currently receiving data
-byte fingeringReceiveMode = 0;                    // Indicates the mode (instrument) for  which a fingering pattern is going to be sent
-byte WARBL2settingsReceiveMode = 0;               // Indicates the mode (instrument) for  which a WARBL2settings array variable is going to be sent
+byte fingeringReceiveMode = 0;                    // Indicates the preset (instrument) for  which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;               // Indicates the preset (instrument) for  which a WARBL2settings array variable is going to be sent
 
 SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();  // Semephore for sending MIDI couplets, in case there are multiple threads sending.
 
@@ -484,8 +484,8 @@ void setup() {
 
 
     loadFingering();
-    loadSettingsForAllModes();
-    mode = defaultMode;       // Set the startup instrument.
+    loadSettingsForAllPresets();
+    preset = defaultPreset;       // Set the startup instrument.
     analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
     twelveBitPressure = analogPressure.getRawValue();
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
@@ -558,9 +558,9 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 9 ms (or 4 when legatoslidevibrato mode is used) if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval.
+    /////////// Things here happen ~ every 9 ms (or 4 when legatoslidevibrato preset is used) if not connected to BLE or connected at a fast interval, and longer if connected at a slow interval.
     /////////// This ensures that we aren't sending pitchbend too much faster than the connection interval.
-    const int pbsendinterval = (connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : ((pitchBendModeSelector[mode] == kPitchBendLegatoSlideVibrato) ? 4 : 9);
+    const int pbsendinterval = (connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : ((pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) ? 4 : 9);
 
     if ((wakeTime - pitchBendTimer) >= pbsendinterval) {
         pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
