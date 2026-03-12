@@ -102,6 +102,10 @@ byte battLevel;                     // Estimated battery percentage remaining
 
 // BLE
 int connIntvl = 0;  // The negotiated connection interval
+uint16_t pendingConnHandle = BLE_CONN_HANDLE_INVALID;
+uint32_t bleConnectTime = 0;
+bool bleIntervalCheckPending = false;
+bool bleIntervalReported = false;
 
 
 // IMU data
@@ -141,18 +145,18 @@ bool registerHold = false;              // Locked into the current register, pre
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
 bool halfHoleTargetRegionState[9] = { false };
 
-// Instrument
-byte preset = 0;         // The current preset (instrument), from 0-2.
+// Preset
+byte preset = 0;         // The current preset (preset), from 0-2.
 byte defaultPreset = 0;  // The default preset, from 0-2.
 
 
-// WARBL2 variables that are independent of instrument
+// WARBL2 variables that are independent of preset
 byte WARBL2settings[] = { 2, 1, 5 };   // See defines above
 uint8_t WARBL2CustomChart[256];        // The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
 int WARBL2CustomChartReceiveByte = 0;  // The byte in the custom chart currently being received from the Config Tool
 
 
-// Variables that can change according to instrument.
+// Variables that can change according to preset.
 int8_t octaveShift = 0;                            // Octave transposition
 int8_t noteShift = 0;                              // Note transposition, for changing keys. All fingering patterns are initially based on the key of D, and transposed with this variable to the desired key.
 byte pitchBendMode = kPitchBendSlideVibrato;       // 0 means slide and vibrato are on. 1 means only vibrato is on. 2 is all pitchbend off, 3 is legato slide/vibrato.
@@ -165,7 +169,7 @@ byte mainMidiChannel = MIDI_DEFAULT_MAIN_CHANNEL;  // Current MIDI channel to se
 byte overblowSemitones = 5;                        // Number of semitones for overblowing
 
 
-// These are containers for the above variables, storing the value used by the three different instruments (presets).  First variable in array is for instrument 0, etc.
+// These are containers for the above variables, storing the value used by the three different presets.  First variable in array is for preset 0, etc.
 byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three presets.
 int8_t octaveShiftSelector[] = { 0, 0, 0 };
 int8_t noteShiftSelector[] = { 0, 0, 0 };
@@ -180,32 +184,32 @@ unsigned int vibratoDepthSelector[] = { 1024, 1024, 1024 };
 byte midiBendRangeSelector[] = { 2, 2, 2 };
 byte midiChannelSelector[] = { 1, 1, 1 };
 
-bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is preset (instrument), dimension 1 is button 0,1,2.
+bool momentary[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };  // Whether momentary click behavior is desired for MIDI on/off message sent with a button. Dimension 0 is preset (preset), dimension 1 is button 0,1,2.
 
 byte switches[3][kSWITCHESnVariables] =              // Settings for the switches in various Config Tool panels (see defines)
-  { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 0
-    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Instrument 1
-    { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Instrument 2
+  { { 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Preset 0
+    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },    // Preset 1
+    { 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 } };  // Preset 2
 
 byte IMUsettings[3][kIMUnVariables] =                                                                                                                                                                                                                                       // Settings for mapping and sending IMU readings (see defines)
-  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 0
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Instrument 1
-    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Instrument 2
+  { { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Preset 0
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Preset 1
+    { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                             // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Instrument 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Instrument 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 } };  // Instrument 2
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Preset 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Preset 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
-  { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 0
-    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Instrument 1
-    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 } };  // Instrument 2
+  { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
+    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 1
+    { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 } };  // Preset 2
 
-uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                          // The button configuration settings. Dimension 1 is the three instruments. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
-  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 0
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Instrument 1
-    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  // Instrument 2
+uint8_t buttonPrefs[3][kGESTURESnVariables][5] =                                                                                                                                                          // The button configuration settings. Dimension 1 is the three presets. Dimension 2 is the button combination (see button/gesture defines). Dimension 3 is the desired result: Action, MIDI command type (noteon/off, CC, PC), MIDI channel, MIDI byte 2, MIDI byte 3.
+  { { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Preset 0
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } },    // Preset 1
+    { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 13, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } } };  // Preset 2
 
 
 // Other misc. variables
@@ -338,8 +342,8 @@ bool communicationMode = 0;                       // Whether we are currently co
 byte communicationModeSource = MIDI_SOURCE_NONE;  // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
 byte buttonReceiveMode = 100;                     // Which row in the button configuration matrix for which we're currently receiving data.
 int pressureReceiveMode = 100;                    // Indicates the variable for which we're currently receiving data
-byte fingeringReceiveMode = 0;                    // Indicates the preset (instrument) for  which a fingering pattern is going to be sent
-byte WARBL2settingsReceiveMode = 0;               // Indicates the preset (instrument) for  which a WARBL2settings array variable is going to be sent
+byte fingeringReceiveMode = 0;                    // Indicates the preset for which a fingering pattern is going to be sent
+byte WARBL2settingsReceiveMode = 0;               // Indicates the preset for which a WARBL2settings array variable is going to be sent
 
 SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();  // Semephore for sending MIDI couplets, in case there are multiple threads sending.
 
@@ -438,7 +442,10 @@ void setup() {
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
     Bluefruit.begin();
-    Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Request the lowest possible connection interval.
+    //Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Request the lowest possible connection interval.
+    Bluefruit.Periph.setConnInterval(12, 12);  // 12 * 1.25 ms = 15 ms
+    //Bluefruit.Periph.setConnSlaveLatency(0);
+    //Bluefruit.Periph.setConnSupervisionTimeoutMS(4000);    // Apple wants 2-6 s
     Bluefruit.setTxPower(8);                               // Max power.
     Bluefruit.autoConnLed(false);                          // Don't indicate connection (we'll do this in the connect callback instead).
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service.
@@ -485,11 +492,11 @@ void setup() {
 
     loadFingering();
     loadSettingsForAllPresets();
-    preset = defaultPreset;       // Set the startup instrument.
+    preset = defaultPreset;   // Set the startup preset.
     analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
     twelveBitPressure = analogPressure.getRawValue();
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
-    loadPrefs();                                 // Load the correct user settings based on current instrument.
+    loadPrefs();                                 // Load the correct user settings based on current preset.
     powerDownTimer = millis();                   // Reset the powerDown timer.
 
     // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
@@ -554,6 +561,7 @@ void loop() {
         detectSip();
         detectShake();               // Gesture detection
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
+        updateBLEIntervalStatus();   // See if the BLE connection interval has changed.
     }
 
 

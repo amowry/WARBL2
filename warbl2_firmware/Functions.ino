@@ -8,7 +8,7 @@ void printStuff(void) {
     //Serial.println(buttonPrefs[preset][8][3]);
     //Serial.println(buttonPrefs[preset][8][4]);
 
-    //Serial.println(roll);
+    //Serial.println(connIntvl);
     //Serial.println("");
 
 
@@ -972,8 +972,8 @@ void getShift() {
 
     // Overblow if allowed.
     if (newState == TOP_REGISTER && !(modeSelector[preset] == kModeEVI || (modeSelector[preset] == kModeSax && newNote < 58) || (modeSelector[preset] == kModeSaxBasic && newNote < 70) || (modeSelector[preset] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                       // Add a register jump to the transposition if overblowing.
-        if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                             // Kaval only plays a fifth higher in the second register.
+        shift = shift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
+        if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                                       // Kaval only plays a fifth higher in the second register.
             shift = shift - 5;
         }
     }
@@ -990,7 +990,7 @@ void getShift() {
     // ToDo: Are there any others that don't use the thumb that can be added here?
     // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
     else if ((breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3 || modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4 || modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic || modeSelector[preset] == kModeNAF))) {
-        byte thumbShift = getThumbHalfHoleShift();                    // Number of registers shifted by thumb
+        byte thumbShift = getThumbHalfHoleShift();                      // Number of registers shifted by thumb
         shift = shift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
 }
@@ -1017,9 +1017,9 @@ ________________________________________________________________________________
 _________________________________________________________________________________________________
 
 */
-    const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };       // Lookup table for thumb halfhole functionality.
+    const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };           // Lookup table for thumb halfhole functionality.
     byte combinedSwitches = switches[preset][INVERT] << 1 | ED[preset][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
-    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                   // Second dimension is thumb position: 0 closed, 1 open, 2 half
+    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                       // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
     if (!(ED[preset][HALFHOLE_PITCHBEND] && bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
         if (bitRead(holeCovered, 8) == switches[preset][INVERT]) {
@@ -1442,7 +1442,7 @@ void handleCustomPitchBend() {
                                                                          : 0;
 
         if (modeSelector[preset] != kModeGHB && modeSelector[preset] != kModeNorthumbrian) {  // Only used for whistle and uilleann
-            if (vibratoEnable == 1) {                                                     // If it's a vibrato fingering pattern
+            if (vibratoEnable == 1) {                                                         // If it's a vibrato fingering pattern
                 if (iPitchBend[2] == 0) {
                     iPitchBend[2] = adjvibdepth;  // Just assign max vibrato depth to a hole that isn't being used for sliding (it doesn't matter which hole, it's just so it will be added in later).
                     iPitchBend[3] = 0;
@@ -1497,7 +1497,7 @@ void handleCustomPitchBend() {
 
 
         else if (modeSelector[preset] == kModeGHB || modeSelector[preset] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
-            for (byte i = 2; i < 4; i++) {                                                     // Use holes 2 and 3 for vibrato.
+            for (byte i = 2; i < 4; i++) {                                                         // Use holes 2 and 3 for vibrato.
                 if (i != slideHoleIndex || (holeCovered & 0b100000000) == 0) {
                     static unsigned int testNote;                        // The hypothetical note that would be played if a finger were lowered all the way.
                     if (bitRead(holeCovered, i) != 1) {                  // If the hole is not fully covered
@@ -1645,10 +1645,10 @@ void getHalfholePitchbend(byte i) {
     int heightOffset = ED[preset][HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
     int width = ED[preset][HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
     int fingerRate = ED[preset][HALFHOLE_FINGERRATE] * 1.5;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-    const int hysteresis = 3;                              // Hysteresis for the target region
-    bool inTargetRegion = halfHoleTargetRegionState[i];    // Whether the finger is in the assigned halfhole region, initialized with last state
-    const int offsetSteps = -2;                            // This is always true because there is a full step drop for the holes we use for halfholing.
-    static int prevToneholeRead[9];                        // For calculating rate of finger movement
+    const int hysteresis = 3;                                // Hysteresis for the target region
+    bool inTargetRegion = halfHoleTargetRegionState[i];      // Whether the finger is in the assigned halfhole region, initialized with last state
+    const int offsetSteps = -2;                              // This is always true because there is a full step drop for the holes we use for halfholing.
+    static int prevToneholeRead[9];                          // For calculating rate of finger movement
     bool MIDInoteShifted = false;
     bool inSlideHyst = false;
     float change = 999;  // Rate of finger movement
@@ -1876,8 +1876,8 @@ void sendNote() {
       (!noteon  // If there wasn't any note playing or the current note is different than the previous one
        || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
        || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
-      && newNote != 0                                                                                 // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
-      && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play)) &&         // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
+      && newNote != 0                                                                                   // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
+      && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play)) &&       // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
     {
 
@@ -1912,7 +1912,7 @@ void sendNote() {
         }
 
 
-        if (WARBL2settings[MIDI_DESTINATION] == 0 || connIntvl == 0) {                                                         // Only send here if not connected to BLE (to reduce jitter). I can't detect much difference, if any. (AM)
+        if (WARBL2settings[MIDI_DESTINATION] == 0 || connIntvl == 0) {                                                               // Only send here if not connected to BLE (to reduce jitter). I can't detect much difference, if any. (AM)
             if (ED[preset][SEND_PRESSURE] == 1 || switches[preset][SEND_AFTERTOUCH] != 0 || switches[preset][SEND_VELOCITY] == 1) {  // Need to send pressure prior to note, in case we are using it for velocity.
                 sendPressure(true);
             }
@@ -1951,10 +1951,10 @@ void sendNote() {
     if (noteon) {  // Several conditions to turn a note off
         if (
           ((newState == SILENCE && !switches[preset][BAGLESS]) || newNote == 0 || (switches[preset][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
-          (modeSelector[preset] == kModeNorthumbrian && newNote == 63) ||                                                 // Or closed Northumbrian pipe.
-          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                                // Or completely closed pipe with any fingering chart.
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                       // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
-                                                                                                                        // Keep track.
+          (modeSelector[preset] == kModeNorthumbrian && newNote == 63) ||                                                   // Or closed Northumbrian pipe.
+          (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                                    // Or completely closed pipe with any fingering chart.
+            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                           // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
+                                                                                                                            // Keep track.
 
             if (IMUsettings[preset][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
                 autoCenterYawTimer = millis();
@@ -2090,10 +2090,10 @@ void handleProgramChange(byte source, byte channel, byte value) {
     if (value < 3) {
         preset = value;  // change the preset.
         play = 0;
-        loadPrefs();  // Load the correct user settings based on current instrument.
+        loadPrefs();  // Load the correct user settings based on current preset.
         blinkNumber[GREEN_LED] = abs(preset) + 1;
         if (communicationMode) {
-            sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
+            sendSettings();  // Tell communications tool to switch preset and send all settings for current preset.
         }
     }
     //}
@@ -2183,13 +2183,13 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
 
-                for (byte i = 0; i < 3; i++) {  // Update current preset (instrument) if directed.
+                for (byte i = 0; i < 3; i++) {  // Update current preset if directed.
                     if (value == MIDI_CURRENT_PRESET_START + i) {
                         preset = i;
                         play = 0;
-                        loadPrefs();  // Load the correct user settings based on current instrument.
+                        loadPrefs();  // Load the correct user settings based on current preset.
                         if (communicationMode) {
-                            sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
+                            sendSettings();  // Tell communications tool to switch preset and send all settings for current preset.
                         }
                         blinkNumber[GREEN_LED] = abs(preset) + 1;
                     }
@@ -2206,7 +2206,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 for (byte i = 0; i < 5; i++) {  // Update current breath mode if directed.
                     if (value == MIDI_BREATH_MODE_START + i) {
                         breathModeSelector[preset] = i;
-                        loadPrefs();  // Load the correct user settings based on current instrument.
+                        loadPrefs();  // Load the correct user settings based on current preset.
                         blinkNumber[GREEN_LED] = abs(breathMode) + 1;
                     }
                 }
@@ -2241,19 +2241,19 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     }
                 }
 
-                if (value == MIDI_DEFAULT_PRESET_START) {  // Set current Instrument as default and save default to settings.
+                if (value == MIDI_DEFAULT_PRESET_START) {  // Set current Preset as default and save default to settings.
                     defaultPreset = preset;
                     writeEEPROM(EEPROM_DEFAULT_PRESET, defaultPreset);
                 }
 
 
-                if (value == MIDI_SAVE_AS_DEFAULTS_CURRENT) {  // Save settings as the defaults for the current instrument
+                if (value == MIDI_SAVE_AS_DEFAULTS_CURRENT) {  // Save settings as the defaults for the current preset
                     saveSettings(preset);
                     blinkNumber[GREEN_LED] = 3;
                 }
 
 
-                else if (value == MIDI_SAVE_AS_DEFAULTS_ALL) {  // Save settings as the defaults for all instruments
+                else if (value == MIDI_SAVE_AS_DEFAULTS_ALL) {  // Save settings as the defaults for all presets
                     for (byte k = 0; k < 3; k++) {
                         saveSettings(k);
                     }
@@ -2289,7 +2289,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             for (byte i = 0; i < 3; i++) {  // Update noteshift.
                 if (number == MIDI_CC_111 + i) {
                     if (value == MIDI_STICKS_MODE) {
-                        sticksModeTimer = millis();         // We will be toggling hidden "sticks" mode, if "autocalibrate bell sensor only" is clicked within 10 seconds.
+                        sticksModeTimer = millis();           // We will be toggling hidden "sticks" mode, if "autocalibrate bell sensor only" is clicked within 10 seconds.
                         prevKey = noteShiftSelector[preset];  // Remember the current key because we'll need to reset it if we're entering or exiting sticks mode.
                     }
                     if (value < 50) {
@@ -2639,10 +2639,10 @@ void handleButtons() {
                 changePitchBend();
             }
 
-            else if (holeCovered >> 1 == 0b00000010) {  // Change instrument if button 0 is pressed and fingering pattern is 0 0000001.
+            else if (holeCovered >> 1 == 0b00000010) {  // Change preset if button 0 is pressed and fingering pattern is 0 0000001.
                 justPressed[0] = 0;
                 specialPressUsed[0] = 1;
-                changeInstrument();
+                changePreset();
             }
         }
     }
@@ -2659,7 +2659,7 @@ void handleButtons() {
             if (!specialPressUsed[i]) {
                 //20240629 MrMep DoubleClick handling
                 if (switches[preset][BUTTON_DOUBLE_CLICK] && !momentary[preset][i]) {  //Double click is active on buttons, and this button is not in momentary
-                    if (waitingSecondClick[i]) {                                   //We already had a first click
+                    if (waitingSecondClick[i]) {                                       //We already had a first click
                         waitingSecondClick[i] = false;
                         if (doubleClickTimer < DOUBLE_CLICK_WAIT_INTERVAL) {  //Timer has not expired yet, we had second clic
                             performAction(i, i);
@@ -2779,8 +2779,8 @@ void performAction(byte action, byte button) {
             changePitchBend();
             break;
 
-        case CHANGE_INSTRUMENT:
-            changeInstrument();
+        case CHANGE_PRESET:
+            changePreset();
             break;
 
         case PLAY_STOP:
@@ -2958,17 +2958,17 @@ void changePitchBend() {
 
 
 
-// Cycle through instruments
-void changeInstrument() {
-    preset++;  //set instrument
+// Cycle through presets
+void changePreset() {
+    preset++;  //set preset
     if (preset == 3) {
         preset = 0;
     }
     play = 0;
-    loadPrefs();  // Load the correct user settings based on current instrument.
+    loadPrefs();  // Load the correct user settings based on current preset.
     blinkNumber[GREEN_LED] = abs(preset) + 1;
     if (communicationMode) {
-        sendSettings();  // Tell communications tool to switch preset and send all settings for current instrument.
+        sendSettings();  // Tell communications tool to switch preset and send all settings for current preset.
     }
 }
 
@@ -3092,7 +3092,7 @@ byte findleftmostunsetbit(uint16_t n) {
 
 // This is used the first time the software is run, to copy all the default settings to EEPROM.
 void saveFactorySettings() {
-    for (byte i = 0; i < 3; i++) {  // Save all the current settings for all three instruments.
+    for (byte i = 0; i < 3; i++) {  // Save all the current settings for all three presets.
         preset = i;
         saveSettings(i);
     }
@@ -3147,13 +3147,13 @@ void restoreFactorySettings() {
 
 
 
-// Send all settings for current instrument to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
+// Send all settings for current preset to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
 void sendSettings() {
 
     sendMIDI(MIDI_CC_110_MSG, VERSION);  //Send the firmware version.
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for instrument i.
+        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for preset i.
 
         if (noteShiftSelector[i] >= 0) {
             sendMIDI(MIDI_SEND_CC, MIDI_CC_111 + i, noteShiftSelector[i]);
@@ -3163,8 +3163,8 @@ void sendSettings() {
         }
     }
 
-    sendMIDI(MIDI_CC_102_MSG, MIDI_CURRENT_PRESET_START + preset);         // Send current instrument.
-    sendMIDI(MIDI_CC_102_MSG, MIDI_DEFAULT_PRESET_START + defaultPreset);  // Send default instrument.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_CURRENT_PRESET_START + preset);         // Send current preset.
+    sendMIDI(MIDI_CC_102_MSG, MIDI_DEFAULT_PRESET_START + defaultPreset);  // Send default preset.
 
     sendMIDI(MIDI_CC_103_MSG, senseDistance);  // Send sense distance
 
@@ -3254,7 +3254,7 @@ void loadFingering() {
         noteShiftSelector[i] = (int8_t)readEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i);
 
         if (communicationMode) {
-            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for instrument i.
+            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for preset i.
 
             if (noteShiftSelector[i] >= 0) {
                 sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + i), noteShiftSelector[i]);
@@ -3275,7 +3275,7 @@ void loadFingering() {
 
 
 
-// Save settings for current instrument as defaults for given instrument (i).
+// Save settings for current preset as defaults for given preset (i).
 void saveSettings(byte i) {
     writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[preset]);
     writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[preset]);
@@ -3332,7 +3332,7 @@ void saveSettings(byte i) {
 
 
 
-// Load settings for all three instruments from EEPROM.
+// Load settings for all three presets from EEPROM.
 void loadSettingsForAllPresets() {
     // Some things that are independent of preset.
     defaultPreset = readEEPROM(EEPROM_DEFAULT_PRESET);  // Load default preset.
@@ -3424,7 +3424,7 @@ void resetExpressionOverrideDefaults() {
 
 
 
-// Load the correct user settings for the current preset (instrument). This is used at startup and any time settings are changed.
+// Load the correct user settings for the current preset. This is used at startup and any time settings are changed.
 void loadPrefs() {
 
     vibratoHoles = vibratoHolesSelector[preset];
@@ -3530,7 +3530,7 @@ void loadPrefs() {
 
     // Calculate upper and lower bounds for IMU pitch (elevation) register mapping.
     byte pitchPerRegister = (IMUsettings[preset][PITCH_REGISTER_INPUT_MAX] - IMUsettings[preset][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[preset][PITCH_REGISTER_NUMBER];  // Number of degrees per register
-    IMUsettings[preset][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[preset][PITCH_REGISTER_NUMBER], 2, 5);                                                                // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
+    IMUsettings[preset][PITCH_REGISTER_NUMBER] = constrain(IMUsettings[preset][PITCH_REGISTER_NUMBER], 2, 5);                                                                  // Sanity check if uninitialized. Higher values will result in writing outside of the pitchRegisterBounds[i] array.
     for (byte i = 0; i < IMUsettings[preset][PITCH_REGISTER_NUMBER] + 1; i++) {
         pitchRegisterBounds[i] = ((i * pitchPerRegister) + IMUsettings[preset][PITCH_REGISTER_INPUT_MIN] * 5) - 90;  // Upper/lower bounds for each register
     }
@@ -3995,32 +3995,39 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
 
 
-
 // Retrieve BLE connection information.
 void connect_callback(uint16_t conn_handle) {
 
-    BLEConnection* connection = Bluefruit.Connection(conn_handle);  // Get the reference to current connection
+    BLEConnection* connection = Bluefruit.Connection(conn_handle);
 
     char central_name[32] = { 0 };
-
     connection->getPeerName(central_name, sizeof(central_name));
 
-    connIntvl = connection->getConnectionInterval();  // Get the current connection agreed upon connection interval in units of 0.625 ms
-    connIntvl = connIntvl * 0.625;                    // Convert to ms. A 7.5 ms interval gets truncated to 7.
+    //Serial.println(central_name);
 
+    // Read the initial connection interval
+    uint16_t connUnits = connection->getConnectionInterval();  // units of 1.25 ms
+        float intervalMs = connUnits * 1.25f;
+        connIntvl = (int)intervalMs;
 
-    if (connIntvl < 7) {  // When connecting to a CME Widi Bud Pro, getConnectionInterval() erroneously returns a connection interval of 3 ms. No idea why :).
-        connIntvl = 7;
-    }
+    // Schedule a second read later, after renegotiation has had time to happen.
+    pendingConnHandle = conn_handle;
+    bleConnectTime = millis();
+    bleIntervalCheckPending = true;
+    bleIntervalReported = false;
 
-    if (communicationMode) {
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7);    // high low byte of the connection interval.
-    }
+        if (communicationMode) {
+            uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
 
-    blinkNumber[BLUE_LED] = 2;  // Indicate connection.
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
+                            MIDI_CC_119, interval_x100 & 0x7F);
+
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
+                            MIDI_CC_119, interval_x100 >> 7);
+        }
+
+    blinkNumber[BLUE_LED] = 2;
 }
-
 
 
 
@@ -4045,6 +4052,88 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
         }
     }
 }
+
+
+
+
+
+
+
+
+// Check to see if the connection interval has been renegotiated.
+void updateBLEIntervalStatus() {
+
+    if (!bleIntervalCheckPending) return;
+    if (pendingConnHandle == BLE_CONN_HANDLE_INVALID) {
+        bleIntervalCheckPending = false;
+        return;
+    }
+
+    BLEConnection* connection = Bluefruit.Connection(pendingConnHandle);
+    if (!connection || !connection->connected()) {
+        bleIntervalCheckPending = false;
+        pendingConnHandle = BLE_CONN_HANDLE_INVALID;
+        return;
+    }
+
+    uint32_t elapsed = millis() - bleConnectTime;
+
+    // Wait long enough for device to finish its automatic renegotiation.
+    if (!bleIntervalReported && elapsed >= 1500) {
+        uint16_t connUnits = connection->getConnectionInterval();
+        float intervalMs = connUnits * 1.25f;
+        connIntvl = (int)intervalMs;
+
+        if (communicationMode) {
+            uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
+                            MIDI_CC_119, interval_x100 & 0x7F);
+
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
+                            MIDI_CC_119, interval_x100 >> 7);
+        }
+
+        bleIntervalReported = true;
+
+        // If still slower than 15 ms, optionally request 15 ms as a fallback.
+        // 12 units * 1.25 ms = 15 ms.
+        if (connUnits > 12) {
+
+            connection->requestConnectionParameter(12, 0, 400);
+
+            // Keep the check alive a little longer so we can see whether the fallback worked.
+            bleConnectTime = millis();
+            bleIntervalReported = false;
+        } else {
+            bleIntervalCheckPending = false;
+        }
+    }
+
+    // After fallback request, check one final time.
+    else if (bleIntervalReported == false && elapsed >= 1500) {
+        uint16_t connUnits = connection->getConnectionInterval();
+        float intervalMs = connUnits * 1.25f;
+
+        //Serial.print("Final BLE interval (ms): ");
+        //Serial.println(intervalMs);
+
+        connIntvl = (int)intervalMs;
+
+        if (communicationMode) {
+            uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
+                            MIDI_CC_119, interval_x100 & 0x7F);
+
+            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
+                            MIDI_CC_119, interval_x100 >> 7);
+        }
+
+        bleIntervalCheckPending = false;
+    }
+}
+
 
 
 
