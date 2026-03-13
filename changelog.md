@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - The three "Instruments" are now called "Presets" for clarity, both the in Config Tool and the firmware.
-- Projected the body-axis vector onto a horizontal frame to compute compass heading of the long body axis. This is now used as "yaw" so that it is entirely independent of "roll", which as we use it is defined as rotation around the long body axis. This makes "yaw" much more useful because it is not affected by roll.
+- Preset import and export now works on iOS (WARBL app) as well as other platforms. The user is given the option of where to save export files (typically the Files app).
+- "Yaw" is now much more useful because it is not affected by roll. The body-axis vector is now projected onto a horizontal frame to compute compass heading of the long body axis. This is now used as "yaw" so that it is entirely independent of "roll", which as we use it is defined as rotation around the long body axis.
 - Fixed a bug where neither "Sip Mouthpiece" nor "Shake" weren't correctly able to send MIDI messages (channel, byte 2, and byte 3 weren't being sent from the Configuration Tool to the WARBL2).
 - Reset the long-press counter when any button is released so that a long press of button 2 isn't registered if it was only being held in combination with a click of 1 or 3.
 - Fixed longstanding bug where certain button actions didn't work properly because of an incorrect check for momentary mode. This particularly affected instruments (presets) 2 and 3.
