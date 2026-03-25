@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- The Cofiguration Tool now has a built-in SoundFont player for improved basic audio for testing purposes.
+- The Cofiguration Tool now has a built-in SoundFont player with improved basic audio for testing purposes.
 - The three "Instruments" are now called "Presets" for clarity, both in the Config Tool and the firmware.
 - Preset import and export now works on iOS (WARBL app) as well as other platforms. The user is given the option of where to save export files (typically the Files app).
 - "Yaw" is now much more useful because it is not affected by roll. The body-axis vector is now projected onto a horizontal frame to compute compass heading of the long body axis. This is now used as "yaw" so that it is entirely independent of "roll", which as we use it is defined as rotation around the long body axis.
@@ -21,8 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added baroque recorder fingering that leverages half holing for the thumb and fingers to be as close as possible to the acoustic instrument.
+- Baroque recorder fingering that leverages half holing for the thumb and fingers to be as close as possible to the acoustic instrument.
 - It is now possible to send Program Changes messages (1, 2, or 3) on any channel to tell the WARBL to change to preset (instrument) 1, 2, or 3 respectively. The WARBL will not send any messages back unless it is currently connected to the Config Tool (in that case it will be sending CC messages on channel 7 to keep the Config Tool in sync).
+- Button action for toggling between vibrato/slide modes 1 and 4 (slide and legato slide).
 
 ## [Released]
 
