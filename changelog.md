@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - "Control register with elevation" now uses the "Register semitones" setting in the "Note trigger and register control" panel to determine the number of semitones in each register. This allows using elevation for a more versatile transpose method.
 - Fixed bug where the WARBL would send CC messages back when told by CC to switch presets, even when not connected to the Config Tool. When not connected, the WARBL still responds to CC messages on channel 7 but won't send any replies.
 - Fixed calculation of BLE connection interval and added request for renegotiation if the initial interval is greater than 15 ms.
+- Fixed bug where the selection of holes for half hole pitchbend was ignored if "Use MIDI note" switch was turned on.
 
 ### Added
 
