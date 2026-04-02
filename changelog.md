@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
-## [4.6] - 2025-9-18
+## [4.6] - 2026-4-2
 
 ### Changed
 
@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed bug where the WARBL would send CC messages back when told by CC to switch presets, even when not connected to the Config Tool. When not connected, the WARBL still responds to CC messages on channel 7 but won't send any replies.
 - Fixed calculation of BLE connection interval and added request for renegotiation if the initial interval is greater than 15 ms.
 - Fixed bug where the selection of holes for half hole pitchbend was ignored if "Use MIDI note" switch was turned on.
+- Fixed bug where thumb half hole was ignored if another tone hole was also half covered.
+- Added separate controls for thumb half-hole height, region size, and finger speed.
 
 ### Added
 
