@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Baroque recorder fingering that leverages half holing for the thumb and fingers to be as close as possible to the acoustic instrument.
 - It is now possible to send Program Changes messages (1, 2, or 3) on any channel to tell the WARBL to change to preset (instrument) 1, 2, or 3 respectively. The WARBL will not send any messages back unless it is currently connected to the Config Tool (in that case it will be sending CC messages on channel 7 to keep the Config Tool in sync).
 - Button action for toggling between vibrato/slide modes 1 and 4 (slide and legato slide).
+- Option to not use the bell sensor. This saves 0.7 mA or about 8% of battery life. If an uilleann pipes chart is chosen the bell sensor is used automatically. Turning it on with any other chart means that sounds will stop if all sensors including the bell sensor are covered, as an option to mute the instrument (useful in "bagless" mode especially).
 
 ## [Released]
 
