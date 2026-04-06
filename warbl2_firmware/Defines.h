@@ -5,7 +5,7 @@
 #define VERSION 46  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
-#define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we kow when to update it.
+#define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we know when to update it.
 
 #define WATCHDOG_TIMEOUT_SECS 10  // The timeout needs to be set longer than any task that might interrupt the loop().
 
@@ -57,11 +57,12 @@
 #define kModeMedievalPipes 22
 #define kModeEVI2 23
 #define kModeEVI3 24
+#define kModeRecorder2 25
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
 #define kWARBL2Custom4 70
-#define kModeNModes 29
+#define kModeNModes 30
 
 // Pitch bend modes
 #define kPitchBendSlideVibrato 0
@@ -166,11 +167,14 @@
 #define HALFHOLE_FINGERRATE 53      // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
 #define HALFHOLE_HOLES_LOW4BITS 54  // Holes that are enabled for halfhole pitchbend. Binary 00000000 LT -> R4
 #define HALFHOLE_HOLES_HIGH4BITS 55
-#define HALFHOLE_USE_MIDI_NOTE 56  // Boolean, send a new MIDI note instead of pitchbend when halfholing.
-#define HALFHOLE_INVERT_THUMB 57   // Boolean, invert the thumb halfhole register functionality.
-#define USE_THUMB_FOR_SLIDE 58     // Boolean
-#define ENABLE_REGISTER_HOLD 59    // Boolean -- If IMU register hold mode is enabled (currently not included in Config Tool)
-#define kEXPRESSIONnVariables 60
+#define HALFHOLE_USE_MIDI_NOTE 56        // Boolean, send a new MIDI note instead of pitchbend when halfholing.
+#define HALFHOLE_INVERT_THUMB 57         // Boolean, invert the thumb halfhole register functionality.
+#define USE_THUMB_FOR_SLIDE 58           // Boolean
+#define ENABLE_REGISTER_HOLD 59          // Boolean -- If IMU register hold mode is enabled (currently not included in Config Tool)
+#define THUMB_HALFHOLE_HEIGHT_OFFSET 60  // Thumb: (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
+#define THUMB_HALFHOLE_WIDTH 61          // Thumb: The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+#define THUMB_HALFHOLE_FINGERRATE 62     // Thumb: 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+#define kEXPRESSIONnVariables 63
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -204,7 +208,8 @@
 #define RECENTER_YAW 14
 #define SHOW_BATTERY_LEVEL 15
 #define REGISTER_HOLD 16
-#define kACTIONSnVariables 17
+#define TOGGLE_SLIDE_MODES 17
+#define kACTIONSnVariables 18
 
 // Variables in the WARBL2settings array (independent of PRESET)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
@@ -388,7 +393,9 @@
 #define MIDI_CC_102_VALUE_55 55  // Bidirectional. Medieval bagpipes
 #define MIDI_CC_102_VALUE_56 56  // Bidirectional. EVI2
 #define MIDI_CC_102_VALUE_57 57  // Bidirectional. EVI3
-                                 /* 58-59 unused */
+#define MIDI_CC_102_VALUE_58 58  // Bidirectional. Recorder2
+
+/* 59 unused */
 
 #define MIDI_CC_102_VALUE_60 60  // Bidirectional. Current preset (preset variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. Current preset is 1
@@ -560,8 +567,11 @@
 #define MIDI_CC_104_VALUE_106 106  // Bidirectional. Settings for current preset: indicates ED[57] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_107 107  // Bidirectional. Settings for current preset: indicates ED[58] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_108 108  // Bidirectional. Settings for current preset: indicates ED[59] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_109 109  // Bidirectional. Settings for current preset: indicates ED[60] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_110 110  // Bidirectional. Settings for current preset: indicates ED[61] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_111 111  // Bidirectional. Settings for current preset: indicates ED[62] is about to be sent with CC 105.
 //
-/* 109-127 unused */
+/* 112-127 unused */
 
 #define MIDI_CC_105 105  // Bidirectional - From Warbl. Values 0-127. Settings for current preset: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -738,11 +748,11 @@
 #define MIDI_MAX_CALIB_MSGS_END MIDI_CC_102_VALUE_28             // End of Calibration max values reached messages
 #define MIDI_FINGERING_PATTERN_MODE_START MIDI_CC_102_VALUE_30   // Bidirectional. indicates that the next command will be the fingering pattern for preset 1
 #define MIDI_FINGERING_PATTERN_START MIDI_CC_102_VALUE_33        // Bidirectional. first fingering pattern is tin whistle
-#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_57          // Bidirectional. EVI2
-#define MIDI_CURRENT_PRESET_START MIDI_CC_102_VALUE_60             // Bidirectional. current preset (preset variable) is  0
+#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_58          // Bidirectional. EVI2
+#define MIDI_CURRENT_PRESET_START MIDI_CC_102_VALUE_60           // Bidirectional. current preset (preset variable) is  0
 #define MIDI_PB_MODE_START MIDI_CC_102_VALUE_70                  // Bidirectional. Settings for current preset: Pitchbend mode 0
 #define MIDI_BREATH_MODE_START MIDI_CC_102_VALUE_80              // Bidirectional. Settings for current preset: Breath mode 0
-#define MIDI_DEFAULT_PRESET_START MIDI_CC_102_VALUE_85             // Bidirectional. default preset is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current preset as default)
+#define MIDI_DEFAULT_PRESET_START MIDI_CC_102_VALUE_85           // Bidirectional. default preset is 0 - (if Config Tool sends 85 to WARBL, WARBL sets current preset as default)
 #define MIDI_GESTURE_START MIDI_CC_102_VALUE_90                  // Bidirectional. Sending data for click 1 (dropdown row 0)
 #define MIDI_CUST_FINGERING_PATTERN_START MIDI_CC_102_VALUE_100  // Bidirectional. WARBL2 custom fingering chart 1
 #define MIDI_CUST_FINGERING_PATTERN_END MIDI_CC_102_VALUE_103    // Bidirectional. WARBL2 custom fingering chart 4
@@ -755,7 +765,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current preset: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current preset: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current preset: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_108                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_111                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
@@ -877,8 +887,8 @@
                                             // 343 low byte of vibrato depth  for PRESET 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
-#define EEPROM_ED_VARS_START 351  // 351-530	expression and drones (ED) variables
-/* 531-599 unused, room for extending above array or other variables */
+#define EEPROM_ED_VARS_START 351  // 351-533	expression and drones (ED) variables
+/* 534-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
 /* 603-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array

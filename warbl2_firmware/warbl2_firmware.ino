@@ -196,10 +196,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Preset 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                             // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Preset 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 },    // Preset 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 36, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0 } };  // Preset 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                        // Many settings in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 },    // Preset 0
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 },    // Preset 1
+    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
@@ -277,6 +277,7 @@ int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                         
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
 bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
+bool thumbHalfHoleChanged = 0;                                                     // Keeps track of when the thumb halfhole state has changed (used for recorder2).
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
 byte tempNewNote = 127;
 byte prevNote = 127;
@@ -309,7 +310,7 @@ bool customEnabled = 0;                                                         
 int adjvibdepth;                                                                           // Vibrato depth scaled to MIDI bend range.
 bool snapped[9];                                                                           // Whether snapped to halfhole pitchbend
 bool halfHoleShift[] = { false, false, false, false, false, false, false, false, false };  // Whether we have shifted the MIDI note by half holing.
-bool thumbHalfHole = true;                                                                 // Whether the register is currently shfted by the thumb inthe halfhole position.
+bool thumbHalfHole = true;                                                                 // Whether the register is currently shfted by the thumb in the halfhole position.
 byte previousTonehole = 255;                                                               // For halfhole finger rate: Remember whhich hole was used for the previous sensor reading so we are sure to get two consecutive readings from the same hole.
 
 
@@ -442,9 +443,8 @@ void setup() {
     // BLE MIDI stuff:
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
     Bluefruit.begin();
-    //Bluefruit.Periph.setConnIntervalMS(7.5, 15);           // Request the lowest possible connection interval.
-    Bluefruit.Periph.setConnInterval(12, 12);  // 12 * 1.25 ms = 15 ms
-    //Bluefruit.Periph.setConnSlaveLatency(0);
+    Bluefruit.Periph.setConnIntervalMS(7.5, 15);  // Request the lowest possible connection interval.
+    Bluefruit.Periph.setConnSlaveLatency(0);
     //Bluefruit.Periph.setConnSupervisionTimeoutMS(4000);    // Apple wants 2-6 s
     Bluefruit.setTxPower(8);                               // Max power.
     Bluefruit.autoConnLed(false);                          // Don't indicate connection (we'll do this in the connect callback instead).
@@ -523,6 +523,7 @@ void setup() {
 
 void loop() {
 
+
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
@@ -586,7 +587,6 @@ void loop() {
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }
-
 
     // timerD = micros(); // For benchmarking--can paste these lines around any of the function calls above.
     // Serial.println(micros() - timerD);

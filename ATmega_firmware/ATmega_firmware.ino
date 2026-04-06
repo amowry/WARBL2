@@ -38,7 +38,7 @@ const volatile GPIO_pin_t pins[] = { DP7, DP13, DP5, DP11, DP0, DP1, DP23, DP21,
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                       // Storage for tonehole sensor readings
 int tempToneholeReadA[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                  // Temporary storage for ambient light tonehole sensor readings, written during the timer ISR.
 volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // We pack the 9 10-bit tonehole readings into 12 bytes to send via SPI to the NRF52840.
-
+bool useBellSensor = true;                                                // Whether we should read the bell sensor (not doing so helps conserve power).
 
 
 
@@ -108,8 +108,16 @@ void loop() {
 
 // SPI interrupt routine
 ISR(SPI_STC_vect) {
-    byte c = SPDR;             // Read request from NRF52840.
-    SPDR = toneholePacked[c];  // Send requested byte to the NRF52840.
+    byte c = SPDR;  // Read request from NRF52840.
+    if (c < 12) {
+        SPDR = toneholePacked[c];  // Send requested byte to the NRF52840.
+    } else if (c == 20) {
+        useBellSensor = false;      // Stop using bell sensor
+        SPDR = toneholePacked[11];  // Send toneholePacked[11] again. It isn't normally used but could be used as a sanity check to check alignment for the next session.
+    } else if (c == 21) {
+        useBellSensor = true;
+        SPDR = toneholePacked[11];     // Send toneholePacked[11] again.
+    } else SPDR = toneholePacked[11];  // Send toneholePacked[11] in response to any other received value.
 }
 
 
@@ -123,12 +131,17 @@ EMPTY_INTERRUPT(ADC_vect);  // We're not using the ADC complete interrupt.
 // 830 us to read all sensors and prepare the data. The total time that IR LEDs are on is 800 us, so power consumed by sensors is: 800 uS/3000 us * 13mA/LED == 3.5 mA when polled every 3 ms.
 void readSensors(void) {
 
-    digitalWrite2f(pins[0], HIGH);                                    // Turn on LED 0. ToDo: We can add a setting to *not* use the bell sensor, in which case we can skip this step and save ~0.7 mA.
+    if (useBellSensor) {
+        digitalWrite2f(pins[0], HIGH);  // Turn on LED 0. If we can skip this step we save ~0.7 mA.
+    }
     ADC_read(holeTrans[0]);                                           // Throwaway to give sensor 0 extra time to rise after turning on LED (it's a slower sensor).
     tempToneholeReadA[1] = ADC_read(holeTrans[1]);                    // Get ambient reading for sensor 1.
     toneholeRead[0] = ADC_read(holeTrans[0]) - tempToneholeReadA[0];  // Get illuminated reading for 0 and subtract previously measured ambient reading.
-    digitalWrite2f(pins[0], LOW);                                     // Turn off LED 0.
-    digitalWrite2f(pins[1], HIGH);                                    // Turn on LED 1.
+    if (!useBellSensor) {
+        toneholeRead[0] = 0;  // Make sure it's 0 if we're not using the bell sensor.
+    }
+    digitalWrite2f(pins[0], LOW);   // Turn off LED 0.
+    digitalWrite2f(pins[1], HIGH);  // Turn on LED 1.
 
     tempToneholeReadA[2] = ADC_read(holeTrans[2]);  // etc.
     toneholeRead[1] = ADC_read(holeTrans[1]) - tempToneholeReadA[1];
@@ -198,7 +211,14 @@ void readSensors(void) {
         if (i != 7) { toneholePacked[10] = toneholePacked[10] << 2; }
     }
 
-    toneholePacked[11] = toneholeRead[8] >> 8;  // Put upper 2 bits of final tone hole into byte 12. There are 8 extra bits here, if we need them for sending status.
+    // byte 11:
+    // bits 1..0 = high 2 bits of sensor 8
+    // bits 3..2 = unused = 0
+    // bits 7..4 = checksum
+    toneholePacked[11] = toneholeRead[8] >> 8;                    // Put upper 2 bits of final tone hole into byte 11.
+    toneholePacked[11] &= 0x0F;                                   // clear upper nibble
+    uint8_t checksum = computeToneholeChecksum4(toneholePacked);  // Compute a checksum.
+    toneholePacked[11] |= (checksum << 4);                        // Insert the checksum.
 
 
     interrupts();
@@ -238,4 +258,24 @@ int ADC_read(byte pin) {
     while (bit_is_set(ADCSRA, ADSC)) {}  // Awake again, reading should be done, but better make sure.
 
     return ADC;
+}
+
+
+
+// Compute checksum for sensor values.
+uint8_t computeToneholeChecksum4(const uint8_t *p) {
+    // Fold all packet bytes except byte 11 into 4 bits.
+    // Also include only the low 2 data bits of byte 11 (sensor 8 high bits),
+    // not the checksum nibble itself.
+    uint8_t x = 0;
+
+    for (uint8_t i = 0; i < 11; i++) {
+        x ^= p[i];
+    }
+
+    x ^= (p[11] & 0x03);  // only sensor8 top two bits
+
+    // Fold to 4 bits
+    x ^= (x >> 4);
+    return x & 0x0F;
 }

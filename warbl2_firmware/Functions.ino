@@ -4,14 +4,21 @@
 // Debug
 void printStuff(void) {
 
-    //Serial.println(buttonPrefs[preset][8][2]);
-    //Serial.println(buttonPrefs[preset][8][3]);
-    //Serial.println(buttonPrefs[preset][8][4]);
 
-    //Serial.println(connIntvl);
+    //Note: there may be an issue where midi destination is sometimes set to an incorrect value. Currently unable to reproduce. AM 3/26
+    //Serial.println(WARBL2settings[MIDI_DESTINATION]);
     //Serial.println("");
 
+    //Seems like sometimes these aren't received correctly from teh Config Tool 3/26
+    //byte halfHoleEnabled = (ED[preset][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[preset][HALFHOLE_HOLES_LOW4BITS];
+    //Serial.println(halfHoleEnabled, BIN);
 
+    /*
+    for (byte i = 0; i < 9; i++) {
+        Serial.println(toneholeRead[i]);
+    }
+     Serial.println("");
+*/
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
@@ -62,7 +69,6 @@ byte calculateDelayTime(void) {
 
 
 
-// Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
     analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
@@ -70,51 +76,90 @@ void getSensors(void) {
     smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
     sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
 
-    // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 us.
+    // Receive tone hole readings from ATmega32U4.
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(2, LOW);   // CS -- Wake up ATmega.
-    delayMicroseconds(10);  // Give it time to wake up.
-    SPI.transfer(0);        // We don't receive anything useful back from the first transfer.
-    for (byte i = 0; i < 12; i++) {
+    digitalWrite(2, LOW);
+    delayMicroseconds(10);
+
+    SPI.transfer(0);  // discard first returned byte
+    for (byte i = 0; i < 11; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
-    digitalWrite(2, HIGH);  //CS
+    toneholePacked[11] = SPI.transfer(11);  // This just shifts in a dummy value while reading the last value in the buffer.
+    //toneholePacked[11] = SPI.transfer(20);  // This sends the command to turn off the bell sensor while reading the last value in the buffer. This saves 0.7 mA of power, or ~8% of battery life.
+    //toneholePacked[11] = SPI.transfer(21);  // This sends the command to turn on the bell sensor while reading the last value in the buffer.
+
+    digitalWrite(2, HIGH);
     SPI.endTransaction();
 
-    // Unpack the readings from bytes to ints.
-    for (byte i = 0; i < 9; i++) {
-        toneholeRead[i] = toneholePacked[i];  // Unpack lower 8 bits.
+    // Check checksum to validate the sensor readings.
+    uint8_t receivedChecksum = (toneholePacked[11] >> 4) & 0x0F;
+    uint8_t computedChecksum = computeToneholeChecksum4(toneholePacked);
+
+    bool goodChecksum = (receivedChecksum == computedChecksum);
+    if (!goodChecksum) {
+        //Serial.println("bad");
     }
 
-    for (byte i = 0; i < 4; i++) {  // Unpack the upper 2 bits of holes 0-3.
-        toneholePacked[9] = toneholePacked[9] & 0b11111111, BIN;
-        toneholeRead[i] = toneholeRead[i] | (toneholePacked[9] << 2) & 0b1100000000;
-        toneholePacked[9] = toneholePacked[9] << 2;
-    }
 
-    for (byte i = 4; i < 8; i++) {  // Unpack the upper 2 bits of holes 4-7.
-        toneholePacked[10] = toneholePacked[10] & 0b11111111, BIN;
-        toneholeRead[i] = toneholeRead[i] | (toneholePacked[10] << 2) & 0b1100000000;
-        toneholePacked[10] = toneholePacked[10] << 2;
-    }
-
-    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  // Unpack the upper 2 bits of hole 8.
-
-
-
-    for (byte i = 0; i < 9; i++) {
-        // run through adaptive smoothing filter
-        filterToneholes[i].update(toneholeRead[i]);
-        toneholeRead[i] = filterToneholes[i].getValue();
-
-        if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
-            toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
+    if (goodChecksum) {
+        // Unpack the readings from bytes to ints.
+        for (byte i = 0; i < 9; i++) {
+            toneholeRead[i] = toneholePacked[i];
         }
-        if (toneholeRead[i] < 0) {  // In rare cases the adjusted readings might end up being negative.
-            toneholeRead[i] = 0;
+
+        byte b9 = toneholePacked[9];
+        byte b10 = toneholePacked[10];
+
+        for (byte i = 0; i < 4; i++) {
+            toneholeRead[i] |= ((b9 << 2) & 0b1100000000);
+            b9 <<= 2;
+        }
+
+        for (byte i = 4; i < 8; i++) {
+            toneholeRead[i] |= ((b10 << 2) & 0b1100000000);
+            b10 <<= 2;
+        }
+
+        toneholeRead[8] |= ((toneholePacked[11] & 0x03) << 8);
+
+
+        for (byte i = 0; i < 9; i++) {
+            // Run through adaptive smoothing filter.
+            filterToneholes[i].update(toneholeRead[i]);
+            toneholeRead[i] = filterToneholes[i].getValue();
+
+            if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
+                toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
+            }
+            if (toneholeRead[i] < 0) {  // In rare cases the adjusted readings might end up being negative.
+                toneholeRead[i] = 0;
+            }
         }
     }
+}
+
+
+
+
+
+
+
+
+// Calculate checksum for received sensor values. It should be ~94% effective at detecting a bad sensor value.
+uint8_t computeToneholeChecksum4(const uint8_t* p) {
+    uint8_t x = 0;
+
+    for (uint8_t i = 0; i < 11; i++) {
+        x ^= p[i];
+    }
+
+    x ^= (p[11] & 0x03);  // only sensor 8 high bits
+
+    x ^= (x >> 4);
+    return x & 0x0F;
 }
 
 
@@ -828,8 +873,10 @@ void debounceFingerHoles() {
         transitionFilter = 0;
     }
 
-    if (debounceDelta >= transitionFilter
-        && timing == 1) {  // The fingering pattern has changed.
+    if ((debounceDelta >= transitionFilter
+         && timing == 1)
+        || (modeSelector[preset] == kModeRecorder2 && thumbHalfHoleChanged == true)) {  // The fingering pattern has changed. IF we're using recorder2 also check to see if the thumb has changed.
+        thumbHalfHoleChanged = false;
         timing = 0;
         fingersChanged = 1;
         fingeringChangeTimer = millis();     // Start timing after the fingering pattern has changed.
@@ -916,10 +963,21 @@ byte getNote(unsigned int fingerPattern) {
 
     // Read the MIDI note for the current fingering (all charts except the custom ones).
     if (modeSelector[preset] < kWARBL2Custom1) {
-        if (breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3)) {  // Here we can put fingering charts that hsve the thumb hard-coded but we want to optionally be able to ignore the second half of the chart and use the thumb register and halfhole functionality instead.
+        if (breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3)) {  // Here we can put fingering charts that have the thumb hard-coded but we want to optionally be able to ignore the second half of the chart and use the thumb register and halfhole functionality instead.
             bitClear(tempCovered, 7);
         }
         ret = charts[modeSelector[preset]][tempCovered];
+
+        if (modeSelector[preset] == kModeRecorder2 && thumbHalfHole == false) {  // Some special cases with Recorder2 if the thumb hole is completely open.
+            if (tempCovered == 0b01100000) {
+                ret = 73;
+            } else if (tempCovered == 0b00100000) {
+                ret = 74;
+            } else if (tempCovered == 0b00111110) {
+                ret = 75;
+            }
+        }
+
     } else {                                 // Otherwise read from the currently selected custom chart.
         if (breathMode == kPressureThumb) {  // If we're using the thumb for register control we only look at the first half of the custom chart (ignoring the half with the thumb hole covered).
             bitClear(tempCovered, 7);
@@ -954,6 +1012,12 @@ byte getNote(unsigned int fingerPattern) {
 
 // Add up any transposition based on key and register.
 void getShift() {
+
+
+    if (breathMode == kPressureThumb && (bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3) == 1) && bitRead(holeCovered, 8) != 1) {  // If we're using the thumb for register shift, go ahead and detect that now.
+        getThumbHalfhole();
+    }
+
 
     byte pitchShift;
     byte totalHalfHoleShift = 0;
@@ -1021,16 +1085,20 @@ ________________________________________________________________________________
     byte combinedSwitches = switches[preset][INVERT] << 1 | ED[preset][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
     byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                       // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
-    if (!(ED[preset][HALFHOLE_PITCHBEND] && bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
-        if (bitRead(holeCovered, 8) == switches[preset][INVERT]) {
-            return 1;
-        } else {
-            return 0;
+    if (modeSelector[preset] != kModeRecorder2) {                                                     // Recorder2 is handled in getNote(), so ignore that.
+        if (!(ED[preset][HALFHOLE_PITCHBEND] && bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
+            if (bitRead(holeCovered, 8) == switches[preset][INVERT]) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
-    }
 
-    else {  // If thumb halfhole is being used
-        return lookup[combinedSwitches][thumbPosition] - 1;
+        else {  // If thumb halfhole is being used
+            return lookup[combinedSwitches][thumbPosition] - 1;
+        }
+    } else {
+        return 0;  // There's no thumb shift with Recorder2-- we just need to get the thumb state.
     }
 }
 
@@ -1408,7 +1476,7 @@ void getIMUpitchbend() {
 
 
 
-// For a specific hole, return the number of half-steps interval it would be from the current note with hole-covered state.
+// For a specific hole, return the number of half-step intervals it would be from the current note with hole-covered state.
 int findStepsOffsetFor(int hole) {
     unsigned int closedHolePattern = holeCovered;
     bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole.
@@ -1602,16 +1670,13 @@ void getSlide() {
             if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
                 offsetSteps = -offsetLimit;
             }
-            if (breathMode == kPressureThumb && i == 8 && (bitRead(halfHoleEnabled, 7) == 1) && bitRead(holeCovered, 8) != 1) {  // If we're using the thumb for register shift, go ahead and detect that now.
-                getHalfholePitchbend(i);
-            }
 
             else if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
                 if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
                     if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
                     }
-                } else if (trueOffsetSteps == -2) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
+                } else if (trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
                     getHalfholePitchbend(i);
                 }
             } else {
@@ -1639,6 +1704,68 @@ void getSlide() {
 
 
 
+// Thumb half hole handing for register control (called from getShift). For clarity this is separate from the function used for other fingers below.
+void getThumbHalfhole() {
+
+    int heightOffset = ED[preset][THUMB_HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
+    int width = ED[preset][THUMB_HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    float fingerRate = ED[preset][THUMB_HALFHOLE_FINGERRATE] / 3;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
+    const int hysteresis = 3;                                      // Hysteresis for the target region
+    bool inTargetRegion = halfHoleTargetRegionState[8];            // Whether the thumb is in the assigned halfhole region, initialized with last state
+    static int prevToneholeRead;                                   // For calculating rate of finger movement
+    bool inSlideHyst = false;
+    float change = 999;  // Rate of finger movement
+    static bool prevThumbHalfhole = 0;
+
+    change = (abs(sqrt(float(toneholeRead[8])) - sqrt(float(prevToneholeRead)))) * 30;  // Absolute rate of thumb movement, linearized to account for exponential sensor/distance relationship. Typically ranges from 0-100.
+    prevToneholeRead = toneholeRead[8];
+
+    int center = ((toneholeCovered[8] - senseDistance) >> 1) + senseDistance;  // Center sensor value for current slide hole (midpoint of sensor readings).
+    // Note that sensor values increase exponentially with distance so the center sensor value is not the center of the distance from the tone hole.
+
+    heightOffset = ((heightOffset - 50) * center) / 50;  // Convert offset to a positive or negative sensor value.
+    width = (width * (center + heightOffset)) / 100;     // Convert width to a sensor value.
+
+    // Determine if the thumb is in the target region.
+    if (toneholeRead[8] > (center - heightOffset - width) && toneholeRead[8] > (senseDistance + hysteresis)) {  // The halfhole region extends all the way down to the fully-covered hole.
+        inTargetRegion = true;
+
+    } else if ((toneholeRead[8] < (center - heightOffset - width - hysteresis)) || toneholeRead[8] < senseDistance + hysteresis) {
+        inTargetRegion = false;
+    }
+
+    halfHoleTargetRegionState[8] = inTargetRegion;
+    if (((change < fingerRate) || (ED[preset][HALFHOLE_FINGERRATE] == 127)) && inTargetRegion) {  // Snap to half hole if the thumb is moving slowly enough and it is within the defined region.
+        snapped[8] = true;
+    }
+
+    if (!inTargetRegion) {
+        snapped[8] = false;
+        thumbHalfHole = false;  // Unshift the register.
+        if (halfHoleShift[8] == true) {
+            halfHoleShift[8] = false;
+        }
+    }
+
+    if (snapped[8] == true) {
+        thumbHalfHole = true;  // Shift the register.
+    }
+
+    if (prevThumbHalfhole != thumbHalfHole) {  // Used for recorder2 so we know when to call getNote() again.
+        thumbHalfHoleChanged = true;
+    } else thumbHalfHoleChanged = false;
+    prevThumbHalfhole = thumbHalfHole;
+}
+
+
+
+
+
+
+
+
+
+
 // Snap pitchbend to a semitone (or optionally apply a shift to the MIDI note) and optionally calculate slide to smoothly integrate.
 void getHalfholePitchbend(byte i) {
 
@@ -1649,7 +1776,6 @@ void getHalfholePitchbend(byte i) {
     bool inTargetRegion = halfHoleTargetRegionState[i];      // Whether the finger is in the assigned halfhole region, initialized with last state
     const int offsetSteps = -2;                              // This is always true because there is a full step drop for the holes we use for halfholing.
     static int prevToneholeRead[9];                          // For calculating rate of finger movement
-    bool MIDInoteShifted = false;
     bool inSlideHyst = false;
     float change = 999;  // Rate of finger movement
 
@@ -1668,91 +1794,46 @@ void getHalfholePitchbend(byte i) {
     width = (width * (center + heightOffset)) / 100;     // Convert width to a sensor value.
 
     // Determine if the finger is in the target region.
-    if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !ED[preset][HALFHOLE_USE_MIDI_NOTE] && !(kPressureThumb && i == 8)) {
+    if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !ED[preset][HALFHOLE_USE_MIDI_NOTE]) {
         if (abs(toneholeRead[i] - center + heightOffset) < width && toneholeRead[i] > (senseDistance + hysteresis)) {  // If we're using slide, there's a "not halfhole" space both above and below the halfhole region.
             inTargetRegion = true;
-            //Serial.print(i);
-            //Serial.println(" - SlideTargetRegion TRUE : ");
-            //Serial.println(toneholeRead[i]);
+
         } else if (abs(toneholeRead[i] - center + heightOffset) > width + hysteresis && toneholeRead[i] > (senseDistance + hysteresis)) {  // Use hysteresis to exit target region to avoid oscillations when we're not also using slide.
             inTargetRegion = false;
-            //Serial.print(i);
-            //Serial.print(" - SlideTargetRegion FALS : ");
-            //Serial.println(toneholeRead[i]);
+
         } else {
             inSlideHyst = toneholeRead[i] <= (senseDistance + hysteresis);
-            /*
-            Serial.print(i);
-            if (inTargetRegion) {
-                Serial.print(" - SlideTargetReHYST TRUE : ");
-            } else {
-                Serial.print(" - SlideTargetReHYST FALS : ");
-            }
-            Serial.println(toneholeRead[i]);
-            */
         }
     } else if (toneholeRead[i] > (center - heightOffset - width) && toneholeRead[i] > (senseDistance + hysteresis)) {  // If we're not using sliding, if we're using MIDI notes for pitchbend, or using the thumb for register, the halfhole region extends all the way down to the fully-covered hole.
         inTargetRegion = true;
-        /*
-        Serial.print(i);
-        Serial.print(" - InTargetRegion TRUE : ");
-        Serial.print(" sensedist: ");
-        Serial.print(senseDistance);
-        Serial.print(" htoffs: ");
-        Serial.print(heightOffset);
-        Serial.print(" center: ");
-        Serial.print(center);
-        Serial.print(" width: ");
-        Serial.print(width);
-        Serial.print(" tread: ");
-        Serial.println(toneholeRead[i]);
-        */
-    } else if (toneholeRead[i] < (center - heightOffset - width - hysteresis)) {
+
+    } else if ((toneholeRead[i] < (center - heightOffset - width - hysteresis)) || toneholeRead[8] < senseDistance) {
         inTargetRegion = false;
-        //Serial.print(i);
-        //Serial.print(" - InTargetRegion FALS : ");
-        //Serial.println(toneholeRead[i]);
     }
-    /*
-    else {
-        Serial.print(i);
-        if (inTargetRegion) {
-             Serial.print(" - InTargetReHYST TRUE : ");
-        } else {
-        Serial.print(" - InTargetReHYST FALS : ");
-        }
-        Serial.println(toneholeRead[i]);
-    }
-    */
 
     halfHoleTargetRegionState[i] = inTargetRegion;
-    if (((change < fingerRate) || (ED[preset][HALFHOLE_FINGERRATE] == 127) || ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(i == 8 && breathMode == kPressureThumb) && !ED[preset][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
+    if (((change < fingerRate) || (ED[preset][HALFHOLE_FINGERRATE] == 127) || ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !ED[preset][HALFHOLE_USE_MIDI_NOTE])) && inTargetRegion) {  // Snap to semitone if the finger is moving slowly enough (or we're using slide) and it is within the defined region.
         snapped[i] = true;
-        //Serial.println("snapped");
     }
 
     if (!inTargetRegion) {
         snapped[i] = false;
-        if (i == 8 && breathMode == kPressureThumb) {  // If we're using the thumb for register control
-            thumbHalfHole = false;                     // Unshift the register.
-        }
         if (halfHoleShift[i] == true) {
             halfHoleShift[i] = false;
         }
     }
 
     if (snapped[i] == true) {
-        if (i == 8 && breathMode == kPressureThumb) {  // If we're using the thumb for register control and it's in the halfhole region...
-            thumbHalfHole = true;                      // Shift the register.
-        } else if (!ED[preset][HALFHOLE_USE_MIDI_NOTE]) {
+        if (!ED[preset][HALFHOLE_USE_MIDI_NOTE]) {
             iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone if not using MIDI note instead.
         } else {
             halfHoleShift[i] = true;  // Or shift MIDI note.
         }
     }
 
+
     // Calculate slide here if we're not snapped to semitone. We calculate the slide in two portions, converging on the edges of the target region at one semitone. This gives a smooth transition from sliding to semitone.
-    if (!snapped[i] && !inSlideHyst && !ED[preset][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(i == 8 && (breathMode == kPressureThumb || !ED[preset][USE_THUMB_FOR_SLIDE]))) {
+    if (!snapped[i] && !inSlideHyst && !ED[preset][HALFHOLE_USE_MIDI_NOTE] && (pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato)) {
         if (toneholeRead[i] < (center - heightOffset)) {                                                                                                      // The sensor value is lower than the target region.
             float tempToneholeScale = (((16383.0f / midiBendRange)) / max((center - heightOffset - width) - toneholeBaseline[i] - senseDistance, 1) / 4.0f);  // We need to recalculate the tonehole scaling factor based on whether we are above the region or below it.
             iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * tempToneholeScale)) * -offsetSteps));
@@ -1762,6 +1843,7 @@ void getHalfholePitchbend(byte i) {
         }
     }
 }
+
 
 
 
@@ -2900,13 +2982,24 @@ void performAction(byte action, byte button) {
             }
             break;
 
+        case TOGGLE_SLIDE_MODES:
+            if (button != 127 && !momentary[preset][button]) {
+                toggleSlideMode();
+
+            } else {
+                toggleSlideMode();  // Toggle again if we're in momentary mode and this is a release.
+            }
+            break;
+
         default:
             return;
     }
 }
 
 
+/*
 
+*/
 
 
 
@@ -2948,6 +3041,34 @@ void changePitchBend() {
     blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
     if (communicationMode) {
         sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);  //send current pitchbend mode to configuration tool.
+    }
+}
+
+
+
+
+
+
+
+
+// Switch between vibrato/slide modes 1 and 4
+void toggleSlideMode() {
+    if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
+        pitchBendModeSelector[preset] = kPitchBendLegatoSlideVibrato;
+        loadPrefs();
+        blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
+        if (communicationMode) {
+            sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);  //send current pitchbend mode to configuration tool.
+        }
+    }
+
+    else if (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) {
+        pitchBendModeSelector[preset] = kPitchBendSlideVibrato;
+        loadPrefs();
+        blinkNumber[GREEN_LED] = abs(pitchBendMode) + 1;
+        if (communicationMode) {
+            sendMIDI(MIDI_CC_102_MSG, MIDI_PB_MODE_START + pitchBendMode);  //send current pitchbend mode to configuration tool.
+        }
     }
 }
 
@@ -3012,6 +3133,10 @@ void handleMomentary(byte button) {
                 registerHold = true;
                 heldRegister = newState;
             }
+        }
+
+        if (buttonPrefs[preset][button][0] == 17) {
+            toggleSlideMode();
         }
     }
 }
@@ -4007,8 +4132,8 @@ void connect_callback(uint16_t conn_handle) {
 
     // Read the initial connection interval
     uint16_t connUnits = connection->getConnectionInterval();  // units of 1.25 ms
-        float intervalMs = connUnits * 1.25f;
-        connIntvl = (int)intervalMs;
+    float intervalMs = connUnits * 1.25f;
+    connIntvl = (int)intervalMs;
 
     // Schedule a second read later, after renegotiation has had time to happen.
     pendingConnHandle = conn_handle;
@@ -4016,15 +4141,15 @@ void connect_callback(uint16_t conn_handle) {
     bleIntervalCheckPending = true;
     bleIntervalReported = false;
 
-        if (communicationMode) {
-            uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+    if (communicationMode) {
+        uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
 
-            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
-                            MIDI_CC_119, interval_x100 & 0x7F);
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
+                        MIDI_CC_119, interval_x100 & 0x7F);
 
-            sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
-                            MIDI_CC_119, interval_x100 >> 7);
-        }
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
+                        MIDI_CC_119, interval_x100 >> 7);
+    }
 
     blinkNumber[BLUE_LED] = 2;
 }
