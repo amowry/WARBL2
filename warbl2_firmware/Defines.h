@@ -5,12 +5,11 @@
 #define VERSION 46  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
-#define ATMEGA_FIRMWARE_VERSION 10  // Remember which ATmega firmware version we have installed so we know when to update it.
-
+#define ATMEGA_FIRMWARE_VERSION 11
 #define WATCHDOG_TIMEOUT_SECS 10  // The timeout needs to be set longer than any task that might interrupt the loop().
 
-#define DEBUG_TRANSITION_FILTER 0
 #define DEBUG_CONFIG_TOOL 0
+#define DEBUG_TRANSITION_FILTER 0
 
 #define EEPROM_I2C_ADDRESS 0x50
 
@@ -215,7 +214,8 @@
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
 #define CHARGE_FROM_HOST 1  // Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
-#define kWARBL2SETTINGSnVariables 3
+#define USE_BELL_SENSOR 3 // Bool, whether to use the bell sensor.
+#define kWARBL2SETTINGSnVariables 4
 
 
 // Variables in the IMUsettings array
@@ -638,7 +638,8 @@
 #define MIDI_CC_106_VALUE_55 55  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
 #define MIDI_CC_106_VALUE_56 56  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
 #define MIDI_CC_106_VALUE_57 57  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
-/* 58-59 unused */
+#define MIDI_CC_106_VALUE_58 58  // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
+/* 59 unused */
 #define MIDI_CC_106_VALUE_60 60  // from Config Tool. WARBL2 recenter yaw
 #define MIDI_CC_106_VALUE_61 61  // from Config Tool. WARBL2 reset pitch expression override to default
 /* 62-69 unused */
@@ -889,8 +890,8 @@
 /* 348-350 unused */
 #define EEPROM_ED_VARS_START 351  // 351-533	expression and drones (ED) variables
 /* 534-599 unused, room for extending above array or other variables */
-#define EEPROM_WARBL2_SETTINGS_START 600  // 600-602 WARBL2settings array
-/* 603-625 unused, room for extending above array or other variables */
+#define EEPROM_WARBL2_SETTINGS_START 600  // 600-603 WARBL2settings array
+/* 604-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array
 /*842-999 unused, room for extending above array or other variables */
 #define EEPROM_BUTTON_PREFS_START 1000  // 1000-1247 button prefs

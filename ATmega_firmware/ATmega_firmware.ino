@@ -38,7 +38,8 @@ const volatile GPIO_pin_t pins[] = { DP7, DP13, DP5, DP11, DP0, DP1, DP23, DP21,
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                       // Storage for tonehole sensor readings
 int tempToneholeReadA[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                  // Temporary storage for ambient light tonehole sensor readings, written during the timer ISR.
 volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // We pack the 9 10-bit tonehole readings into 12 bytes to send via SPI to the NRF52840.
-bool useBellSensor = true;                                                // Whether we should read the bell sensor (not doing so helps conserve power).
+volatile bool useBellSensor = true;                                       // Whether we should read the bell sensor (not doing so helps conserve power).
+
 
 
 
@@ -77,7 +78,9 @@ void setup() {
 
 
 
-void pinFall() {}  // Just used to wake up MCU. Triggered when CS falls.
+void pinFall() {
+    SPDR = 0xff;  // Wake up and preload the SPI buffer with a verification byte.
+}
 
 
 
@@ -112,12 +115,10 @@ ISR(SPI_STC_vect) {
     if (c < 12) {
         SPDR = toneholePacked[c];  // Send requested byte to the NRF52840.
     } else if (c == 20) {
-        useBellSensor = false;      // Stop using bell sensor
-        SPDR = toneholePacked[11];  // Send toneholePacked[11] again. It isn't normally used but could be used as a sanity check to check alignment for the next session.
+        useBellSensor = false;  // Don't use bell sensor.
     } else if (c == 21) {
-        useBellSensor = true;
-        SPDR = toneholePacked[11];     // Send toneholePacked[11] again.
-    } else SPDR = toneholePacked[11];  // Send toneholePacked[11] in response to any other received value.
+        useBellSensor = true;  // Use bell sensor.
+    }
 }
 
 

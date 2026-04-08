@@ -61,7 +61,7 @@ ResponsiveAnalogRead analogPressure(A0, true);
 ResponsiveAnalogRead analogPressure(A1, true);
 #endif
 
-// just used for filtering
+// Filtering
 ResponsiveAnalogRead filterToneholes[9];
 
 // Custom settings for MIDI library
@@ -143,7 +143,6 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
-bool halfHoleTargetRegionState[9] = { false };
 
 // Preset
 byte preset = 0;         // The current preset (preset), from 0-2.
@@ -151,9 +150,9 @@ byte defaultPreset = 0;  // The default preset, from 0-2.
 
 
 // WARBL2 variables that are independent of preset
-byte WARBL2settings[] = { 2, 1, 5 };   // See defines above
-uint8_t WARBL2CustomChart[256];        // The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
-int WARBL2CustomChartReceiveByte = 0;  // The byte in the custom chart currently being received from the Config Tool
+byte WARBL2settings[] = { 2, 1, 5, 0 };  // See defines above
+uint8_t WARBL2CustomChart[256];          // The currently selected custom fingering chart. This is only populated if a custom chart is currently selected or if we're transferring a chart from the Config Tool to EEPROM.
+int WARBL2CustomChartReceiveByte = 0;    // The byte in the custom chart currently being received from the Config Tool
 
 
 // Variables that can change according to preset.
@@ -277,7 +276,6 @@ int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                         
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
 bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
-bool thumbHalfHoleChanged = 0;                                                     // Keeps track of when the thumb halfhole state has changed (used for recorder2).
 unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
 byte tempNewNote = 127;
 byte prevNote = 127;
@@ -285,7 +283,10 @@ byte newNote = 127;             // The next note to be played, based on the fing
 byte notePlaying;               // The actual MIDI note being played, which we remember so we can turn it off again.
 byte transientFilterDelay = 0;  // Small delay for filtering out transient notes
 unsigned long transitionFilter = 0;
-
+bool useBellSensor = false;
+bool useBellSensorChanged = false;
+bool thumbHalfHole = true;      // Whether the register is currently shfted by the thumb in the halfhole position.
+bool thumbHalfHoleChanged = 0;  // Keeps track of when the thumb halfhole state has changed.
 
 // Pitchbend variables
 byte pitchBendOn[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Whether pitchbend is currently turned for for a specific hole
@@ -310,9 +311,8 @@ bool customEnabled = 0;                                                         
 int adjvibdepth;                                                                           // Vibrato depth scaled to MIDI bend range.
 bool snapped[9];                                                                           // Whether snapped to halfhole pitchbend
 bool halfHoleShift[] = { false, false, false, false, false, false, false, false, false };  // Whether we have shifted the MIDI note by half holing.
-bool thumbHalfHole = true;                                                                 // Whether the register is currently shfted by the thumb in the halfhole position.
 byte previousTonehole = 255;                                                               // For halfhole finger rate: Remember whhich hole was used for the previous sensor reading so we are sure to get two consecutive readings from the same hole.
-
+bool halfHoleTargetRegionState[9] = { false };
 
 // Variables for managing MIDI note output
 bool noteon = 0;                        // Whether a note is currently turned on
