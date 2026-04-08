@@ -20,9 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed calculation of BLE connection interval and added request for renegotiation if the initial interval is greater than 15 ms.
 - Fixed bug where the selection of holes for half hole pitchbend was ignored if "Use MIDI note" switch was turned on.
 - Fixed bug where thumb half hole was ignored if another tone hole was also half covered.
-- Added separate controls for thumb half-hole height, region size, and finger speed.
+- Fixed bug in Config Tool where the tone holes selected for half-holing were not synced properly with the WARBL.
+- Added separate controls for thumb half-hole height and finger speed.
 - Fixed bug where finger-sensing distance wasn't being considered when exiting the half-hole region.
-- Added checksum for SPI transfer of tone hole sensor values from the ATMega. 
+- Added checksum for SPI transfer of tone hole sensor values from the ATMega.
 
 ### Added
 
