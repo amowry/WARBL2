@@ -365,9 +365,15 @@ void setup() {
     WDDTelapsedTime = millis();                     // Record when we started it.
 
     // NRF stuff
-    dwt_enable();                 // Enable DWT for high-resolution micros() (uses a bit more power).
-    sd_clock_hfclk_request();     // Enable the high-frequency clock. This is necessary because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
-    NRF_POWER->DCDCEN = 1;        // ENABLE DC/DC CONVERTER, cuts power consumption.
+    dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power).
+
+    // Enable the high-frequency clock. This is necessary if using SPIMs because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    // See note about this in getSensors(void).
+#if defined(USE_SPIM3)
+    sd_clock_hfclk_request();  // ******Important******: #define USE_SPIM3 in Defines.h if you haven't modified SPI.cpp to use SPIM2.
+#endif #endif
+
+    NRF_POWER->DCDCEN = 1;        //  ENABLE DC/DC CONVERTER, cuts power consumption.
     NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average.
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
@@ -469,7 +475,7 @@ void setup() {
     SPI.begin();
 
     // IMU
-    sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz.
+    sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz. If using SPIM2 I believe this is limited to 8 Mhz.
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down the gyro for now to save power, and we'll turn it on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
 

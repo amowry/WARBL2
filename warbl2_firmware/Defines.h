@@ -5,8 +5,10 @@
 #define VERSION 46  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
-#define ATMEGA_FIRMWARE_VERSION 11
-#define WATCHDOG_TIMEOUT_SECS 10  // The timeout needs to be set longer than any task that might interrupt the loop().
+#define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
+#define WATCHDOG_TIMEOUT_SECS 10    // The timeout needs to be set longer than any task that might interrupt the loop().
+
+//#define USE_SPIM3 // Unless SPI.cpp has been modified to use SPIM2, this **must be uncommented**. SPIM2 is more reliable. See note about this in getSensors(void).
 
 #define DEBUG_CONFIG_TOOL 0
 #define DEBUG_TRANSITION_FILTER 0
@@ -214,7 +216,7 @@
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
 #define CHARGE_FROM_HOST 1  // Charge from USB host in addition to "dumb" charging brick.
 #define POWERDOWN_TIME 2
-#define USE_BELL_SENSOR 3 // Bool, whether to use the bell sensor.
+#define USE_BELL_SENSOR 3  // Bool, whether to use the bell sensor.
 #define kWARBL2SETTINGSnVariables 4
 
 

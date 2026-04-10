@@ -77,7 +77,8 @@ void setup() {
 
 
 void pinFall() {
-    SPDR = 0xff;  // Wake up and preload the SPI buffer with a verification byte.
+    sleep_disable();  // Disable sleep after waking.
+    SPDR = 0xff;      // Preload the SPI buffer with a verification byte.
 }
 
 
@@ -96,10 +97,9 @@ void loop() {
     // sleeping__________________________________
     // Wake and enter SPI interrupt.
 
-    sleep_disable();  // Disable sleep after waking.
-    power_adc_enable();
-
     while (digitalRead(SS) == LOW) {}  // Make sure the SPI transfer is done before proceeding.
+
+    power_adc_enable();
 
     readSensors();
 }
@@ -127,13 +127,13 @@ EMPTY_INTERRUPT(ADC_vect);  // We're not using the ADC complete interrupt.
 
 
 
-// 830 us to read all sensors and prepare the data. The total time that IR LEDs are on is 800 us, so power consumed by sensors is: 800 uS/3000 us * 13mA/LED == 3.5 mA when polled every 3 ms.
+// With bell sensor on, it takes 830 us to read all sensors and prepare the data. The total time that IR LEDs are on is 800 us, so power consumed by sensors is: 800 uS/3000 us * 13mA/LED == 3.5 mA when polled every 3 ms.
 void readSensors(void) {
 
     if (useBellSensor) {
         digitalWrite2f(pins[0], HIGH);  // Turn on LED 0. If we can skip this step we save ~0.7 mA.
+        ADC_read(holeTrans[0]);         // Throwaway to give sensor 0 extra time to rise after turning on LED (it's a slower sensor).
     }
-    ADC_read(holeTrans[0]);                                           // Throwaway to give sensor 0 extra time to rise after turning on LED (it's a slower sensor).
     tempToneholeReadA[1] = ADC_read(holeTrans[1]);                    // Get ambient reading for sensor 1.
     toneholeRead[0] = ADC_read(holeTrans[0]) - tempToneholeReadA[0];  // Get illuminated reading for 0 and subtract previously measured ambient reading.
     if (!useBellSensor) {

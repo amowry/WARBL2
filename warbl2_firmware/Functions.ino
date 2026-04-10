@@ -82,9 +82,7 @@ void getSensors(void) {
 
     byte testByte = SPI.transfer(0);  // The first byte received is for verification of SPI alignment. It should be 0xff. This tests whether the ATmega was ready at the start of the transfer.
     bool goodtestByte = (testByte == 0xff);
-    if (!goodtestByte) {
-        //Serial.println("bad test byte");
-    }
+
     for (byte i = 0; i < 12; i++) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
@@ -101,13 +99,26 @@ void getSensors(void) {
     uint8_t receivedChecksum = (toneholePacked[11] >> 4) & 0x0F;
     uint8_t computedChecksum = computeToneholeChecksum4(toneholePacked);
 
-    bool goodChecksum = (receivedChecksum == computedChecksum);
-    if (!goodChecksum) {
-        //Serial.println("bad checksum");
-    }
+    bool goodChecksum = (receivedChecksum == computedChecksum)
+
+    if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
+                         //...could be AHB bus stall: https://devzone.nordicsemi.com/f/nordic-q-a/127744/ble-radio-interrupts-interfering-with-spi
+                         /* ...or one of the many issues with SPIM3. SPIM2 seems to be more reliable, so I'm switching to that for now. This is done by changing this in SPI.cpp:
+// default to 0
+#ifndef SPI_32MHZ_INTERFACE
+#define SPI_32MHZ_INTERFACE 0
+#endif
+
+... to this:
+
+// default to 0
+#ifndef SPI_32MHZ_INTERFACE
+#define SPI_32MHZ_INTERFACE 1
+#endif
+
+*/
 
 
-    if (goodChecksum && goodtestByte) {
         // Unpack the readings from bytes to ints.
         for (byte i = 0; i < 9; i++) {
             toneholeRead[i] = toneholePacked[i];
