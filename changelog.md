@@ -9,28 +9,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - The Configuration Tool now has a built-in SoundFont player with improved basic audio for testing purposes.
+  
 - The three "Instruments" are now called "Presets" for clarity, both in the Config Tool and the firmware.
+  
 - Preset import and export now works on iOS (WARBL app) as well as other platforms. The user is given the option of where to save export files (typically the Files app).
+  
 - "Yaw" is now much more useful because it is not affected by roll. The body-axis vector is now projected onto a horizontal frame to compute compass heading of the long body axis. This is now used as "yaw" so that it is entirely independent of "roll", which as we use it is defined as rotation around the long body axis.
+  
 - Fixed a bug where neither "Sip Mouthpiece" nor "Shake" were correctly able to send MIDI messages (channel, byte 2, and byte 3 weren't being sent from the Configuration Tool to the WARBL2).
+  
 - Reset the long-press counter when any button is released so that a long press of button 2 isn't registered if it was only being held in combination with a click of 1 or 3.
+  
 - Fixed longstanding bug where certain button actions didn't work properly because of an incorrect check for momentary mode. This particularly affected instruments (presets) 2 and 3.
+  
 - "Control register with elevation" now uses the "Register semitones" setting in the "Note trigger and register control" panel to determine the number of semitones in each register. This allows using elevation for a more versatile transpose method.
+  
 - Fixed bug where the WARBL would send CC messages back when told by CC to switch presets, even when not connected to the Config Tool. When not connected, the WARBL still responds to CC messages on channel 7 but won't send any replies.
+  
 - Fixed calculation of BLE connection interval and added request for renegotiation if the initial interval is greater than 15 ms.
+  
 - Fixed bug where the selection of holes for half hole pitchbend was ignored if "Use MIDI note" switch was turned on.
+  
 - Fixed bug where thumb half hole was ignored if another tone hole was also half covered.
+  
 - Fixed bug in Config Tool where the tone holes selected for half-holing were not synced properly with the WARBL.
+  
 - Added separate controls for thumb half-hole height and finger speed.
+  
 - Fixed bug where finger-sensing distance wasn't being considered when exiting the half-hole region.
+  
 - Added checksum for SPI transfer of tone hole sensor values from the ATMega.
+  
+- The WARBL will now always send CC messages in the Config Tool range regardless of the USB/BLE destination setting, so the user can't get locked out of the Config Tool by changing this setting. 
 
 ### Added
 
 - Baroque recorder fingering that leverages half holing for the thumb and fingers to be as close as possible to the acoustic instrument.
+  
 - It is now possible to send Program Changes messages (1, 2, or 3) on any channel to tell the WARBL to change to preset (instrument) 1, 2, or 3 respectively. The WARBL will not send any messages back unless it is currently connected to the Config Tool (in that case it will be sending CC messages on channel 7 to keep the Config Tool in sync).
+  
 - Button action for toggling between vibrato/slide modes 1 and 4 (slide and legato slide).
+  
 - Option to not use the bell sensor. This saves 0.7 mA or about 8% of battery life. If an uilleann pipes chart is chosen the bell sensor is used automatically. Turning it on with any other chart means that sounds will stop if all sensors including the bell sensor are covered, as an option to mute the instrument (useful in "bagless" mode especially).
+  
 
 ## [Released]
 
