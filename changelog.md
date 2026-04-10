@@ -38,9 +38,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   
 - Fixed bug where finger-sensing distance wasn't being considered when exiting the half-hole region.
   
-- Added checksum for SPI transfer of tone hole sensor values from the ATMega.
+- The WARBL will now always send CC messages in the Config Tool range regardless of the USB/BLE destination setting, so the user can't get locked out of the Config Tool by changing this setting.
   
-- The WARBL will now always send CC messages in the Config Tool range regardless of the USB/BLE destination setting, so the user can't get locked out of the Config Tool by changing this setting. 
+- Added checksum for SPI transfer of tone hole sensor values from the ATMega.
+
+- Now using SPIM2 instead of SPIM3 because it seems more stable. This also saves 0.15 ma power, for a total of 0.95 (+ 11% battery life) with this update if the bell sensor isn't used.
 
 ### Added
 
@@ -51,6 +53,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Button action for toggling between vibrato/slide modes 1 and 4 (slide and legato slide).
   
 - Option to not use the bell sensor. This saves 0.7 mA or about 8% of battery life. If an uilleann pipes chart is chosen the bell sensor is used automatically. Turning it on with any other chart means that sounds will stop if all sensors including the bell sensor are covered, as an option to mute the instrument (useful in "bagless" mode especially).
+
+- There is now a version number in the Config Tool, under the title. I plan to keep it in sync with the firmware but may add patches, e.g. 4.6.2 (major, minor, patch).
   
 
 ## [Released]
