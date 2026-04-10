@@ -41,8 +41,6 @@ volatile byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // We 
 volatile bool useBellSensor = true;                                       // Whether we should read the bell sensor (not doing so helps conserve power).
 
 
-
-
 void setup() {
 
     USBCON |= (1 << FRZCLK);  // Freeze the USB Clock.
@@ -220,7 +218,6 @@ void readSensors(void) {
     toneholePacked[11] &= 0x0F;                                   // clear upper nibble
     uint8_t checksum = computeToneholeChecksum4(toneholePacked);  // Compute a checksum.
     toneholePacked[11] |= (checksum << 4);                        // Insert the checksum.
-
 
     interrupts();
 }

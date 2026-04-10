@@ -529,7 +529,7 @@ void loop() {
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
     delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms. Total device consumption is ~8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
     wakeTime = millis();                    // When we woke from sleep
-    getSensors();                           // 200 us, 55 of which is reading the pressure sensor.
+    getSensors();                           // 240 us, of which 55 is reading the pressure sensor and 50 is the adaptive filter for toneholes.
     getFingers();                           // Find which holes are covered. 4 us.
     getState();                             // Get the breath state. 3 us.
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.

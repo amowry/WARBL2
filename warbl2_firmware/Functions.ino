@@ -8,10 +8,7 @@ void printStuff(void) {
     //Note: there may be an issue where midi destination is sometimes set to an incorrect value. Currently unable to reproduce. AM 3/26
     //Serial.println(WARBL2settings[MIDI_DESTINATION]);
     //Serial.println("");
-
-    //Seems like sometimes these aren't received correctly from the Config Tool (or by it?)3/26
-    //byte halfHoleEnabled = (ED[preset][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[preset][HALFHOLE_HOLES_LOW4BITS];
-    //Serial.println(halfHoleEnabled, BIN);
+    //Serial.println(toneholeRead[8]);
 
     /*
     for (byte i = 0; i < 9; i++) {
@@ -19,7 +16,6 @@ void printStuff(void) {
     }
      Serial.println("");
 */
-
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
 
@@ -74,7 +70,7 @@ void getSensors(void) {
 
     analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
     twelveBitPressure = analogPressure.getRawValue();
-    smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+    smoothed_pressure = analogPressure.getValue();  // Use an adaptively-smoothed 12-bit reading to map to CC, aftertouch, poly.
     sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
 
     // Receive tone hole readings from ATmega32U4.
@@ -82,7 +78,7 @@ void getSensors(void) {
 
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);
-    delayMicroseconds(10);
+    delayMicroseconds(10);  // Give the ATmega time to wake up and preload the first byte in the buffer.
 
     byte testByte = SPI.transfer(0);  // The first byte received is for verification of SPI alignment. It should be 0xff. This tests whether the ATmega was ready at the start of the transfer.
     bool goodtestByte = (testByte == 0xff);
@@ -134,7 +130,7 @@ void getSensors(void) {
 
 
         for (byte i = 0; i < 9; i++) {
-            // Run through adaptive smoothing filter.
+            // Run through adaptive smoothing filter. Takes 50 us.
             filterToneholes[i].update(toneholeRead[i]);
             toneholeRead[i] = filterToneholes[i].getValue();
 
@@ -3678,17 +3674,14 @@ void loadPrefs() {
 
     // Handle turning the bell sensor on/off.
     static bool prevUseBellSensorChanged = true;
-
     if (WARBL2settings[USE_BELL_SENSOR]) {
         useBellSensor = true;
     } else {
         useBellSensor = false;
     }
-
     if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard) {  // Use the bell sensor if we're using uilleann fingering.
         useBellSensor = true;
     }
-
     if (prevUseBellSensorChanged != useBellSensor) {  // Record whether the state has changed so we know to tell the ATMeaga to turn the sensor on or off.
         useBellSensorChanged = true;
     } else {
@@ -4074,12 +4067,13 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2) {  // Send a 3-byte 
             {
                 bool isForConfigTool = (c == MIDI_CONFIG_TOOL_CHANNEL && d1 >= 102);  //CC is for config tool
 
-                if (sendUsb && (!isForConfigTool ||  // Always send CC messages within the Config Tool range so user can't get locked out of Config Tool if only BLE or USB is selected (changed by AM 4/11/24).
-                                (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_USB))) {
+
+                if (isForConfigTool || (sendUsb ||  // Always send CC messages within the Config Tool range so user can't get locked out of Config Tool if only BLE or USB is selected (changed by AM 4/11/24).
+                                        (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_USB))) {
 
                     MIDI.sendControlChange(d1, d2, c);
                 }
-                if (sendBle && (!isForConfigTool || (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_BLE))) {
+                if (isForConfigTool || (sendBle || (communicationModeSource == MIDI_SOURCE_NONE || communicationModeSource == MIDI_SOURCE_BLE))) {
                     BLEMIDI.sendControlChange(d1, d2, c);
                 }
                 break;
@@ -4500,6 +4494,23 @@ void checkFirmwareVersion() {
                     writeEEPROM(EEPROM_ED_VARS_START + i + ((HALFHOLE_PITCHBEND + n) * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][(HALFHOLE_PITCHBEND + n)]);
                 }
             }
+        }
+
+        if (currentVersion < 46) {  // Manage all changes made in version 46.
+
+            // New thumb half hole settings
+            for (int i = 0; i < 3; ++i) {  // Each preset
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_HEIGHT_OFFSET * 3), ED[preset][THUMB_HALFHOLE_HEIGHT_OFFSET]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_HEIGHT_OFFSET * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][THUMB_HALFHOLE_HEIGHT_OFFSET]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_WIDTH * 3), ED[preset][THUMB_HALFHOLE_WIDTH]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_WIDTH * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][THUMB_HALFHOLE_WIDTH]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_FINGERRATE * 3), ED[preset][THUMB_HALFHOLE_FINGERRATE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (THUMB_HALFHOLE_FINGERRATE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][THUMB_HALFHOLE_FINGERRATE]);
+            }
+
+            // Bell sensor on/off setting
+            writeEEPROM(EEPROM_WARBL2_SETTINGS_START + USE_BELL_SENSOR, WARBL2settings[USE_BELL_SENSOR]);
+            writeEEPROM(EEPROM_WARBL2_SETTINGS_START + USE_BELL_SENSOR + EEPROM_FACTORY_SETTINGS_START, WARBL2settings[USE_BELL_SENSOR]);
         }
 
         writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
