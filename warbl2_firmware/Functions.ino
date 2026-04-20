@@ -78,13 +78,13 @@ void getSensors(void) {
 
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);
-    delayMicroseconds(10);  // Give the ATmega time to wake up and preload the first byte in the buffer.
+    delayMicroseconds(10);  // Give the ATmega time to wake up and preload the test byte into the buffer.
 
     byte testByte = SPI.transfer(0);  // The first byte received is for verification of SPI alignment. It should be 0xff. This tests whether the ATmega was ready at the start of the transfer.
     bool goodtestByte = (testByte == 0xff);
 
     for (byte i = 0; i < 12; i++) {
-        toneholePacked[i] = SPI.transfer(i + 1);
+        toneholePacked[i] = SPI.transfer(i + 1);  // The ATmega doesn't load anything during the final trasfer-- it's just to retrieve the last value in the buffer.
     }
 
     if (useBellSensorChanged) {  // Tell the ATmega to turn the bell sensor on or off if necessary.
@@ -95,15 +95,21 @@ void getSensors(void) {
     digitalWrite(2, HIGH);
     SPI.endTransaction();
 
-    // Check checksum to validate the sensor readings.
+    // Checksum to validate the sensor readings.
     uint8_t receivedChecksum = (toneholePacked[11] >> 4) & 0x0F;
     uint8_t computedChecksum = computeToneholeChecksum4(toneholePacked);
 
-    bool goodChecksum = (receivedChecksum == computedChecksum)
+    bool goodChecksum = (receivedChecksum == computedChecksum);
+
+    /*
+    if (!goodChecksum) {  // Indicate a bad transfer.
+        blinkNumber[RED_LED] = 1;
+    }
+*/
 
     if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
-                         //...could be AHB bus stall: https://devzone.nordicsemi.com/f/nordic-q-a/127744/ble-radio-interrupts-interfering-with-spi
-                         /* ...or one of the many issues with SPIM3. SPIM2 seems to be more reliable, so I'm switching to that for now. This is done by changing this in SPI.cpp:
+                                         //...could be AHB bus stall issue: https://devzone.nordicsemi.com/f/nordic-q-a/127744/ble-radio-interrupts-interfering-with-spi
+                                         /* ...or one of the many issues with SPIM3. SPIM2 seems to be more reliable, so I'm switching to that for now. This is done by changing this in SPI.cpp:
 // default to 0
 #ifndef SPI_32MHZ_INTERFACE
 #define SPI_32MHZ_INTERFACE 0
@@ -111,7 +117,7 @@ void getSensors(void) {
 
 ... to this:
 
-// default to 0
+// default to 1
 #ifndef SPI_32MHZ_INTERFACE
 #define SPI_32MHZ_INTERFACE 1
 #endif
@@ -240,7 +246,6 @@ void readIMU(void) {
 
 
 
-#if 1
     // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
     static float rollLocal = roll;  // Initialize using global frame.
     static float correctionFactor;
@@ -270,7 +275,7 @@ void readIMU(void) {
     roll = rollLocal;
     roll *= 1.2f;  // Rough correction for unknown error in gyro integration (perhaps error in gyro scale factor in LSM6D library??)
 
-#endif
+
 
 
 
@@ -3104,6 +3109,7 @@ void toggleSlideMode() {
 
 // Cycle through presets
 void changePreset() {
+
     preset++;  //set preset
     if (preset == 3) {
         preset = 0;
@@ -3378,8 +3384,15 @@ void sendSettings() {
 
     manageBattery(true);  // Do this to send voltage and charging status to Config Tool.
 
-    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, (connIntvl * 100) & 0x7F);  // Send low byte of the connection interval.
-    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, (connIntvl * 100) >> 7);    // high low byte of the connection interval.
+    uint16_t interval_x100 = (uint16_t)(connIntvl * 100.0f);
+
+    Serial.println(interval_x100);
+
+    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
+                    MIDI_CC_119, interval_x100 & 0x7F);
+
+    sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB,
+                    MIDI_CC_119, interval_x100 >> 7);
 
     for (byte i = 0; i < kIMUnVariables; i++) {  // IMU settings
         sendMIDICouplet(MIDI_CC_109, i, MIDI_CC_105, IMUsettings[preset][i]);
@@ -3425,6 +3438,7 @@ void loadFingering() {
 
 // Save settings for current preset as defaults for given preset (i).
 void saveSettings(byte i) {
+
     writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[preset]);
     writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[preset]);
     writeEEPROM(EEPROM_SENS_DISTANCE_START + i, senseDistanceSelector[preset]);
@@ -4176,7 +4190,7 @@ void connect_callback(uint16_t conn_handle) {
     // Read the initial connection interval
     uint16_t connUnits = connection->getConnectionInterval();  // units of 1.25 ms
     float intervalMs = connUnits * 1.25f;
-    connIntvl = (int)intervalMs;
+    connIntvl = intervalMs;
 
     // Schedule a second read later, after renegotiation has had time to happen.
     pendingConnHandle = conn_handle;
@@ -4185,7 +4199,9 @@ void connect_callback(uint16_t conn_handle) {
     bleIntervalReported = false;
 
     if (communicationMode) {
-        uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+        uint16_t interval_x100 = (uint16_t)(connIntvl * 100.0f);
+
+        Serial.println(interval_x100);
 
         sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                         MIDI_CC_119, interval_x100 & 0x7F);
@@ -4228,6 +4244,7 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
 
 
 
+
 // Check to see if the connection interval has been renegotiated.
 void updateBLEIntervalStatus() {
 
@@ -4250,10 +4267,11 @@ void updateBLEIntervalStatus() {
     if (!bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
-        connIntvl = (int)intervalMs;
+        connIntvl = intervalMs;
 
         if (communicationMode) {
             uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+            Serial.println(interval_x100);
 
             sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                             MIDI_CC_119, interval_x100 & 0x7F);
@@ -4267,26 +4285,21 @@ void updateBLEIntervalStatus() {
         // If still slower than 15 ms, optionally request 15 ms as a fallback.
         // 12 units * 1.25 ms = 15 ms.
         if (connUnits > 12) {
-
             connection->requestConnectionParameter(12, 0, 400);
 
             // Keep the check alive a little longer so we can see whether the fallback worked.
             bleConnectTime = millis();
-            bleIntervalReported = false;
         } else {
             bleIntervalCheckPending = false;
         }
     }
 
     // After fallback request, check one final time.
-    else if (bleIntervalReported == false && elapsed >= 1500) {
+    else if (bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
 
-        //Serial.print("Final BLE interval (ms): ");
-        //Serial.println(intervalMs);
-
-        connIntvl = (int)intervalMs;
+        connIntvl = intervalMs;
 
         if (communicationMode) {
             uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);

@@ -1,6 +1,6 @@
 
 
-//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 46  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
@@ -8,7 +8,8 @@
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
 #define WATCHDOG_TIMEOUT_SECS 10    // The timeout needs to be set longer than any task that might interrupt the loop().
 
-//#define USE_SPIM3 // Unless SPI.cpp has been modified to use SPIM2, this **must be uncommented**. SPIM2 is more reliable. See note about this in getSensors(void).
+//#define USE_SPIM3 // Unless SPI.cpp has been modified to use SPIM2, this **must** be uncommented. SPIM2 seems to be more reliable and uses less current. See note about this in getSensors(void).
+// SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
 
 #define DEBUG_CONFIG_TOOL 0
 #define DEBUG_TRANSITION_FILTER 0

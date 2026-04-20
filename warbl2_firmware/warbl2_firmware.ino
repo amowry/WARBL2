@@ -101,7 +101,7 @@ byte battLevel;                     // Estimated battery percentage remaining
 
 
 // BLE
-int connIntvl = 0;  // The negotiated connection interval
+float connIntvl = 0;  // The negotiated connection interval
 uint16_t pendingConnHandle = BLE_CONN_HANDLE_INVALID;
 uint32_t bleConnectTime = 0;
 bool bleIntervalCheckPending = false;
@@ -195,10 +195,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Preset 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                        // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 },    // Preset 0
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 },    // Preset 1
-    { 0, 3, 0, 0, 1, 7, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 30 } };  // Preset 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                         // Many settings in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 },    // Preset 0
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 },    // Preset 1
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
@@ -367,7 +367,7 @@ void setup() {
     // NRF stuff
     dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power).
 
-    // Enable the high-frequency clock. This is necessary if using SPIMs because of a hardware bug that requires the HFCLK for SPI. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
     // See note about this in getSensors(void).
 #if defined(USE_SPIM3)
     sd_clock_hfclk_request();  // ******Important******: #define USE_SPIM3 in Defines.h if you haven't modified SPI.cpp to use SPIM2.
@@ -535,7 +535,7 @@ void loop() {
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
     delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms. Total device consumption is ~8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
     wakeTime = millis();                    // When we woke from sleep
-    getSensors();                           // 240 us, of which 55 is reading the pressure sensor and 50 is the adaptive filter for toneholes.
+    getSensors();                           // 240 us, of which 80 is reading and filtering the pressure sensor and 50 is the adaptive filter for toneholes.
     getFingers();                           // Find which holes are covered. 4 us.
     getState();                             // Get the breath state. 3 us.
     debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
@@ -579,7 +579,7 @@ void loop() {
 
     if ((wakeTime - pitchBendTimer) >= pbsendinterval) {
         pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
-        calculateAndSendPitchbend();
+        calculateAndSendPitchbend(); // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
         printStuff();  // Debug
         sendIMU();     // ~ 130 us
     }
