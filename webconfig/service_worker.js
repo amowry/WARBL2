@@ -9,7 +9,7 @@
 // Service worker for WARBL configuration tool offline use resource caching
 //
 
-const cacheName = "warbl_config_78";
+const cacheName = "warbl_config_79";
 
 const contentToCache = [
   "/configure.html",
