@@ -5796,7 +5796,7 @@ function exportPreset() {
 
 		// App-specific behavior:
 		// Don't auto-download. Store the file and wait for a user tap on Save.
-	if (platform == "app") {
+	if (platform == "app" || platform == "app2") {
 		gPendingPresetExport = {
 		content: theExportObjectJSON,
 		filename: "WARBL_Preset.warbl",
