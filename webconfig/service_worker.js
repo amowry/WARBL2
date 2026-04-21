@@ -2,34 +2,28 @@
 // Service worker for WARBL configuration tool offline use resource caching
 //
 //
-// Updated 3/30/26
+// Updated 4/21/26
 //
 
 //
 // Service worker for WARBL configuration tool offline use resource caching
 //
 
-const cacheName = "warbl_config_74";
+const cacheName = "warbl_config_78";
 
 const contentToCache = [
   "/configure.html",
-  "/configure_test_synth.html",
   "/favicon.ico",
   "/manifest.json",
 
   "/css/config.min.css",
   "/css/nouislider.css",
-  "/css/modal.css",
 
   "/js/jquery-3.3.1.min.js",
   "/js/nouislider.js",
-  "/js/WebAudioFontPlayer.js",
-  "/js/0650_SBLive_sf2.js",
   "/js/constants.min.js",
   "/js/midi.min.js",
   "/js/d3.min.js",
-  "/js/daypilot-modal.min-3.10.1.js",
-  "/js/update.js",
 
   "/img/small_logo.png",
   "/img/downarrow.png",
@@ -55,13 +49,11 @@ const contentToCache = [
 
 // Only these pages should be treated as app pages
 const allowedPages = new Set([
-  "/configure.html",
-  "/configure_test_synth.html"
+  "/configure.html"
 ]);
 
 // Only these folders/resources should be cached/served by this SW
 const allowedPrefixes = [
-  "/css/",
   "/js/",
   "/img/",
   "/soundfonts/",
@@ -70,7 +62,10 @@ const allowedPrefixes = [
 
 const allowedExactFiles = new Set([
   "/favicon.ico",
-  "/manifest.json"
+  "/manifest.json",
+    // Only these CSS files
+  "/css/config.min.css",
+  "/css/nouislider.css",
 ]);
 
 function shouldHandleRequest(request) {
