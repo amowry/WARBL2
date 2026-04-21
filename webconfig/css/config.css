@@ -239,6 +239,31 @@ a {
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+.audioSettings {
+	position: relative;
+	top: -35px;
+	left: -460px;
+	width: 40px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 40px;
+	cursor: pointer;
+	border: none;
+	background-color: var(--main-bg-color);
+	color: var(--primary-color);
+}
+
+.title{
+	position: relative;
+	top: -10px;
+}
+
+#configVersion {
+	position: relative;
+	top: -20px;
+	font-size: 14px;
+}
+
 input {
 	outline: none;
 }
@@ -744,14 +769,16 @@ input {
 .importExportTopWrapper {
 	display: block;
 	position: absolute;
-	width: 370px;
+	width: 400px;
 	top: 330px;
-	left: 430px;
+	left: 412px;
 }
 
-.importexportbutton {
-	margin-left: 90px;
-	width: 120px;
+
+.importbutton {
+	left: -20px;
+	position: relative;
+	width: 160px;
 	text-align: center;
 	text-decoration: none;
 	font-size: 14px;
@@ -760,12 +787,13 @@ input {
 	border-radius: 5px;
 	background-color: var(--primary-color);
 	color: var(--button-text-color);
-	padding: 10px;
+	padding: 5px;
 }
 
-.importPreset {
-	width: 120px;
-	height: 30px;
+.exportbutton {
+	left: 18px;
+	position: relative;
+	width: 160px;
 	text-align: center;
 	text-decoration: none;
 	font-size: 14px;
@@ -774,15 +802,18 @@ input {
 	border-radius: 5px;
 	background-color: var(--primary-color);
 	color: var(--button-text-color);
-	padding: 10px;
+	padding: 5px;
 }
+
+
 
 .headerbuttons {
 	position: relative;
-	height: 50px;
+	top: -5px;
+	//height: 50px;
 	width: 160px;
 	margin-bottom: 30px;
-	padding: 8px;
+	padding: 5px;
 	text-align: center;
 	text-decoration: none;
 	font-size: 14px;
@@ -894,8 +925,6 @@ input {
 }
 
 
-
-
 .chargingLabel {
 	display: none;
 	position: absolute;
@@ -906,8 +935,6 @@ input {
 }
 
 
-
-
 .connLabel {
 	display: block;
 	position: absolute;
@@ -916,8 +943,6 @@ input {
 	z-index: 99;
 	font-size: 14px;
 }
-
-
 
 
 .hostLabel {
@@ -981,9 +1006,10 @@ input {
 
 #connect {
 	position: absolute;
-	left: 140px;
+	left: 150px;
 	top: 39px;
 	height: 35px;
+	z-index: 999;
 }
 
 #defaultInstrument {
@@ -1608,7 +1634,23 @@ fieldset {
 	display: block;
 	top: 35px;
 	width: 140px;
-	left: 825px;
+	left: 845px;
+}
+
+#switch35 {
+	top: 70px;
+	left:  545px;
+	z-index:100;
+}
+
+
+.useBellLabel {
+	display: block;
+	position: absolute;
+	left: 430px;
+	top: 72px;
+	z-index: 99;
+	font-size: 14px;
 }
 
 
@@ -1659,9 +1701,14 @@ fieldset {
 	visibility: hidden;
 }
 
-#leddot {
-	position: absolute;
+.leddot2 {
+	position: relative;
+	visibility: hidden;
+}
+
+#leddot {	
 	display: block;
+	position: absolute;
 	top: 145px;
 	left: 358px;
 	height: 8px;
@@ -2035,34 +2082,50 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: relative;
 	top: -70px;
-	left: -25px;
+	left: 140px;
 }
 
-.totalRegionRect {
+.thumbHalfHoleControls {
 	display: block;
-	position: absolute;
-	left: 40px;
-	top: 150px;
-	width: 30px;
-	height: 100px;
-	border: solid 2px;
-	border-color: var(--console-border-color);
-	z-index: 999999;
+	position: relative;
+	top: -70px;
+	left: -85px;
 }
 
-#halfholeRegionRect {
-	display: block;
-	position: absolute;
-	left: 42px;
-	top: 150px;
-	width: 30px;
-	height: 50px;
-	//border: solid 2px;
-	//border-color: var(--console-border-color);
-	background-color: var(--primary-color);
-	z-index: 999999;
+.jumpvalue19 {
+	left: 495px;
+	top: 165px;
 }
 
+.jumpvalue20 {
+	left: 495px;
+	top: 105px;
+}
+
+.jumpvalue21 {
+	left: 495px;
+	top: 225px;
+}
+
+.jumpvalue22 {
+	left: 270px;
+	top: 165px;
+}
+
+.jumpvalue23 {
+	visibility:hidden;
+	left: 270px;
+	top: 105px;
+}
+
+.jumpvalue24 {
+	left: 270px;
+	top: 225px;
+}
+
+.slidecontainer2 {
+	width: 30%;
+}
 
 .halfhole8 {
 	left: 40px;
@@ -2104,15 +2167,25 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 120px;
+	top: 180px;
+	z-index: 99;
+}
+
+#thumbHalfholeSizeContainer {
+	visibility: hidden;
+	display: block;
+	position: absolute;
+	left: 120px;
 	top: 120px;
 	z-index: 99;
 }
+
 
 #halfholeSizeContainer {
 	display: block;
 	position: absolute;
 	left: 120px;
-	top: 180px;
+	top: 120px;
 	z-index: 99;
 }
 
@@ -2127,26 +2200,36 @@ input:disabled + .vibratoSlider:before {
 .halfholeDirectionLabel {
 	display: block;
 	position: absolute;
-	left: 90px;
+	left: 160px;
 	top: 65px;
 	z-index: 99;
-	font-size: 14px;
+	font-size: 18px;
+}
+
+.thumbHalfholeDirectionLabel {
+	display: block;
+	position: absolute;
+	left: 165px;
+	top: 115px;
+	z-index: 99;
+	font-size: 18px;
 }
 
 .halfholeOffsetlabel {
 	display: block;
 	position: absolute;
-	left: 161px;
-	top: 95px;
+	left: 117px;
+	top: 157px;
 	z-index: 99;
 	font-size: 14px;
 }
 
+
 .halfholeSizeLabel {
 	display: block;
 	position: absolute;
-	left: 170px;
-	top: 157px;
+	left: 117px;
+	top: 95px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2154,11 +2237,12 @@ input:disabled + .vibratoSlider:before {
 .halfholeRatelabel {
 	display: block;
 	position: absolute;
-	left: 200px;
+	left: 155px;
 	top: 215px;
 	z-index: 99;
 	font-size: 14px;
 }
+
 
 #switch5 {
 	top: 248px;
@@ -2378,17 +2462,20 @@ input:disabled + .vibratoSlider:before {
 #IMUCCMappingControls {
 	position: relative;
 	top: -120px;
+	z-index: 1000;
 }
 
 
 #IMUbottomControls {
 	position: relative;
 	top: -120px;
+	z-index: 1000;
 }
 
 
 #IMUpitchMappingControls {
 	display: block;
+	z-index: 1000;
 }
 
 .IMUMapping {
@@ -2747,24 +2834,115 @@ input:disabled + .vibratoSlider:before {
 }
 
 
-.tinyDeviceLabel {
-	display: block;
-	position: absolute;
-	left: 50px;
-	top: 103px;
-	width: 100px;
-	z-index: 99;
-	font-size: 14px;
-}
-
-
 .midiSelector {
 	position: absolute;
 	height: 38px;
 	width: 150px;
 	top: 100px;
-	left: 145px;
+	left: 155px;
 }
+
+
+#reverbSlider{
+	width: 75%;
+}
+
+
+#audioStatus{
+	color:#090;
+}
+
+.synthBendRangeContainer {
+	display: flex;
+    justify-content: center;
+	margin-bottom: 25px;
+	margin-top: 10px;
+}
+
+.synthExpressionInput {
+	display: block;
+	position: relative;
+	height: 23px;
+	border: "black";
+	border-radius: 5px;
+	margin-bottom: 10px;
+	padding: 0px 0px 0px 0px;
+	text-align: center;
+	font-size: 14px;
+	width: 50px;
+}
+
+
+.testbutton {
+	width: 120px;
+	height: 30px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--primary-color);
+	color: var(--button-text-color);
+	margin-bottom: 40px;
+	margin-top: 40px;
+}
+
+#leddot2 {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	background-color: #32CD32;
+	border-radius: 50%;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+
+.reverbContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+	margin-bottom: 20px;
+}
+
+.audioSettingsHeader {
+	position: relative;
+	left: 12px;
+	}
+
+.audioSelector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+	margin-bottom: 20px;
+	margin-top: 10px;
+}
+
+.synthKeySelectContainer {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+	height: 30px;
+	margin-bottom: 30px;
+}
+
+.synthKeySelectLabel {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+	z-index: 99;
+	margin-bottom: 18px;
+}
+
+
+.row {
+    display: flex;
+    justify-content: center;
+}
+
 
 .openConsole {
 	position: absolute;
@@ -3076,6 +3254,10 @@ h3 {
 	border: medium solid #dddddd;
 }
 
+
+
+
+
 .modal-window {
 	position: fixed;
 	background-color: rgba(50, 50, 50, 0.9);
@@ -3120,6 +3302,57 @@ h3 {
 	margin-top: 20px;
 	color: #333333;
 }
+
+
+.modal {
+display: none; /* Hidden by default */
+position: fixed; /* Stay in place */
+z-index: 102; /* Sit on top */
+padding-top: 200px; /* Location of the box */
+left: 0;
+top: 0;
+width: 100%; /* Full width */
+height: 100%; /* Full height */
+overflow: auto; /* Enable scroll if needed */
+background-color: rgb(0,0,0); /* Fallback color */
+background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+background-color: #fefefe;
+margin: auto;
+padding: 20px;
+border: 1px solid #888;
+width: 600px;
+}
+
+/* For modal dialog prompt replacement */
+.modal_flat_background { background-color: #000; opacity: 0.4; }
+.modal_flat_main { border: 1px solid #333; box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);  }
+
+/* font size only */
+.modal_flat_main, .modal_flat_main input, .modal_flat_main button {  font-size: 16px; }
+
+.modal_flat_main input, .modal_flat_main button {  padding: 5px; box-sizing: border-box; }
+.modal_flat_inner { padding: 10px 30px 30px 30px; background: #fff; color: #000; }
+.modal_flat_content { font-family:"Helvetica"; margin: 20px 0px;}
+.modal_flat_input { margin: 20px 0px;}
+.modal_flat_buttons { text-align:center;margin-top: 40px; }
+.modal_flat_main button { background-color: #ccc; color: #000; padding: 10px 20px; border: 0px; cursor: pointer; outline: none; width: 100px;  }
+.modal_flat_cancel {margin-left: 5px;}
+
+
+#modal-center34 .modal-footer {
+	text-align: center;
+}
+
+#modal-center34 .modal-footer button {
+	float: none;
+	display: inline-block;
+	margin-left: 0;
+	margin-right: 0;
+}
+
 
 .consoleLabel {
 	margin-left: 30px !important;
@@ -3173,10 +3406,6 @@ h3 {
 
 .slidecontainer {
 	width: 22%;
-}
-
-.slidecontainer2 {
-	width: 50%;
 }
 
 .slidecontainer3 {
@@ -3433,21 +3662,6 @@ h3 {
 	top: 220px;
 }
 
-.jumpvalue19 {
-	left: 365px;
-	top: 105px;
-}
-
-.jumpvalue20 {
-	left: 365px;
-	top: 165px;
-}
-
-.jumpvalue21 {
-	left: 365px;
-	top: 225px;
-}
-
 
 /*transient filter value */
 .jumpvalue10b {
@@ -3557,6 +3771,7 @@ h3 {
 	left: 590px;
 	top: 380px;
 }
+
 
 #switch12 {
 	top: 70px;
@@ -5275,7 +5490,6 @@ input[type="range"]:disabled::-ms-thumb {
 	display: block;
 	background: url("../img/downarrow.png") no-repeat 96%;
 	background-size: 20px 33px;
-	height: 23px;
 	overflow: hidden;
 	width: 55px;
 	margin-bottom: 15px;
@@ -5297,9 +5511,8 @@ input[type="range"]:disabled::-ms-thumb {
 	display: block;
 	background: url("../img/downarrow.png") no-repeat 96%;
 	background-size: 20px 33px;
-	height: 23px;
 	overflow: hidden;
-	width: 200px;
+	width: 210px;
 	margin-bottom: 15px;
 }
 
@@ -5307,7 +5520,6 @@ input[type="range"]:disabled::-ms-thumb {
 	background: transparent;
 	border: none;
 	font-size: 14px;
-	height: 23px;
 	padding: 3px;  /* If you add too much padding here, the options won't show in IE */
 	width: 268px;
 	cursor: pointer;
@@ -5606,3 +5818,61 @@ ath {
 	stroke:white;
     stroke-width: 1;
 }
+
+
+/*
+  Conservative Safari zoom-safety override
+  - Removes the clipping/containment changes from the first pass
+  - Keeps only low-risk repaint/compositing reductions
+*/
+
+/* Avoid animating every property on the fixed modal overlay */
+.modal-window {
+  transition: opacity 0.3s !important;
+}
+
+/* Reduce compositor churn from pressed-state transforms */
+.headerbuttons:active,
+.smallbutton:active,
+.importbutton:active,
+.exportbutton:active,
+.audioSettings:active,
+.defaultInstrumentButton:active {
+  transform: none !important;
+}
+
+/* Keep shadows visually similar but slightly cheaper to redraw */
+.smallcontrolbox,
+.smallcontrolbox2,
+.smallcontrolbox3,
+#topcontrolbox,
+.tab,
+.tab0,
+.tab1,
+.tab2,
+.modal-window > div {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Avoid unnecessary backface/compositing surprises during zoom */
+.headerbuttons,
+.smallbutton,
+.importbutton,
+.exportbutton,
+.audioSettings,
+.defaultInstrumentButton,
+.modal-window,
+.modal-window > div {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Preserve existing layout bounds; do not clip or contain large wrappers */
+html,
+body,
+.pagewrapper,
+#topcontrolbox {
+  overflow-x: visible !important;
+  contain: none !important;
+}
+

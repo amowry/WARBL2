@@ -2,128 +2,154 @@
 // Service worker for WARBL configuration tool offline use resource caching
 //
 //
-//
-//
-// Updated 4 November 2024 at 2010
-//
-//
-//
+// Updated 3/30/26
 //
 
-const cacheName = "warbl_46";
+//
+// Service worker for WARBL configuration tool offline use resource caching
+//
+
+const cacheName = "warbl_config_73";
 
 const contentToCache = [
-    "configure.html",
-    "favicon.ico",
-    "manifest.json",
-    "css/config.min.css",
-    "css/nouislider.css",
-    "css/modal.css", 
-    "js/jquery-3.3.1.min.js",
-    "js/nouislider.js",
-    "js/WebAudioFontPlayer.js",
-    "js/0650_SBLive_sf2.js",
-    "js/constants.min.js",
-    "js/midi.min.js",
-    "js/d3.min.js",
-    "js/daypilot-modal.min-3.10.1.js",
-    "js/update.js",
-    "img/small_logo.png",
-    "img/downarrow.png",
-    "img/info-circle.svg",
-    "img/volume-off.svg",
-    "img/volume-up.svg",
-    "img/angle-up.svg",
-    "img/angle-down.svg",
-    "img/bars.svg",
-    "img/warbl-app-36x36.png",
-    "img/warbl-app-48x48.png",
-    "img/warbl-app-72x72.png",
-    "img/warbl-app-96x96.png",
-    "img/warbl-app-144x144.png",
-    "img/warbl-app-192x192.png"
+  "/configure.html",
+  "/configure_test_synth.html",
+  "/favicon.ico",
+  "/manifest.json",
+
+  "/css/config.min.css",
+  "/css/nouislider.css",
+  "/css/modal.css",
+
+  "/js/jquery-3.3.1.min.js",
+  "/js/nouislider.js",
+  "/js/WebAudioFontPlayer.js",
+  "/js/0650_SBLive_sf2.js",
+  "/js/constants.min.js",
+  "/js/midi.min.js",
+  "/js/d3.min.js",
+  "/js/daypilot-modal.min-3.10.1.js",
+  "/js/update.js",
+
+  "/img/small_logo.png",
+  "/img/downarrow.png",
+  "/img/info-circle.svg",
+  "/img/volume-off.svg",
+  "/img/volume-up.svg",
+  "/img/angle-up.svg",
+  "/img/angle-down.svg",
+  "/img/bars.svg",
+  "/img/warbl-app-36x36.png",
+  "/img/warbl-app-48x48.png",
+  "/img/warbl-app-72x72.png",
+  "/img/warbl-app-96x96.png",
+  "/img/warbl-app-144x144.png",
+  "/img/warbl-app-192x192.png",
+
+  "/soundfonts/WARBL_SoundFonts2.sf2",
+
+  "/spessasynth/spessasynth_lib_4.2.0_index.js",
+  "/spessasynth/spessasynth_core_4.2.0_index.js",
+  "/spessasynth/spessasynth_processor.min.js"
 ];
 
+// Only these pages should be treated as app pages
+const allowedPages = new Set([
+  "/configure.html",
+  "/configure_test_synth.html"
+]);
 
-// Installing Service Worker
-self.addEventListener("install", (e) => {
+// Only these folders/resources should be cached/served by this SW
+const allowedPrefixes = [
+  "/css/",
+  "/js/",
+  "/img/",
+  "/soundfonts/",
+  "/spessasynth/"
+];
 
-    console.log("[Service Worker] Install");
+const allowedExactFiles = new Set([
+  "/favicon.ico",
+  "/manifest.json"
+]);
 
-    // Make this the current service worker
-    self.skipWaiting();
-    
-    e.waitUntil((async () => {
-      const cache = await caches.open(cacheName);
-      console.log("[Service Worker] Caching all: app shell and content");
-      await cache.addAll(contentToCache);
-      console.log("[Service Worker] Cache addAll complete!");
-    })());
+function shouldHandleRequest(request) {
+  if (request.method !== "GET") return false;
 
+  const url = new URL(request.url);
 
-  });
+  // Only same-origin requests
+  if (url.origin !== self.location.origin) return false;
 
-self.addEventListener("activate", event => {
+  const path = url.pathname;
 
-    console.log("[Service Worker] Activate event");
+  if (allowedPages.has(path)) return true;
+  if (allowedExactFiles.has(path)) return true;
 
-    clients.claim().then(() => {
-        //claim means that the html file will use this new service worker.
-        console.log(
-          "[Service Worker] - The service worker has now claimed all pages so they use the new service worker."
-        );
+  return allowedPrefixes.some(prefix => path.startsWith(prefix));
+}
+
+// Install: precache the config tool shell
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+
+  event.waitUntil((async () => {
+    const cache = await caches.open(cacheName);
+    await cache.addAll(contentToCache);
+  })());
+});
+
+// Activate: claim clients and remove older config-tool caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    await clients.claim();
+
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((key) => key !== cacheName && key.startsWith("warbl_config_"))
+        .map((key) => caches.delete(key))
+    );
+  })());
+});
+
+// Fetch: only handle configure tool pages and their resources
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  if (!shouldHandleRequest(req)) {
+    return;
+  }
+
+  event.respondWith((async () => {
+    const cached = await caches.match(req, {
+      ignoreSearch: false,
+      ignoreVary: true
     });
 
-   event.waitUntil(
-        caches.keys().then((keys) => {
-          return Promise.all(
-            keys.filter((key) => key != cacheName).map((key) => {if (key.indexOf("warbl") != -1){caches.delete(key)}})
-          );
-        })
-    );
-
-});
-  
-// Fetching content using Service Worker
-self.addEventListener("fetch", (e) => {
-
-    //console.log(`[Service Worker] fetching: ${e.request.url}`);
-
-    // Cache http and https only, skip unsupported chrome-extension:// and file://...
-    if (!(
-        e.request.url.startsWith("http:") || e.request.url.startsWith("https:")
-    )) {
-        return; 
+    if (cached) {
+      return cached;
     }
 
-    e.respondWith((async () => {
+    try {
+      const response = await fetch(req);
 
-        //console.log("request: "+e.request.url);
+      if (response && response.ok && response.type === "basic") {
+        const cache = await caches.open(cacheName);
+        await cache.put(req, response.clone());
+      }
 
-        const r = await caches.match(e.request,{ignoreSearch: true, ignoreVary:true});
+      return response;
+    } catch (error) {
+      const url = new URL(req.url);
 
-        if (r){
+      // Offline fallback for the two app pages
+      if (req.mode === "navigate" && allowedPages.has(url.pathname)) {
+        const fallback = await caches.match("/configure.html");
+        if (fallback) return fallback;
+      }
 
-            //console.log(`[Service Worker] Returning cached resource: ${e.request.url}`);
-
-            return r;
-        }
-
-        try{
-
-            //console.log(`[Service Worker] Not in cache, fetching resource: ${e.request.url}`);
-
-            const response = await fetch(e.request);
- 
-            return response;
-            
-        }
-        catch (error){
-
-            console.log("[Service Worker] fetch error: "+error);
-    
-        }
-    })());
+      throw error;
+    }
+  })());
 });
-
-
