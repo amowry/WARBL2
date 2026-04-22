@@ -1141,8 +1141,7 @@ void getShift() {
     // ToDo: Are there any others that don't use the thumb that can be added here?
     // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
     else if ((breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3 || modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4 || modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic || modeSelector[preset] == kModeNAF))) {
-        byte thumbShift = getThumbHalfHoleShift();  // Number of registers shifted by thumb
-        //Serial.println(thumbShift);
+        byte thumbShift = getThumbHalfHoleShift();                      // Number of registers shifted by thumb
         shift = shift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
 }
@@ -1752,7 +1751,10 @@ void getSlide() {
 
         if (toneholeRead[i] > senseDistance && bitRead(holeCovered, i) != 1 && transitionFilter == 0) {  // Does transitionFilter really need to be zero here? AM
 
-            const int offsetLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
+            int offsetLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
+            if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
+                offsetLimit = 2; // Added by AM--kPitchBendSlideVibrato shouldn't be limited if legato slide limit is set to 1.
+            }
 
             int offsetSteps = findStepsOffsetFor(i);
             int trueOffsetSteps = offsetSteps;
@@ -1761,30 +1763,36 @@ void getSlide() {
                 offsetSteps = -offsetLimit;
             }
 
-            else if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
-                if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
-                    if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
+
+            if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
+                if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
+
+                    if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
+
+                    } else {
+                        iPitchBend[i] = 0;
+                        snapped[i] = false;
+                        halfHoleShift[i] = false;
+                        halfHoleTargetRegionState[i] = false;
                     }
-                } else if (trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
-                    getHalfholePitchbend(i);
                 }
-            } else {
-                iPitchBend[i] = 0;
-                snapped[i] = false;
-                halfHoleShift[i] = false;
-                halfHoleTargetRegionState[i] = false;
-                //if (i == 8) { thumbHalfHole = false; }
+            } else if (trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
+                getHalfholePitchbend(i);
             }
+
+
+
         } else {
             iPitchBend[i] = 0;
             snapped[i] = false;
             halfHoleShift[i] = false;
             halfHoleTargetRegionState[i] = false;
-            //if (i == 8) { thumbHalfHole = false; }
         }
     }
 }
+
+
 
 
 
@@ -1852,6 +1860,7 @@ void getHalfholePitchbend(byte i) {
 
     if (snapped[i] == true) {
         if (!ED[preset][HALFHOLE_USE_MIDI_NOTE]) {
+
             iPitchBend[i] = pitchBendPerSemi;  // Snap to semitone if not using MIDI note instead.
         } else {
             halfHoleShift[i] = true;  // Or shift MIDI note.
@@ -1920,8 +1929,6 @@ void calculateAndSendPitchbend() {
 
 
 void sendPitchbend() {
-
-
     static int prevRawPitchBend = 0;
 
     pitchBend = 0;  // Reset the overall pitchbend in preparation for adding up the contributions from all the toneholes.
@@ -1929,8 +1936,10 @@ void sendPitchbend() {
         pitchBend = pitchBend + iPitchBend[i];
     }
 
+    bool halfholeUsingMidiNote = ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE];
+
     int noteshift = 0;
-    if (noteon && pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) {
+    if (noteon && pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfholeUsingMidiNote) {
         noteshift = (notePlaying - shift) - newNote;
         pitchBend += (int)(noteshift * pitchBendPerSemi);
 
@@ -1938,15 +1947,12 @@ void sendPitchbend() {
         // to provide the smallest amount of smoothing to the raw note value which avoids artifacts
         // in some destination sound sources
 
-        const int avgcnt = 2;
-        if (resetBendFilter) {
-            // don't average in this case (happens around a note on)
+        if (resetBendFilter) {  // don't average in this case (happens around a note on)
             prevRawPitchBend = pitchBend;
             resetBendFilter = false;
         } else {
             int avgbend = (prevRawPitchBend + pitchBend) >> 1;
             prevRawPitchBend = pitchBend;
-
             pitchBend = avgbend;
         }
     }
@@ -1960,9 +1966,7 @@ void sendPitchbend() {
     }
 
     if (prevPitchBend != pitchBend) {
-
         if (noteon) {
-
             sendMIDI(PITCH_BEND, mainMidiChannel, pitchBend & 0x7F, pitchBend >> 7);
             prevPitchBend = pitchBend;
         }
@@ -1977,14 +1981,19 @@ void sendPitchbend() {
 
 
 
-// Send MIDI NoteOn/NoteOff events when necessary.
+
 void sendNote() {
     const int velDelayMs = switches[preset][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // Keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
 
+    bool halfHoleUsingMidiNote = ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE];
+    int targetPlayedNote = newNote + shift;
+    int currentPlayedNote = notePlaying;
+
     if (        // Several conditions to tell if we need to turn on a new note.
       (!noteon  // If there wasn't any note playing or the current note is different than the previous one
-       || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && newNote != (notePlaying - shift))
-       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
+       || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && targetPlayedNote != currentPlayedNote)
+       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && halfHoleUsingMidiNote && targetPlayedNote != currentPlayedNote)
+       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfHoleUsingMidiNote && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
       && newNote != 0                                                                                   // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
       && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play)) &&       // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
       !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
@@ -3385,9 +3394,6 @@ void sendSettings() {
     manageBattery(true);  // Do this to send voltage and charging status to Config Tool.
 
     uint16_t interval_x100 = (uint16_t)(connIntvl * 100.0f);
-
-    Serial.println(interval_x100);
-
     sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                     MIDI_CC_119, interval_x100 & 0x7F);
 
@@ -4201,8 +4207,6 @@ void connect_callback(uint16_t conn_handle) {
     if (communicationMode) {
         uint16_t interval_x100 = (uint16_t)(connIntvl * 100.0f);
 
-        Serial.println(interval_x100);
-
         sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                         MIDI_CC_119, interval_x100 & 0x7F);
 
@@ -4271,8 +4275,6 @@ void updateBLEIntervalStatus() {
 
         if (communicationMode) {
             uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
-            Serial.println(interval_x100);
-
             sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                             MIDI_CC_119, interval_x100 & 0x7F);
 
