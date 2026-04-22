@@ -1296,6 +1296,8 @@ function WARBL_Receive(event, source) {
 
 					else if (jumpFactorWrite == MIDI_BEND_RANGE) {
 						document.getElementById("midiBendRange").value = data2;
+						let element = document.getElementById("midiBendRange");
+						element.dispatchEvent(new Event("input", { bubbles: true }));
 					}
 					else if (jumpFactorWrite == MIDI_MIDI_CHANNEL) {
 						document.getElementById("noteChannel").value = data2;

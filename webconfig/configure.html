@@ -3337,7 +3337,7 @@ function isIOS() {
                         <p>The <b> Note channel </b> input allows you to select the MIDI channel (1-16) used for sending notes from WARBL. This should typically be left set to "1".</p>
                         <p>The <b> Bend Range </b> setting is the number of semitones of pitch bend that the WARBL will allow. This should typically be set to the default value of 2.</p>
                         <p>The <b> Transient note filter </b> filters out very brief unwanted notes by adding a small delay to the tonehole sensors. This can be particularly useful when using note annotation software to transcribe your playing. Without the filter, there can be very brief notes that you might not necessarily hear but that will be transcribed. The filter can also be used to "clean up" the sound of your playing by removing "crossing noises" that occur while changing from one fingering pattern to another. Be aware, however, that because the filter works by adding a delay, setting it too high will give a "sluggish" feel. Set it to "0" for the fastest possible tonehole response.</p>
-                        <p>The Configuration Tool now contains an <b>audio player</b> with several instrument sounds available. To turn on the audio, click the "loudspeaker" icon in the top left corner of the Configuration Tool. To select the instrument sound and other settings, click the "<b> ... </b>" button directly below the loudspeaker icon. </p>
+                        <p>The Configuration Tool now contains an <b>audio player</b> with several instrument sounds available. To turn on the audio, click the <img src="img/volume-up.svg"/> button in the top left corner of the Configuration Tool. To select the instrument sound and other settings, click the "<b> ... </b>" button directly below. </p>
                       </div>
                     </div>
                   </div>
@@ -3716,12 +3716,14 @@ function isIOS() {
                           20
                         </span>
                       </div>
+                      <!-- removing this because I'm syncing bend range with the current WARBL preset
                       <div class="synthBendrangelabel noTouch">
                         Bend Range (semitones)
                       </div>
                       <div class="synthBendRangeContainer">
                         <input class="synthExpressionInput" id="synthBendRange" onchange="sendSynthBendRange(value)" type="text" value="2">
                       </div>
+                      -->
                       <div class="row synthKeySelectLabel noTouch" id="keyLabel">
                         Transpose (semitones)
                       </div>
@@ -3760,9 +3762,11 @@ function isIOS() {
                       </div>
                       <p>The audio in the Configuration Tool is mostly for testing purposes, and a standalone app is generally recommended for the best sound quality. Note: on iOS devices, you might not hear the audio if the <b> Do Not Disturb </b> switch is turned on. If you are not hearing sound, use the <b> Test Audio </b> button to determine if the problem is with the audio output or your WARBL settings.</p>
                       <p>The audio will respond to <b> CC2, CC7, CC11, or channel pressure messages </b> for controlling loudness. If no expression messages are received for two seconds while a note is playing, loudness will be reset to the maximum.</p>
-                      <p>The <b> Bend Range (semitones) </b> setting should match the same setting near the top of the Configuration Tool.</p>
+
                       <p>The <b> Transpose (semitones) </b> can be used to change the key of the audio. If you are using bagpipes sounds, use this rather than the other Transpose selector next to the Fingering Pattern menu, because this will keep the drones in tune with the chanter. This <b> only </b> affects the audio output here, <b> not </b> the MIDI notes that the WARBL is sending. <b> Note: </b> Transposing the uilleann pipes sound lower than -7 semitones is not recommended because it then extends into the drones range and low notes will cause the drones to play.</p>
                       <p>The bagpipes contain drone sounds that can be turned on by using the <b> Drones </b> panel to a MIDI <b> Note On </b> message (any note lower than 55). They are turned off by sending a <b> Note Off </b> message for the same note number, or a <b> Note On </b> message with a velocity of 0 (byte 3 in the drones panel). To ensure that the drones don't respond to pitchbend messages, you can use a different channel for drones than the main note (chanter) channel.</p>
+                     <p>The MIDI pitchbend range in the audio player is automatically synced with the <b>Bend Range</b> in the current WARBL preset.</p>
+                     <p>To reset the audio, use the <img src="img/volume-up.svg"/> button to turn it off and then on again.</p>
                     </div>
                   </div>
                 </div>

@@ -11,11 +11,15 @@ var synthReady = false;
 var startAudioPromise = null;
 
 // Pitch bend range
+/* //(now just syncing this with the current preset).
 var pitchBendRangeSemitones = document.getElementById("synthBendRange").value;
 if (localStorage.getItem("pitchBendRange") != null) {
 	pitchBendRangeSemitones = localStorage.getItem("pitchBendRange");
 	document.getElementById("synthBendRange").value = pitchBendRangeSemitones;
 }
+*/
+
+var pitchBendRangeSemitones = 2;
 
 // Voice
 var synthPresetNumber = 1;
@@ -742,6 +746,29 @@ reverbSlider.oninput = function () {
 		initializeChannels();
 	}
 };
+
+/*
+// Old
+document.getElementById("synthBendRange").oninput = function () {
+	pitchBendRangeSemitones = Number(this.value);
+	localStorage.setItem("pitchBendRange", pitchBendRangeSemitones);
+
+	if (synthReady && synth) {
+		setPitchBendRange(pitchBendRangeSemitones, 0);
+	}
+};
+*/
+
+document.getElementById("midiBendRange").oninput = function () {
+	pitchBendRangeSemitones = Number(this.value);
+	//localStorage.setItem("pitchBendRange", pitchBendRangeSemitones);
+//console.log("bend range: ");
+//console.log(pitchBendRangeSemitones);
+	if (synthReady && synth) {
+		setPitchBendRange(pitchBendRangeSemitones, 0);
+	}
+};
+
 
 reverbValue.textContent = reverbSlider.value;
 
