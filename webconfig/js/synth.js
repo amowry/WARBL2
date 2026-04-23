@@ -618,7 +618,7 @@ async function startAudio() {
 		await audioContext.audioWorklet.addModule(window.WORKLET_URL);
 
 		setStatus("Loading SoundFont...");
-		const response = await fetch(window.SOUNDFONT_URL, { cache: "no-store" });
+		const response = await fetch(window.SOUNDFONT_URL);
 		if (!response.ok) {
 			throw new Error("SoundFont load failed: " + response.status + " " + response.statusText);
 		}

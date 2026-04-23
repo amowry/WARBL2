@@ -2,7 +2,6 @@
 <html>
   <head>
     <script>
-      //Use a URL like this to disable service worker for development etc.: https://warbl.xyz/configure.html?nosw=1
       //Change this for app vs. web version (app version is only needed for those who haven't updated the WARBl iOS app since 2024, or the older WEB MIDI Browser). File names should be configure.html for web version and configureForApp.html for app version.
       //var platform = "app";
       var platform = "web";
@@ -11,13 +10,14 @@
     <title>
       WARBL Configuration
     </title>
-		<meta name="viewport" content="maximum-scale=1,viewport-fit=cover">
+	<meta name="viewport" content="maximum-scale=1,viewport-fit=cover">
     <meta content="WARBL Configuration Tool" name="description"/>
     <meta content="Andrew Mowry" name="author"/>
     <link href="css/nouislider.css" rel="stylesheet" type="text/css"/>
     <link href="css/config.min.css" rel="stylesheet" type="text/css"/>
 		
-    <link href="https://warbl.xyz/manifest.json" rel="manifest"/>
+    <link rel="manifest" href="/manifest.json">
+
     <style>
       .topnav.responsive {
       background: transparent;
@@ -26,25 +26,35 @@
       text-align: center;
       }
     </style>
-    <script>
-      //
-      // Are we on iOS?
-      //
-	  
-	  /* // Older method
-      function isIOS() {
-      if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-      platform = "app";
-      return true;
-      } else {
-      return (
-      (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)) ||
-      (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /iPad/.test(navigator.platform))
-      );
-      }
-      }
-	  */
-	  
+    
+    
+ <script>
+	// Do our best to cache the synth.
+(async function warmSynthAssets() {
+  const urls = [
+    "https://warbl.xyz//spessasynth/spessasynth_lib_4.2.0_index.js",
+    "https://warbl.xyz//spessasynth/spessasynth_processor.min.js",
+    "https://warbl.xyz//soundfonts/WARBL_SoundFonts2.sf2"
+  ];
+
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, {
+        method: "GET",
+        cache: "force-cache",
+        mode: "cors",
+        credentials: "same-origin"
+      });
+      console.log("Warm fetch:", url, r.status, r.type);
+    } catch (e) {
+      console.log("Warm fetch failed:", url, e);
+    }
+  }
+})();
+</script>
+  
+<script>
+
 function isIOS() {
   const isiOS =
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -57,32 +67,8 @@ function isIOS() {
   return isiOS;
 }
       
-      //
-      // Should service worker be disabled?
-      // Example:
-      //   configure_test_synth.html?nosw=1
-      //
-      function disableServiceWorker() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("nosw") === "1";
-      }
-      
-      if (window.isSecureContext) {
-      console.log("secure");
-      }
-      
-      if (disableServiceWorker()) {
-      console.log("Service Worker disabled by URL toggle");
-      
-      if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let reg of registrations) {
-      reg.unregister();
-      }
-      });
-      }
-      } else {
-      // Register service worker (not on iOS or iPad requesting desktop site)
+
+  // Register service worker (not on iOS or iPad requesting desktop site)
       if ((!isIOS()) && ("serviceWorker" in navigator)) {
       navigator.serviceWorker.register("/service_worker.js", {
       scope: "/"
@@ -94,14 +80,14 @@ function isIOS() {
       console.log("Service Worker Registration failed: " + err);
       });
       }
-      }
+      
     </script>
     <script type="module">
-      import { WorkletSynthesizer } from "https://warbl.xyz/spessasynth/spessasynth_lib_4.2.0_index.js";
-      
+	// Using absolute links for these allows the site to work locally without a server.
+      import { WorkletSynthesizer } from "https://warbl.xyz//spessasynth/spessasynth_lib_4.2.0_index.js";   
       window.WorkletSynthesizer = WorkletSynthesizer;
-      window.WORKLET_URL = "https://warbl.xyz/spessasynth/spessasynth_processor.min.js";
-      window.SOUNDFONT_URL = "https://warbl.xyz/soundfonts/WARBL_SoundFonts2.sf2";
+      window.WORKLET_URL = "https://warbl.xyz//spessasynth/spessasynth_processor.min.js";
+      window.SOUNDFONT_URL = "https://warbl.xyz//soundfonts/WARBL_SoundFonts2.sf2";
     </script>
   </head>
   <body>
@@ -3817,11 +3803,11 @@ function isIOS() {
                 </div>
               </div>
             </body>
-            <script src="js/jquery-3.3.1.min.js">
-            </script>
-            <script src="js/nouislider.js">
-            </script>
-            <script>
+<script src="js/jquery-3.3.1.min.js">
+</script>
+<script src="js/nouislider.min.js">
+ </script>
+<script>
               var slider = document.getElementById('slider');
 noUiSlider.create(slider, {
 start: [0, 100],
