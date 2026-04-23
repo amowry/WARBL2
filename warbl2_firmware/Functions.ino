@@ -83,14 +83,15 @@ void getSensors(void) {
     byte testByte = SPI.transfer(0);  // The first byte received is for verification of SPI alignment. It should be 0xff. This tests whether the ATmega was ready at the start of the transfer.
     bool goodtestByte = (testByte == 0xff);
 
-    for (byte i = 0; i < 12; i++) {
-        toneholePacked[i] = SPI.transfer(i + 1);  // The ATmega doesn't load anything during the final trasfer-- it's just to retrieve the last value in the buffer.
+    for (byte i = 0; i < 11; i++) {
+        toneholePacked[i] = SPI.transfer(i + 1);
     }
+    toneholePacked[11] = SPI.transfer(useBellSensor + 20);  // The final transfer is dual purpose-- receive the last byte and send the bell sensor state.
 
-    if (useBellSensorChanged) {  // Tell the ATmega to turn the bell sensor on or off if necessary.
-        SPI.transfer(useBellSensor + 20);
-        useBellSensorChanged = false;
-    }
+    //if (useBellSensorChanged) {  // Tell the ATmega to turn the bell sensor on or off if necessary (this was occasionally turning the sensor off eroneously so I'm now sending it every time as a stopgap).
+    //SPI.transfer(useBellSensor + 20);
+    //useBellSensorChanged = false;
+    //}
 
     digitalWrite(2, HIGH);
     SPI.endTransaction();
@@ -1753,7 +1754,7 @@ void getSlide() {
 
             int offsetLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
             if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
-                offsetLimit = 2; // Added by AM--kPitchBendSlideVibrato shouldn't be limited if legato slide limit is set to 1.
+                offsetLimit = 2;  // Added by AM--kPitchBendSlideVibrato shouldn't be limited if legato slide limit is set to 1.
             }
 
             int offsetSteps = findStepsOffsetFor(i);
