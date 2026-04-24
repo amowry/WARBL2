@@ -27,31 +27,6 @@
       }
     </style>
     
-    
- <script>
-	// Do our best to cache the synth.
-(async function warmSynthAssets() {
-  const urls = [
-    "https://warbl.xyz//spessasynth/spessasynth_lib_4.2.0_index.js",
-    "https://warbl.xyz//spessasynth/spessasynth_processor.min.js",
-    "https://warbl.xyz//soundfonts/WARBL_SoundFonts2.sf2"
-  ];
-
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, {
-        method: "GET",
-        cache: "force-cache",
-        mode: "cors",
-        credentials: "same-origin"
-      });
-      console.log("Warm fetch:", url, r.status, r.type);
-    } catch (e) {
-      console.log("Warm fetch failed:", url, e);
-    }
-  }
-})();
-</script>
   
 <script>
 
@@ -61,27 +36,34 @@ function isIOS() {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   if (isiOS) {
-    if (platform == "web") {platform = "app2";}
+    if (platform == "web") {
+		platform = "app2";
+		document.documentElement.classList.add("ios-app"); // Change CSS for iOS if desired.
+		}
   }
-
+  console.log("Platform: " + platform);
   return isiOS;
 }
       
 
-  // Register service worker (not on iOS or iPad requesting desktop site)
-      if ((!isIOS()) && ("serviceWorker" in navigator)) {
-      navigator.serviceWorker.register("/service_worker.js", {
-      scope: "/"
-      }, { updateViaCache: "none" })
-      .then(reg => {
-      console.log("Service Worker Registered!");
-      })
-      .catch(err => {
-      console.log("Service Worker Registration failed: " + err);
-      });
-      }
+// Register service worker (not on iOS or iPad requesting desktop site)
+const isiOS = isIOS();
+
+if (!isiOS && ("serviceWorker" in navigator)) {
+  navigator.serviceWorker.register("/service_worker.js", {
+    scope: "/",
+    updateViaCache: "none"
+  })
+  .then(reg => {
+    console.log("Service Worker Registered!");
+  })
+  .catch(err => {
+    console.log("Service Worker Registration failed:", err);
+  });
+}
       
-    </script>
+ </script>
+ 
     <script type="module">
 	// Using absolute links for these allows the site to work locally without a server.
       import { WorkletSynthesizer } from "https://warbl.xyz//spessasynth/spessasynth_lib_4.2.0_index.js";   
@@ -1026,9 +1008,6 @@ function isIOS() {
             <button class="smallbutton noTouch advanced" onclick="advanced()" type="button">
               Advanced...
             </button>
-            <button class="smallbutton noTouch graph" onclick="pressureGraph()" type="button">
-              Graph...
-            </button>
           </div>
           <div class="smallcontrolbox" id="box2">
             <h2 class="controlboxtitle noTouch">
@@ -1151,19 +1130,6 @@ function isIOS() {
             <button class="smallbutton noTouch advancedBagDefaults" onclick="advancedBagDefaults()" type="button">
               Bag defaults
             </button>
-          </div>
-          <div class="smallcontrolbox" id="pressuregraph">
-            <h2 class="controlboxtitle noTouch">
-              Pressure Graph
-              <button class="infocircle" onclick="modal(16)" type="button">
-                <img class="info" src="img/info-circle.svg"/>
-              </button>
-              <div id="d3PressureGraph">
-              </div>
-              <button class="smallbutton noTouch pressureOkay" onclick="pressureOkay()" type="button">
-                OK
-              </button>
-            </h2>
           </div>
           <div class="smallcontrolbox" id="box5">
             <h2 class="controlboxtitle noTouch">
@@ -3975,9 +3941,7 @@ range: {
             </script>
             <script src="js/midi.min.js">
             </script>
-            <script src="js/d3.min.js">
-            </script>
       
-            
+    
             
           </html>

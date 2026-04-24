@@ -2406,7 +2406,7 @@ input:disabled + .vibratoSlider:before {
 	height: 40px;
 	width: 110px;
 	top: 340px;
-	left: 200px;
+	left: 230px;
 }
 
 .advancedPB {
@@ -3266,13 +3266,15 @@ h3 {
 	bottom: 0;
 	left: 0;
 	z-index: 999999;
-	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
-	transition: all 0.3s;
+	opacity: 0;
+	transition: opacity 0.3s !important;
 }
 
 .modal-window-open {
 	opacity: 1;
+	visibility: visible;
 	pointer-events: auto;
 }
 
@@ -5822,14 +5824,9 @@ ath {
 
 /*
   Conservative Safari zoom-safety override
-  - Removes the clipping/containment changes from the first pass
   - Keeps only low-risk repaint/compositing reductions
 */
 
-/* Avoid animating every property on the fixed modal overlay */
-.modal-window {
-  transition: opacity 0.3s !important;
-}
 
 /* Reduce compositor churn from pressed-state transforms */
 .headerbuttons:active,
@@ -5876,3 +5873,7 @@ body,
   contain: none !important;
 }
 
+/* Prevent zooming to field on iOS*/
+html.ios-app input[type="text"] {
+  font-size: 16px !important;
+}

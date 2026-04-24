@@ -61,14 +61,6 @@ var selectedMidiOutId = 0;
 
 var gExportProxy = null; // Export received message proxy
 
-// For pressure graphing
-var gPressureGraphEnabled = false; // When true, proxy pressure messages to graphing code
-var gCurrentPressure = 0.0;
-var gGraphInterval = null;
-var gNPressureReadings = 100;
-var gMaxPressure = 25;
-var gPressureReadings = [];
-
 var on, off;
 
 var deviceName;
@@ -451,6 +443,7 @@ async function startMidiConnect()
 		console.log("Could not detect any connected WARBLs");
 		enableMidiInputForOnly(0); // disable all midi input
 		showWARBLNotDetected();
+		startMidiConnect();
 	}
 
 }
@@ -473,13 +466,38 @@ async function onMIDIInit(midi)  {
 	updateMidiDeviceSelector();
 
 	if (foundMIDIInputDevice) {
-		// try a connection
+		// Try connecting for several seconds, then give up.
 		console.log("trying initial connect");
-		startMidiConnect();
+
+		var autoConnectStart = Date.now();
+		var autoConnectTimeout = 8000;
+		var autoConnectRetryDelay = 100;
+
+		function tryInitialConnect() {
+
+			if (communicationMode) {
+				console.log("initial auto-connect succeeded");
+				return;
+			}
+
+			if (Date.now() - autoConnectStart > autoConnectTimeout) {
+				console.log("initial auto-connect timed out");
+				showWARBLNotDetected();
+				return;
+			}
+
+			if (!midiConnecting) {
+				console.log("initial auto-connect attempt");
+				startMidiConnect();
+			}
+
+			setTimeout(tryInitialConnect, autoConnectRetryDelay);
+		}
+
+		tryInitialConnect();
 	}
 	else {
 		console.log("no inputs");
-
 		showWARBLNotDetected();
 	}
 }
@@ -701,8 +719,6 @@ function WARBL_Receive(event, source) {
 	// If we haven't established the WARBL output port and we get a received CC110 message on channel 7 (the first message that the WARBL sends back when connecting)
 	// find the port by name by walking the output ports and matching the input port name
 	if ((!WARBLout || !WARBLin) && ((data0 & 0x0F) == MIDI_CONFIG_TOOL_CHANNEL - 1) && ((data0 & 0xf0) == 176) && (data1 == MIDI_CC_110)) {
-		//alert(data0 & 0x0F);
-		console.log("Platform: " + platform);
 		if (platform == "app") { // legacy app
 			console.log("Legacy app connection");
 			WARBLout = 1; //for legacy app version we don't worry about the device name or port, just that it's sending on channel 7.
@@ -989,7 +1005,6 @@ function WARBL_Receive(event, source) {
 						document.getElementById("key1").style.display = "none";
 						document.getElementById("key2").style.display = "none";
 						advancedOkay(); //turn off the advanced tab	
-						pressureOkay();
 						updateCells();
 						advancedOkayPB();
 						okayCCmap();
@@ -1012,7 +1027,6 @@ function WARBL_Receive(event, source) {
 						document.getElementById("key1").style.display = "block";
 						document.getElementById("key2").style.display = "none";
 						advancedOkay(); //turn off the advanced tab
-						pressureOkay();
 						updateCells();
 						advancedOkayPB();
 						okayCCmap();
@@ -1035,7 +1049,6 @@ function WARBL_Receive(event, source) {
 						document.getElementById("key1").style.display = "none";
 						document.getElementById("key2").style.display = "block";
 						advancedOkay(); //turn off the advanced tab	
-						pressureOkay();
 						updateCells();
 						advancedOkayPB();
 						okayCCmap();
@@ -1723,7 +1736,6 @@ function WARBL_Receive(event, source) {
 
 					version = data2;
 					
-					console.log("Previous version = " + previousVersion);
 					console.log("Version = " + version);
 
 					if (previousVersion != 0 && version != previousVersion) { //If the version has changed because a different WARBL has connected
@@ -2125,11 +2137,6 @@ function WARBL_Receive(event, source) {
 						p = 0
 					};
 
-					// Are we graphing pressure values?
-					if (gPressureGraphEnabled) {
-						capturePressure(p);
-					}
-					else {
 						document.getElementById("pressure").innerHTML = (p);
 						document.getElementById("pressure1").innerHTML = (p);
 						
@@ -2181,7 +2188,6 @@ function WARBL_Receive(event, source) {
 								bendbar.style.background = "var(--gauge-color)";
 							}
 						}
-					}
 				}
 
 				for (var i = 0; i < numberOfGestures; i++) {
@@ -2623,7 +2629,6 @@ function sendFingeringRadio(tab) { //change presets, showing the correct tab for
 	instrument = tab;
 	updateCustom();
 	advancedOkay(); //turn off the advanced tab
-	pressureOkay();
 	okayCCmap();
 	okayIMUmap();
 	okayPitchRegistermap();
@@ -3946,7 +3951,6 @@ function configureCustomFingering() {
 		document.getElementById("box2").style.top = "740px";
 		document.getElementById("box4").style.top = "740px";
 		document.getElementById("box5").style.top = "740px";
-		document.getElementById("pressuregraph").style.top = "740px";
 		document.getElementById("box3").style.top = "1200px";
 		document.getElementById("expressionPressureBox").style.top = "1200px";
 		document.getElementById("box9").style.top = "1200px";
@@ -3975,7 +3979,6 @@ function customFingeringOkay() {
 	document.getElementById("box2").style.top = "440px";
 	document.getElementById("box4").style.top = "440px";
 	document.getElementById("box5").style.top = "440px";
-	document.getElementById("pressuregraph").style.top = "440px";
 	document.getElementById("box3").style.top = "900px";
 	document.getElementById("expressionPressureBox").style.top = "900px";
 	document.getElementById("box9").style.top = "900px";
@@ -4285,27 +4288,6 @@ function sendIMUCC(selection) {
 	sendToWARBL(MIDI_CC_105, selection);
 }
 
-
-function pressureGraph() {
-
-
-	// Show the pressure graph
-	document.getElementById("pressuregraph").style.display = "block";
-	document.getElementById("box1").style.display = "none";
-
-	// Start graphing the incoming pressure
-	startPressureGraph();
-}
-
-function pressureOkay() {
-
-	// Stop graphing the incoming pressure
-	stopPressureGraph();
-
-	// Hide the pressure
-	document.getElementById("pressuregraph").style.display = "none";
-	document.getElementById("box1").style.display = "block";
-}
 
 function advancedDefaults() {
 	if (version > 2.0 || version == "Unknown") {
@@ -5908,150 +5890,6 @@ async function saveExportedPreset() {
 
 
 
-
-//
-// Capture the incoming pressure
-//
-function capturePressure(val) {
-
-	//console.log("capturePressure: "+val);
-
-	gCurrentPressure = val;
-
-}
-
-//
-// Graph the incoming pressure
-//
-function graphPressure() {
-
-	// Drop the last element of the array
-	gPressureReadings.pop();
-
-	// Add the new value to the front of the array
-	gPressureReadings.unshift(gCurrentPressure);
-
-	// Clear the graph
-	$("#d3PressureGraph").empty();
-
-	// set the dimensions and margins of the graph
-	var margin = { top: 10, right: 10, bottom: 100, left: 50 },
-		width = 390,
-		height = 320 - margin.top - margin.bottom;
-
-	// append the svg object to the body of the page
-	var svg = d3.select("#d3PressureGraph")
-		.append("svg")
-		.attr("width", width + margin.left + margin.right)
-		.attr("height", height + margin.top + margin.bottom)
-		// translate this svg element to leave some margin.
-		.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-	// X scale and Axis
-	var x = d3.scaleLinear()
-		.domain([0, width])       // This is the min and the max of the data
-		.range([0, width]);
-
-	svg.append('g')
-		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(x).tickSize(0).tickFormat(""));
-
-	// Y scale and Axis
-	var y = d3.scaleLinear()
-		.domain([0, gMaxPressure])  // This is the min and the max of the data: 0 to gMaxPressure
-		.range([height, 0]);
-
-	svg.append('g')
-		.call(d3.axisLeft(y));
-
-	// text label for the x axis
-	svg.append("text")
-		.attr("y", (height + 4))
-		.attr("x", (width / 2) - (margin.left / 2) + 10)
-		.attr("dy", "1em")
-		.style("text-anchor", "middle")
-		.style("fill", "white")
-		.text("Time");
-
-	// text label for the y axis
-	svg.append("text")
-		.attr("transform", "rotate(-90)")
-		.attr("y", 0 - (margin.left - 5))
-		.attr("x", 0 - (height / 2))
-		.attr("dy", "1em")
-		.style("text-anchor", "middle")
-		.style("fill", "white")
-		.text("Inches of H₂O");
-
-	// X scale will use the index of our data
-	var xScale = d3.scaleLinear()
-		.domain([0, gNPressureReadings - 1]) // input
-		.range([0, width]); // output
-
-	// Y scale will use the pressure range from 0 - gMaxPressure 
-	var yScale = d3.scaleLinear()
-		.domain([0, gMaxPressure]) // input 
-		.range([height, 0]); // output 
-
-	// d3's line generator
-	var line = d3.line()
-		.x(function (d, i) { return xScale(i); }) // set the x values for the line generator
-		.y(function (d) { return yScale(d.y); }) // set the y values for the line generator 
-		.curve(d3.curveMonotoneX); // apply smoothing to the line
-
-	// An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a pressure reading
-	var dataset = d3.range(gNPressureReadings).map(function (d) { return { "y": gPressureReadings[d] } });
-
-	// Append the path, bind the data, and call the line generator 
-	svg.append("path")
-		.datum(dataset) // Binds data to the line 
-		.attr("class", "pressureline") // Assign a class for styling 
-		.attr("d", line); // Calls the line generator 
-}
-
-//
-// Start the pressure graph
-//
-function startPressureGraph() {
-
-	// Shunt the pressure messages to the graphing routine
-	gPressureGraphEnabled = true;
-
-	// Reset the pressure capture
-	gCurrentPressure = 0.0;
-
-	// Clear the pressure capture array
-	var i;
-	gPressureReadings = [];
-	for (i = 0; i < gNPressureReadings; ++i) {
-		gPressureReadings.push(0.0);
-	}
-
-	// Setup the graph redraw interval timer
-	gGraphInterval = setInterval(graphPressure, 100);
-
-}
-
-//
-// Stop the pressure graph
-//
-function stopPressureGraph() {
-
-	// Stop shunting the pressure messages to the graphing routine
-	gPressureGraphEnabled = false;
-
-	// Stop the interval timer
-	clearInterval(gGraphInterval);
-
-	$("#d3PressureGraph").empty();
-
-	return;
-}
-
-
-
-
 function sendUpdateTool() {
 
 	// Close confirm modal
@@ -6134,3 +5972,4 @@ function finishUpdateTool() {
 function restartTool() {
 	window.location.reload();
 }
+

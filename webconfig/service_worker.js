@@ -1,15 +1,9 @@
-//
-// Service worker for WARBL configuration tool offline use resource caching
-//
-//
-// Updated 4/21/26
-//
 
-//
 // Service worker for WARBL configuration tool offline use resource caching
-//
+// Updated 4/24/26
 
-const cacheName = "warbl_config_81";
+
+const cacheName = "warbl_config_85";
 
 const contentToCache = [
   "/configure.html",
@@ -20,10 +14,9 @@ const contentToCache = [
   "/css/nouislider.css",
 
   "/js/jquery-3.3.1.min.js",
-  "/js/nouislider.js",
+  "/js/nouislider.min.js",
   "/js/constants.min.js",
   "/js/midi.min.js",
-  "/js/d3.min.js",
 
   "/img/small_logo.png",
   "/img/downarrow.png",
@@ -39,6 +32,7 @@ const contentToCache = [
   "/img/warbl-app-96x96.png",
   "/img/warbl-app-144x144.png",
   "/img/warbl-app-192x192.png",
+  "/img/warbl-app-512x512.png",
 
   "/soundfonts/WARBL_SoundFonts2.sf2",
 
