@@ -443,7 +443,6 @@ async function startMidiConnect()
 		console.log("Could not detect any connected WARBLs");
 		enableMidiInputForOnly(0); // disable all midi input
 		showWARBLNotDetected();
-		startMidiConnect();
 	}
 
 }

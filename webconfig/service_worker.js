@@ -3,7 +3,7 @@
 // Updated 4/24/26
 
 
-const cacheName = "warbl_config_85";
+const cacheName = "warbl_config_86";
 
 const contentToCache = [
   "/configure.html",
