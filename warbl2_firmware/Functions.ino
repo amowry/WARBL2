@@ -1991,22 +1991,23 @@ void sendPitchbend() {
 
 
 void sendNote() {
-    const int velDelayMs = switches[preset][SEND_AFTERTOUCH] != 0 ? 3 : 16;  // Keep this minimal to avoid latency if also sending aftertouch, but enough to get a good reading, otherwise use longer
+    const int velDelayMs = switches[preset][SEND_AFTERTOUCH] != 0 ? 3 : 16;
 
     bool halfHoleUsingMidiNote = ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE];
     int targetPlayedNote = newNote + shift;
     int currentPlayedNote = notePlaying;
 
+    int legatoSlideLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
+
     if (        // Several conditions to tell if we need to turn on a new note.
-      (!noteon  // If there wasn't any note playing or the current note is different than the previous one
+      (!noteon
        || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && targetPlayedNote != currentPlayedNote)
        || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && halfHoleUsingMidiNote && targetPlayedNote != currentPlayedNote)
-       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfHoleUsingMidiNote && abs(newNote - (notePlaying - shift)) > midiBendRange - 1))
-      && newNote != 0                                                                                   // And the MIDI note is not 0 (with a custom chart a MIDI note of 0 can be used as a silent position, so don't play the note).
-      && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play)) &&       // And the state machine has determined that a note should be playing, or we're in bagless mode and the sound is turned on
-      !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))  // And not waiting for the pressure to rise to calculate note on velocity if we're transitioning from not having any note playing.
+       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfHoleUsingMidiNote && abs(newNote - (notePlaying - shift)) > legatoSlideLimit))
+      && newNote != 0
+      && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play))
+      && !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))
     {
-
         int notewason = noteon;
         int notewasplaying = notePlaying;
 
