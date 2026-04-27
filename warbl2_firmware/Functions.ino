@@ -29,6 +29,13 @@ void printStuff(void) {
         delay(5000);
     } 
 */
+
+    // Print the total minutes run time per charge (for estimating battery health).
+    /*
+         int runTimePerCharge;
+         getEEPROM(EEPROM_EST_RUNTIME_START, runTimePerCharge);
+         Serial.println(runTimePerCharge);
+         */
 }
 
 

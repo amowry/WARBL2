@@ -5,7 +5,7 @@
 //debugger;
 
 
-var configVersion = 4.6;
+var configVersion = "4.6.3";
 
 
 var sendDelay = 15 //milliseconds delay between sending commands to the WARBL
@@ -145,9 +145,6 @@ window.onclick = function (event) {
 }
 
 
-//console.log('Initially ' + (window.navigator.onLine ? 'on' : 'off') + 'line'); // Detect if there's a connection-- can be used for refreshing the app version if a connection is available?
-
-
 window.addEventListener('load', function () {
 
 	//console.log("window onLoad");
@@ -201,8 +198,7 @@ function updatePlatform()
 	
 
 	let newdispleg =  (platform == "app") ? "none" : "block";
-	// Always show
-	// document.getElementById("midiSelector").style.display = newdispleg;
+
 }
 
 //
@@ -303,10 +299,8 @@ function enableMidiInputForOnly(portid)
 
 			if (input.value.id == portid) {
 				input.value.onmidimessage = WARBL_Receive;
-				//input.value.addEventListener('midimessage', WARBL_Receive, false);
 			} else {
 				input.value.onmidimessage = null;
-				//input.value.removeEventListener('midimessage', WARBL_Receive, false);
 			}
 		}
 	}
@@ -469,8 +463,8 @@ async function onMIDIInit(midi)  {
 		console.log("trying initial connect");
 
 		var autoConnectStart = Date.now();
-		var autoConnectTimeout = 8000;
-		var autoConnectRetryDelay = 100;
+		var autoConnectTimeout = 3000;
+		var autoConnectRetryDelay = 250;
 
 		function tryInitialConnect() {
 
@@ -515,7 +509,7 @@ function setToDisconnected()
 	WARBLout = null;
 	WARBLin = null;
 	communicationMode = false;
-	//previousVersion = 0;
+	previousVersion = 0;
 	document.getElementById("connect").innerHTML = "Connect to WARBL";	//make sure the connect button shows the correct text    
 }
 
@@ -4926,22 +4920,42 @@ function frequencyFromNoteNumber(note) {
 	return 440 * Math.pow(2, (note - 69) / 12);
 }
 
+let modalCenterToken = 0;
+
 function modal(modalId) {
+	const thisToken = ++modalCenterToken;
+
 	document.getElementById("open-modal" + modalId).classList.add('modal-window-open');
+	document.body.classList.add("modal-open");
+
+	requestAnimationFrame(() => {
+		requestAnimationFrame(() => {
+			if (thisToken !== modalCenterToken) return;
+			centerOpenModalToVisualViewport();
+			lockPageScroll();
+		});
+	});
+
 	if (modalId == 18) { clearConsole(); }
+
 	if (modalId == 25) {
 		document.getElementById("sending").innerHTML = "Sending...";
 		document.getElementById("WARBL2CustomSuccessOkay").style.display = "none";
 	}
-	if (modalId == 32) { // Turn on audio when opening the audio settings.
+
+	if (modalId == 32) {
 		if (volume == 0) {
-		toggleOn();
+			toggleOn();
 		}
 	}
 }
 
 function modalclose(modalId) {
+	++modalCenterToken; // cancel any pending delayed centering
+
 	document.getElementById("open-modal" + modalId).classList.remove('modal-window-open');
+	document.body.classList.remove("modal-open");
+	unlockPageScroll();
 }
 
 function blink(blinkNum) {
@@ -5972,3 +5986,63 @@ function restartTool() {
 	window.location.reload();
 }
 
+
+let modalScrollY = 0;
+
+function centerOpenModalToVisualViewport() {
+	const vv = window.visualViewport;
+	if (!vv) return;
+
+	document.querySelectorAll(".modal-window-open > div").forEach(modalBox => {
+		const modalWidth = Math.max(120, Math.min(700, vv.width - 24));
+
+		modalBox.style.position = "fixed";
+		modalBox.style.boxSizing = "border-box";
+
+		modalBox.style.left = (vv.offsetLeft + vv.width / 2) + "px";
+		modalBox.style.top = (vv.offsetTop + vv.height / 2) + "px";
+
+		modalBox.style.maxHeight = Math.max(120, vv.height - 250) + "px";
+		modalBox.style.width = modalWidth + "px";
+		modalBox.style.maxWidth = modalWidth + "px";
+
+		modalBox.style.overflowX = "hidden";
+
+		modalBox.style.transform = "translate(-50%, -50%)";
+		modalBox.style.webkitTransform = "translate(-50%, -50%)";
+	});
+}
+
+if (window.visualViewport) {
+	window.visualViewport.addEventListener("resize", centerOpenModalToVisualViewport);
+}
+
+function preventBackgroundTouchScroll(e) {
+	const modalBox = e.target.closest(".modal-window-open > div");
+
+	// Allow pinch zoom
+	if (e.touches && e.touches.length > 1) {
+		return;
+	}
+
+	// If touch is outside modal, block one-finger background scroll
+	if (!modalBox) {
+		e.preventDefault();
+		return;
+	}
+
+	// If modal cannot scroll, block one-finger scroll leak
+	if (modalBox.scrollHeight <= modalBox.clientHeight) {
+		e.preventDefault();
+	}
+}
+
+function lockPageScroll() {
+	document.addEventListener("touchmove", preventBackgroundTouchScroll, {
+		passive: false
+	});
+}
+
+function unlockPageScroll() {
+	document.removeEventListener("touchmove", preventBackgroundTouchScroll);
+}

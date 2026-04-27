@@ -1413,6 +1413,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: block;
+	z-index:999;
 }
 
 #box11 {
@@ -3272,12 +3273,13 @@ h3 {
 	transition: opacity 0.3s !important;
 }
 
+
 .modal-window-open {
 	opacity: 1;
 	visibility: visible;
 	pointer-events: auto;
 }
-
+/*
 .modal-window > div {
 	width: 400px;
 	position: absolute;
@@ -3292,6 +3294,40 @@ h3 {
 	max-height: 75%;
 	overflow-y: auto;
 	border-radius: 5px;
+}
+
+*/
+
+
+
+.modal-window > div {
+	max-width: 700px;
+	width: 90vw;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	-webkit-transform: translate(-50%, -50%);
+	padding: 2em;
+	background: white;
+	color: #333333;
+	line-height: 30px;
+	max-height: 75vh;
+	max-height: 75dvh;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	border-radius: 5px;
+	overscroll-behavior: contain;
+	box-sizing: border-box;
+	overflow-wrap: anywhere;
+	word-break: normal;
+}
+
+
+html.modal-open,
+body.modal-open {
+	overflow: hidden;
+	height: 100%;
 }
 
 .modal-window header {
@@ -3358,7 +3394,6 @@ width: 600px;
 
 .consoleLabel {
 	margin-left: 30px !important;
-	//margin-top: 100px !important;
 }
 
 
@@ -3369,7 +3404,6 @@ width: 600px;
 	margin: auto;
 	text-align: center;
 	width: 145px;
-	//height: 400px;
 	max-height: 70%;
 	left: 60px;
 	top: 160px;
@@ -3388,17 +3422,14 @@ width: 600px;
 	right: 20px;
 	text-align: center;
 	top: -10px;
-	width: 30px;
 	height: 20px;
 	text-decoration: none;
 	cursor: pointer;
 }
 
 #clear {
-	//position: absolute;
 	left: 120px;
 	top: 80px;
-	//bottom: 20px;
 }
 
 
@@ -4658,9 +4689,9 @@ width: 600px;
 
 #exprhighbendslider-value {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 290px;
 	z-index: 99;
 }
@@ -4681,9 +4712,9 @@ width: 600px;
 
 #IMUlowslider-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 155px;
 	z-index: 99;
 }
@@ -4707,18 +4738,18 @@ width: 600px;
 
 #IMUhighslider-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 190px;
 	z-index: 99;
 }
 
 #IMUlowbendslider-value {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 255px;
 	z-index: 99;
 }
@@ -4742,9 +4773,9 @@ width: 600px;
 
 #IMUhighbendslider-value {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 290px;
 	z-index: 99;
 }
@@ -4792,9 +4823,9 @@ width: 600px;
 
 #slider-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 215px;
 	z-index: 99;
 }
@@ -4810,9 +4841,9 @@ width: 600px;
 
 #slider2-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 280px;
 	z-index: 99;
 }
@@ -4831,9 +4862,9 @@ width: 600px;
 
 #slider4-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 280px;
 	z-index: 99;
 }
@@ -4849,9 +4880,9 @@ width: 600px;
 
 #slider5-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 215px;
 	z-index: 99;
 }
@@ -4867,9 +4898,9 @@ width: 600px;
 
 #slider6-value-max {
 	display: block;
-	width: 65%;
+	width: 30px;
 	position: absolute;
-	left: 270px;
+	left: 410px;
 	top: 130px;
 	z-index: 99;
 }

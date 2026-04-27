@@ -3,14 +3,14 @@
 // Updated 4/24/26
 
 
-const cacheName = "warbl_config_86";
+const cacheName = "warbl_config_92";
 
 const contentToCache = [
   "/configure.html",
   "/favicon.ico",
   "/manifest.json",
 
-  "/css/config.min.css",
+  "/css/config.min.css", 
   "/css/nouislider.css",
 
   "/js/jquery-3.3.1.min.js",
