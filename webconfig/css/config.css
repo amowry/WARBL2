@@ -1592,14 +1592,14 @@ fieldset {
 .okay {
 	float: left;
 	margin-top: 40px;
-	margin-left: 40px;
+	margin-left: 80px;
 	border: 2px solid black;
 }
 
 .cancel {
 	float: right;
 	margin-top: 40px;
-	margin-right: 40px;
+	margin-right: 80px;
 	background: none;
 	border: 2px solid var(--cancel-color);
 	color: var(--cancel-color);

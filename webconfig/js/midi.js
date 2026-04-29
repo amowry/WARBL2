@@ -42,6 +42,21 @@ var communicationMode = false; //if we're communicating with WARBL
 var noteNames = ["C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C","C#","D","Eb","E","F","F#","G"];
 var noteNamesforKeySelect = ["G#","A","Bb","B","C3","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C4","C#","D","Eb","E","F","F#","G","G#","A","Bb","B","C5","C#","D","Eb","F","F#","G","G#","A"];
 
+// Used to tell when to animate various displays.
+var midiConsoleOpen = false;
+var pressureMappingOpen = false;
+var IMUmappingOpen = false;
+
+// For pitchgbend display
+var pendingPBpitch = 0;
+var pendingPBframe = false;
+var receivedPBEl = document.getElementById("receivedPB");
+var receivedPBCentsEl = document.getElementById("receivedPBCents");
+var midiBendRangeEl = document.getElementById("midiBendRange");
+var PBmarkerEl = document.getElementById("PBmarker");
+var PBlevelEl = document.getElementById("PBlevel");
+var topPBlevelEl = document.getElementById("topPBlevel");
+
 var notePlaying = -1; //MIDI note most recently turned on, used for small note display
 var numberOfGestures = 10; //Number of button gestures
 
@@ -71,8 +86,8 @@ var currentNote = 62;
 
 var sendAllQueue = []; //queue for outgoing messages to WARBL port
 var sendWARBLoutQueue = []; //queue for outgoing messages to all ports
-var sendWARBLInterval = setInterval(sendQueuedWARBLoutMessages, sendDelay); //start sending any queued messages 
-var sendAllInterval = setInterval(sendAllQueuedMessages, sendDelay); //start sending any queued messages
+var sendWARBLInterval = null; //start sending any queued messages 
+var sendAllInterval = null; //start sending any queued messages
 
 var sensorValue = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -174,9 +189,8 @@ window.addEventListener('load', function () {
 
 
 	if (navigator.requestMIDIAccess)
-		navigator.requestMIDIAccess({
-			sysex: false
-		}).then(onMIDIInit, onMIDIReject);
+		navigator.requestMIDIAccess()
+		.then(onMIDIInit, onMIDIReject);
 	else
 		alert("Your browser does not support MIDI. Please use Chrome or Opera, or the free WARBL iOS app.")
 
@@ -772,32 +786,50 @@ function WARBL_Receive(event, source) {
 		e = "KP";
 	}
 
-	// Display received PB messages
+	// Display received PB messages, throttled to one DOM update per animation frame.
 	if (e == "PB") {
-		var pitch = ((data1 + (data2 << 7))) - 8192;
-		document.getElementById('receivedPB').innerHTML = pitch;
-		var pitchcents = 100 * (pitch / 8192.0) * document.getElementById("midiBendRange").value;
-		document.getElementById('receivedPBCents').innerHTML = (pitchcents > 0 ? "+" : "") + pitchcents.toFixed(0);
-		var barHeight = pitch / 81.92;
-		var heightPixels = 65 - (barHeight / 100 * 65) + "px";
-		var markerTopPixels = 65 - (barHeight / 100 * 65) + 90 + "px";
-		document.getElementById("PBmarker").style.top = markerTopPixels;
-		if (pitch < 0) {
-			document.getElementById("PBlevel").style.height = -barHeight + "%";
-			document.getElementById("topPBlevel").style.height = 0 + "%";
-		}
-		else if (pitch > 0) {
-			document.getElementById("PBlevel").style.height = 0 + "%";
-			document.getElementById("topPBlevel").style.height = barHeight + "%";
-			document.getElementById("topPBlevel").style.top = heightPixels;
-		}
-		else {
-			document.getElementById("PBlevel").style.height = 0 + "%";
-			document.getElementById("topPBlevel").style.height = 0 + "%";
-		}
+	pendingPBpitch = ((data1 + (data2 << 7))) - 8192;
+
+	if (!pendingPBframe) {
+		pendingPBframe = true;
+
+		requestAnimationFrame(function () {
+			pendingPBframe = false;
+
+			var pitch = pendingPBpitch;
+			var bendRange = midiBendRangeEl.value;
+
+			receivedPBEl.textContent = pitch;
+
+			var pitchcents = 100 * (pitch / 8192.0) * bendRange;
+			receivedPBCentsEl.textContent = (pitchcents > 0 ? "+" : "") + pitchcents.toFixed(0);
+
+			var barHeight = pitch / 81.92;
+			var markerTopPixels = 65 - (barHeight / 100 * 65) + 90 + "px";
+
+			PBmarkerEl.style.top = markerTopPixels;
+
+			if (pitch < 0) {
+				PBlevelEl.style.height = -barHeight + "%";
+				topPBlevelEl.style.height = "0%";
+			}
+			else if (pitch > 0) {
+				var heightPixels = 65 - (barHeight / 100 * 65) + "px";
+
+				PBlevelEl.style.height = "0%";
+				topPBlevelEl.style.height = barHeight + "%";
+				topPBlevelEl.style.top = heightPixels;
+			}
+			else {
+				PBlevelEl.style.height = "0%";
+				topPBlevelEl.style.height = "0%";
+			}
+		});
+	}
 	}
 
 	// If we receive a CC on the channel and CC# currently assigned in the IMU mapping panel, display the CC value
+	if(IMUmappingOpen) { // Only send if the panel is open
 	var IMUchan = document.getElementById('IMUChannelInput').value;
 	var IMUCC = document.getElementById('IMUCC').value;
 	if (e == "CC" && (parseFloat(data0 & 0x0f) + 1 == IMUchan) && data1 == IMUCC) {
@@ -805,8 +837,10 @@ function WARBL_Receive(event, source) {
 		var barWidth = data2 / 1.27;
 		document.getElementById("CClevel").style.width = barWidth + "%";
 	}
+	}
 	
 	// If we receive a message currently assigned in the pressure mapping panel, display the value
+	if(pressureMappingOpen) { // Only send if the panel is open
 	if (mapSelection == 0) {
 		var IMUchan2 = document.getElementById('pressureChannel').value;
 		var IMUCC2 = document.getElementById('pressureCC').value;
@@ -840,7 +874,9 @@ function WARBL_Receive(event, source) {
 			document.getElementById("CCpressurelevel").style.width = barWidth5 + "%";
 		}
 	}
+	}
 
+	if(midiConsoleOpen){
 	if (!(e == "CC" && (parseFloat(data0 & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL - 1))) { //as long as it's not a CC on channel 7, show in the MIDI console.
 		consoleEntries++;
 		if (consoleEntries < 301) {
@@ -852,6 +888,7 @@ function WARBL_Receive(event, source) {
 		}
 		var elem2 = document.getElementById("console");
 		elem2.scrollTop = elem2.scrollHeight;
+	}
 	}
 	
 	var ch = data0 & 0x0F; // Formats for the synth
@@ -921,7 +958,7 @@ function WARBL_Receive(event, source) {
 				console.log("From WARBL", data1, data2);
 			}
 
-			if (parseFloat(data0 & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL - 1) { // if it's channel 7 it's from WARBL
+		if (parseFloat(data0 & 0x0f) == MIDI_CONFIG_TOOL_CHANNEL - 1) { // if it's channel 7 it's from WARBL
 
 				//console.log("WARBL_Receive: "+data0+" "+data1+" "+data2);
 
@@ -4008,6 +4045,7 @@ function mapCC() {
 	document.getElementById("expressionChannel").style.visibility = "visible";
 	document.getElementById("highByte").style.visibility = "visible";
 	document.getElementById("box7").style.display = "block";
+	pressureMappingOpen = true;
 	document.getElementById("expressionPressureBox").style.display = "none";
 	
 	var dispval = version < 4.3 ? "none" : "block";
@@ -4019,9 +4057,7 @@ function mapCC() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
 	document.getElementById("pressureShakeModDepthValue").style.display = dispval;
 	document.getElementById("shakePressureModModeContainer").style.display = dispval;
-	
 	document.getElementById("pressureMappingHeader").innerHTML = "CC Mapping";
-	
 	updatePressureValuesForSelection();
 }
 
@@ -4030,9 +4066,9 @@ function mapVelocity() {
 	document.getElementById('receivedpressureCC').innerHTML = null;
 	document.getElementById("CCpressurelevel").style.width = 0 + "%";
 	document.getElementById("box7").style.display = "block";
+	pressureMappingOpen = true;
 	document.getElementById("expressionPressureBox").style.display = "none";
 	document.getElementById("pressureMappingHeader").innerHTML = "Velocity Mapping";
-	
 	document.getElementById("pressureShakeModSwitch").style.display = "none";
 	document.getElementById("pressureShakeModLabel").style.display = "none";
 	document.getElementById("pressureMPEplusSwitch").style.display = "none";
@@ -4041,7 +4077,6 @@ function mapVelocity() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = "none";
 	document.getElementById("pressureShakeModDepthValue").style.display = "none";
 	document.getElementById("shakePressureModModeContainer").style.display = "none";
-
 	updatePressureValuesForSelection();
 	
 	//console.log(mapSelection);
@@ -4052,9 +4087,9 @@ function mapAftertouch() {
 	document.getElementById('receivedpressureCC').innerHTML = null;
 	document.getElementById("CCpressurelevel").style.width = 0 + "%";
 	document.getElementById("box7").style.display = "block";
+	pressureMappingOpen = true;
 	document.getElementById("expressionPressureBox").style.display = "none";
 	document.getElementById("pressureMappingHeader").innerHTML = "Channel Pressure Mapping";
-	
 	var dispval = version < 4.3 ? "none" : "block";
 	document.getElementById("pressureShakeModSwitch").style.display = dispval;
 	document.getElementById("pressureShakeModLabel").style.display = dispval;
@@ -4075,9 +4110,9 @@ function mapPoly() {
 	document.getElementById('receivedpressureCC').innerHTML = null;
 	document.getElementById("CCpressurelevel").style.width = 0 + "%";
 	document.getElementById("box7").style.display = "block";
+	pressureMappingOpen = true;
 	document.getElementById("expressionPressureBox").style.display = "none";
 	document.getElementById("pressureMappingHeader").innerHTML = "Key Pressure Mapping";
-	
 	var dispval = version < 4.3 ? "none" : "block";    
 	document.getElementById("pressureShakeModSwitch").style.display = dispval;
 	document.getElementById("pressureShakeModLabel").style.display = dispval;
@@ -4087,7 +4122,6 @@ function mapPoly() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
 	document.getElementById("pressureShakeModDepthValue").style.display = dispval;
 	document.getElementById("shakePressureModModeContainer").style.display = dispval;
-
 	updatePressureValuesForSelection();    
 }
 
@@ -4095,6 +4129,7 @@ function mapPoly() {
 function okayCCmap() {
 	mapSelection = 4;
 	document.getElementById("box7").style.display = "none";
+	pressureMappingOpen = false;
 	document.getElementById("expressionPressureBox").style.display = "block";
 	document.getElementById("pressureChannel").style.visibility = "hidden";
 	document.getElementById("pressureCC").style.visibility = "hidden";
@@ -4116,6 +4151,7 @@ function mapRoll() {
 	slider4.noUiSlider.set([outputSliderMin[4], outputSliderMax[4]]);
 	document.getElementById("box10").style.display = "none";
 	document.getElementById("box11").style.display = "block";
+	IMUmappingOpen = true;
 	document.getElementById("IMUMappingHeader").innerHTML = "Roll Mapping";
 	document.getElementById("centerLabel").style.display = "block";
 	document.getElementById("switch23").style.display = "block";
@@ -4131,6 +4167,7 @@ function mapPitch() {
 	slider4.noUiSlider.set([outputSliderMin[5], outputSliderMax[5]]);
 	document.getElementById("box10").style.display = "none";
 	document.getElementById("box11").style.display = "block";
+	IMUmappingOpen = true;
 	document.getElementById("IMUMappingHeader").innerHTML = "Elevation Mapping";
 	document.getElementById("centerLabel").style.display = "none";
 	document.getElementById("switch23").style.display = "none";
@@ -4150,6 +4187,7 @@ function mapYaw() {
 	slider4.noUiSlider.set([outputSliderMin[6], outputSliderMax[6]]);
 	document.getElementById("box10").style.display = "none";
 	document.getElementById("box11").style.display = "block";
+	IMUmappingOpen = true;
 	document.getElementById("IMUMappingHeader").innerHTML = "Yaw Mapping";
 	document.getElementById("centerLabel").style.display = "block";
 	document.getElementById("switch23").style.display = "block";
@@ -4236,6 +4274,7 @@ function okayIMUmap() {
 	document.getElementById("YawCenterControls").style.display = "none";
 	document.getElementById("IMUMappingControls").style.top = "-170px";
 	document.getElementById("box11").style.display = "none";
+	IMUmappingOpen = false;
 	document.getElementById("box10").style.display = "block";
 }
 
@@ -4924,6 +4963,11 @@ let modalCenterToken = 0;
 
 function modal(modalId) {
 	const thisToken = ++modalCenterToken;
+	
+	if (modalId === 18) {
+		midiConsoleOpen = true;
+		clearConsole();
+	}
 
 	document.getElementById("open-modal" + modalId).classList.add('modal-window-open');
 	document.body.classList.add("modal-open");
@@ -4936,7 +4980,6 @@ function modal(modalId) {
 		});
 	});
 
-	if (modalId == 18) { clearConsole(); }
 
 	if (modalId == 25) {
 		document.getElementById("sending").innerHTML = "Sending...";
@@ -4952,6 +4995,8 @@ function modal(modalId) {
 
 function modalclose(modalId) {
 	++modalCenterToken; // cancel any pending delayed centering
+	
+	if (modalId == 18) midiConsoleOpen = false;
 
 	document.getElementById("open-modal" + modalId).classList.remove('modal-window-open');
 	document.body.classList.remove("modal-open");

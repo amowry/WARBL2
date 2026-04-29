@@ -1252,7 +1252,7 @@ void getState() {
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
     unsigned int tempHoleCovered = holeCovered;
     bitSet(tempHoleCovered, 8);                                  // Ignore thumb hole.
-    scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate.
+    scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate. ToDo: This could be rewritten because soe charts may ignore upper holes. Maybe use the number of uncovered holes or something like that?
     if (scalePosition > 69) {
         scalePosition = 70;
     }
