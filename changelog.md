@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+## [Released]
+
+## [4.6.2] - 2026-4-30
+
+### Changed
+
+- Fixed a legato slide bug where a new note wasn't being triggered when necessary.
+
 - Requesting 7.5 ms connection interval negotiation to get Windows to use the lowest possible interval.
 
 ## [Released]
