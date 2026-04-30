@@ -10,6 +10,7 @@ void printStuff(void) {
     //Serial.println("");
     //Serial.println(toneholeRead[8]);
 
+
     /*
     for (byte i = 0; i < 9; i++) {
         Serial.println(toneholeRead[i]);
@@ -4262,12 +4263,14 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
 void updateBLEIntervalStatus() {
 
     if (!bleIntervalCheckPending) return;
+
     if (pendingConnHandle == BLE_CONN_HANDLE_INVALID) {
         bleIntervalCheckPending = false;
         return;
     }
 
     BLEConnection* connection = Bluefruit.Connection(pendingConnHandle);
+
     if (!connection || !connection->connected()) {
         bleIntervalCheckPending = false;
         pendingConnHandle = BLE_CONN_HANDLE_INVALID;
@@ -4276,7 +4279,7 @@ void updateBLEIntervalStatus() {
 
     uint32_t elapsed = millis() - bleConnectTime;
 
-    // Wait long enough for device to finish its automatic renegotiation.
+    // Wait long enough for the central device to finish any automatic renegotiation.
     if (!bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
@@ -4284,6 +4287,7 @@ void updateBLEIntervalStatus() {
 
         if (communicationMode) {
             uint16_t interval_x100 = (uint16_t)(intervalMs * 100.0f);
+
             sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
                             MIDI_CC_119, interval_x100 & 0x7F);
 
@@ -4293,19 +4297,20 @@ void updateBLEIntervalStatus() {
 
         bleIntervalReported = true;
 
-        // If still slower than 15 ms, optionally request 15 ms as a fallback.
+        // If still slower than 7.5 ms, request a 7.5–15 ms range.
+        // 6 units * 1.25 ms = 7.5 ms.
         // 12 units * 1.25 ms = 15 ms.
-        if (connUnits > 12) {
-            connection->requestConnectionParameter(12, 0, 400);
+        if (connUnits > 6) {
+            connection->requestConnectionParameter(6, 0, 400);
 
-            // Keep the check alive a little longer so we can see whether the fallback worked.
+            // Keep the check alive a little longer so we can report the result.
             bleConnectTime = millis();
         } else {
             bleIntervalCheckPending = false;
         }
     }
 
-    // After fallback request, check one final time.
+    // After the 7.5–15 ms request, check one final time.
     else if (bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
