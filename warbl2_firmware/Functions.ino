@@ -1747,10 +1747,18 @@ void handlePitchBend() {
 
 
 
-// Calculate slide pitchBend, to be added with vibrato.
 void getSlide() {
 
     byte halfHoleEnabled = (ED[preset][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[preset][HALFHOLE_HOLES_LOW4BITS];
+
+    int legatoSlideLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
+    int slideCalcLimit = midiBendRange;
+
+    // Legacy slide/vibrato behavior.
+    if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
+        legatoSlideLimit = 2;
+        slideCalcLimit = 2;
+    }
 
     for (byte i = 0; i < 9; i++) {
 
@@ -1760,23 +1768,17 @@ void getSlide() {
 
         if (toneholeRead[i] > senseDistance && bitRead(holeCovered, i) != 1 && transitionFilter == 0) {  // Does transitionFilter really need to be zero here? AM
 
-            int offsetLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
-            if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
-                offsetLimit = 2;  // Added by AM--kPitchBendSlideVibrato shouldn't be limited if legato slide limit is set to 1.
-            }
-
             int offsetSteps = findStepsOffsetFor(i);
             int trueOffsetSteps = offsetSteps;
 
-            if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato && offsetSteps < -offsetLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
-                offsetSteps = -offsetLimit;
+            if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato && offsetSteps < -legatoSlideLimit) {  // Added by AM 5/24 to make the slide behavior more like that of the original WARBL.
+                offsetSteps = -legatoSlideLimit;
             }
-
 
             if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
                 if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
 
-                    if (offsetSteps != 0 && offsetSteps <= offsetLimit && offsetSteps >= -offsetLimit) {
+                    if (offsetSteps != 0 && offsetSteps <= slideCalcLimit && offsetSteps >= -slideCalcLimit) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
 
                     } else {
@@ -1786,11 +1788,9 @@ void getSlide() {
                         halfHoleTargetRegionState[i] = false;
                     }
                 }
-            } else if (trueOffsetSteps == -2 && (bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
+            } else if (trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
                 getHalfholePitchbend(i);
             }
-
-
 
         } else {
             iPitchBend[i] = 0;
@@ -1800,7 +1800,6 @@ void getSlide() {
         }
     }
 }
-
 
 
 
@@ -2000,15 +1999,14 @@ void sendNote() {
 
     int legatoSlideLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
 
-    if (        // Several conditions to tell if we need to turn on a new note.
+    if (  // Several conditions to tell if we need to turn on a new note.
       (!noteon
        || (pitchBendModeSelector[preset] != kPitchBendLegatoSlideVibrato && targetPlayedNote != currentPlayedNote)
        || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && halfHoleUsingMidiNote && targetPlayedNote != currentPlayedNote)
-       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfHoleUsingMidiNote && abs(newNote - (notePlaying - shift)) > legatoSlideLimit))
+       || (pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato && !halfHoleUsingMidiNote && abs(newNote - (notePlaying - shift)) >= legatoSlideLimit))
       && newNote != 0
       && ((newState > 1 && !switches[preset][BAGLESS]) || (switches[preset][BAGLESS] && play))
-      && !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs)))
-    {
+      && !(switches[preset][SEND_VELOCITY] && !noteon && ((millis() - velocityDelayTimer) < velDelayMs))) {
         int notewason = noteon;
         int notewasplaying = notePlaying;
 
