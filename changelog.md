@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
+## [4.7] - 2026-4-30
+
+### Changed
+
+- Requesting 7.5 ms connection interval negotiation to get Windows to use the lowest possible interval.
+
+## [Released]
+
 ## [4.6] - 2026-4-2
 
 ### Changed
@@ -20,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   
 - Reset the long-press counter when any button is released so that a long press of button 2 isn't registered if it was only being held in combination with a click of 1 or 3.
   
-- Fixed longstanding bug where certain button actions didn't work properly because of an incorrect check for momentary mode. This particularly affected instruments (presets) 2 and 3.
+- Fixed longstanding bug where certain button actions didn't work properly because of an incorrect check for momentary mode. This particularly affected presets (instruments) 2 and 3.
   
 - "Control register with elevation" now uses the "Register semitones" setting in the "Note trigger and register control" panel to determine the number of semitones in each register. This allows using elevation for a more versatile transpose method.
   
