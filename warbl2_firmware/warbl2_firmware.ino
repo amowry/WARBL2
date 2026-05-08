@@ -45,9 +45,9 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 // Libraries below may need to be installed.
 #include <MIDI.h>
 #include <Adafruit_LSM6DSOX.h>     //IMU
+#include <Adafruit_MMC56x3.h>      // Magnetometer
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
-
 
 // Create instances of library classes.
 BLEDis bledis;
@@ -60,6 +60,7 @@ ResponsiveAnalogRead analogPressure(A0, true);
 #else
 ResponsiveAnalogRead analogPressure(A1, true);
 #endif
+Adafruit_MMC5603 mag = Adafruit_MMC5603(12345);  // Assign a unique ID to the magnetometer.
 
 // Filtering
 ResponsiveAnalogRead filterToneholes[9];
@@ -367,11 +368,11 @@ void setup() {
     // NRF stuff
     dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power).
 
-    // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter SPI.cpp to force using SPIM2, which will use 0.15 mA less current. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
-    // See note about this in getSensors(void).
-#if defined(USE_SPIM3)
-    sd_clock_hfclk_request();  // ******Important******: #define USE_SPIM3 in Defines.h if you haven't modified SPI.cpp to use SPIM2.
-#endif #endif
+    // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter SPI.cpp to force using SPIM2. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    // See note about this in getSensors(void). SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
+#if SPI_32MHZ_INTERFACE
+    sd_clock_hfclk_request();
+#endif
 
     NRF_POWER->DCDCEN = 1;        //  ENABLE DC/DC CONVERTER, cuts power consumption.
     NRF_UART0->TASKS_STOPTX = 1;  // Disable UART-- saves ~0.1 mA average.
@@ -471,13 +472,21 @@ void setup() {
 
     // SPI
     pinMode(2, OUTPUT);     // CS for Atmega
-    digitalWrite(2, HIGH);  // Ensure CS stays high for now.
-    SPI.begin();
+    digitalWrite(2, HIGH);  // Ensure CS stays high for now. 
+    SPI.begin();            // This uses SPIM3 for programming the Atmega.
+
 
     // IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz. If using SPIM2 I believe this is limited to 8 Mhz.
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down the gyro for now to save power, and we'll turn it on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
+
+    // Magnetometer
+    // while (!Serial) {};
+    if (!mag.begin(MMC56X3_DEFAULT_ADDRESS, &Wire)) {  // I2C mode
+        /* There was a problem detecting the MMC5603 ... check your connections */
+        Serial.println("Ooops, no MMC5603 detected ... Check your wiring!");
+    }
 
     //writeEEPROM(EEPROM_SETTINGS_SAVED, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -578,10 +587,10 @@ void loop() {
     const int pbsendinterval = (connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : ((pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) ? 4 : 9);
 
     if ((wakeTime - pitchBendTimer) >= pbsendinterval) {
-        pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
-        calculateAndSendPitchbend(); // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
-        printStuff();  // Debug
-        sendIMU();     // ~ 130 us
+        pitchBendTimer = wakeTime;    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
+        calculateAndSendPitchbend();  // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
+        printStuff();                 // Debug
+        sendIMU();                    // ~ 130 us
     }
 
 
@@ -590,6 +599,7 @@ void loop() {
 
     if ((wakeTime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = wakeTime;
+        //getMag();              // Read the magnetometer.
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }

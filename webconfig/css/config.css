@@ -232,6 +232,17 @@ a {
 	height: 30px;
 	vertical-align: middle;
 	outline: none;
+
+}
+
+.volume::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  cursor: pointer;
 }
 
 .volume:focus {
@@ -241,7 +252,7 @@ a {
 
 .audioSettings {
 	position: relative;
-	top: -35px;
+	top: -30px;
 	left: -460px;
 	width: 40px;
 	text-align: center;
@@ -251,6 +262,16 @@ a {
 	border: none;
 	background-color: var(--main-bg-color);
 	color: var(--primary-color);
+}
+
+.audioSettings::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  cursor: pointer;
 }
 
 .title{

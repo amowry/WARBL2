@@ -133,7 +133,6 @@ void getSensors(void) {
 
 */
 
-
         // Unpack the readings from bytes to ints.
         for (byte i = 0; i < 9; i++) {
             toneholeRead[i] = toneholePacked[i];
@@ -419,6 +418,34 @@ void centerIMU() {
     axisHeadingOffset = -currAxisHeading;
 }
 
+
+
+
+
+
+
+/*
+// Read the magnetometer.
+void getMag(){
+  sensors_event_t event;
+  mag.getEvent(&event);
+
+  float Pi = 3.14159;
+
+  // Calculate the angle of the vector y,x
+  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+
+  // Normalize to 0-360
+  if (heading < 0)
+  {
+    heading = 360 + heading;
+  }
+  Serial.print("Compass Heading: ");
+  Serial.println(heading);
+  delay(500);
+}
+
+*/
 
 
 
