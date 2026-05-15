@@ -147,6 +147,8 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
+uint32_t prevDelayTime = 3;                 // Stores delay time from previous loop iteration, to be used for deltaT calculation.
+uint32_t lastAwakeMicros = 0;           // Also used for deltaT calculation.
 
 
 // Preset
@@ -465,7 +467,7 @@ void setup() {
     BLEMIDI.setHandleProgramChange(handleProgramChangeFromBLE);   // Handle received MIDI PC messages.
     Bluefruit.Periph.setConnectCallback(connect_callback);        // Get connection information and handle indication.
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
-    startAdv();                                                   // Set up and start advertising. Comment this out for testing without BLE on.
+    startAdv();
 
     // I2C
     Wire.begin();           // Join i2c bus for EEPROM.
@@ -527,25 +529,24 @@ void setup() {
 
 
 
-
-
-
-
 void loop() {
 
 
-    /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
+/////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
-    byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously (delayTime ranges from 0 to 3 ms).
-    delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power. ~ 2.5 mA NRF consumption with delay of 3 ms. Total device consumption is ~8.7 mA with 3 ms delay, or 10.9 mA with 2 ms delay.
-    wakeTime = millis();                    // When we woke from sleep
-    getSensors();                           // 240 us, of which 80 is reading and filtering the pressure sensor and 50 is the adaptive filter for toneholes.
-    getFingers();                           // Find which holes are covered. 4 us.
-    getState();                             // Get the breath state. 3 us.
-    debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
-    getShift();                             // Shift the next note up or down based on register and key.
-    sendNote();                             // Send the note as soon as we know the note, state, and shift.
-    readMIDI();                             // Read incoming MIDI messages.
+lastAwakeMicros = micros();             // Capture end of awake period, for IMU deltat calculation.
+byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously.
+uint32_t sleepStart = millis();
+delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power.
+prevDelayTime = millis() - sleepStart;  // Actual sleep duration in ms, for IMU deltat calculation.
+wakeTime = millis();                    // When we woke from sleep.
+getSensors();                           // 240 us
+getFingers();                           // Find which holes are covered. 4 us.
+getState();                             // Get the breath state. 3 us.
+debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
+getShift();                             // Shift the next note up or down based on register and key.
+sendNote();                             // Send the note as soon as we know the note, state, and shift.
+readMIDI();                             // Read incoming MIDI messages.
 
 
 

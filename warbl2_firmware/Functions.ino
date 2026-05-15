@@ -241,8 +241,12 @@ void readIMU(void) {
     gyroY = rawGyroY - gyroYCalibration;
     gyroZ = rawGyroZ - gyroZCalibration;
 
-    float deltat = deltatUpdate();
-    deltat = constrain(deltat, 0.001f, 0.02f);
+    float deltat = IMUdeltatUpdate();
+    //deltat = constrain(deltat, 0.001f, 0.02f);
+    Serial.println(deltat, 6);  // 6 decimal places
+
+
+
 
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
@@ -396,19 +400,26 @@ void readIMU(void) {
 
 
 
-
-float deltatUpdate() {
+/*
+// This method uses millis() and works well
+float IMUdeltatUpdate() {
     static unsigned long lastUpdate = 0;
     unsigned long now = millis();
     float deltaT = (now - lastUpdate) / 1000.0f;
     lastUpdate = now;
     return deltaT;
 }
+*/
 
 
-
-
-
+// This method works better once I add a small tuning factor. I'm using milis() to measure the asleep time and micros() to measure the awake time. 
+float IMUdeltatUpdate() {
+    uint32_t now = micros();
+    uint32_t awakeDuration = now - lastAwakeMicros;  // Pure awake time since last sleep
+    float delta = (awakeDuration + (prevDelayTime * 1000UL)) / 1000000.0f;
+    delta = constrain(delta, 0.001f, 0.02f);
+    return delta + 0.0004f; // Compensates for ~0.4ms unaccounted overhead in sleep/wake cycle. Might need tweaking in the future but gives excellent repeatability now.
+}
 
 
 
@@ -4694,5 +4705,3 @@ void eraseEEPROM(void) {
     delay(500);
     analogWrite(LEDpins[GREEN_LED], 0);
 }
-
-
