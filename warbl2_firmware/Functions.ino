@@ -1,14 +1,32 @@
-
+#include "Defines.h"
 
 
 // Debug
 void printStuff(void) {
 
 
-    //Note: there may be an issue where midi destination is sometimes set to an incorrect value. Currently unable to reproduce. AM 3/26
-    //Serial.println(WARBL2settings[MIDI_DESTINATION]);
-    //Serial.println("");
-    //Serial.println(toneholeRead[8]);
+    /*
+// MotionCal megnetometer calibration output - comment out other Serial prints while using this.
+static uint32_t lastCal = 0;
+if (millis() - lastCal < 100) return;
+lastCal = millis();
+
+triggerMag();
+delay(5);  // Wait for measurement to complete
+readMagResult();
+
+Serial.print("Raw:");
+Serial.print((int)(accelX * 8192 / 9.8));  Serial.print(",");
+Serial.print((int)(accelY * 8192 / 9.8));  Serial.print(",");
+Serial.print((int)(accelZ * 8192 / 9.8));  Serial.print(",");
+Serial.print((int)(gyroX * 57.2957795f * 16));  Serial.print(",");
+Serial.print((int)(gyroY * 57.2957795f * 16));  Serial.print(",");
+Serial.print((int)(gyroZ * 57.2957795f * 16));  Serial.print(",");
+Serial.print((int)(rawMagX * 10));  Serial.print(",");
+Serial.print((int)(rawMagY * 10));  Serial.print(",");
+Serial.print((int)(rawMagZ * 10));
+Serial.println();
+*/
 
 
     /*
@@ -38,6 +56,7 @@ void printStuff(void) {
          Serial.println(runTimePerCharge);
          */
 }
+
 
 
 
@@ -198,6 +217,8 @@ uint8_t computeToneholeChecksum4(const uint8_t* p) {
 
 
 
+
+
 void readIMU(void) {
 
     // Note: Gyro is turned off by default to save power unless using roll/pitch/yaw, elevation register, or sticks mode (see loadPrefs()).
@@ -220,8 +241,8 @@ void readIMU(void) {
     gyroY = rawGyroY - gyroYCalibration;
     gyroZ = rawGyroZ - gyroZCalibration;
 
-    float deltat = sfusion.deltatUpdate();
-    deltat = constrain(deltat, 0.001f, 0.01f);
+    float deltat = deltatUpdate();
+    deltat = constrain(deltat, 0.001f, 0.02f);
 
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
@@ -281,12 +302,6 @@ void readIMU(void) {
 
     rollLocal -= correctionFactor;
     roll = rollLocal;
-    roll *= 1.2f;  // Rough correction for unknown error in gyro integration (perhaps error in gyro scale factor in LSM6D library??)
-
-
-
-
-
 
 
 
@@ -322,17 +337,11 @@ void readIMU(void) {
         while (axisHeading > 180.0f) axisHeading -= 360.0f;
         while (axisHeading < -180.0f) axisHeading += 360.0f;
 
-        axisHeading *= 1.2f;  // Rough correction for unknown error in gyro integration (perhaps error in gyro scale factor in LSM6D library??)
-
         axisHeadingInitialized = true;
     } else if (!axisHeadingInitialized) {
         axisHeading = 0.0f;
         currAxisHeading = 0.0f;
     }
-
-
-
-
 
 
 
@@ -385,6 +394,26 @@ void readIMU(void) {
 
 
 
+
+
+
+float deltatUpdate() {
+    static unsigned long lastUpdate = 0;
+    unsigned long now = millis();
+    float deltaT = (now - lastUpdate) / 1000.0f;
+    lastUpdate = now;
+    return deltaT;
+}
+
+
+
+
+
+
+
+
+
+
 // Calibrate the gyroscope when the command is received from the Config Tool.
 void calibrateIMU() {
 
@@ -419,33 +448,6 @@ void centerIMU() {
 }
 
 
-
-
-
-
-
-/*
-// Read the magnetometer.
-void getMag(){
-  sensors_event_t event;
-  mag.getEvent(&event);
-
-  float Pi = 3.14159;
-
-  // Calculate the angle of the vector y,x
-  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
-
-  // Normalize to 0-360
-  if (heading < 0)
-  {
-    heading = 360 + heading;
-  }
-  Serial.print("Compass Heading: ");
-  Serial.println(heading);
-  delay(500);
-}
-
-*/
 
 
 
@@ -4266,9 +4268,14 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason) {
 
     connIntvl = 0;
 
+    pendingConnHandle = BLE_CONN_HANDLE_INVALID;
+    bleIntervalCheckPending = false;
+    bleIntervalReported = false;
+    bleConnectTime = 0;
+
     if (communicationMode) {
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, 0);  // Send low byte of the connection interval.
-        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, 0);  // high low byte of the connection interval.
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB, MIDI_CC_119, 0);
+        sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_MSB, MIDI_CC_119, 0);
 
         if (communicationModeSource == MIDI_SOURCE_BLE) {
             communicationModeSource = MIDI_SOURCE_NONE;
@@ -4325,8 +4332,8 @@ void updateBLEIntervalStatus() {
         // If still slower than 7.5 ms, request a 7.5–15 ms range.
         // 6 units * 1.25 ms = 7.5 ms.
         // 12 units * 1.25 ms = 15 ms.
-        if (connUnits > 6) {
-            connection->requestConnectionParameter(6, 0, 400);
+        if (connUnits > 12) {
+            connection->requestConnectionParameter(6, 0, 400);  // **Note-- if we request 6, 0, 400 instead it can make Windows connect at 7.5 ms but can (maybe) break BLE on older iOS devices(?).
 
             // Keep the check alive a little longer so we can report the result.
             bleConnectTime = millis();
@@ -4335,7 +4342,7 @@ void updateBLEIntervalStatus() {
         }
     }
 
-    // After the 7.5–15 ms request, check one final time.
+    // After the 15–30 ms request, check one final time.
     else if (bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
@@ -4687,3 +4694,5 @@ void eraseEEPROM(void) {
     delay(500);
     analogWrite(LEDpins[GREEN_LED], 0);
 }
+
+

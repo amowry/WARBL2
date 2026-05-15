@@ -45,7 +45,6 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 // Libraries below may need to be installed.
 #include <MIDI.h>
 #include <Adafruit_LSM6DSOX.h>     //IMU
-#include <Adafruit_MMC56x3.h>      // Magnetometer
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
 
@@ -60,10 +59,10 @@ ResponsiveAnalogRead analogPressure(A0, true);
 #else
 ResponsiveAnalogRead analogPressure(A1, true);
 #endif
-Adafruit_MMC5603 mag = Adafruit_MMC5603(12345);  // Assign a unique ID to the magnetometer.
 
 // Filtering
 ResponsiveAnalogRead filterToneholes[9];
+
 
 // Custom settings for MIDI library
 struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
@@ -110,6 +109,10 @@ bool bleIntervalReported = false;
 
 
 // IMU data
+float q0 = 1.0f;  // Quaternion
+float q1 = 0.0f;
+float q2 = 0.0f;
+float q3 = 0.0f;
 float rawGyroX = 0.0f;
 float rawGyroY = 0.0f;
 float rawGyroZ = 0.0f;
@@ -144,6 +147,7 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
+
 
 // Preset
 byte preset = 0;         // The current preset (preset), from 0-2.
@@ -321,10 +325,8 @@ bool shiftState = 0;                    // Whether the octave is shifted (could 
 int8_t shift = 0;                       // The total amount of shift up or down from the base note 62 (D). This takes into account octave shift and note shift.
 byte velocity = MIDI_DEFAULT_VELOCITY;  // MIDI note velocity
 
-
 // Tonehole calibration variables
 byte calibration = 0;  // Whether we're currently calibrating. 1 is for calibrating all sensors, 2 is for calibrating bell sensor only, 3 is for calibrating all sensors plus baseline calibration (normally only done once, in the "factory").
-
 
 // Variables for reading buttons
 bool pressed[] = { 0, 0, 0 };          // Whether a button is currently presed
@@ -337,7 +339,6 @@ bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;                         //used to monitor drones on/off.
 bool waitingSecondClick[3] = { 0, 0, 0 };  //20240629 MrMep - Double-click Action
 unsigned int doubleClickTimer = 0;
-
 
 // Variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;                       // Whether we are currently communicating with the tool.
@@ -366,7 +367,7 @@ void setup() {
     WDDTelapsedTime = millis();                     // Record when we started it.
 
     // NRF stuff
-    dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power).
+    dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power). ***IMPORTANT*** micros() is not accurate when spanning a period of tickless sleep (every loop). Only use it for timing thast doesn't span loop().
 
     // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter SPI.cpp to force using SPIM2. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
     // See note about this in getSensors(void). SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
@@ -472,21 +473,13 @@ void setup() {
 
     // SPI
     pinMode(2, OUTPUT);     // CS for Atmega
-    digitalWrite(2, HIGH);  // Ensure CS stays high for now. 
+    digitalWrite(2, HIGH);  // Ensure CS stays high for now.
     SPI.begin();            // This uses SPIM3 for programming the Atmega.
-
 
     // IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz. If using SPIM2 I believe this is limited to 8 Mhz.
     sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);  // Shut down the gyro for now to save power, and we'll turn it on in loadPrefs() if necessary. IMU uses 0.55 mA if both gyro and accel are on, or 170 uA for just accel.
     sox.setAccelDataRate(LSM6DS_RATE_208_HZ);   // Turn on the accel.
-
-    // Magnetometer
-    // while (!Serial) {};
-    if (!mag.begin(MMC56X3_DEFAULT_ADDRESS, &Wire)) {  // I2C mode
-        /* There was a problem detecting the MMC5603 ... check your connections */
-        Serial.println("Ooops, no MMC5603 detected ... Check your wiring!");
-    }
 
     //writeEEPROM(EEPROM_SETTINGS_SAVED, 255);  // This line can be uncommented to make a version of the software that will resave factory settings every time it is run.
 
@@ -513,6 +506,8 @@ void setup() {
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
     loadPrefs();                                 // Load the correct user settings based on current preset.
     powerDownTimer = millis();                   // Reset the powerDown timer.
+
+
 
     // Reprogram the ATmega32U4 if necessary (doesn't work with 4.6 prototypes because they don't have a reset trace from the NRF to the ATmega reset pin.)
 #ifndef PROTOTYPE46
@@ -595,11 +590,13 @@ void loop() {
 
 
 
+
     /////////// Things here happen ~ every 0.75 s.
 
     if ((wakeTime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = wakeTime;
-        //getMag();              // Read the magnetometer.
+        //readMagResult();    // Read previous mag result.
+        //triggerMag();       // Trigger next mag measurement. Total time for reading and triggering is 590 us.
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }
