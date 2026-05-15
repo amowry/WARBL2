@@ -6,30 +6,6 @@ void printStuff(void) {
 
 
     /*
-// MotionCal megnetometer calibration output - comment out other Serial prints while using this.
-static uint32_t lastCal = 0;
-if (millis() - lastCal < 100) return;
-lastCal = millis();
-
-triggerMag();
-delay(5);  // Wait for measurement to complete
-readMagResult();
-
-Serial.print("Raw:");
-Serial.print((int)(accelX * 8192 / 9.8));  Serial.print(",");
-Serial.print((int)(accelY * 8192 / 9.8));  Serial.print(",");
-Serial.print((int)(accelZ * 8192 / 9.8));  Serial.print(",");
-Serial.print((int)(gyroX * 57.2957795f * 16));  Serial.print(",");
-Serial.print((int)(gyroY * 57.2957795f * 16));  Serial.print(",");
-Serial.print((int)(gyroZ * 57.2957795f * 16));  Serial.print(",");
-Serial.print((int)(rawMagX * 10));  Serial.print(",");
-Serial.print((int)(rawMagY * 10));  Serial.print(",");
-Serial.print((int)(rawMagZ * 10));
-Serial.println();
-*/
-
-
-    /*
     for (byte i = 0; i < 9; i++) {
         Serial.println(toneholeRead[i]);
     }
@@ -418,7 +394,7 @@ float IMUdeltatUpdate() {
     uint32_t awakeDuration = now - lastAwakeMicros;  // Pure awake time since last sleep
     float delta = (awakeDuration + (prevDelayTime * 1000UL)) / 1000000.0f;
     delta = constrain(delta, 0.001f, 0.02f);
-    return delta + 0.0004f; // Compensates for ~0.4ms unaccounted overhead in sleep/wake cycle. Might need tweaking in the future but gives excellent repeatability now.
+    return delta + 0.0004f; // Compensates for ~0.4 ms unaccounted overhead in sleep/wake cycle. Might need tweaking in the future but gives excellent repeatability now.
 }
 
 
