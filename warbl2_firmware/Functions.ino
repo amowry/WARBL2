@@ -218,12 +218,6 @@ void readIMU(void) {
     gyroZ = rawGyroZ - gyroZCalibration;
 
     float deltat = IMUdeltatUpdate();
-    //deltat = constrain(deltat, 0.001f, 0.02f);
-    Serial.println(deltat, 6);  // 6 decimal places
-
-
-
-
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
@@ -268,6 +262,7 @@ void readIMU(void) {
     prevYaw = yaw;
     prevRoll = roll;
 
+
     if (signbit(rollLocal) != signbit(roll)) {  // If roll and rollLocal have opposite signs, nudge rollLocal towards zero, aligning the zero crossing point with gravity.
         correctionFactor = rollLocal / correctionRate;
 
@@ -280,7 +275,17 @@ void readIMU(void) {
         correctionFactor = 0;
     }
 
-    rollLocal -= correctionFactor;
+    if (rollLocal >= -90 && rollLocal <= 90) {
+        rollLocal -= correctionFactor; // Apply the correction factor if the WARBL is right-side up.
+    }
+
+    if (rollLocal >= 270) {  // Wrap
+        rollLocal -= 360;
+    }
+    if (rollLocal <= -270) {
+        rollLocal += 360;
+    }
+
     roll = rollLocal;
 
 
@@ -376,26 +381,21 @@ void readIMU(void) {
 
 
 
-/*
-// This method uses millis() and works well
+// Calculate deltat for the IMU. Using the RTC2 timer because it is more accurate than micros() during a period of sleep. 30.5 us resolution.
 float IMUdeltatUpdate() {
-    static unsigned long lastUpdate = 0;
-    unsigned long now = millis();
-    float deltaT = (now - lastUpdate) / 1000.0f;
+    static uint32_t lastUpdate = 0;
+    uint32_t now = NRF_RTC2->COUNTER;
+    uint32_t elapsed = (now - lastUpdate) & 0xFFFFFF;  // 24-bit counter
     lastUpdate = now;
-    return deltaT;
-}
-*/
-
-
-// This method works better once I add a small tuning factor. I'm using milis() to measure the asleep time and micros() to measure the awake time. 
-float IMUdeltatUpdate() {
-    uint32_t now = micros();
-    uint32_t awakeDuration = now - lastAwakeMicros;  // Pure awake time since last sleep
-    float delta = (awakeDuration + (prevDelayTime * 1000UL)) / 1000000.0f;
+    float delta = elapsed / 32768.0f;
     delta = constrain(delta, 0.001f, 0.02f);
-    return delta + 0.0004f; // Compensates for ~0.4 ms unaccounted overhead in sleep/wake cycle. Might need tweaking in the future but gives excellent repeatability now.
+    return delta;
 }
+
+
+
+
+
 
 
 

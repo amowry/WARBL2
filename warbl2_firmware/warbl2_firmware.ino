@@ -147,7 +147,7 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
-uint32_t prevDelayTime = 3;                 // Stores delay time from previous loop iteration, to be used for deltaT calculation.
+uint32_t prevDelayTime = 3;             // Stores delay time from previous loop iteration, to be used for deltaT calculation.
 uint32_t lastAwakeMicros = 0;           // Also used for deltaT calculation.
 
 
@@ -382,6 +382,10 @@ void setup() {
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->ENABLE = 0;
 
+    // Configure RTC2 for IMU deltat timing because micros() isn't accurate accros the sleep period.
+    NRF_RTC2->PRESCALER = 0;    // No prescaler, full 32768 Hz
+    NRF_RTC2->TASKS_START = 1;  // Start the counter
+
     // Configure pins
     digitalWrite(battReadEnable, LOW);  // The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
@@ -532,21 +536,21 @@ void setup() {
 void loop() {
 
 
-/////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
+    /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
-lastAwakeMicros = micros();             // Capture end of awake period, for IMU deltat calculation.
-byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously.
-uint32_t sleepStart = millis();
-delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power.
-prevDelayTime = millis() - sleepStart;  // Actual sleep duration in ms, for IMU deltat calculation.
-wakeTime = millis();                    // When we woke from sleep.
-getSensors();                           // 240 us
-getFingers();                           // Find which holes are covered. 4 us.
-getState();                             // Get the breath state. 3 us.
-debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
-getShift();                             // Shift the next note up or down based on register and key.
-sendNote();                             // Send the note as soon as we know the note, state, and shift.
-readMIDI();                             // Read incoming MIDI messages.
+    lastAwakeMicros = micros();             // Capture end of awake period, for IMU deltat calculation.
+    byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously.
+    uint32_t sleepStart = millis();
+    delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power.
+    prevDelayTime = millis() - sleepStart;  // Actual sleep duration in ms, for IMU deltat calculation.
+    wakeTime = millis();                    // When we woke from sleep.
+    getSensors();                           // 240 us
+    getFingers();                           // Find which holes are covered. 4 us.
+    getState();                             // Get the breath state. 3 us.
+    debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
+    getShift();                             // Shift the next note up or down based on register and key.
+    sendNote();                             // Send the note as soon as we know the note, state, and shift.
+    readMIDI();                             // Read incoming MIDI messages.
 
 
 
