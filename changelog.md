@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Fixed IMU loop timing to greatly reduce drift. This also results in smoother IMU behavior overall.
+- Fixed IMU read interval timing to greatly reduce drift. This also results in smoother IMU behavior overall.
 
 ## [Released]
 
