@@ -35,10 +35,11 @@ warbl2.build.core=nRF5
 warbl2.build.variant=itsybitsy_nrf52840_express
 warbl2.build.usb_manufacturer="Mowry Stringed Instruments"
 warbl2.build.usb_product="WARBL"
-warbl2.build.extra_flags=-DNRF52840_XXAA {build.flags.usb}
+warbl2.build.extra_flags=-DNRF52840_XXAA {build.flags.usb} -DSPI_32MHZ_INTERFACE=0
 warbl2.build.ldscript=nrf52840_s140_v6.ld
 warbl2.build.vid=0x239A
 warbl2.build.pid=0x8053
+
 
 # SoftDevice Menu
 warbl2.menu.softdevice.s140v6=S140 6.1.1

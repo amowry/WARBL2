@@ -369,9 +369,9 @@ void setup() {
     WDDTelapsedTime = millis();                     // Record when we started it.
 
     // NRF stuff
-    dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power). ***IMPORTANT*** micros() is not accurate when spanning a period of tickless sleep (every loop). Only use it for timing thast doesn't span loop().
+    dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power). ***IMPORTANT*** micros() is not accurate when spanning a period of tickless sleep (every loop). Only use it for timing that doesn't span loop(). Can use RTC2 instead (see below).
 
-    // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter SPI.cpp to force using SPIM2. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
+    // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter boards.local.txt to force using SPIM2. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
     // See note about this in getSensors(void). SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
 #if SPI_32MHZ_INTERFACE
     sd_clock_hfclk_request();
@@ -600,8 +600,6 @@ void loop() {
 
     if ((wakeTime - timerF) > 750) {  // This period was chosen for detection of a 1 Hz fault signal from the battery charger STAT pin.
         timerF = wakeTime;
-        //readMagResult();    // Read previous mag result.
-        //triggerMag();       // Trigger next mag measurement. Total time for reading and triggering is 590 us.
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }

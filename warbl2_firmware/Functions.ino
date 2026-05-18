@@ -81,7 +81,7 @@ void getSensors(void) {
 
     SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     digitalWrite(2, LOW);
-    delayMicroseconds(10);  // Give the ATmega time to wake up and preload the test byte into the buffer.
+    delayMicroseconds(15);  // Give the ATmega time to wake up and preload the test byte into the buffer.
 
     byte testByte = SPI.transfer(0);  // The first byte received is for verification of SPI alignment. It should be 0xff. This tests whether the ATmega was ready at the start of the transfer.
     bool goodtestByte = (testByte == 0xff);
@@ -90,11 +90,6 @@ void getSensors(void) {
         toneholePacked[i] = SPI.transfer(i + 1);
     }
     toneholePacked[11] = SPI.transfer(useBellSensor + 20);  // The final transfer is dual purpose-- receive the last byte and send the bell sensor state.
-
-    //if (useBellSensorChanged) {  // Tell the ATmega to turn the bell sensor on or off if necessary (this was occasionally turning the sensor off eroneously so I'm now sending it every time as a stopgap).
-    //SPI.transfer(useBellSensor + 20);
-    //useBellSensorChanged = false;
-    //}
 
     digitalWrite(2, HIGH);
     SPI.endTransaction();
@@ -105,28 +100,16 @@ void getSensors(void) {
 
     bool goodChecksum = (receivedChecksum == computedChecksum);
 
-    /*
-    if (!goodChecksum) {  // Indicate a bad transfer.
-        blinkNumber[RED_LED] = 1;
-    }
-*/
+
+   // if (!goodChecksum) {  // Indicate a bad transfer.
+       // blinkNumber[RED_LED] = 1;
+   // }
+
 
     if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
                                          //...could be AHB bus stall issue: https://devzone.nordicsemi.com/f/nordic-q-a/127744/ble-radio-interrupts-interfering-with-spi
-                                         /* ...or one of the many issues with SPIM3. SPIM2 seems to be more reliable, so I'm switching to that for now. This is done by changing this in SPI.cpp:
-// default to 0
-#ifndef SPI_32MHZ_INTERFACE
-#define SPI_32MHZ_INTERFACE 0
-#endif
+                                         // ...or one of the many issues with SPIM3. SPIM2 seems to be similar, though. You can select either by changing the build flag in boards.local.txt. 0 is for SPIM3, 1 for SPIM2.
 
-... to this:
-
-// default to 1
-#ifndef SPI_32MHZ_INTERFACE
-#define SPI_32MHZ_INTERFACE 1
-#endif
-
-*/
 
         // Unpack the readings from bytes to ints.
         for (byte i = 0; i < 9; i++) {
@@ -276,7 +259,7 @@ void readIMU(void) {
     }
 
     if (rollLocal >= -90 && rollLocal <= 90) {
-        rollLocal -= correctionFactor; // Apply the correction factor if the WARBL is right-side up.
+        rollLocal -= correctionFactor;  // Apply the correction factor if the WARBL is right-side up.
     }
 
     if (rollLocal >= 270) {  // Wrap
