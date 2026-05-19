@@ -3286,7 +3286,7 @@ void saveFactorySettings() {
         writeEEPROM(EEPROM_FACTORY_SETTINGS_START + i, readEEPROM(i));  // And rewrite them from 2039 to 3974. Then they'll be available to restore later if necessary.
     }
 
-    blinkNumber[GREEN_LED] = 3;
+    //blinkNumber[GREEN_LED] = 3;
 }
 
 

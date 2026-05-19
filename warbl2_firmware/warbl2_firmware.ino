@@ -458,7 +458,6 @@ void setup() {
     Bluefruit.begin();
     Bluefruit.Periph.setConnIntervalMS(7.5, 15);  // Request the lowest possible connection interval.
     Bluefruit.Periph.setConnSlaveLatency(0);
-    //Bluefruit.Periph.setConnSupervisionTimeoutMS(4000);    // Apple wants 2-6 s
     Bluefruit.setTxPower(8);                               // Max power.
     Bluefruit.autoConnLed(false);                          // Don't indicate connection (we'll do this in the connect callback instead).
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service.
