@@ -101,9 +101,9 @@ void getSensors(void) {
     bool goodChecksum = (receivedChecksum == computedChecksum);
 
 
-   // if (!goodChecksum) {  // Indicate a bad transfer.
-       // blinkNumber[RED_LED] = 1;
-   // }
+    // if (!goodChecksum) {  // Indicate a bad transfer.
+    // blinkNumber[RED_LED] = 1;
+    // }
 
 
     if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
@@ -154,6 +154,7 @@ void getSensors(void) {
 
 
 
+
 // Calculate checksum for received sensor values. It should be ~94% effective at detecting a bad sensor value.
 uint8_t computeToneholeChecksum4(const uint8_t* p) {
     uint8_t x = 0;
@@ -162,7 +163,7 @@ uint8_t computeToneholeChecksum4(const uint8_t* p) {
         x ^= p[i];
     }
 
-    x ^= (p[11] & 0x03);  // only sensor 8 high bits
+    x ^= (p[11] & 0x03);
 
     x ^= (x >> 4);
     return x & 0x0F;

@@ -361,10 +361,9 @@ unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we
 void setup() {
 
 #if defined(RELEASE)
-    Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device
+    Serial.end();  // Turn off CDC. Necessary for release to make a class-compliant device.
 #endif
 
-    // AM 5/24 -- starting watchdog here in case something goes wrong during setup, like initializing peripherals.
     watchdog_enable(WATCHDOG_TIMEOUT_SECS * 1000);  // Enable the watchdog timer, to recover from hangs. If the watchdog triggers while on battery power, the WARBL will power down. On USB power, the NRF will reset but the peripherals will remain powered.
     WDDTelapsedTime = millis();                     // Record when we started it.
 
@@ -372,7 +371,7 @@ void setup() {
     dwt_enable();  // Enable DWT for high-resolution micros() (uses a bit more power). ***IMPORTANT*** micros() is not accurate when spanning a period of tickless sleep (every loop). Only use it for timing that doesn't span loop(). Can use RTC2 instead (see below).
 
     // Enable the high-frequency clock. This is necessary if using SPIM3 because of a hardware bug that requires the HFCLK. Instead you can alter boards.local.txt to force using SPIM2. See issue: https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/773
-    // See note about this in getSensors(void). SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
+    // See note about this in getSensors(). SPIM2 uses 0.15 mA less power but reduces the SPI speed for reading the IMU from 10 Mhz to 8 Mhz.
 #if SPI_32MHZ_INTERFACE
     sd_clock_hfclk_request();
 #endif
@@ -387,7 +386,7 @@ void setup() {
     NRF_RTC2->TASKS_START = 1;  // Start the counter
 
     // Configure pins
-    digitalWrite(battReadEnable, LOW);  // The default with this board is for output pins to be high, so drive them all low before setting them as outputs.
+    digitalWrite(battReadEnable, LOW);  // Pins are floating or may be driven high by the bootloader, so drive them low before setting them as outputs.
     digitalWrite(chargeEnable, LOW);
     digitalWrite(powerEnable, LOW);
     digitalWrite(LEDpins[RED_LED], LOW);
