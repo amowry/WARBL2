@@ -72,6 +72,7 @@ var WARBLout = null; // WARBL output port
 var WARBLin = null; // WARBL input port
 var midiConnecting = false;
 var midiScanningOut = null;
+var midiLastScannedOut = null;
 var selectedMidiOutId = 0;
 
 var gExportProxy = null; // Export received message proxy
@@ -376,7 +377,7 @@ function connect() {
 	}
 	else {
 		// CONNECTING
-
+		updateMidiDeviceSelector(); // See if there are any new devices.
 		startMidiConnect();
 	}
 
@@ -386,7 +387,7 @@ async function startMidiConnect()
 {
 	// ensure disconnected
 	setToDisconnected();
-
+	midiLastScannedOut = null;
 	console.log("startMidiConnect");
 
 	var outputId = document.getElementById("midiDeviceSelector").value;
@@ -409,6 +410,7 @@ async function startMidiConnect()
 			if ((outputId == 0 || o.value.id == outputId) && o.value.name.includes("WARBL")) {
 				console.log("Attempting connect to " + o.value.name + " id: " + o.value.id)
 				midiScanningOut = o.value;
+				midiLastScannedOut = o.value;
 				o.value.send(cc); //send CC message to all ports
 			}
 			else {
@@ -430,6 +432,7 @@ async function startMidiConnect()
 				if ((outputId == 0 || o.value.id == outputId) && !o.value.name.includes("WARBL") ) {
 					console.log("Attempting connect to " + o.value.name + " id: " + o.value.id)
 					midiScanningOut = o.value;
+					midiLastScannedOut = o.value;
 					o.value.send(cc); //send CC message to all ports
 				}
 				else {
@@ -459,57 +462,41 @@ async function startMidiConnect()
 // Callback when first requesting WebMIDI support
 //
 
-async function onMIDIInit(midi)  {
+async function onMIDIInit(midi) {
+    midiAccess = midi;
+    midi.onstatechange = midiOnStateChange;
+    WARBLout = null;
+    WARBLin = null;
 
-	midiAccess = midi;
-	midi.onstatechange = midiOnStateChange;
+    var autoConnectStart = Date.now();
+    var autoConnectTimeout = 3000;
+    var autoConnectRetryDelay = 250;
 
-	// Null the WARBL MIDI output port
-	WARBLout = null;
-	WARBLin = null;
+    function tryInitialConnect() {
+        if (communicationMode) {
+            console.log("initial auto-connect succeeded");
+            return;
+        }
+        if (Date.now() - autoConnectStart > autoConnectTimeout) {
+            console.log("initial auto-connect timed out");
+            showWARBLNotDetected();
+            return;
+        }
+        // refresh ports on every attempt
+        updateMidiDeviceSelector();
+        var foundMIDIInputDevice = enableMidiInputsForAll();
+        if (foundMIDIInputDevice && !midiConnecting) {
+            console.log("initial auto-connect attempt");
+            startMidiConnect();
+        } else {
+            // ports not ready yet, wait and try again
+            console.log("no inputs yet, waiting...");
+        }
+        setTimeout(tryInitialConnect, autoConnectRetryDelay);
+    }
 
-	var foundMIDIInputDevice = enableMidiInputsForAll();
-
-	updateMidiDeviceSelector();
-
-	if (foundMIDIInputDevice) {
-		// Try connecting for several seconds, then give up.
-		console.log("trying initial connect");
-
-		var autoConnectStart = Date.now();
-		var autoConnectTimeout = 3000;
-		var autoConnectRetryDelay = 250;
-
-		function tryInitialConnect() {
-
-			if (communicationMode) {
-				console.log("initial auto-connect succeeded");
-				return;
-			}
-
-			if (Date.now() - autoConnectStart > autoConnectTimeout) {
-				console.log("initial auto-connect timed out");
-				showWARBLNotDetected();
-				return;
-			}
-
-			if (!midiConnecting) {
-				console.log("initial auto-connect attempt");
-				startMidiConnect();
-			}
-
-			setTimeout(tryInitialConnect, autoConnectRetryDelay);
-		}
-
-		tryInitialConnect();
-	}
-	else {
-		console.log("no inputs");
-		showWARBLNotDetected();
-	}
+    tryInitialConnect();
 }
-
-
 function onMIDIReject(err) {
 
 	alert("The MIDI system failed to start. Please refresh the page.");
@@ -732,21 +719,20 @@ function WARBL_Receive(event, source) {
 			WARBLin = source;
 		}
 		else {
-			console.log("midiScanningOut: " + midiScanningOut + " id: " + midiScanningOut.id);
-			if (!WARBLout && midiScanningOut) {
-				WARBLout = midiScanningOut;
-				selectedMidiOutId = WARBLout.id;
-			}
-
-			WARBLin = source;
-
-			if (WARBLout && WARBLin) {
-				console.log("Connected WARBL!");
-				console.log(WARBLin);
-				enableMidiInputForOnly(WARBLin.id);
-				updateMidiDeviceSelector();
-			}
-		}
+    var resolvedPort = midiScanningOut || midiLastScannedOut;
+    if (!WARBLout && resolvedPort) {
+        console.log("midiScanningOut: " + resolvedPort + " id: " + resolvedPort.id);
+        WARBLout = resolvedPort;
+        selectedMidiOutId = WARBLout.id;
+    }
+    WARBLin = source;
+    if (WARBLout && WARBLin) {
+        console.log("Connected WARBL!");
+        console.log(WARBLin);
+        enableMidiInputForOnly(WARBLin.id);
+        updateMidiDeviceSelector();
+    }
+}
 	}
 
 	if (WARBLout != 1 && (!WARBLin || WARBLin != source)) {
@@ -5518,6 +5504,9 @@ function importPreset(context) {
 		document.getElementById("modal14-title").innerHTML =
 			"Preset import only allowed when WARBL is connected";
 		document.getElementById("modal14-ok").style.display = "inline-block";
+				// Hide save button if present
+		const saveBtn = document.getElementById("modal14-save");
+		if (saveBtn) saveBtn.style.display = "none";
 		modal(14);
 		return;
 	}
@@ -5937,8 +5926,7 @@ async function saveExportedPreset() {
 		document.getElementById("modal14-title").innerHTML =
 			"Save canceled or not supported on this device.";
 
-		// Keep OK hidden so user can try Save again
-		document.getElementById("modal14-ok").style.display = "none";
+		document.getElementById("modal14-ok").style.display = "inline-block";
 
 		if (saveBtn) saveBtn.style.display = "inline-block";
 
