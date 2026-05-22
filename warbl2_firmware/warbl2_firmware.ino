@@ -147,8 +147,6 @@ byte prevKey = 0;                       // Used to remember the current key beca
 unsigned long sticksModeTimer = 20000;  // For timing out the hidden way of entering sticks preset.
 bool registerHold = false;              // Locked into the current register, preventing overblowinng.
 byte heldRegister;                      // The current register (1 or 2), which is remembered when registerHold is triggered.
-uint32_t prevDelayTime = 3;             // Stores delay time from previous loop iteration, to be used for deltaT calculation.
-uint32_t lastAwakeMicros = 0;           // Also used for deltaT calculation.
 
 
 // Preset
@@ -457,7 +455,7 @@ void setup() {
     Bluefruit.configPrphBandwidth(BANDWIDTH_MAX);
     Bluefruit.begin();
     Bluefruit.Periph.setConnIntervalMS(7.5, 15);  // Request the lowest possible connection interval.
-    Bluefruit.Periph.setConnSlaveLatency(0);
+    Bluefruit.Periph.setConnSlaveLatency(4);
     Bluefruit.setTxPower(8);                               // Max power.
     Bluefruit.autoConnLed(false);                          // Don't indicate connection (we'll do this in the connect callback instead).
     bledis.setManufacturer("Mowry Stringed Instruments");  // Configure and Start Device Information Service.
@@ -536,11 +534,8 @@ void loop() {
 
     /////////// Things here happen ~ every 3 ms if connected to BLE and 2 ms otherwise.
 
-    lastAwakeMicros = micros();             // Capture end of awake period, for IMU deltat calculation.
     byte delayTime = calculateDelayTime();  // Figure out how long to sleep based on how much time has been consumed previously.
-    uint32_t sleepStart = millis();
     delay(delayTime);                       // Put the NRF52840 in tickless sleep, saving power.
-    prevDelayTime = millis() - sleepStart;  // Actual sleep duration in ms, for IMU deltat calculation.
     wakeTime = millis();                    // When we woke from sleep.
     getSensors();                           // 240 us
     getFingers();                           // Find which holes are covered. 4 us.
@@ -590,7 +585,6 @@ void loop() {
         printStuff();                 // Debug
         sendIMU();                    // ~ 130 us
     }
-
 
 
 

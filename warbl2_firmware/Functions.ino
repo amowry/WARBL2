@@ -4283,7 +4283,7 @@ void updateBLEIntervalStatus() {
     uint32_t elapsed = millis() - bleConnectTime;
 
     // Wait long enough for the central device to finish any automatic renegotiation.
-    if (!bleIntervalReported && elapsed >= 1500) {
+    if (!bleIntervalReported && elapsed >= 2500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
         connIntvl = intervalMs;
@@ -4304,7 +4304,7 @@ void updateBLEIntervalStatus() {
         // 6 units * 1.25 ms = 7.5 ms.
         // 12 units * 1.25 ms = 15 ms.
         if (connUnits > 12) {
-            connection->requestConnectionParameter(6, 0, 400);  // **Note-- if we request 6, 0, 400 instead it can make Windows connect at 7.5 ms but can (maybe) break BLE on older iOS devices(?).
+            connection->requestConnectionParameter(6, 4, 400);  // Technically Apple recommends requesting a minimum of 15 ms, so keep an eye out for poissible issues with this.
 
             // Keep the check alive a little longer so we can report the result.
             bleConnectTime = millis();
@@ -4313,7 +4313,7 @@ void updateBLEIntervalStatus() {
         }
     }
 
-    // After the 15–30 ms request, check one final time.
+    // After the request, check one final time.
     else if (bleIntervalReported && elapsed >= 1500) {
         uint16_t connUnits = connection->getConnectionInterval();
         float intervalMs = connUnits * 1.25f;
