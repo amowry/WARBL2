@@ -66,8 +66,65 @@ byte calculateDelayTime(void) {
 
 
 
+#ifdef PROTOTYPE46
+// This version needed for the few prototype out there
+// Read the pressure sensor and get latest tone hole readings from the ATmega.
+void getSensors(void) {
+
+    analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
+    twelveBitPressure = analogPressure.getRawValue();
+    smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+    sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
+
+    // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 us.
+    byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+    digitalWrite(2, LOW);   // CS -- Wake up ATmega.
+    delayMicroseconds(10);  // Give it time to wake up.
+    SPI.transfer(0);        // We don't receive anything useful back from the first transfer.
+    for (byte i = 0; i < 12; i++) {
+        toneholePacked[i] = SPI.transfer(i + 1);
+    }
+    digitalWrite(2, HIGH);  //CS
+    SPI.endTransaction();
+
+    // Unpack the readings from bytes to ints.
+    for (byte i = 0; i < 9; i++) {
+        toneholeRead[i] = toneholePacked[i];  // Unpack lower 8 bits.
+    }
+
+    for (byte i = 0; i < 4; i++) {  // Unpack the upper 2 bits of holes 0-3.
+        toneholePacked[9] = toneholePacked[9] & 0b11111111, BIN;
+        toneholeRead[i] = toneholeRead[i] | (toneholePacked[9] << 2) & 0b1100000000;
+        toneholePacked[9] = toneholePacked[9] << 2;
+    }
+
+    for (byte i = 4; i < 8; i++) {  // Unpack the upper 2 bits of holes 4-7.
+        toneholePacked[10] = toneholePacked[10] & 0b11111111, BIN;
+        toneholeRead[i] = toneholeRead[i] | (toneholePacked[10] << 2) & 0b1100000000;
+        toneholePacked[10] = toneholePacked[10] << 2;
+    }
+
+    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  // Unpack the upper 2 bits of hole 8.
 
 
+
+    for (byte i = 0; i < 9; i++) {
+        // run through adaptive smoothing filter
+        filterToneholes[i].update(toneholeRead[i]);
+        toneholeRead[i] = filterToneholes[i].getValue();
+
+        if (calibration == 0) {  // If we're not calibrating, compensate for baseline sensor offset (the stored sensor reading with the hole completely uncovered).
+            toneholeRead[i] = toneholeRead[i] - toneholeBaseline[i];
+        }
+        if (toneholeRead[i] < 0) {  // In rare cases the adjusted readings might end up being negative.
+            toneholeRead[i] = 0;
+        }
+    }
+}
+
+
+#else
 
 void getSensors(void) {
 
@@ -147,7 +204,7 @@ void getSensors(void) {
     }
 }
 
-
+#endif
 
 
 
@@ -1752,12 +1809,10 @@ void getSlide() {
     byte halfHoleEnabled = (ED[preset][HALFHOLE_HOLES_HIGH4BITS] << 4) | ED[preset][HALFHOLE_HOLES_LOW4BITS];
 
     int legatoSlideLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
-    int slideCalcLimit = midiBendRange;
 
     // Legacy slide/vibrato behavior.
     if (pitchBendModeSelector[preset] == kPitchBendSlideVibrato) {
         legatoSlideLimit = 2;
-        slideCalcLimit = 2;
     }
 
     for (byte i = 0; i < 9; i++) {
@@ -1778,7 +1833,7 @@ void getSlide() {
             if (!(ED[preset][HALFHOLE_PITCHBEND] && ED[preset][HALFHOLE_USE_MIDI_NOTE]) && !(ED[preset][HALFHOLE_PITCHBEND] && trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1))) {  // Calculate slide normally if halfhole doesn't apply (if we're using half-holing and sending MIDI notes instead of pitch, we also don't use sliding on any holes).
                 if ((pitchBendModeSelector[preset] == kPitchBendSlideVibrato || pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) && !(!ED[preset][USE_THUMB_FOR_SLIDE] && i == 8)) {
 
-                    if (offsetSteps != 0 && offsetSteps <= slideCalcLimit && offsetSteps >= -slideCalcLimit) {
+                    if (offsetSteps != 0 && offsetSteps <= legatoSlideLimit && offsetSteps >= -legatoSlideLimit) {
                         iPitchBend[i] = ((((int)((toneholeRead[i] - senseDistance) * toneholeScale[i])) * -offsetSteps));  // Scale.
 
                     } else {
@@ -1997,7 +2052,7 @@ void sendNote() {
     int targetPlayedNote = newNote + shift;
     int currentPlayedNote = notePlaying;
 
-    int legatoSlideLimit = constrain(ED[preset][SLIDE_LIMIT_MAX], 0, midiBendRange);
+    int legatoSlideLimit = midiBendRange; // legato slide mode will ONLY retrigger a note if the bend range is exceeded, it handles its other features in getSlide()/sendPitchbend()
 
     if (  // Several conditions to tell if we need to turn on a new note.
       (!noteon
