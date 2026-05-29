@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed a legato slide bug where a new note wasn't being triggered when necessary.
 
-- Requesting 7.5 ms connection interval negotiation to get Windows to use the lowest possible interval.
+- 7.5 ms connection interval negotiation to get Windows to use the lowest possible interval.
 
 ## [Released]
 
