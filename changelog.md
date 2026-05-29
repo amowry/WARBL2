@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed IMU read interval timing to greatly reduce drift. This also results in smoother IMU behavior overall.
 
+- Fix to legato slide
+
 ## [Released]
 
 ## [4.6.2] - 2026-4-30
