@@ -1170,6 +1170,10 @@ byte getNote(unsigned int fingerPattern) {
 
 // Add up any transposition based on key and register.
 void getShift() {
+    shift = getShiftInternal(newState, holeCovered, newNote);
+}
+
+int8_t getShiftInternal(int l_newState, int l_holeCovered, int l_newNote) {
 
 
     byte pitchShift;
@@ -1185,21 +1189,21 @@ void getShift() {
         pitchShift = pitchRegister();
     }
 
-    shift = ((octaveShift * 12) + noteShift + (pitchShift * ED[preset][OVERBLOW_SEMITONES]) + totalHalfHoleShift);  // Adjust for key and octave shift.
+    int8_t lshift = ((octaveShift * 12) + noteShift + (pitchShift * ED[preset][OVERBLOW_SEMITONES]) + totalHalfHoleShift);  // Adjust for key and octave shift.
 
     // Overblow if allowed.
-    if (newState == TOP_REGISTER && !(modeSelector[preset] == kModeEVI || (modeSelector[preset] == kModeSax && newNote < 58) || (modeSelector[preset] == kModeSaxBasic && newNote < 70) || (modeSelector[preset] == kModeRecorder && newNote < 74)) && !(newNote == 62 && (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        shift = shift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
+    if (l_newState == TOP_REGISTER && !(modeSelector[preset] == kModeEVI || (modeSelector[preset] == kModeSax && l_newNote < 58) || (modeSelector[preset] == kModeSaxBasic && l_newNote < 70) || (modeSelector[preset] == kModeRecorder && l_newNote < 74)) && !(l_newNote == 62 && (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
+        lshift = lshift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
         if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                                       // Kaval only plays a fifth higher in the second register.
-            shift = shift - 5;
+            lshift = lshift - 5;
         }
     }
     // Use the bell sensor to control register if desired.
     if (breathMode == kPressureBell && modeSelector[preset] != kModeUilleann && modeSelector[preset] != kModeUilleannStandard) {
-        if (bitRead(holeCovered, 0) == switches[preset][INVERT]) {
-            shift = shift + ED[preset][OVERBLOW_SEMITONES];
+        if (bitRead(l_holeCovered, 0) == switches[preset][INVERT]) {
+            lshift = lshift + ED[preset][OVERBLOW_SEMITONES];
             if (modeSelector[preset] == kModeKaval) {
-                shift = shift - 5;
+                lshift = lshift - 5;
             }
         }
     }
@@ -1207,9 +1211,11 @@ void getShift() {
     // ToDo: Are there any others that don't use the thumb that can be added here?
     // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
     else if ((breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3 || modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4 || modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic || modeSelector[preset] == kModeNAF))) {
-        byte thumbShift = getThumbHalfHoleShift();                      // Number of registers shifted by thumb
-        shift = shift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
+        byte thumbShift = getThumbHalfHoleShift(l_holeCovered);                      // Number of registers shifted by thumb
+        lshift = lshift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
+
+    return lshift;
 }
 
 
@@ -1221,7 +1227,7 @@ void getShift() {
 
 
 // Get the number of registers shifted by the thumb.
-byte getThumbHalfHoleShift() {
+byte getThumbHalfHoleShift(int l_holeCovered) {
 
     /* Thumb halfhole function (table from MrMep)
 _________________________________________________________________________________________________
@@ -1236,12 +1242,12 @@ ________________________________________________________________________________
 */
     const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };           // Lookup table for thumb halfhole functionality.
     byte combinedSwitches = switches[preset][INVERT] << 1 | ED[preset][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
-    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(holeCovered, 8);                       // Second dimension is thumb position: 0 closed, 1 open, 2 half
+    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(l_holeCovered, 8);                       // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
 
     if (modeSelector[preset] != kModeRecorder2) {                                                     // Recorder2 is handled in getNote(), so ignore that.
         if (!(ED[preset][HALFHOLE_PITCHBEND] && bitRead(ED[preset][HALFHOLE_HOLES_HIGH4BITS], 3))) {  // First handle register contribution by the thumb if we're not using it for half-holing.
-            if (bitRead(holeCovered, 8) == switches[preset][INVERT]) {
+            if (bitRead(l_holeCovered, 8) == switches[preset][INVERT]) {
                 return 1;
             } else {
                 return 0;
@@ -1635,7 +1641,12 @@ void getIMUpitchbend() {
 int findStepsOffsetFor(int hole) {
     unsigned int closedHolePattern = holeCovered;
     bitSet(closedHolePattern, hole);  // Figure out what the fingering pattern would be if we closed the hole.
-    int stepsOffset = getNote(closedHolePattern) - newNote;
+    int oldNote = getNote(closedHolePattern);
+    int stepsOffset = oldNote - newNote;
+
+    int oldShift = getShiftInternal(newState, closedHolePattern, oldNote);
+    stepsOffset += oldShift - shift;
+
     return stepsOffset;
 }
 
