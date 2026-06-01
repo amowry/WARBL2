@@ -1442,6 +1442,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
+	z-index:999;
 }
 
 #box12 {
@@ -1449,6 +1450,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
+	z-index:999;
 }
 
 #pressuregraph {
@@ -1703,6 +1705,7 @@ fieldset {
 	top: 900px;
 	left: 527px;
 	height: 405px;
+	z-index:999;
 }
 
 .pitchbend {
