@@ -1771,7 +1771,8 @@ function WARBL_Receive(event, source) {
 						document.getElementById("current").style.color = "#f7c839";
 					}
 					else {
-						document.getElementById("current").innerHTML = "There is a firmware update available.";
+document.getElementById("current").innerHTML =
+    'There is a firmware update available.<br><a href="#" onclick="downloadFirmware(); return false;">Download update</a>';
 						document.getElementById("current").style.left = "690px";
 						document.getElementById("current").style.visibility = "visible";
 						document.getElementById("status").style.visibility = "hidden";
@@ -6078,4 +6079,31 @@ function lockPageScroll() {
 
 function unlockPageScroll() {
 	document.removeEventListener("touchmove", preventBackgroundTouchScroll);
+}
+
+// For downloading the firmware on iOS
+async function downloadFirmware() {
+    const url = "https://warbl.xyz/WARBL2_firmware_4.6.6.uf2";
+    const filename = "WARBL2_firmware_4.6.6.uf2";
+
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        if (platform == "app2") {
+            // iOS: use share sheet → Save to Files
+            const file = new File([blob], filename);
+            await navigator.share({ files: [file] });
+        } else {
+            // Desktop/other: normal download
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+    } catch (err) {
+        console.error("Firmware download failed:", err);
+    }
 }
