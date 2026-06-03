@@ -1193,8 +1193,8 @@ int8_t getShiftInternal(int l_newState, int l_holeCovered, int l_newNote) {
 
     // Overblow if allowed.
     if (l_newState == TOP_REGISTER && !(modeSelector[preset] == kModeEVI || (modeSelector[preset] == kModeSax && l_newNote < 58) || (modeSelector[preset] == kModeSaxBasic && l_newNote < 70) || (modeSelector[preset] == kModeRecorder && l_newNote < 74)) && !(l_newNote == 62 && (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard))) {  // If overblowing (except EVI, sax and recorder in the lower register, and low D with uilleann fingering, which can't overblow)
-        lshift = lshift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                                 // Add a register jump to the transposition if overblowing.
-        if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                                       // Kaval only plays a fifth higher in the second register.
+        lshift = lshift + ED[preset][OVERBLOW_SEMITONES];                                                                                                                                                                                                                                                                                                                         // Add a register jump to the transposition if overblowing.
+        if (modeSelector[preset] == kModeKaval) {                                                                                                                                                                                                                                                                                                                                 // Kaval only plays a fifth higher in the second register.
             lshift = lshift - 5;
         }
     }
@@ -1211,7 +1211,7 @@ int8_t getShiftInternal(int l_newState, int l_holeCovered, int l_newNote) {
     // ToDo: Are there any others that don't use the thumb that can be added here?
     // If we're using the left thumb to control the regiser with a fingering patern that doesn't normally use the thumb
     else if ((breathMode == kPressureThumb && (modeSelector[preset] == kModeEVI2 || modeSelector[preset] == kModeEVI3 || modeSelector[preset] == kWARBL2Custom1 || modeSelector[preset] == kWARBL2Custom2 || modeSelector[preset] == kWARBL2Custom3 || modeSelector[preset] == kWARBL2Custom4 || modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic || modeSelector[preset] == kModeNAF))) {
-        byte thumbShift = getThumbHalfHoleShift(l_holeCovered);                      // Number of registers shifted by thumb
+        byte thumbShift = getThumbHalfHoleShift(l_holeCovered);           // Number of registers shifted by thumb
         lshift = lshift + (thumbShift * ED[preset][OVERBLOW_SEMITONES]);  // Add an octave jump to the transposition if necessary.
     }
 
@@ -1242,7 +1242,7 @@ ________________________________________________________________________________
 */
     const byte lookup[4][3] = { { 1, 3, 2 }, { 1, 2, 3 }, { 3, 1, 2 }, { 2, 1, 3 } };           // Lookup table for thumb halfhole functionality.
     byte combinedSwitches = switches[preset][INVERT] << 1 | ED[preset][HALFHOLE_INVERT_THUMB];  // Append the invert switches for the first dimension of the lookup table.
-    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(l_holeCovered, 8);                       // Second dimension is thumb position: 0 closed, 1 open, 2 half
+    byte thumbPosition = thumbHalfHole ? 2 : 1 - bitRead(l_holeCovered, 8);                     // Second dimension is thumb position: 0 closed, 1 open, 2 half
 
 
     if (modeSelector[preset] != kModeRecorder2) {                                                     // Recorder2 is handled in getNote(), so ignore that.
@@ -2063,7 +2063,7 @@ void sendNote() {
     int targetPlayedNote = newNote + shift;
     int currentPlayedNote = notePlaying;
 
-    int legatoSlideLimit = midiBendRange; // legato slide mode will ONLY retrigger a note if the bend range is exceeded, it handles its other features in getSlide()/sendPitchbend()
+    int legatoSlideLimit = midiBendRange;  // legato slide mode will ONLY retrigger a note if the bend range is exceeded, it handles its other features in getSlide()/sendPitchbend()
 
     if (  // Several conditions to tell if we need to turn on a new note.
       (!noteon
@@ -3850,6 +3850,7 @@ void calibrate() {
 
         if ((calibration == 1 && ((millis() - calibrationTimer) > 10000)) || (calibration == 2 && ((millis() - calibrationTimer) > 5000))) {
 
+            /* // Removing this because values for this sensor are much lower than the others.
             // Just in case bell wasn't exercised
             if (abs(toneholeCovered[0] - toneholeBaseline[0]) < 50) {
                 toneholeCovered[0] = toneholeBaseline[0] + 50;
@@ -3858,6 +3859,7 @@ void calibrate() {
                 int feeloffset = (int)((toneholeCovered[0] - toneholeBaseline[0]) * 0.2f);
                 toneholeCovered[0] -= feeloffset;
             }
+            */
 
             if (calibration == 1) {
                 // Adjust for calibration feel.

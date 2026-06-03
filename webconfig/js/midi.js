@@ -983,8 +983,8 @@ function WARBL_Receive(event, source) {
 					}
 				} else if (data1 == MIDI_CC_102) { //parse based on received CC
 					if (data2 >= MIDI_MAX_CALIB_MSGS_START && data2 <= MIDI_MAX_CALIB_MSGS_END) {
-						document.getElementById("v" + (data2 - MIDI_MAX_CALIB_MSGS_START -1)).innerHTML = "MAX"; //set sensor value field to max if message is received from WARBL
-						checkMax((data2 - MIDI_MAX_CALIB_MSGS_START -1));
+						document.getElementById("v" + (data2 - MIDI_MAX_CALIB_MSGS_START +1)).innerHTML = "MAX"; //set sensor value field to max if message is received from WARBL
+						checkMax((data2 - MIDI_MAX_CALIB_MSGS_START +1));
 					}
 
 					for (var i = 0; i < 3; i++) { // update the three selected fingering patterns if prompted by the tool.

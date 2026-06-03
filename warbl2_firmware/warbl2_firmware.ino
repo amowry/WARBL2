@@ -276,7 +276,7 @@ byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for
 float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f };  // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
 
 // Variables for reading tonehole sensors
-unsigned int toneholeCovered[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
+unsigned int toneholeCovered[] = { 10, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
 int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
 int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
 unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
