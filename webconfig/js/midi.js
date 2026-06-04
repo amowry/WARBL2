@@ -890,8 +890,7 @@ function WARBL_Receive(event, source) {
 			if (d2 !== 0) {
 				notePlaying = d1; // keep track of most recent note so we know when to turn off the display.
 				logKeys;
-				document.getElementById("tinyConsole").value = noteNames[d1 - 1] + " " + d1;
-
+				document.getElementById("tinyConsole").innerHTML = noteNames[d1 - 1] + " " + d1;
 				if (synthActive) {
 					synthNoteOn(ch, d1, d2);
 					LED2on();
@@ -903,7 +902,7 @@ function WARBL_Receive(event, source) {
 				}
 				logKeys;
 				if (notePlaying == d1) {
-					document.getElementById("tinyConsole").value = "";
+					document.getElementById("tinyConsole").innerHTML = "";
 					notePlaying = -1;
 					LED2off();
 				}
@@ -916,7 +915,7 @@ function WARBL_Receive(event, source) {
 			}
 			logKeys;
 			if (notePlaying == d1) {
-				document.getElementById("tinyConsole").value = "";
+				document.getElementById("tinyConsole").innerHTML = "";
 				notePlaying = -1;
 				LED2off();
 			}

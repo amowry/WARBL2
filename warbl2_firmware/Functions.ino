@@ -4,6 +4,7 @@
 // Debug
 void printStuff(void) {
 
+//Serial.println(toneholeRead[0]);
 
     /*
     for (byte i = 0; i < 9; i++) {
@@ -293,13 +294,14 @@ void readIMU(void) {
     // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
     static float rollLocal = roll;  // Initialize using global frame.
     static float correctionFactor;
-    const byte correctionRate = 40;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
+    const byte correctionRate = 100;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
     static float prevYaw;
     static float prevRoll;
 
     if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || (abs(pitch) >= 85)) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at a steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
-        rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                     // Integrate gyro Y axis.
+       // rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                     // Integrate gyro Y axis.
     }
+    rollLocal += ((gyroY * RAD_TO_DEG) * deltat);    
     prevYaw = yaw;
     prevRoll = roll;
 
@@ -320,10 +322,10 @@ void readIMU(void) {
         rollLocal -= correctionFactor;  // Apply the correction factor if the WARBL is right-side up.
     }
 
-    if (rollLocal >= 270) {  // Wrap
+    while (rollLocal >= 270) {  // Wrap
         rollLocal -= 360;
     }
-    if (rollLocal <= -270) {
+    while (rollLocal <= -270) {
         rollLocal += 360;
     }
 

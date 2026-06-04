@@ -2988,18 +2988,15 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
-.tinyConsoleContainer {
-	display: block;
-	position: absolute;
-	left: 610px;
-	top: 104px;
-}
+
 
 .tinyConsole {
 	display: block;
 	position: absolute;
 	margin: auto;
 	text-align: center;
+	left: 610px;
+	top: 104px;
 	width: 60px;
 	height: 21px;
 	color: var(--text-color);
@@ -3010,6 +3007,8 @@ input:disabled + .vibratoSlider:before {
 	background-color: var(--console-bg-color);
 	border-radius: 5px;
 }
+
+
 
 .graph {
 	position: absolute;
