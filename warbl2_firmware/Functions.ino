@@ -231,12 +231,6 @@ uint8_t computeToneholeChecksum4(const uint8_t* p) {
 
 
 
-
-
-
-
-
-
 void readIMU(void) {
 
     // Note: Gyro is turned off by default to save power unless using roll/pitch/yaw, elevation register, or sticks mode (see loadPrefs()).
@@ -263,11 +257,47 @@ void readIMU(void) {
 
     sfusion.MahonyUpdate(gyroX, gyroY, gyroZ, accelX, accelY, accelZ, deltat);
 
-
     // Pitch and roll are swapped due to PCB sensor orientation.
     roll = sfusion.getPitchRadians();
     pitch = sfusion.getRollRadians();
     yaw = sfusion.getYawRadians();
+
+    float* quat = sfusion.getQuat();
+
+    float qw = quat[0];
+    float qx = quat[1];
+    float qy = quat[2];
+    float qz = quat[3];
+
+    // Gravity vector in the body's local frame (based on standard Z-down or Z-up)
+    // Here, we assume Z is pointing down in the global frame
+    float pvx = 2.0f * (qx * qz - qw * qy);
+    float pvy = 2.0f * (qw * qx + qy * qz);
+    float pvz = qw * qw - qx * qx - qy * qy + qz * qz;
+
+    // Calculate unconstrained pitch in the local frame (rotation about the body's Y-axis) (is our roll due to chip orientation)
+    float localroll = atan2f(pvx, pvz);
+
+
+    /*
+    Serial.print(quat[0], 4);
+    Serial.print("  ");
+    Serial.print(quat[1], 4);
+    Serial.print("  ");
+    Serial.print(quat[2], 4);
+    Serial.print("  ");
+    Serial.print(quat[3], 4);
+    Serial.println("  -1.25 1.25");
+    */
+
+    /*
+    Serial.print(roll, 4);
+    Serial.print("  ");
+    Serial.print(pitch, 4);
+    Serial.print("  ");
+    Serial.print(yaw, 4);
+    Serial.println("  -4 4");
+    */
 
     currYaw = yaw;  // Needs to be the unadjusted value
 
@@ -279,77 +309,63 @@ void readIMU(void) {
     pitch += PI;
     if (pitch > PI) pitch -= TWO_PI;
 
-    // Invert all three.
-    roll = -roll;
+
+    // adjust localroll
+    localroll -= PI;
+    if (localroll > PI) localroll -= TWO_PI;
+    if (localroll < -PI) localroll += TWO_PI;
+    localroll *= -RAD_TO_DEG;
+
+    // use it
+    roll = localroll;
+
+    // Invert
+
     pitch = -pitch;
     yaw = -yaw;
 
-    roll = roll * RAD_TO_DEG;
     pitch = pitch * RAD_TO_DEG;
     yaw = yaw * RAD_TO_DEG;
 
 
+    const float abspitch = abs(pitch);
 
+    static float runningRoll = roll;
+    float gyro_roll = gyroY * deltat * RAD_TO_DEG;
 
-    // Integrate gyroY without accelerometer to get roll in the local frame (around the long axis of the WARBL regardless of orientation). This seems more useful/intuitive than the "roll" Euler angle.
-    static float rollLocal = roll;  // Initialize using global frame.
-    static float correctionFactor;
-    const byte correctionRate = 100;  // How quickly we correct to the gravity vector when roll and rollLocal have opposite signs.
-    static float prevYaw;
-    static float prevRoll;
+    // the normal roll is really good now, except for when the warbl is nearly on its end, where we use the gyro based roll only
+    // filter the transitions
+    const float alpha = abspitch < 75.0f ? 1.0f : abspitch < 80.0f ? (80.0f - abspitch) * 0.2f
+                                                                   : 0.0f;
 
-    if ((signbit(yaw - prevYaw) == signbit(roll - prevRoll) && pitch <= 0) || (signbit(yaw - prevYaw) != signbit(roll - prevRoll) && pitch > 0) || (abs(pitch) >= 85)) {  // Only integrate gyro if yaw is changing in the same direction as roll (or at a steep pitch angle). This helps minimize the influence of yaw on rollLocal. This could be improved.
-       // rollLocal += ((gyroY * RAD_TO_DEG) * deltat);                                                                                                                     // Integrate gyro Y axis.
+    runningRoll = (1.0f - alpha) * (runningRoll + gyro_roll) + (alpha * roll);
+
+    // necessary now?
+    if (runningRoll >= 270) {  // Wrap
+        runningRoll -= 360;
     }
-    rollLocal += ((gyroY * RAD_TO_DEG) * deltat);    
-    prevYaw = yaw;
-    prevRoll = roll;
-
-
-    if (signbit(rollLocal) != signbit(roll)) {  // If roll and rollLocal have opposite signs, nudge rollLocal towards zero, aligning the zero crossing point with gravity.
-        correctionFactor = rollLocal / correctionRate;
-
+    if (runningRoll <= -270) {
+        runningRoll += 360;
     }
 
-    else {  // No correction if they have the same sign.
-        correctionFactor = 0;
-    }
-    if (abs(pitch) >= 85) {  // Correcting for gravity gets sketchy if pitch is near vertical, so don't apply a correction factor then.
-        correctionFactor = 0;
-    }
+    //float origroll = roll;
+    //Serial.print(origroll, 4);
+    //Serial.print("  ");
 
-    if (rollLocal >= -90 && rollLocal <= 90) {
-        rollLocal -= correctionFactor;  // Apply the correction factor if the WARBL is right-side up.
-    }
-
-    while (rollLocal >= 270) {  // Wrap
-        rollLocal -= 360;
-    }
-    while (rollLocal <= -270) {
-        rollLocal += 360;
-    }
-
-    roll = rollLocal;
-
-
+    roll = runningRoll;
 
     // Compute compass heading of the long axis of the WARBL because it is independent of the "local" roll.
 
     static bool axisHeadingInitialized = false;
 
-    float* quat = sfusion.getQuat();
-    float q0 = quat[0];
-    float q1 = quat[1];
-    float q2 = quat[2];
-    float q3 = quat[3];
-
     // World-frame direction of body +Y axis (WARBL long axis)
-    float vx = 2.0f * (q1 * q2 - q0 * q3);
-    float vy = 1.0f - 2.0f * (q1 * q1 + q3 * q3);
-    float vz = 2.0f * (q2 * q3 + q0 * q1);
+    float vx = 2.0f * (qx * qy - qw * qz);
+    float vy = 1.0f - 2.0f * (qx * qx + qz * qz);
+    float vz = 2.0f * (qy * qz + qw * qx);
 
     // Don't calculate heading if the WARBL is too close to vertical.
-    // In that case, keep the previous valid heading.
+    // In that case, keep the previous valid heading.  
+    //     - JLC: this is not a clean transition, perhaps fade into using real yaw?
     const float maxAbsVz = 0.995f;
 
     if (fabsf(vz) < maxAbsVz) {
@@ -371,7 +387,16 @@ void readIMU(void) {
         currAxisHeading = 0.0f;
     }
 
-
+    /*
+    Serial.print(roll, 4);
+    Serial.print("  ");
+    Serial.print(pitch, 4);
+    Serial.print("  ");
+    Serial.print(yaw, 4);
+    Serial.print("  ");
+    Serial.print(axisHeading, 4);
+    Serial.println("  -180 180");
+    */
 
     // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note-off messages are sent.
     // This mode is "hidden" -- to turn it on select "-18" in the transpose menu and then click "Auto-caibrate bell sensor only" within 10 seconds.
@@ -445,22 +470,27 @@ float IMUdeltatUpdate() {
 
 
 // Calibrate the gyroscope when the command is received from the Config Tool.
-void calibrateIMU() {
+void calibrateIMU(bool reset = false) {
 
-    sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
-    delay(50);                                // Give it a bit of time.
-    readIMU();                                // Get a reading in case we haven't been reading it.
-    delay(50);                                // Give it a bit of time.
-    readIMU();                                // Another reading seems to be necessary after turning the gyro on.
+    if (!reset) {
+        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Make sure the gyro is on.
+        delay(50);                                // Give it a bit of time.
+        readIMU();                                // Get a reading in case we haven't been reading it.
+        delay(50);                                // Give it a bit of time.
+        readIMU();                                // Another reading seems to be necessary after turning the gyro on.
 
-    gyroXCalibration = rawGyroX;
-    gyroYCalibration = rawGyroY;
-    gyroZCalibration = rawGyroZ;
+        gyroXCalibration = rawGyroX;
+        gyroYCalibration = rawGyroY;
+        gyroZCalibration = rawGyroZ;
+    } else {
+        // reset
+        gyroXCalibration = gyroYCalibration = gyroZCalibration = 0.0;
+    }
 
     putEEPROM(EEPROM_XGYRO_CALIB_START, gyroXCalibration);  // Put the current readings into EEPROM.
     putEEPROM(EEPROM_YGYRO_CALIB_START, gyroYCalibration);
     putEEPROM(EEPROM_ZGYRO_CALIB_START, gyroZCalibration);
-    writeEEPROM(EEPROM_XGYRO_CALIB_SAVED, 3);  // Remember that we have saved a calibration.
+    writeEEPROM(EEPROM_XGYRO_CALIB_SAVED, reset ? 0 : 3);  // Remember that we have saved a calibration.
 }
 
 
@@ -3770,6 +3800,8 @@ void loadPrefs() {
 
     if (ED[preset][ENABLE_REGISTER_HOLD] || IMUsettings[preset][SEND_ROLL] || IMUsettings[preset][SEND_PITCH] || IMUsettings[preset][SEND_YAW] || IMUsettings[preset][PITCH_REGISTER] || IMUsettings[preset][STICKS_MODE] || IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
+    } else {
+        sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
     }
 
     // Calculate upper and lower bounds for IMU pitch (elevation) register mapping.
