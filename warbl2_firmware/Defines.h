@@ -2,7 +2,7 @@
 
 #define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
-#define VERSION 46  // Firmware version (without decimal point)
+#define VERSION 47  // Firmware version (without decimal point)
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
@@ -113,7 +113,7 @@
 #define EXPRESSION_ON 0
 #define EXPRESSION_DEPTH 1
 #define SEND_PRESSURE 2
-#define CURVE 3  // (0 is linear, 1 and 2 are power curves)
+#define CURVE 3  // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_PRESSURE_CURVE)
 #define PRESSURE_CHANNEL 4
 #define PRESSURE_CC 5
 #define INPUT_PRESSURE_MIN 6
@@ -143,9 +143,9 @@
 #define POLY_INPUT_PRESSURE_MAX 30
 #define POLY_OUTPUT_PRESSURE_MIN 31
 #define POLY_OUTPUT_PRESSURE_MAX 32
-#define VELOCITY_CURVE 33
-#define AFTERTOUCH_CURVE 34
-#define POLY_CURVE 35
+#define VELOCITY_CURVE 33   // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_VELOCITY_CURVE)
+#define AFTERTOUCH_CURVE 34 // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_AFTERTOUCH_CURVE)
+#define POLY_CURVE 35       // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_POLYPRESSURE_CURVE)
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
@@ -173,7 +173,11 @@
 #define THUMB_HALFHOLE_HEIGHT_OFFSET 60  // Thumb: (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
 #define THUMB_HALFHOLE_WIDTH 61          // Thumb: The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
 #define THUMB_HALFHOLE_FINGERRATE 62     // Thumb: 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
-#define kEXPRESSIONnVariables 63
+#define CUSTOM_PRESSURE_CURVE 63         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_VELOCITY_CURVE 64         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_AFTERTOUCH_CURVE 65         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_POLYPRESSURE_CURVE 66         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define kEXPRESSIONnVariables 67
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -570,6 +574,10 @@
 #define MIDI_CC_104_VALUE_109 109  // Bidirectional. Settings for current preset: indicates ED[60] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_110 110  // Bidirectional. Settings for current preset: indicates ED[61] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_111 111  // Bidirectional. Settings for current preset: indicates ED[62] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_112 112  // Bidirectional. Settings for current preset: indicates ED[63] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_113 113  // Bidirectional. Settings for current preset: indicates ED[64] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_114 114  // Bidirectional. Settings for current preset: indicates ED[65] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_115 115  // Bidirectional. Settings for current preset: indicates ED[66] is about to be sent with CC 105.
 //
 /* 112-127 unused */
 
@@ -766,7 +774,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current preset: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current preset: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current preset: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_111                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_115                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
@@ -888,8 +896,8 @@
                                             // 343 low byte of vibrato depth  for PRESET 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
-#define EEPROM_ED_VARS_START 351  // 351-533	expression and drones (ED) variables
-/* 534-599 unused, room for extending above array or other variables */
+#define EEPROM_ED_VARS_START 351  // 351-551	expression and drones (ED) variables
+/* 552-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-603 WARBL2settings array
 /* 604-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array

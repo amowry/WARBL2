@@ -4158,6 +4158,30 @@ width: 600px;
 	z-index: 99;
 }
 
+
+.pressureCustomCurve {
+	width: 150px;
+}
+
+#pressureCustomCurve {
+	display: block;
+	position: absolute;
+	left: -50px;
+	top: -40px;
+	z-index: 99;
+}
+
+#pressurecustomcurveslider-value {
+	display: block;
+	position: absolute;
+	left: 10px;
+	top: -65px;
+	font-size: 14px;
+    text-align: center;
+	z-index: 99;
+}
+
+
 .highByteLabel {
 	display: block;
 	position: absolute;
@@ -4262,9 +4286,9 @@ width: 600px;
 .radiogroup7 {
 	display: block;
 	position: absolute;
-	width: 250px;
-	top: 100px;
-	left: 20px;
+	width: 180px;
+	top: 125px;
+	left: 30px;
 	padding: 0px;
 	z-index: 1000;
 }
@@ -4272,9 +4296,9 @@ width: 600px;
 .radiogroup8 {
 	display: block;
 	position: absolute;
-	width: 250px;
-	top: 100px;
-	left: 160px;
+	width: 180px;
+	top: 125px;
+	left: 115px;
 	padding: 0px;
 	z-index: 1000;
 }
@@ -4282,9 +4306,19 @@ width: 600px;
 .radiogroup9 {
 	display: block;
 	position: absolute;
-	width: 250px;
-	top: 100px;
-	left: 300px;
+	width: 180px;
+	top: 125px;
+	left: 200px;
+	padding: 0px;
+	z-index: 1000;
+}
+
+.radiogroupPressureCustom {
+	display: block;
+	position: absolute;
+	width: 180px;
+	top: 125px;
+	left: 325px;
 	padding: 0px;
 	z-index: 1000;
 }
@@ -4292,34 +4326,36 @@ width: 600px;
 .curveLabel {
 	display: inline;
 	position: absolute;
-	top: 30px;
+	left: 5px;
+	top: -28px;
+    text-align: center;
 }
 
 
 .linear {
 	display: block;
 	position: absolute;
-	width: 250px;
-	top: -80px;
-	left: -75px;
+	width: 180px;
+	top: -100px;
+	left: -115px;
 	padding: 0px;
 }
 
 .curve2 {
-		display: block;
+	display: block;
 	position: absolute;
-	width: 250px;
-	top: -80px;
-	left: 70px;
+	width: 180px;
+	top: -100px;
+	left: -30px;
 	padding: 0px;
 }
 
 .curve3 {
-		display: block;
+	display: block;
 	position: absolute;
-	width: 250px;
-	top: -80px;
-	left: 215px;
+	width: 180px;
+	top: -100px;
+	left: 55px;
 	padding: 0px;
 }
 	

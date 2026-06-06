@@ -17,6 +17,7 @@ var center = [1, 1, 1, 1]; //center range of input sliders for IMU mapping
 var IMUchannel = [1, 1, 1]; //CC channels for roll, pitch, yaw mapping
 var IMUnumber = [2, 2, 2]; //CC numbers for roll, pitch, yaw mapping
 var curve = [0, 0, 0, 0]; //which curve is selected for CC, vel, aftertouch, poly
+var customPressureCurve = [64, 64, 64, 64]; //custom pressure curves for CC, vel, aftertouch, poly
 var pressureShakeMod = [0, 0, 0]; //which pressure shake mod is selected for CC, aftertouch, poly
 var pressureShakeDepth = [0, 0, 0]; //which pressure shake depth for CC, aftertouch, poly
 var pressureShakeModMode = [0, 0, 0]; //which pressure shake mode for CC, aftertouch, poly
@@ -1471,22 +1472,6 @@ function WARBL_Receive(event, source) {
 					   	var k = document.getElementById("halfholeRate");
 						k.dispatchEvent(new Event('input'));
 					}
-					else if (jumpFactorWrite == MIDI_ED_VARS2_START +39) {
-					   document.getElementById("thumbHalfholeOffset").value = data2;
-					    var k = document.getElementById("thumbHalfholeOffset");
-						k.dispatchEvent(new Event('input'));
-					}
-					else if (jumpFactorWrite == MIDI_ED_VARS2_START +40) {
-					   document.getElementById("thumbHalfholeSize").value = data2;
-					   	var k = document.getElementById("thumbHalfholeSize");
-						k.dispatchEvent(new Event('input'));
-					}
-					else if (jumpFactorWrite == MIDI_ED_VARS2_START +41) {
-					   document.getElementById("thumbHalfholeRate").value = data2;
-					   	var k = document.getElementById("thumbHalfholeRate");
-						k.dispatchEvent(new Event('input'));
-					}
-					
 					else if (jumpFactorWrite == MIDI_ED_VARS2_START +33) {
 					   halfholesLow4bits = data2;
 					}
@@ -1514,6 +1499,40 @@ function WARBL_Receive(event, source) {
 					}
 					else if (jumpFactorWrite == MIDI_ED_VARS2_START +37) {
 					   document.getElementById("checkbox34").checked = data2;
+					}
+                    // + 38 - enable register hold - not included here
+
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +39) {
+					   document.getElementById("thumbHalfholeOffset").value = data2;
+					    var k = document.getElementById("thumbHalfholeOffset");
+						k.dispatchEvent(new Event('input'));
+					}
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +40) {
+					    document.getElementById("thumbHalfholeSize").value = data2;
+					    var k = document.getElementById("thumbHalfholeSize");
+					    k.dispatchEvent(new Event('input'));
+					}
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START +41) {
+					    document.getElementById("thumbHalfholeRate").value = data2;
+					    var k = document.getElementById("thumbHalfholeRate");
+				        k.dispatchEvent(new Event('input'));
+					}
+
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START + 42) {
+						// custom pressure curve value
+                        customPressureCurve[0] = data2;
+					}
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START + 43) {
+						// custom velocity curve value
+                        customPressureCurve[1] = data2;
+					}
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START + 44) {
+						// custom velocity curve value
+                        customPressureCurve[2] = data2;
+					}
+					else if (jumpFactorWrite == MIDI_ED_VARS2_START + 45) {
+						// custom velocity curve value
+                        customPressureCurve[3] = data2;
 					}
 					
 					
@@ -2868,6 +2887,20 @@ function resetIMUCurveHigh() {
 	sendIMUCurveHigh(64);
 }
 
+function sendPressureCustomCurve(selection) {
+	blink(1);
+	selection = parseFloat(selection);
+	sendToWARBL(MIDI_CC_104, MIDI_ED_VARS2_START + 42 + mapSelection);
+	sendToWARBL(MIDI_CC_105, selection);
+	updatePressureCustomCurveLabels();
+}
+
+function resetPressureCustomCurve() {
+	var slider = document.getElementById('pressurecustomcurveslider');
+	slider.value = 64;
+	sendPressureCustomCurve(64);
+}
+
 function sendPressureAftertouchMPEplus(value) {
 	blink(1);
 	sendToWARBL(MIDI_CC_104, MIDI_AFTERTOUCH_MPEPLUS);
@@ -4015,8 +4048,11 @@ function updatePressureValuesForSelection()
 	document.getElementById("pressureShakeModDepthValue").innerHTML = pressureShakeDepth[mapSelection] + "%";
 	document.getElementById("pressureShakeModCheck").checked = pressureShakeMod[mapSelection];
 	document.getElementById("shakePressureModMode").value = pressureShakeModMode[mapSelection];
+	document.getElementById("pressurecustomcurveslider").value = customPressureCurve[mapSelection];
+        updatePressureCustomCurveLabels();
+	//document.getElementById("pressurecustomcurveslider-value").innerHTML = customPressureCurve[mapSelection] ;
 
-	if (curve[mapSelection] < 3) {
+	if (curve[mapSelection] < 4) {
 		document.getElementById("curveRadio" + curve[mapSelection]).checked = true;
 	}        
 	
@@ -4044,6 +4080,10 @@ function mapCC() {
 	document.getElementById("pressureShakeModDepthValue").style.display = dispval;
 	document.getElementById("shakePressureModModeContainer").style.display = dispval;
 	document.getElementById("pressureMappingHeader").innerHTML = "CC Mapping";
+
+    dispval = version < 4.7 ? "none" : "block";
+    document.getElementById("radiogroupPressureCustom").style.display = dispval;
+
 	updatePressureValuesForSelection();
 }
 
@@ -4063,8 +4103,12 @@ function mapVelocity() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = "none";
 	document.getElementById("pressureShakeModDepthValue").style.display = "none";
 	document.getElementById("shakePressureModModeContainer").style.display = "none";
+
+    var dispval = version < 4.7 ? "none" : "block";
+    document.getElementById("radiogroupPressureCustom").style.display = dispval;
+
 	updatePressureValuesForSelection();
-	
+
 	//console.log(mapSelection);
 }
 
@@ -4085,7 +4129,10 @@ function mapAftertouch() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
 	document.getElementById("pressureShakeModDepthValue").style.display = dispval;
 	document.getElementById("shakePressureModModeContainer").style.display = dispval;
-	
+
+    dispval = version < 4.7 ? "none" : "block";
+    document.getElementById("radiogroupPressureCustom").style.display = dispval;
+
 	updatePressureValuesForSelection();
 	
 	//console.log("map aftertouch");
@@ -4108,6 +4155,10 @@ function mapPoly() {
 	document.getElementById("pressureShakeModDepthLabel").style.display = dispval;
 	document.getElementById("pressureShakeModDepthValue").style.display = dispval;
 	document.getElementById("shakePressureModModeContainer").style.display = dispval;
+
+    dispval = version < 4.7 ? "none" : "block";
+    document.getElementById("radiogroupPressureCustom").style.display = dispval;
+
 	updatePressureValuesForSelection();    
 }
 
@@ -4626,6 +4677,13 @@ function updateExpressionCurveLabels()
 	var highslider = document.getElementById('exprcurvehighslider');
 	var highelement = document.getElementById('exprcurvehighslider-value');
 	updateExpressionCurveLabel(highslider, highelement);
+}
+
+function updatePressureCustomCurveLabels()
+{
+	var slider = document.getElementById('pressurecustomcurveslider');
+	var element = document.getElementById('pressurecustomcurveslider-value');
+	updateExpressionCurveLabel(slider, element);
 }
 
 function updateIMUCurveLabel(theslider, thelabel)

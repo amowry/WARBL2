@@ -201,9 +201,9 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                         // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 },    // Preset 0
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 },    // Preset 1
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100 } };  // Preset 2
+  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 0
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 1
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
@@ -272,6 +272,7 @@ byte outputBounds[4][2] =  // Container for ED output pressure range variables (
     { 0, 127 } };
 
 byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
+byte customCurve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the custom pressure curve values for each type
 
 float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f };  // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
 

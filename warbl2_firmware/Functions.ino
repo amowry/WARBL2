@@ -1512,7 +1512,7 @@ int calcHysteresis(int currentUpperBound, bool high) {
 
 inline float curveValToExponent(int val) {
     // takes 0 -> 127 and returns curve exponent
-    // which is between 0.25 -> 0 -> 4.0
+    // which is between 0.25 -> 1.0 -> 4.0
     float retval = 1.0f;
     val -= 64;
     if (val >= 0) {
@@ -3798,6 +3798,11 @@ void loadPrefs() {
     curve[2] = ED[preset][AFTERTOUCH_CURVE];
     curve[3] = ED[preset][POLY_CURVE];
 
+    customCurve[0] = ED[preset][CUSTOM_PRESSURE_CURVE];
+    customCurve[1] = ED[preset][CUSTOM_VELOCITY_CURVE];
+    customCurve[2] = ED[preset][CUSTOM_AFTERTOUCH_CURVE];
+    customCurve[3] = ED[preset][CUSTOM_POLYPRESSURE_CURVE];
+
     if (ED[preset][ENABLE_REGISTER_HOLD] || IMUsettings[preset][SEND_ROLL] || IMUsettings[preset][SEND_PITCH] || IMUsettings[preset][SEND_YAW] || IMUsettings[preset][PITCH_REGISTER] || IMUsettings[preset][STICKS_MODE] || IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
         sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
     } else {
@@ -4019,8 +4024,15 @@ void calculatePressure(byte pressureOption) {
     }
 
     else if (curve[pressureOption] == 2 && scaledPressure != 0) {  // Log curve.
-        float pressureLog2 = log(scaledPressure) / log(2);
+        const float pressureLog2 = log(scaledPressure) / log(2);
         scaledPressure = pressureLog2 * pressureLog2 * 10.24f;
+    }
+    else if (curve[pressureOption] == 3) { // custom curve specified by parameter
+        const float normval = scaledPressure / 1024.0f;
+        const float pscale = 1.0f / curveValToExponent(customCurve[pressureOption]);
+        if (pscale != 1.0f) {
+            scaledPressure = lrintf(powf(normval, pscale) * 1024.0f);
+        };
     }
 
     // Else curve 0 is linear, so no transformation.
@@ -4656,6 +4668,22 @@ void checkFirmwareVersion() {
             // Bell sensor on/off setting
             writeEEPROM(EEPROM_WARBL2_SETTINGS_START + USE_BELL_SENSOR, WARBL2settings[USE_BELL_SENSOR]);
             writeEEPROM(EEPROM_WARBL2_SETTINGS_START + USE_BELL_SENSOR + EEPROM_FACTORY_SETTINGS_START, WARBL2settings[USE_BELL_SENSOR]);
+        }
+
+        if (currentVersion < 47) {  // Manage all changes made in version 47.
+
+            // New custom pressure curve settings
+            for (int i = 0; i < 3; ++i) {  // Each preset
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_PRESSURE_CURVE * 3), ED[preset][CUSTOM_PRESSURE_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_PRESSURE_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_PRESSURE_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_VELOCITY_CURVE * 3), ED[preset][CUSTOM_VELOCITY_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_VELOCITY_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_VELOCITY_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_AFTERTOUCH_CURVE * 3), ED[preset][CUSTOM_AFTERTOUCH_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_AFTERTOUCH_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_AFTERTOUCH_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3), ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
+            }
+
         }
 
         writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.

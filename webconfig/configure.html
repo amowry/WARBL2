@@ -1882,7 +1882,6 @@ if (!isiOS && ("serviceWorker" in navigator)) {
                     <p class="curveLabel">
                       Linear
                     </p>
-                    <p></p>
                   </label>
                 </div>
               </fieldset>
@@ -1899,7 +1898,6 @@ if (!isiOS && ("serviceWorker" in navigator)) {
                     <p class="curveLabel">
                       Curve 2
                     </p>
-                    <p></p>
                   </label>
                 </div>
               </fieldset>
@@ -1916,10 +1914,30 @@ if (!isiOS && ("serviceWorker" in navigator)) {
                     <p class="curveLabel">
                       Curve 3
                     </p>
-                    <p></p>
                   </label>
                 </div>
               </fieldset>
+            </div>
+            <div class="radiogroupPressureCustom" id="radiogroupPressureCustom">
+              <fieldset>
+                <div>
+                  <input checked="checked" id="curveRadio3" name="curveRadio" onchange="sendCurveRadio(value)" type="radio" value="3"/>
+                  <label for="curveRadio3">
+                    <span>
+                      <span>
+                      </span>
+                    </span>
+                    <p class="curveLabel">
+                      Custom
+                    </p>
+                  </label>
+                </div>
+              </fieldset>
+              <div class="jumpvalues noTouch" id="pressurecustomcurveslider-value">
+              </div>
+              <div class="pressureCustomCurve" id="pressureCustomCurve">
+                <input class="ranger" id="pressurecustomcurveslider" max="127" min="0" onchange="sendPressureCustomCurve(value)" ondblclick="resetPressureCustomCurve()" oninput="updatePressureCustomCurveLabels()" type="range" value="64"/>
+              </div>
             </div>
             <div class="jumpvalues noTouch" id="slider-value-min">
             </div>
@@ -3460,7 +3478,7 @@ if (!isiOS && ("serviceWorker" in navigator)) {
                       Pressure Mapping
                     </h1>
                     <div>
-                      <p>The input pressure range can be mapped to the output ( <b> CC, velocity, channel pressure, <b> or </b> key pressure </b> ) range using one of three curves: linear, a power curve (curve 2), or an inverse power curve (curve 3). Adjusting the sliders controls which portion of the overall breath/bag pressure is mapped to which portion of the possible MIDI output range of 0-127. When mapping pressure to CC you can choose a CC channel and CC number. Also note that the WARBL will only be sending those messages if the corresponding switch in the main Pressure Mapping panel is turned on. In the <b> Channel Pressure </b> mapping panel, you can turn on the <b> MPE+ </b> switch to send 14-bit MPE+ specifically for use with Haken Audio hardware.</p>
+                      <p>The input pressure range can be mapped to the output ( <b> CC, velocity, channel pressure, <b> or </b> key pressure </b> ) range using one of three curves: linear, a power curve (curve 2), or an inverse power curve (curve 3), or (with firmware >= 4.7) a custom curve value. Adjusting the sliders controls which portion of the overall breath/bag pressure is mapped to which portion of the possible MIDI output range of 0-127. When mapping pressure to CC you can choose a CC channel and CC number. Also note that the WARBL will only be sending those messages if the corresponding switch in the main Pressure Mapping panel is turned on. In the <b> Channel Pressure </b> mapping panel, you can turn on the <b> MPE+ </b> switch to send 14-bit MPE+ specifically for use with Haken Audio hardware.</p>
                       <p>Beginning with firmware v. 4.3 it is possible to turn on the <b> IMU Shake Mod switch </b> to modify the pressure mapping by shaking the WARBL2 along its long axis. This can be useful, for example, to modify volume by shaking the WARBL2. It could also be used along with <b> Shake vibrato </b> (see the IMU mapping section below) to control both pitch and volume (or another type of expression) by shaking the WARBL2. You can select the "depth" of the modification as well as the direction (in the drop-down menu below the depth slider).</p>
                       <p>The <b> Received value </b> field and bar at the bottom show the MIDI messages received from the WARBL2 that correspond to the current panel. For example, if you are mapping breath pressure to CC 7 on channel 1, the display will show only those specific messages. Also, note that the WARBL will only send messages if the corresponding switch in the main panel is turned on.</p>
                     </div>
