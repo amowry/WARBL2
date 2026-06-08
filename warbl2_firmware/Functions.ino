@@ -4,7 +4,7 @@
 // Debug
 void printStuff(void) {
 
-//Serial.println(toneholeRead[0]);
+    //Serial.println(toneholeRead[0]);
 
     /*
     for (byte i = 0; i < 9; i++) {
@@ -260,7 +260,6 @@ void readIMU(void) {
     // Pitch and roll are swapped due to PCB sensor orientation.
     roll = sfusion.getPitchRadians();
     pitch = sfusion.getRollRadians();
-    yaw = sfusion.getYawRadians();
 
     float* quat = sfusion.getQuat();
 
@@ -299,11 +298,17 @@ void readIMU(void) {
     Serial.println("  -4 4");
     */
 
-    currYaw = yaw;  // Needs to be the unadjusted value
 
+    /* 
+    // Yaw is no longer used anywhere (see axisHeading instead).
+    yaw = sfusion.getYawRadians();
+    currYaw = yaw;  // Needs to be the unadjusted value
     yaw += yawOffset;
     if (yaw > PI) yaw -= TWO_PI;
     else if (yaw < -PI) yaw += TWO_PI;
+    yaw = -yaw;
+    yaw = yaw * RAD_TO_DEG;
+    */
 
     // Adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
@@ -320,13 +325,8 @@ void readIMU(void) {
     roll = localroll;
 
     // Invert
-
     pitch = -pitch;
-    yaw = -yaw;
-
     pitch = pitch * RAD_TO_DEG;
-    yaw = yaw * RAD_TO_DEG;
-
 
     const float abspitch = abs(pitch);
 
@@ -340,11 +340,10 @@ void readIMU(void) {
 
     runningRoll = (1.0f - alpha) * (runningRoll + gyro_roll) + (alpha * roll);
 
-    // necessary now?
-    if (runningRoll >= 270) {  // Wrap
+    while (runningRoll >= 270) {  // Wrap
         runningRoll -= 360;
     }
-    if (runningRoll <= -270) {
+    while (runningRoll <= -270) {
         runningRoll += 360;
     }
 
@@ -364,7 +363,7 @@ void readIMU(void) {
     float vz = 2.0f * (qy * qz + qw * qx);
 
     // Don't calculate heading if the WARBL is too close to vertical.
-    // In that case, keep the previous valid heading.  
+    // In that case, keep the previous valid heading.
     //     - JLC: this is not a clean transition, perhaps fade into using real yaw?
     const float maxAbsVz = 0.995f;
 
@@ -420,7 +419,7 @@ void readIMU(void) {
             armed = true;                              // Detect forward rotation above a threshold to prepare for a hit.
             if (gyroX > maxGyro) { maxGyro = gyroX; }  // Find the fastest X rotation, to use for hit velocity.
             else if (maxGyro > 0) {
-                maxGyro -= 0.7f;  // Gradually reduce the velocity analog if the rotation is slowing. This adjusts the velocity and/or prevents a hit if you start out with a fast swing but then slow it before the rebound occurs.
+                maxGyro -= 0.7f;  // Gradually reduce the velocity analogue if the rotation is slowing. This adjusts the velocity and/or prevents a hit if you start out with a fast swing but then slow it before the rebound occurs.
             }
             if (maxGyro <= 0) {
                 armed = false;
@@ -4026,8 +4025,7 @@ void calculatePressure(byte pressureOption) {
     else if (curve[pressureOption] == 2 && scaledPressure != 0) {  // Log curve.
         const float pressureLog2 = log(scaledPressure) / log(2);
         scaledPressure = pressureLog2 * pressureLog2 * 10.24f;
-    }
-    else if (curve[pressureOption] == 3) { // custom curve specified by parameter
+    } else if (curve[pressureOption] == 3) {  // custom curve specified by parameter
         const float normval = scaledPressure / 1024.0f;
         const float pscale = 1.0f / curveValToExponent(customCurve[pressureOption]);
         if (pscale != 1.0f) {
@@ -4683,7 +4681,6 @@ void checkFirmwareVersion() {
                 writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3), ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
                 writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
             }
-
         }
 
         writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
