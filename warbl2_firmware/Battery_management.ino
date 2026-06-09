@@ -327,10 +327,10 @@ float getBattVoltage() {
 
     // Read battery voltage
     analogReference(AR_INTERNAL_1_8);          // Use 1.8 V reference to maximize resolution. The battery should never read higher than ~1.7 V because that's the charger overvoltage cutoff.
+    digitalWrite(battReadEnable, HIGH);        // We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     analogOversampling(1);                     // Minimal oversampling for the throwaway read
     analogRead(battRead);                      // Dummy read to settle the reference
     analogOversampling(64);                    // Increase oversampling for precise 12-bit reading.
-    digitalWrite(battReadEnable, HIGH);        // We only connect the battery to the pin when reading to make sure it's not connected when the MCU is powered down.
     float battReading = analogRead(battRead);  // 290 uS.
     digitalWrite(battReadEnable, LOW);
     analogReference(AR_VDD4);  // Change back to VDD reference for reading pressure sensor.
