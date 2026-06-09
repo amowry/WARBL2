@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed IMU read interval timing to greatly reduce drift. This also results in smoother IMU behavior overall.
 
-- Improvement to roll (correct reprojection to the boady frame).
+- Improvement to roll (correct reprojection to the body frame).
 
 - Fix to legato slide.
 
