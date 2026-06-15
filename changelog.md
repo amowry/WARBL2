@@ -10,11 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fixed IMU read interval timing to greatly reduce drift. This also results in smoother IMU behavior overall.
 
+- Improvement to roll (correct reprojection to the body frame).
+
 - Fix to legato slide.
 
 - Fix to thumb slide behavior (thumb slide wasn't enabled for all fingering charts).
 
 - Further improvements to BLE connection interval negotiation.
+
+- Minor fix to battery voltage reading.
+
+### Added
+
+- Custom curve for mapping breath pressure.
+
+- Firmware patch number is now displayed in the Config Tool.
 
 ## [Released]
 
