@@ -6,6 +6,8 @@ void printStuff(void) {
 
     //Serial.println(toneholeRead[0]);
 
+    //Serial.println(twelveBitPressure);
+
     /*
     for (byte i = 0; i < 9; i++) {
         Serial.println(toneholeRead[i]);
@@ -62,6 +64,10 @@ byte calculateDelayTime(void) {
     }
     return 0;
 }
+
+
+
+
 
 
 
@@ -3418,7 +3424,9 @@ void restoreFactorySettings() {
 // Send all settings for current preset to the WARBL Configuration Tool. New variables should be added at the end to maintain backweard compatability with settings import/export in the Config Tool.
 void sendSettings() {
 
-    sendMIDI(MIDI_CC_110_MSG, VERSION);  //Send the firmware version.
+    sendMIDI(MIDI_CC_110_MSG, VERSION);                                       //Send the firmware version.
+    sendMIDICouplet(MIDI_CC_109, MIDI_CC_109_VALUE_126, MIDI_CC_105, PATCH);  //Send the firmware patch number.
+
 
     for (byte i = 0; i < 3; i++) {
         sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for preset i.

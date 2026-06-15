@@ -3,6 +3,7 @@
 #define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 47  // Firmware version (without decimal point)
+#define PATCH 0    // Firmware patch number
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
@@ -143,9 +144,9 @@
 #define POLY_INPUT_PRESSURE_MAX 30
 #define POLY_OUTPUT_PRESSURE_MIN 31
 #define POLY_OUTPUT_PRESSURE_MAX 32
-#define VELOCITY_CURVE 33   // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_VELOCITY_CURVE)
-#define AFTERTOUCH_CURVE 34 // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_AFTERTOUCH_CURVE)
-#define POLY_CURVE 35       // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_POLYPRESSURE_CURVE)
+#define VELOCITY_CURVE 33    // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_VELOCITY_CURVE)
+#define AFTERTOUCH_CURVE 34  // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_AFTERTOUCH_CURVE)
+#define POLY_CURVE 35        // (0 is linear, 1 and 2 are power curves, 3 is custom, referencing CUSTOM_POLYPRESSURE_CURVE)
 #define EXPRESSION_MIN 36
 #define EXPRESSION_MAX 37
 #define SLIDE_LIMIT_MAX 38
@@ -175,8 +176,8 @@
 #define THUMB_HALFHOLE_FINGERRATE 62     // Thumb: 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the efffect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
 #define CUSTOM_PRESSURE_CURVE 63         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define CUSTOM_VELOCITY_CURVE 64         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define CUSTOM_AFTERTOUCH_CURVE 65         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define CUSTOM_POLYPRESSURE_CURVE 66         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_AFTERTOUCH_CURVE 65       // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
+#define CUSTOM_POLYPRESSURE_CURVE 66     // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define kEXPRESSIONnVariables 67
 
 // Button combinations/gestures
@@ -708,7 +709,9 @@
 #define MIDI_CC_109_VALUE_101 101  // Bidirectional. Indicates that  WARBL2 custom fingering chart 2 is about to be sent on CC 105.
 #define MIDI_CC_109_VALUE_102 102  // Bidirectional. Indicates that  WARBL2 custom fingering chart 3 is about to be sent on CC 105.
 #define MIDI_CC_109_VALUE_103 103  // Bidirectional. Indicates that  WARBL2 custom fingering chart 4 is about to be sent on CC 105.
-                                   /* 104-126	unused */
+                                   /* 104-125	unused */
+
+#define MIDI_CC_109_VALUE_126 126  // From WARBL. Indicates that firmware patch number will be sent on CC 105
 #define MIDI_CC_109_VALUE_127 127  // From WARBL. Indicates button/gesture action will be sent on CC 105
 
 
