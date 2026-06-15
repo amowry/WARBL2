@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-## [Unreleased]
+## [Released]
 
 ## [4.7] - 2026-4-30
 
@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Firmware patch number is now displayed in the Config Tool.
 
-## [Released]
+
 
 ## [4.6.2] - 2026-4-30
 
