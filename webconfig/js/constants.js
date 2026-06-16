@@ -76,6 +76,7 @@ const MIDI_CC_102_VALUE_55 = 55;  // Bidirectional. Medieval bagpipes
 const MIDI_CC_102_VALUE_56 = 56;  // Bidirectional. EVI2
 const MIDI_CC_102_VALUE_57 = 57;  // Bidirectional. EVI3
 const MIDI_CC_102_VALUE_58 = 58;  // Bidirectional. Recorder2
+const MIDI_CC_102_VALUE_59 = 59;  // Bidirectional. Duduk
 ; //
 /* 59 unused */
 const MIDI_CC_102_VALUE_60 = 60; // Bidirectional. current instrument (mode variable) is 0
@@ -493,7 +494,7 @@ const MIDI_MAX_CALIB_MSGS_START = MIDI_CC_102_VALUE_20; // Start of Calibration 
 const MIDI_MAX_CALIB_MSGS_END = MIDI_CC_102_VALUE_28; // End of Calibration max values reached messages
 const MIDI_FINGERING_PATTERN_MODE_START = MIDI_CC_102_VALUE_30; // Bidirectional. indicates that the next command will be the fingering pattern for instrument 1
 const MIDI_FINGERING_PATTERN_START = MIDI_CC_102_VALUE_33; // Bidirectional. first fingering pattern is tin whistle
-const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_58; // Bidirectional. Last fingering chart.
+const MIDI_FINGERING_PATTERN_END = MIDI_CC_102_VALUE_59; // Bidirectional. Last fingering chart.
 const MIDI_CURRENT_MODE_START = MIDI_CC_102_VALUE_60; // Bidirectional. current instrument (mode variable) is 0
 const MIDI_PB_MODE_START = MIDI_CC_102_VALUE_70; // Bidirectional. Settings for current instrument: Pitchbend mode 0
 const MIDI_BREATH_MODE_START = MIDI_CC_102_VALUE_80; // Bidirectional. Settings for current instrument: Breath mode 0

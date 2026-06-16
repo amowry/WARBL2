@@ -4,7 +4,7 @@
 
 #define VERSION 47  // Firmware version (without decimal point)
 #define PATCH 1    // Firmware patch number
-#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 49        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
 #define WATCHDOG_TIMEOUT_SECS 10    // The timeout needs to be set longer than any task that might interrupt the loop().
@@ -400,8 +400,7 @@
 #define MIDI_CC_102_VALUE_56 56  // Bidirectional. EVI2
 #define MIDI_CC_102_VALUE_57 57  // Bidirectional. EVI3
 #define MIDI_CC_102_VALUE_58 58  // Bidirectional. Recorder2
-
-/* 59 unused */
+#define MIDI_CC_102_VALUE_59 59  // Bidirectional. Duduk
 
 #define MIDI_CC_102_VALUE_60 60  // Bidirectional. Current preset (preset variable) is 0
 #define MIDI_CC_102_VALUE_61 61  // Bidirectional. Current preset is 1
@@ -761,7 +760,7 @@
 #define MIDI_MAX_CALIB_MSGS_END MIDI_CC_102_VALUE_28             // End of Calibration max values reached messages
 #define MIDI_FINGERING_PATTERN_MODE_START MIDI_CC_102_VALUE_30   // Bidirectional. indicates that the next command will be the fingering pattern for preset 1
 #define MIDI_FINGERING_PATTERN_START MIDI_CC_102_VALUE_33        // Bidirectional. first fingering pattern is tin whistle
-#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_58          // Bidirectional. EVI2
+#define MIDI_FINGERING_PATTERN_END MIDI_CC_102_VALUE_59          // Bidirectional. Duduk
 #define MIDI_CURRENT_PRESET_START MIDI_CC_102_VALUE_60           // Bidirectional. current preset (preset variable) is  0
 #define MIDI_PB_MODE_START MIDI_CC_102_VALUE_70                  // Bidirectional. Settings for current preset: Pitchbend mode 0
 #define MIDI_BREATH_MODE_START MIDI_CC_102_VALUE_80              // Bidirectional. Settings for current preset: Breath mode 0
