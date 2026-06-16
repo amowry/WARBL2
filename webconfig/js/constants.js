@@ -78,7 +78,7 @@ const MIDI_CC_102_VALUE_57 = 57;  // Bidirectional. EVI3
 const MIDI_CC_102_VALUE_58 = 58;  // Bidirectional. Recorder2
 const MIDI_CC_102_VALUE_59 = 59;  // Bidirectional. Duduk
 ; //
-/* 59 unused */
+
 const MIDI_CC_102_VALUE_60 = 60; // Bidirectional. current instrument (mode variable) is 0
 const MIDI_CC_102_VALUE_61 = 61; // Bidirectional. current instrument is 1
 const MIDI_CC_102_VALUE_62 = 62; // Bidirectional. current instrument is 2
