@@ -58,11 +58,12 @@
 #define kModeEVI2 23
 #define kModeEVI3 24
 #define kModeRecorder2 25
+#define kModeDuduk 26
 #define kWARBL2Custom1 67
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
 #define kWARBL2Custom4 70
-#define kModeNModes 30
+#define kModeNModes 31
 
 // Pitch bend modes
 #define kPitchBendSlideVibrato 0
