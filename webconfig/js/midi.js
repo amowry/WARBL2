@@ -6,7 +6,7 @@
 
 
 var configVersion = "4.7.0"
-
+var patch = 0;
 
 var sendDelay = 15 //milliseconds delay between sending commands to the WARBL
 
@@ -1394,7 +1394,8 @@ function WARBL_Receive(event, source) {
 						}
 					}
 					else if (jumpFactorWrite == 326) {
-						const patch = data2
+						patch = data2;
+						console.log("Patch = " + patch);
 						const el = document.getElementById('version');
 						el.appendChild(document.createTextNode('.' + patch));
 
@@ -1821,6 +1822,14 @@ function WARBL_Receive(event, source) {
 
 
 					//add new items that should only be visible with newer software versions and disable ones that are for newer version than the current one.
+
+
+					if (version < 4.7 || patch < 1) {
+						document.getElementById("fingeringSelect0").options[25].disabled = true; // Disable duduk fingering.
+						document.getElementById("fingeringSelect1").options[25].disabled = true;
+						document.getElementById("fingeringSelect2").options[25].disabled = true;
+					}
+
 
 					if (version < 4.6) {
 
@@ -2587,7 +2596,7 @@ function sendFingeringSelect(row, selection) {
 		} //default key of D for many patterns
 
 	}
-	else { key = 0; } // For WARBL2 always revert key (transpose) to 0 when a new fingerin chart is selected
+	else { key = 0; } // For WARBL2 always revert key (transpose) to 0 when a new fingering chart is selected
 	document.getElementById("keySelect" + row).value = key; //set key menu
 	//send the fingering pattern
 	sendToWARBL(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + row);
@@ -5658,17 +5667,17 @@ function importPreset(context) {
 		// Wait briefly to allow command processing
 		await sleep(delay);
 
-        var msgbaseindex = 0;
+		var msgbaseindex = 0;
 
-        // version 4.7 introduced a few more messages just after the main version
-        if (theImportObject.messages[0][2] >= 47) {
-            msgbaseindex = 2;
-        }
+		// version 4.7 introduced a few more messages just after the main version
+		if (theImportObject.messages[0][2] >= 47) {
+			msgbaseindex = 2;
+		}
 
 		//
 		// Determine the current preset that was set at export
 		//
-		var exportedInstrument = theImportObject.messages[msgbaseindex+10][2] - 60;
+		var exportedInstrument = theImportObject.messages[msgbaseindex + 10][2] - 60;
 
 		//
 		// Determine the current target preset tab
@@ -5687,52 +5696,52 @@ function importPreset(context) {
 		switch (exportedInstrument) {
 
 			case 0:
-				byte1 = theImportObject.messages[msgbaseindex+1][2];
+				byte1 = theImportObject.messages[msgbaseindex + 1][2];
 				byte2 = targetInstrument;
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
-				byte1 = theImportObject.messages[msgbaseindex+2][1];
-				byte2 = theImportObject.messages[msgbaseindex+2][2];
+				byte1 = theImportObject.messages[msgbaseindex + 2][1];
+				byte2 = theImportObject.messages[msgbaseindex + 2][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
 				byte1 = targetKey;
-				byte2 = theImportObject.messages[msgbaseindex+3][2];
+				byte2 = theImportObject.messages[msgbaseindex + 3][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 				break;
 
 			case 1:
-				byte1 = theImportObject.messages[msgbaseindex+4][1];
+				byte1 = theImportObject.messages[msgbaseindex + 4][1];
 				byte2 = targetInstrument;
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
-				byte1 = theImportObject.messages[msgbaseindex+5][1];
-				byte2 = theImportObject.messages[msgbaseindex+5][2];
+				byte1 = theImportObject.messages[msgbaseindex + 5][1];
+				byte2 = theImportObject.messages[msgbaseindex + 5][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
 				byte1 = targetKey;
-				byte2 = theImportObject.messages[msgbaseindex+6][2];
+				byte2 = theImportObject.messages[msgbaseindex + 6][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 				break;
 
 			case 2:
-				byte1 = theImportObject.messages[msgbaseindex+7][1];
+				byte1 = theImportObject.messages[msgbaseindex + 7][1];
 				byte2 = targetInstrument;
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
-				byte1 = theImportObject.messages[msgbaseindex+8][1];
-				byte2 = theImportObject.messages[msgbaseindex+8][2];
+				byte1 = theImportObject.messages[msgbaseindex + 8][1];
+				byte2 = theImportObject.messages[msgbaseindex + 8][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 
 				byte1 = targetKey;
-				byte2 = theImportObject.messages[msgbaseindex+9][2];
+				byte2 = theImportObject.messages[msgbaseindex + 9][2];
 				sendToWARBL(byte1, byte2);
 				await sleep(delay);
 				break;
@@ -5748,7 +5757,7 @@ function importPreset(context) {
 		// Skip command 11 - Sets default
 
 		// Send the rest of the data
-		for (i = msgbaseindex+12; i < nMessages; ++i) {
+		for (i = msgbaseindex + 12; i < nMessages; ++i) {
 
 			byte1 = theImportObject.messages[i][1];
 			byte2 = theImportObject.messages[i][2];
