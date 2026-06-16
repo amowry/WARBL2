@@ -6130,8 +6130,8 @@ function unlockPageScroll() {
 
 // For downloading the firmware on iOS
 async function downloadFirmware() {
-	const url = "https://warbl.xyz/WARBL2_firmware_4.6.6.uf2";
-	const filename = "WARBL2_firmware_4.6.6.uf2";
+	const url = "https://warbl.xyz/WARBL2_firmware_4.7.0.uf2";
+	const filename = "WARBL2_firmware_4.7.0.uf2";
 
 	try {
 		const response = await fetch(url);
