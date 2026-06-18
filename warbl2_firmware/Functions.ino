@@ -4009,40 +4009,44 @@ void calculateAndSendPressure() {
 
 
 
-
+static float mapfloat(float x, float in_min, float in_max, float out_min, float out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 
 // Calculate pressure data for CC, velocity, channel pressure, and key pressure if those options are selected.
 void calculatePressure(byte pressureOption) {
 
-    long scaledPressure;
+    float scaledPressure;
 
     scaledPressure = smoothed_pressure - (sensorThreshold[0] << 2);  // 12-bit input pressure range is ~400-4000. Bring this down to 0-3600.
 
-    if (scaledPressure < 0) {
-        scaledPressure = 0;
+    if (scaledPressure < 0.0f) {
+        scaledPressure = 0.0f;
     }
 
-    scaledPressure = constrain(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2);     // Constrain the pressure to the input range.
-    scaledPressure = map(scaledPressure, inputPressureBounds[pressureOption][0] << 2, inputPressureBounds[pressureOption][1] << 2, 0, 1024);  // Scale pressure to a range of 0-1024.
+    const int inputMin = inputPressureBounds[pressureOption][0] << 2;
+    const int inputMax = inputPressureBounds[pressureOption][1] << 2;
+    const int outputMin = outputBounds[pressureOption][0];
+    const int outputMax = outputBounds[pressureOption][1];
 
-    if (curve[pressureOption] == 1) {  // For this curve, cube the input and scale back down.
-        scaledPressure = ((scaledPressure * scaledPressure * scaledPressure) >> 20);
-    }
+    scaledPressure = constrain(scaledPressure, (float)inputMin, (float)inputMax);  // Constrain the pressure to the input range.
+    scaledPressure = mapfloat(scaledPressure, inputMin, inputMax, 0.0f, 1.0f);     // Scale pressure to a range of 0.0f-1.0f
 
-    else if (curve[pressureOption] == 2 && scaledPressure != 0) {  // Log curve.
-        const float pressureLog2 = log(scaledPressure) / log(2);
-        scaledPressure = pressureLog2 * pressureLog2 * 10.24f;
+    if (curve[pressureOption] == 1) {  // For this legacy curve, cube the input
+        scaledPressure = powf(scaledPressure, 3.0f);
+    } else if (curve[pressureOption] == 2 && scaledPressure != 0) {  // legacy Log curve.
+        const float pressureLog2 = log(scaledPressure * 1024.0f) / log(2.0f);
+        scaledPressure = pressureLog2 * pressureLog2 * 0.01f;
     } else if (curve[pressureOption] == 3) {  // custom curve specified by parameter
-        const float normval = scaledPressure / 1024.0f;
         const float pscale = 1.0f / curveValToExponent(customCurve[pressureOption]);
         if (pscale != 1.0f) {
-            scaledPressure = lrintf(powf(normval, pscale) * 1024.0f);
+            scaledPressure = powf(scaledPressure, pscale);
         };
     }
 
     // Else curve 0 is linear, so no transformation.
-    mappedPressureHiRes[pressureOption] = (scaledPressure * (outputBounds[pressureOption][1] - outputBounds[pressureOption][0]) / 1024.0f) + outputBounds[pressureOption][0];  // Map to output pressure range.
+    mappedPressureHiRes[pressureOption] = (scaledPressure * (outputMax - outputMin)) + outputMin;  // Map to output pressure range.
 
     inputPressureBounds[pressureOption][3] = (unsigned int)mappedPressureHiRes[pressureOption];
 
