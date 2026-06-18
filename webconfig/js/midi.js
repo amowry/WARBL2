@@ -1824,7 +1824,7 @@ function WARBL_Receive(event, source) {
 					//add new items that should only be visible with newer software versions and disable ones that are for newer version than the current one.
 
 
-					if (version < 4.7 || patch < 1) {
+					if (version < 4.8) {
 						document.getElementById("fingeringSelect0").options[25].disabled = true; // Disable duduk fingering.
 						document.getElementById("fingeringSelect1").options[25].disabled = true;
 						document.getElementById("fingeringSelect2").options[25].disabled = true;
