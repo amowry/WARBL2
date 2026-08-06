@@ -21,7 +21,7 @@
 
 
 Approximate WARBL2 power budget (at 3.0 V): ~ 2.5 mA for NRF52840, 1.5 mA for ATmega32u4, 3.5 mA for tone hole sensors, 1.5 mA for other peripherals. 8.7 mA total, for ~ 12 hour battery life with 350 mAH battery and 86% efficient boost converter
-
+Power update 8/26: With the newer Bosch pressure sensors and the bell sensor turned off, total consumption is around 7.2 mA, for ~16.5 hour theoretical battery life.
 
 ***Notes about the FFC expansion port:
 Connector is Molex 0512810598 (see datasheet for cable design): https://tools.molex.com/pdm_docs/sd/512810598_sd.pdf
@@ -47,6 +47,7 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 #include <Adafruit_LSM6DSOX.h>     //IMU
 #include <SensorFusion.h>          // IMU fusion
 #include <ResponsiveAnalogRead.h>  // Fast smoothing of 12-bit pressure sensor readings
+#include <Adafruit_BMP5xx.h>       // Modify this library (Adafruit_BMP5xx.cpp line 94) to read at 8 Mhz SPI speed. For newer Bosch BMP585/580/581 pressure sensors.
 
 // Create instances of library classes.
 BLEDis bledis;
@@ -59,6 +60,8 @@ ResponsiveAnalogRead analogPressure(A0, true);
 #else
 ResponsiveAnalogRead analogPressure(A1, true);
 #endif
+Adafruit_BMP5xx bmp;
+Adafruit_BMP5xx bmpAmbient;
 
 // Filtering
 ResponsiveAnalogRead filterToneholes[9];
@@ -87,6 +90,9 @@ const uint8_t STAT = 27;  // Battery charger STAT pin
 const uint8_t battReadEnable = 6;         // Driving this high connects the battery to NRF ADC for reading voltage.
 const uint8_t battRead = 16;              // Analog pin for reading battery voltage
 const uint8_t buttons[] = { 4, 17, 18 };  // Buttons 1, 2, 3
+
+const uint8_t BMP5XX_CS_PIN = 15;          // BMP585 breath sensor pin (newer hardware)
+const uint8_t BMP5XX_AMBIENT_CS_PIN = 11;  // BMP580/581 ambient pressure sensor pin (newer hardware)
 
 
 // Battery variables
@@ -200,10 +206,10 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 },    // Preset 1
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
-byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                         // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 0
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 1
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 } };  // Preset 2
+byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                                         // Many settings in the Configuration Tool (see defines).
+  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 0
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 1
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
@@ -227,6 +233,7 @@ bool pulseLED[] = { 0, 0, 0 };     // Whether currently pulsing LEDs
 
 // Misc. timers used in loop()
 unsigned long pitchBendTimer = 0;
+unsigned long timerC = 0;
 unsigned long timerD = 0;
 unsigned long timerE = 0;
 unsigned long timerF = 0;
@@ -259,6 +266,11 @@ int upperBoundHigh;                  // Register boundary for moving up
 int upperBoundLow;                   // Register boudary for moving down (with hysteresis)
 unsigned long fingeringChangeTimer;  // Times how long it's been since the most recent fingering change. Used to hold off the register drop feature until we've "settled" in to a fingering pattern
 
+// For newer BMP585 pressure sensor. There is also a BMP580 or BMP581 onboard for correcting for ambient pressure, because the BMP585 is an absolute sensor.
+bool useBMP = false;
+float BMPcalibration = 0.0f;
+float BMPoffset = 0.0f;
+
 unsigned int inputPressureBounds[4][4] =  // For mapping pressure input range to output range. Dimension 1 is CC, velocity, aftertouch, poly. Dimension 2 is minIn, maxIn, scaledMinIn, mappedPressure.
   { { 100, 800, 0, 0 },
     { 100, 800, 0, 0 },
@@ -271,18 +283,18 @@ byte outputBounds[4][2] =  // Container for ED output pressure range variables (
     { 0, 127 },
     { 0, 127 } };
 
-byte curve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the pressure curve variable
+byte curve[4] = { 0, 0, 0, 0 };        // Similar to above-- more logical ordering for the pressure curve variable
 byte customCurve[4] = { 0, 0, 0, 0 };  // Similar to above-- more logical ordering for the custom pressure curve values for each type
 
 float mappedPressureHiRes[4] = { 0.0f, 0.0f, 0.0f, 0.0f };  // used for hi-res MPE+ output for pressure via CC/chanpress/keypress
 
 // Variables for reading tonehole sensors
 unsigned int toneholeCovered[] = { 10, 100, 100, 100, 100, 100, 100, 100, 100 };  // Value at which each tone hole is considered to be covered. These are set to a low value initially for testing sensors after assembly.
-int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                            // Baseline (uncovered) hole tonehole sensor readings
-int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                                // Tonehole sensor readings after being reassembled from above bytes
-unsigned int holeCovered = 0;                                                      // Whether each hole is covered-- each bit corresponds to a tonehole.
-bool fingersChanged = 1;                                                           // Keeps track of when the fingering pattern has changed.
-unsigned int prevHoleCovered = 1;                                                  // So we can track changes.
+int toneholeBaseline[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                           // Baseline (uncovered) hole tonehole sensor readings
+int toneholeRead[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };                               // Tonehole sensor readings after being reassembled from above bytes
+unsigned int holeCovered = 0;                                                     // Whether each hole is covered-- each bit corresponds to a tonehole.
+bool fingersChanged = 1;                                                          // Keeps track of when the fingering pattern has changed.
+unsigned int prevHoleCovered = 1;                                                 // So we can track changes.
 byte tempNewNote = 127;
 byte prevNote = 127;
 byte newNote = 127;             // The next note to be played, based on the fingering chart (does not include transposition).
@@ -474,8 +486,8 @@ void setup() {
     Wire.begin();           // Join i2c bus for EEPROM.
     Wire.setClock(400000);  // High speed
 
-    // SPI
-    pinMode(2, OUTPUT);     // CS for Atmega
+    // SPI for ATmega.
+    pinMode(2, OUTPUT);     // CS for ATmega
     digitalWrite(2, HIGH);  // Ensure CS stays high for now.
     SPI.begin();            // This uses SPIM3 for programming the Atmega.
 
@@ -503,12 +515,53 @@ void setup() {
 
     loadFingering();
     loadSettingsForAllPresets();
-    preset = defaultPreset;   // Set the startup preset.
-    analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
-    twelveBitPressure = analogPressure.getRawValue();
+    preset = defaultPreset;  // Set the startup preset.
+
+
+
+    // Test for Bosch BMP pressure sensors (otherwise we will default to the older Honeywell sensor).
+    if (bmpAmbient.begin(BMP5XX_AMBIENT_CS_PIN, &SPI)) {  // Test for the ambient sensor.
+        useBMP = true;
+        bmp.begin(BMP5XX_CS_PIN, &SPI);  // If the ambient sensor is there, start the breath sensor as well.
+
+        bmp.setTemperatureOversampling(BMP5XX_OVERSAMPLING_1X);
+        bmpAmbient.setTemperatureOversampling(BMP5XX_OVERSAMPLING_2X);  // Use higher oversampling for temp and pressure on the ambient sensor because we don't need to read it very often.
+        bmp.setPressureOversampling(BMP5XX_OVERSAMPLING_1X);
+        bmpAmbient.setPressureOversampling(BMP5XX_OVERSAMPLING_32X);
+        bmp.setIIRFilterCoeff(BMP5XX_IIR_FILTER_BYPASS);
+        bmpAmbient.setIIRFilterCoeff(BMP5XX_IIR_FILTER_COEFF_3);
+        bmp.setOutputDataRate(BMP5XX_ODR_50_HZ);
+        bmpAmbient.setOutputDataRate(BMP5XX_ODR_50_HZ);
+        bmp.setPowerMode(BMP5XX_POWERMODE_CONTINUOUS);
+        bmpAmbient.setPowerMode(BMP5XX_POWERMODE_NORMAL);
+        bmp.enablePressure(true);
+        bmpAmbient.enablePressure(true);
+
+        delay(10);
+
+        if (bmp.performReading()) {
+            BMPcalibration = bmp.pressure;  // mbar (hPA)
+        }
+
+        delay(10);  // Need a delay between sensor readings.
+
+        if (bmpAmbient.performReading()) {
+            BMPoffset = BMPcalibration - bmpAmbient.pressure;
+        }
+        twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  //Calibrate and scale to ABPLLND060MGAA3 equivalent range at twelve bits.
+    }
+
+
+
+    if (!useBMP) {                // Otherwise use the Honeywell pressure sensor (older hardware).
+        analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
+        twelveBitPressure = analogPressure.getRawValue();
+    }
+
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
-    loadPrefs();                                 // Load the correct user settings based on current preset.
-    powerDownTimer = millis();                   // Reset the powerDown timer.
+
+    loadPrefs();                // Load the correct user settings based on current preset.
+    powerDownTimer = millis();  // Reset the powerDown timer.
 
 
 
@@ -585,6 +638,17 @@ void loop() {
         calculateAndSendPitchbend();  // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
         printStuff();                 // Debug
         sendIMU();                    // ~ 130 us
+    }
+
+
+
+    /////////// Things here happen ~ every 50 us.
+
+    if ((wakeTime - timerC) > 50) {
+        timerC = wakeTime;
+        if (useBMP) {
+            readAmbientPressure();  // Compensate for ambient pressure occasionally.
+        }
     }
 
 

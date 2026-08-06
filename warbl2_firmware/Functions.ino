@@ -4,9 +4,10 @@
 // Debug
 void printStuff(void) {
 
-    //Serial.println(toneholeRead[0]);
-
+    Serial.println(sensorValue);
     //Serial.println(twelveBitPressure);
+    //Serial.println(BMPoffset);
+    //Serial.println("");
 
     /*
     for (byte i = 0; i < 9; i++) {
@@ -74,7 +75,7 @@ byte calculateDelayTime(void) {
 
 
 #ifdef PROTOTYPE46
-// This version needed for the few prototype out there
+// This version needed for the few early prototypes out there
 // Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
@@ -82,6 +83,7 @@ void getSensors(void) {
     twelveBitPressure = analogPressure.getRawValue();
     smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
     sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
+
 
     // Receive tone hole readings from ATmega32U4. The transfer takes ~ 125 us.
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -135,10 +137,22 @@ void getSensors(void) {
 
 void getSensors(void) {
 
-    analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
-    twelveBitPressure = analogPressure.getRawValue();
-    smoothed_pressure = analogPressure.getValue();  // Use an adaptively-smoothed 12-bit reading to map to CC, aftertouch, poly.
-    sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
+    if (!useBMP) {                // Honeywell ABPLLND060MGAA3 pressure sensor (older)
+        analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
+        twelveBitPressure = analogPressure.getRawValue();
+        smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+        sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
+    }
+
+    else {                                                                           // Bosch BMP585 preessure sensor (newer)
+        if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz.
+            twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  // Scale to ABPLLND060MGAA3 equivalent range at twelve bits.
+            sensorValue = twelveBitPressure >> 2;                                    // Reduce the reading to stable 10 bits for state machine.
+            analogPressure.update(twelveBitPressure);                                // Update the smoothing filter.
+            smoothed_pressure = analogPressure.getValue();                           // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+        }
+    }
+
 
     // Receive tone hole readings from ATmega32U4.
     byte toneholePacked[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -165,9 +179,9 @@ void getSensors(void) {
     bool goodChecksum = (receivedChecksum == computedChecksum);
 
 
-    // if (!goodChecksum) {  // Indicate a bad transfer.
-    // blinkNumber[RED_LED] = 1;
-    // }
+    //if (!goodChecksum) {  // Indicate a bad transfer.
+    //blinkNumber[RED_LED] = 1;
+    //}
 
 
     if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
@@ -212,6 +226,21 @@ void getSensors(void) {
 }
 
 #endif
+
+
+
+
+
+
+
+
+// If using the BMP pressure sensors, adjust for ambient pressure.
+void readAmbientPressure() {
+    if (bmpAmbient.performReading()) {
+        BMPcalibration = bmpAmbient.pressure + BMPoffset;  //Calibrate to ambient, adding the initial offset between the two sensors at startup.
+    }
+}
+
 
 
 
@@ -1133,8 +1162,13 @@ void sendToConfig(bool newPattern, bool newPressure) {
             patternChanged = false;
         }
 
+        int positiveSensorValue = sensorValue;
+        if (positiveSensorValue < 0) {
+            positiveSensorValue = 0;
+        }
+
         if (pressureChanged && (nowtime - pressureSendTimer) > 25) {  // If some time has past, send the new pressure to the Config Tool.
-            sendMIDICouplet(MIDI_CC_116, sensorValue & 0x7F, MIDI_CC_118, sensorValue >> 7);
+            sendMIDICouplet(MIDI_CC_116, positiveSensorValue & 0x7F, MIDI_CC_118, positiveSensorValue >> 7);
             pressureChanged = false;
         }
     }
