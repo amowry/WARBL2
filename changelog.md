@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [Unreleased]
+
+## [4.8] - 2026-8-6
+
+### Changed
+
+- Fixed incorrect default values for max input pressure when mapping velocity, key pressure, channel pressure.
+
+### Added
+
+- Support for Bosch BMP585 pressure sensor. This sensor is now being used because the previous Honeywell sensor is being phased out. Also onboard is a BMP580 or BMP581 for sensing/compensating for ambient pressure.
+
+- Duduk fingering
+
 ## [Released]
 
 ## [4.7] - 2026-6-15
