@@ -529,8 +529,8 @@ void setup() {
         bmp.setPressureOversampling(BMP5XX_OVERSAMPLING_1X);
         bmpAmbient.setPressureOversampling(BMP5XX_OVERSAMPLING_32X);
         bmp.setIIRFilterCoeff(BMP5XX_IIR_FILTER_BYPASS);
-        bmpAmbient.setIIRFilterCoeff(BMP5XX_IIR_FILTER_COEFF_3);
-        bmp.setOutputDataRate(BMP5XX_ODR_50_HZ);
+        bmpAmbient.setIIRFilterCoeff(BMP5XX_IIR_FILTER_COEFF_3);  // Use a bit of smoothing on the ambient sensor.
+        bmp.setOutputDataRate(BMP5XX_ODR_50_HZ);                  // This setting is ignored on the breath sensor because we put it in continuous mode below.
         bmpAmbient.setOutputDataRate(BMP5XX_ODR_50_HZ);
         bmp.setPowerMode(BMP5XX_POWERMODE_CONTINUOUS);
         bmpAmbient.setPowerMode(BMP5XX_POWERMODE_NORMAL);
@@ -539,16 +539,17 @@ void setup() {
 
         delay(10);
 
+
         if (bmp.performReading()) {
-            BMPcalibration = bmp.pressure;  // mbar (hPA)
+            BMPcalibration = bmp.pressure;  // Read the breath pressure. Readings are in mbar (hPA).
         }
 
         delay(10);  // Need a delay between sensor readings.
 
         if (bmpAmbient.performReading()) {
-            BMPoffset = BMPcalibration - bmpAmbient.pressure;
+            BMPoffset = BMPcalibration - bmpAmbient.pressure;  // The difference beween the two sensors at startup. Used to continuously conpensate for changing abmient pressure.
         }
-        twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  //Calibrate and scale to ABPLLND060MGAA3 equivalent range at twelve bits.
+        twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  //Calibrate and scale to the older ABPLLND060MGAA3 equivalent range at twelve bits.
     }
 
 

@@ -6,7 +6,7 @@ void printStuff(void) {
 
     Serial.println(sensorValue);
     //Serial.println(twelveBitPressure);
-    //Serial.println(BMPoffset);
+    //Serial.println(BMPoffset, 6);
     //Serial.println("");
 
     /*
@@ -16,7 +16,7 @@ void printStuff(void) {
      Serial.println("");
 */
 
-    //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. Can also use IMU temp. The CPU is in the middle of the PCB and the IMU is near the mouthpiece.
+    //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. There are also temp sensors on the IMU, magnetometer (if installed), and both BMP sensors (if installed).
 
     //This can be used to print out the currently selected fingering chart (all 256 possible values) when button 1 is clicked.
     /*
@@ -145,7 +145,7 @@ void getSensors(void) {
     }
 
     else {                                                                           // Bosch BMP585 preessure sensor (newer)
-        if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz.
+        if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz (~same as reading older analog sensor).
             twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  // Scale to ABPLLND060MGAA3 equivalent range at twelve bits.
             sensorValue = twelveBitPressure >> 2;                                    // Reduce the reading to stable 10 bits for state machine.
             analogPressure.update(twelveBitPressure);                                // Update the smoothing filter.
@@ -239,6 +239,44 @@ void readAmbientPressure() {
     if (bmpAmbient.performReading()) {
         BMPcalibration = bmpAmbient.pressure + BMPoffset;  //Calibrate to ambient, adding the initial offset between the two sensors at startup.
     }
+    checkForBreathPause();  // See if there's currently no breath pressure, to adjust calibration if necessary.
+}
+
+
+
+
+
+
+
+
+
+// If using the BMP sensors, the breath and ambient sensors can drift apart very slightly because of physical PCB stress if the temperature changes rapidly.
+// Here we detect if there's currently no breath pressure, in which case we can reset the sensor offset to adjust for drift if necessary.
+void checkForBreathPause() {
+    constexpr size_t WINDOW_SAMPLES = 60;  // 3-second window at 20Hz.
+    static float buf[WINDOW_SAMPLES] = {};
+    static size_t idx = 0;
+    static bool filled = false;
+
+    buf[idx] = twelveBitPressure;  // Use a ring buffer to track the range in pressure over the time window.
+    idx = (idx + 1) % WINDOW_SAMPLES;
+    if (idx == 0) filled = true;
+
+    size_t count = filled ? WINDOW_SAMPLES : (idx == 0 ? WINDOW_SAMPLES : idx);
+
+    float mn = buf[0], mx = buf[0];
+    for (size_t i = 1; i < count; i++) {
+        mn = min(mn, buf[i]);
+        mx = max(mx, buf[i]);
+    }
+    float range = mx - mn;
+
+    if (filled && range < 3 && ABS(400 - twelveBitPressure) < 3) {
+        BMPoffset = bmp.pressure - bmpAmbient.pressure;  // Reset the sensor offset if the pressure range over the time window is low and the breath pressure is close to 400 (the calibration pressure at startup). If these conditions are met we assume the user isn't blowing.
+        idx = 0;
+        filled = false;  // Don't let the window trigger again until it's refilled.
+        Serial.println("reset");
+    }
 }
 
 
@@ -261,6 +299,10 @@ uint8_t computeToneholeChecksum4(const uint8_t* p) {
     x ^= (x >> 4);
     return x & 0x0F;
 }
+
+
+
+
 
 
 
@@ -313,37 +355,6 @@ void readIMU(void) {
     float localroll = atan2f(pvx, pvz);
 
 
-    /*
-    Serial.print(quat[0], 4);
-    Serial.print("  ");
-    Serial.print(quat[1], 4);
-    Serial.print("  ");
-    Serial.print(quat[2], 4);
-    Serial.print("  ");
-    Serial.print(quat[3], 4);
-    Serial.println("  -1.25 1.25");
-    */
-
-    /*
-    Serial.print(roll, 4);
-    Serial.print("  ");
-    Serial.print(pitch, 4);
-    Serial.print("  ");
-    Serial.print(yaw, 4);
-    Serial.println("  -4 4");
-    */
-
-
-    /* 
-    // Yaw is no longer used anywhere (see axisHeading instead).
-    yaw = sfusion.getYawRadians();
-    currYaw = yaw;  // Needs to be the unadjusted value
-    yaw += yawOffset;
-    if (yaw > PI) yaw -= TWO_PI;
-    else if (yaw < -PI) yaw += TWO_PI;
-    yaw = -yaw;
-    yaw = yaw * RAD_TO_DEG;
-    */
 
     // Adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
@@ -421,16 +432,7 @@ void readIMU(void) {
         currAxisHeading = 0.0f;
     }
 
-    /*
-    Serial.print(roll, 4);
-    Serial.print("  ");
-    Serial.print(pitch, 4);
-    Serial.print("  ");
-    Serial.print(yaw, 4);
-    Serial.print("  ");
-    Serial.print(axisHeading, 4);
-    Serial.println("  -180 180");
-    */
+
 
     // Drumstick mode: WARBL2 must be held by the USB end, with the button side up. No note-off messages are sent.
     // This mode is "hidden" -- to turn it on select "-18" in the transpose menu and then click "Auto-caibrate bell sensor only" within 10 seconds.
@@ -3864,7 +3866,7 @@ void loadPrefs() {
     } else {
         useBellSensor = false;
     }
-    if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard) {  // Use the bell sensor if we're using uilleann fingering.
+    if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard || breathMode == kPressureBell) {  // Use the bell sensor if we're using uilleann fingering or bell register.
         useBellSensor = true;
     }
     if (prevUseBellSensorChanged != useBellSensor) {  // Record whether the state has changed so we know to tell the ATMeaga to turn the sensor on or off.
