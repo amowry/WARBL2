@@ -4,9 +4,9 @@
 // Debug
 void printStuff(void) {
 
-    Serial.println(sensorValue);
-    //Serial.println(twelveBitPressure);
-    //Serial.println(BMPoffset, 6);
+    //Serial.println(sensorValue);
+    Serial.println(twelveBitPressure);
+    //Serial.println(smoothed_pressure);
     //Serial.println("");
 
     /*
@@ -144,12 +144,13 @@ void getSensors(void) {
         sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
     }
 
-    else {                                                                           // Bosch BMP585 preessure sensor (newer)
+    else {                                                                           // Bosch BMP585 preessure sensor (newer).
+    // This sensor has less noise, so we could probably use one more effective bit for the pressure mapping calculations. It also has potential for inhale notes/mapping and has a much higher range than the Honeywell sensor.
         if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz (~same as reading older analog sensor).
             twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  // Scale to ABPLLND060MGAA3 equivalent range at twelve bits.
             sensorValue = twelveBitPressure >> 2;                                    // Reduce the reading to stable 10 bits for state machine.
             analogPressure.update(twelveBitPressure);                                // Update the smoothing filter.
-            smoothed_pressure = analogPressure.getValue();                           // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
+            smoothed_pressure = analogPressure.getValue();                           // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly. The filter currently constrains the values 0-4095 because of the adc bits used in setup. I don't think the library will accept negative values.
         }
     }
 
@@ -270,6 +271,7 @@ void checkForBreathPause() {
         mx = max(mx, buf[i]);
     }
     float range = mx - mn;
+    //Serial.println(range);
 
     if (filled && range < 3 && ABS(400 - twelveBitPressure) < 3) {
         BMPoffset = bmp.pressure - bmpAmbient.pressure;  // Reset the sensor offset if the pressure range over the time window is low and the breath pressure is close to 400 (the calibration pressure at startup). If these conditions are met we assume the user isn't blowing.
@@ -355,7 +357,6 @@ void readIMU(void) {
     float localroll = atan2f(pvx, pvz);
 
 
-
     // Adjust pitch so it makes more sense for way warbl is held, shift it 180 deg
     pitch += PI;
     if (pitch > PI) pitch -= TWO_PI;
@@ -392,10 +393,6 @@ void readIMU(void) {
     while (runningRoll <= -270) {
         runningRoll += 360;
     }
-
-    //float origroll = roll;
-    //Serial.print(origroll, 4);
-    //Serial.print("  ");
 
     roll = runningRoll;
 
@@ -456,7 +453,7 @@ void readIMU(void) {
             armed = true;                              // Detect forward rotation above a threshold to prepare for a hit.
             if (gyroX > maxGyro) { maxGyro = gyroX; }  // Find the fastest X rotation, to use for hit velocity.
             else if (maxGyro > 0) {
-                maxGyro -= 0.7f;  // Gradually reduce the velocity analogue if the rotation is slowing. This adjusts the velocity and/or prevents a hit if you start out with a fast swing but then slow it before the rebound occurs.
+                maxGyro -= 0.7f;  // Gradually reduce the velocity analog if the rotation is slowing. This adjusts the velocity and/or prevents a hit if you start out with a fast swing but then slow it before the rebound occurs.
             }
             if (maxGyro <= 0) {
                 armed = false;

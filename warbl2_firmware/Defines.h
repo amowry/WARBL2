@@ -1,6 +1,6 @@
 
 
-#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 48  // Firmware version (without decimal point)
 #define PATCH 1     // Firmware patch number

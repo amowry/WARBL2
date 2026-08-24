@@ -648,7 +648,7 @@ void loop() {
     if ((wakeTime - timerC) > 50) {
         timerC = wakeTime;
         if (useBMP) {
-            readAmbientPressure();  // Compensate for ambient pressure occasionally.
+            readAmbientPressure();  // Compensate for ambient pressure occasionally if using the Bosch pressure sensors.
         }
     }
 
