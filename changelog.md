@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bell sensor is turned on automatically if "bell register" is selected.
 
+- Some changes to the "recorder with half hole" fingering based on user feedback: Remove the third octave C# and Eb, to avoid playing those notes accidentally while in the lower registers. Changed the "all holes open" note (and minor variations on that) to D74 (second register) to mimic an acoustic recorder more fully. Made it so X XXXXOXX and X XXXXOXO both play an F, and X XXOXXXO and X XXOXXOO both play a G.
+
 ### Added
 
 - Support for Bosch BMP585 pressure sensor. This sensor is now being used because the previous Honeywell sensor is being phased out. Also onboard is a BMP580 or BMP581 for sensing/compensating for ambient pressure.
