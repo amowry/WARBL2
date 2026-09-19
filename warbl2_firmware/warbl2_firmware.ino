@@ -508,10 +508,13 @@ void setup() {
 
     writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
 
+    if (readEEPROM(EEPROM_HARDWARE_VERSION) == 255) {
+        writeEEPROM(EEPROM_HARDWARE_VERSION, HARDWARE_REVISION);  // Write the hardware revision to EEPROM if it hasn't been written previously.
+    }
+
     if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {
         loadCalibration();  // If there has been a calibration saved, reload it at startup.
     }
-
 
     loadFingering();
     loadSettingsForAllPresets();

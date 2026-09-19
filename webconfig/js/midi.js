@@ -514,6 +514,9 @@ function midiOnStateChange(event) {
 
 	console.log("midi state change");
 
+	console.log("outputs.size =", midiAccess.outputs.size);
+	console.log("inputs.size  =", midiAccess.inputs.size);
+
 	// make sure midi output port still exists, otherwise show disconnected
 
 	if (WARBLout) {
@@ -1790,8 +1793,12 @@ function WARBL_Receive(event, source) {
 						document.getElementById("current").style.color = "#f7c839";
 					}
 					else {
+						if (version >= 40){
 						document.getElementById("current").innerHTML =
 							'There is a firmware update available.<br><a href="#" onclick="downloadFirmware(); return false;">Download update</a>';
+						}
+						else {document.getElementById("current").innerHTML = 'There is a firmware update available.';
+						}
 						document.getElementById("current").style.left = "690px";
 						document.getElementById("current").style.visibility = "visible";
 						document.getElementById("status").style.visibility = "hidden";

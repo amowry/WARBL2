@@ -5,9 +5,11 @@
 void printStuff(void) {
 
     //Serial.println(sensorValue);
-    Serial.println(twelveBitPressure);
+    //Serial.println(twelveBitPressure);
     //Serial.println(smoothed_pressure);
     //Serial.println("");
+
+    //Serial.println(readEEPROM(EEPROM_HARDWARE_VERSION));
 
     /*
     for (byte i = 0; i < 9; i++) {
@@ -145,7 +147,7 @@ void getSensors(void) {
     }
 
     else {                                                                           // Bosch BMP585 preessure sensor (newer).
-    // This sensor has less noise, so we could probably use one more effective bit for the pressure mapping calculations. It also has potential for inhale notes/mapping and has a much higher range than the Honeywell sensor.
+                                                                                     // This sensor has less noise, so we could probably use one more effective bit for the pressure mapping calculations. It also has potential for inhale notes/mapping and has a much higher range than the Honeywell sensor.
         if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz (~same as reading older analog sensor).
             twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  // Scale to ABPLLND060MGAA3 equivalent range at twelve bits.
             sensorValue = twelveBitPressure >> 2;                                    // Reduce the reading to stable 10 bits for state machine.
@@ -1227,6 +1229,7 @@ byte getNote(unsigned int fingerPattern) {
         ret = 0;  // Silence
     }
 
+
     return ret;
 }
 
@@ -1924,7 +1927,7 @@ void getSlide() {
                         halfHoleTargetRegionState[i] = false;
                     }
                 }
-            } else if (trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
+            } else if (i != 8 && trueOffsetSteps == -2 && (i > 0 && bitRead(halfHoleEnabled, i - 1) == 1)) {  // Calculate halfhole pitchbend if all the conditions for this hole are met.
                 getHalfholePitchbend(i);
             }
 
