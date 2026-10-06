@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Duduk fingering
 
-- Note-on hysteresis slider. This allows the user to more accurately simulate instruments that require noticeable more breath to start a note than to sustain it.
+- Note-on hysteresis slider. This allows the user to more accurately simulate instruments that require noticeably more breath to start a note than to sustain it.
 
 ## [Released]
 
