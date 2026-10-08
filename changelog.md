@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Note-on hysteresis slider. This allows the user to more accurately simulate instruments that require noticeably more breath to start a note than to sustain it.
 
+- Added a diagnostics page: https://warbl.xyz/WARBL2_Diagnostics.html. When a WARBL2 is connected to this, it displays firmware and hardware versions, battery voltage, runtime per charge, raw pressure sensor counts, and raw optical sensor counts. It has buttons to save the current sensor calibrations as the factory calibration and to reformat LittleFS (the latter can fix rare problems with Bluetooth pairing).
+
 ## [Released]
 
 ## [4.7] - 2026-6-15
