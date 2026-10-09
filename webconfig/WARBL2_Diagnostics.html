@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WARBL2 Diagnostics</title>
+
+  <style>
+    :root {
+      --bg: #262626;
+      --panel: #3c3c3c;
+      --panel2: #303030;
+      --text: #c3c0c0;
+      --head: #f5f5f5;
+      --accent: #f7c839;
+      --warn: #F78339;
+      --border: #505050
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      line-height: 1.35
+    }
+
+    main {
+      width: min(760px, 100%);
+      margin: auto;
+      padding: 18px 14px 50px
+    }
+
+    h1 {
+      font-size: 1.55rem;
+      color: var(--head);
+      margin: 4px 0 6px
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      color: var(--accent);
+      margin: 0 0 12px
+    }
+
+    .sub {
+      font-size: .9rem;
+      margin: 0 0 16px
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0
+    }
+
+    .connectrow {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 12px 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: #111;
+      cursor: pointer;
+      min-height: 44px
+    }
+
+    button.secondary {
+      background: var(--accent);
+    }
+
+    button.danger {
+      background: var(--accent);
+    }
+
+    button:disabled {
+      cursor: not-allowed
+    }
+
+    #status {
+      font-size: .9rem;
+      color: var(--warn)
+    }
+
+    #status.connected {
+      color: var(--accent)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(100px, 180px);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden
+    }
+
+    .label,
+    .value {
+      background: var(--panel2);
+      padding: 10px 12px
+    }
+
+    .value {
+      text-align: right;
+      color: var(--head);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-variant-numeric: tabular-nums
+    }
+
+    .holes {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px
+    }
+
+    .hole {
+      text-align: center;
+      background: var(--panel2);
+      border-radius: 6px;
+      padding: 8px 3px
+    }
+
+    .hole .name {
+      font-size: .7rem;
+      min-height: 1.2em
+    }
+
+    .hole .reading {
+      display: block;
+      color: var(--head);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .95rem;
+      margin-top: 5px
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px
+    }
+
+    .note {
+      font-size: .78rem;
+      color: #aaa;
+      margin-top: 10px
+    }
+
+    details {
+      margin-top: 12px
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #202020;
+      padding: 10px;
+      border-radius: 5px;
+      max-height: 180px;
+      overflow: auto;
+      font-size: .75rem
+    }
+
+    @media(max-width:520px) {
+      main {
+        padding: 12px 10px 36px
+      }
+
+      .card {
+        padding: 13px
+      }
+
+      .grid {
+        grid-template-columns: 1fr 105px
+      }
+
+      .holes {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      button {
+        width: 100%
+      }
+
+      .connectrow {
+        display: block
+      }
+
+      .connectrow #status {
+        display: block;
+        margin-top: 10px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>WARBL2 Diagnostics</h1>
+    <p class="sub">This page requires WARBL2 firmware v.4.8.0 or later.</p>
+    <section class="card">
+      <div class="connectrow"><button id="connect">Connect to WARBL2</button><span id="status">MIDI not
+          initialized.</span></div>
+    </section>
+    <section class="card">
+      <h2>Device</h2>
+      <div class="grid">
+        <div class="label">Hardware revision</div>
+        <div class="value" id="hardwareRevision">—</div>
+        <div class="label">Firmware version</div>
+        <div class="value" id="firmwareRevision">—</div>
+        <div class="label">Battery voltage</div>
+        <div class="value"><span id="batteryVoltage">—</span><span id="voltageUnit"></span></div>
+        <div class="label">Runtime per charge (hours)</div>
+        <div class="value" id="runtimeHours">—</div>
+        <div class="label">Pressure sensor (counts)</div>
+        <div class="value" id="pressureSensor">—</div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Tone hole sensors (raw counts)</h2>
+      <div class="holes" id="toneholes"></div>
+    </section>
+    <section class="card">
+      <h2>Service actions</h2>
+      <div class="actions">
+        <button class="secondary" id="saveFactory" disabled>Save current tone hole calibration as factory
+          calibration</button>
+        <button class="danger" id="resetLittleFS" disabled>Reformat LittleFS</button>
+      </div>
+    </section>
+    <details>
+      <summary>MIDI log</summary>
+      <pre id="log"></pre>
+    </details>
+  </main>
+  <script>
+    'use strict';
+
+    // All messages use MIDI channel 7, matching the Configuration Tool.
+    const MIDI_CHANNEL = 7;
+    const MIDI_CC_105 = 105;
+    const MIDI_CC_106 = 106;
+    const MIDI_CC_109 = 109;
+    const MIDI_CC_110 = 110;
+    const MIDI_CC_119 = 119;
+
+    // Existing WARBL2 messages reused by this page.
+    const MIDI_SAVE_FACTORY_TONEHOLE_CAL = 45;
+    const MIDI_BATTERY_VOLTAGE = 70;      // CC106 selector; value follows on CC119.
+    const MIDI_FIRMWARE_PATCH = 126;      // CC109 selector; patch follows on CC105.
+
+    // New diagnostic commands / framing, chosen from the currently-unused CC106 values 75-99.
+    const DIAG_ENTER = 75;                // Browser -> WARBL2: enter diagnostic mode and start streaming.
+    const DIAG_EXIT = 76;                 // Browser -> WARBL2: stop streaming / exit diagnostic mode.
+    const DIAG_RESET_LITTLEFS = 77;       // Browser -> WARBL2: reset LittleFS.
+    const DIAG_FRAME = 78;                // WARBL2 -> browser: next CC119 values form one diagnostic frame.
+
+    // Diagnostic frame payload on CC119, immediately after CC106/78:
+    //   byte  0: hardware revision, decimal packed (47 = hardware 4.7)
+    //   bytes 1-2: runtime per charge in minutes, 7-bit LSB then MSB
+    //   bytes 3-7: signed 32-bit pressure, split into five 7-bit chunks (least significant first)
+    //   bytes 8-25: nine tonehole readings, each 7-bit LSB then MSB (Thumb ... Bell)
+    // This uses one framing CC for the whole sensor snapshot rather than a selector CC for every value.
+    const DIAG_FRAME_BYTES = 26;
+
+    let midiAccess = null;
+    let WARBLout = null;
+    let WARBLin = null;
+    let midiScanningOut = null;
+    let midiLastScannedOut = null;
+    let diagnosticMode = false;
+    let awaitingBatteryVoltage = false;
+    let awaitingFirmwarePatch = false;
+    let firmwareMajorMinor = null;
+    let firmwarePatch = null;
+    let diagFrame = null;
+
+    const $ = id => document.getElementById(id);
+    const log = s => {
+      console.log(s);
+      $('log').textContent += s + '\n';
+      $('log').scrollTop = $('log').scrollHeight;
+    };
+    const buildMessage = (cc, value) => [0xB0 + (MIDI_CHANNEL - 1), cc, value & 0x7F];
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const unpack14 = (lsb, msb) => ((msb & 0x7F) << 7) | (lsb & 0x7F);
+
+    const holeNames = ['Thumb', 'L1', 'L2', 'L3', 'R1', 'R2', 'R3', 'R4', 'Bell'];
+    holeNames.forEach((name, i) => {
+      const d = document.createElement('div');
+      d.className = 'hole';
+      d.innerHTML = `<div class="name">${name}</div><span class="reading" id="hole${i}">—</span>`;
+      $('toneholes').appendChild(d);
+    });
+
+    function setStatus(text, connected = false) {
+      $('status').textContent = text;
+      $('status').classList.toggle('connected', connected);
+    }
+
+    function setConnected(yes) {
+      diagnosticMode = yes;
+      $('connect').textContent = yes ? 'Disconnect' : 'Connect to WARBL2';
+      $('saveFactory').disabled = !yes;
+      $('resetLittleFS').disabled = !yes;
+      setStatus(yes ? 'WARBL2 diagnostic mode connected.' : 'WARBL2 not detected.', yes);
+    }
+
+    function updateFirmwareDisplay() {
+      if (firmwareMajorMinor === null) return;
+      $('firmwareRevision').textContent = firmwareMajorMinor.toFixed(1) +
+        (firmwarePatch === null ? '' : '.' + firmwarePatch);
+    }
+
+    function enableMidiInputForOnly(portid) {
+      if (!midiAccess) return;
+      for (const input of midiAccess.inputs.values())
+        input.onmidimessage = (input.id === portid) ? WARBL_Receive : null;
+    }
+
+    function enableMidiInputsForAll() {
+      if (!midiAccess) return false;
+      for (const input of midiAccess.inputs.values()) input.onmidimessage = WARBL_Receive;
+      return midiAccess.inputs.size > 0;
+    }
+
+    function claimWARBLPort(source) {
+      if (WARBLout && WARBLin) return;
+      WARBLout = midiScanningOut || midiLastScannedOut;
+      WARBLin = source;
+      if (WARBLout && WARBLin) {
+        enableMidiInputForOnly(WARBLin.id);
+        log('Connected output: ' + WARBLout.name);
+        log('Connected input: ' + WARBLin.name);
+      }
+    }
+
+    async function startMidiConnect() {
+      if (!midiAccess) return;
+      setConnected(false);
+      WARBLout = null;
+      WARBLin = null;
+      midiLastScannedOut = null;
+      firmwareMajorMinor = null;
+      firmwarePatch = null;
+      diagFrame = null;
+      enableMidiInputsForAll();
+
+      const msg = buildMessage(MIDI_CC_106, DIAG_ENTER);
+      const outputs = [...midiAccess.outputs.values()].sort(
+        (a, b) => Number(!a.name.toUpperCase().includes('WARBL')) - Number(!b.name.toUpperCase().includes('WARBL'))
+      );
+
+      for (const out of outputs) {
+        if (diagnosticMode) break;
+        midiScanningOut = out;
+        midiLastScannedOut = out;
+        log('Trying MIDI output: ' + out.name);
+        out.send(msg);
+        await sleep(300);
+      }
+
+      midiScanningOut = null;
+      if (!diagnosticMode) {
+        enableMidiInputForOnly('');
+        setStatus('WARBL2 not detected.');
+      }
+    }
+
+    function decodeDiagnosticFrame(bytes) {
+      if (bytes.length !== DIAG_FRAME_BYTES) return;
+
+      const hw = bytes[0];
+      $('hardwareRevision').textContent = Math.floor(hw / 10) + '.' + (hw % 10);
+
+      const runtimeMinutes = unpack14(bytes[1], bytes[2]);
+      $('runtimeHours').textContent = (runtimeMinutes / 60).toFixed(2);
+
+      // Reassemble the five MIDI data bytes into the original signed 32-bit int.
+      // Bitwise operations in JavaScript operate on signed 32-bit integers, which restores
+      // negative two's-complement pressure values automatically.
+      const pressure = (
+        bytes[3] |
+        (bytes[4] << 7) |
+        (bytes[5] << 14) |
+        (bytes[6] << 21) |
+        ((bytes[7] & 0x0F) << 28)
+      ) | 0;
+      $('pressureSensor').textContent = pressure;
+
+      for (let i = 0; i < 9; i++) {
+        const offset = 8 + i * 2;
+        const value = unpack14(bytes[offset], bytes[offset + 1]);
+        $('hole' + i).textContent = value;
+      }
+    }
+
+    function WARBL_Receive(event) {
+      const [data0, data1, data2] = event.data;
+      const source = event.target;
+
+      if ((data0 & 0xF0) !== 0xB0 || (data0 & 0x0F) !== (MIDI_CHANNEL - 1)) return;
+
+      // Entering diagnostic mode should cause WARBL2 to send its firmware version and data.
+      // Either the version or the frame marker is enough to identify the responding port.
+      if ((!WARBLout || !WARBLin) &&
+        (data1 === MIDI_CC_110 || (data1 === MIDI_CC_106 && data2 === DIAG_FRAME))) {
+        claimWARBLPort(source);
+      }
+      if (WARBLin && source !== WARBLin) return;
+
+      // Existing firmware version protocol: CC110 contains major/minor as tenths (47 -> 4.7).
+      if (data1 === MIDI_CC_110) {
+        firmwareMajorMinor = data2 / 10;
+        updateFirmwareDisplay();
+        setConnected(true);
+        return;
+      }
+
+      // Existing patch protocol: CC109/126 announces that patch follows on CC105.
+      if (data1 === MIDI_CC_109 && data2 === MIDI_FIRMWARE_PATCH) {
+        awaitingFirmwarePatch = true;
+        return;
+      }
+      if (data1 === MIDI_CC_105 && awaitingFirmwarePatch) {
+        awaitingFirmwarePatch = false;
+        firmwarePatch = data2;
+        updateFirmwareDisplay();
+        return;
+      }
+
+      // Existing battery voltage protocol: CC106/70 selects voltage, then CC119 carries it.
+      if (data1 === MIDI_CC_106 && data2 === MIDI_BATTERY_VOLTAGE) {
+        awaitingBatteryVoltage = true;
+        return;
+      }
+
+      // One CC106 marker starts a complete diagnostic sensor frame.
+      if (data1 === MIDI_CC_106 && data2 === DIAG_FRAME) {
+        diagFrame = [];
+        if (!diagnosticMode) setConnected(true);
+        return;
+      }
+
+      if (data1 === MIDI_CC_119) {
+        // Battery messages may occur between diagnostic frames without disturbing framing.
+        if (awaitingBatteryVoltage) {
+          awaitingBatteryVoltage = false;
+          $('batteryVoltage').textContent = ((data2 + 50) / 100).toFixed(2);
+          $('voltageUnit').textContent = ' V';
+          return;
+        }
+
+        if (diagFrame !== null) {
+          diagFrame.push(data2);
+          if (diagFrame.length === DIAG_FRAME_BYTES) {
+            decodeDiagnosticFrame(diagFrame);
+            diagFrame = null;
+          }
+        }
+      }
+    }
+
+    async function initMIDI() {
+      if (!navigator.requestMIDIAccess) {
+        setStatus('Web MIDI is not supported in this browser.');
+        $('connect').disabled = true;
+        return;
+      }
+      try {
+        midiAccess = await navigator.requestMIDIAccess();
+        midiAccess.onstatechange = () => {
+          if (WARBLout && ![...midiAccess.outputs.values()].some(p => p.id === WARBLout.id)) {
+            WARBLout = null;
+            WARBLin = null;
+            setConnected(false);
+          }
+        };
+        setStatus('MIDI ready. Click Connect to WARBL2.');
+      } catch (e) {
+        setStatus('Could not start Web MIDI: ' + e.message);
+        log(e);
+      }
+    }
+
+    $('connect').addEventListener('click', async () => {
+      if (!midiAccess) {
+        await initMIDI();
+        if (!midiAccess) return;
+      }
+
+      if (diagnosticMode) {
+        if (WARBLout) WARBLout.send(buildMessage(MIDI_CC_106, DIAG_EXIT));
+        WARBLout = null;
+        WARBLin = null;
+        diagFrame = null;
+        enableMidiInputForOnly('');
+        setConnected(false);
+      } else {
+        startMidiConnect();
+      }
+    });
+
+    $('saveFactory').addEventListener('click', () => {
+      if (WARBLout && confirm('Save the current tonehole calibration as the factory calibration?')) {
+        // Reuse the existing factory-calibration command from the Config Tool.
+        WARBLout.send(buildMessage(MIDI_CC_106, MIDI_SAVE_FACTORY_TONEHOLE_CAL));
+        log('Sent save factory tonehole calibration command (CC106/45).');
+      }
+    });
+
+    $('resetLittleFS').addEventListener('click', () => {
+      if (WARBLout && confirm('Reset Little FS? This will erase the LittleFS data used by the WARBL2.')) {
+        WARBLout.send(buildMessage(MIDI_CC_106, DIAG_RESET_LITTLEFS));
+        log('Sent Reset LittleFS command (CC106/77).');
+      }
+    });
+
+    initMIDI();
+  </script>
+  </script>
+</body>
+
+</html>

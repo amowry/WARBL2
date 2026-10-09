@@ -45,7 +45,7 @@ void manageBattery(bool send) {
     }
 
 
-    float smoothed_voltage = getBattVoltage();  // Read the battery
+    smoothed_voltage = getBattVoltage();  // Read the battery
 
 
     // Detect charging status based on the STAT pin from the charger (off if charging, blinking if fault)

@@ -5,7 +5,7 @@
 void printStuff(void) {
 
     //Serial.println(sensorValue);
-    Serial.println(twelveBitPressure);
+    //Serial.println(twelveBitPressure);
     //Serial.println(smoothed_pressure);
     //Serial.println("");
 
@@ -957,8 +957,7 @@ void getFingers() {
 // Thumb half hole handing for register control (called from getShift). For clarity this is separate from the function used for other fingers below.
 void getThumbHalfhole() {
 
-    int heightOffset = ED[preset][THUMB_HALFHOLE_HEIGHT_OFFSET];  // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
-    //int width = ED[preset][THUMB_HALFHOLE_WIDTH];                  // The size of the halfhole region (%). Lower values require more accurate finger placement but leave more room for sliding (and smoother transitions from sliding to semitone).
+    int heightOffset = ED[preset][THUMB_HALFHOLE_HEIGHT_OFFSET];   // (0-100) Height offset below (0-50) or above (51-100)  the "natural" semitone point where the halfhole region is centered.
     int width = 50;                                                // It doesn't really make sense to use size for thumb, because there's never a "not halfhole" apace below the halfhole region. I'm just setting it to 50 for now. AM 4/26
     float fingerRate = ED[preset][THUMB_HALFHOLE_FINGERRATE] / 3;  // 0-127. Only used if not using slide too. The finger movement rate (in normalized sensor counts per reading) below which we'll snap to the semitone. Has the effect of a transient filter but uses finger rate rather than elapsed time so we only need to take two readings to calulate it.
     const int hysteresis = 3;                                      // Hysteresis for the target region
@@ -1138,27 +1137,15 @@ bool isMaybeInTransition() {
 
 
 // Stream data to the standalone WARBL2 diagnostics page.
-// A frame is sent every 100 ms (10 Hz). MIDI data bytes are 7-bit, so values larger than
-// 127 are split into low/high 7-bit chunks. The frame order is fixed to avoid spending a
+// A frame is sent ~every 50 ms. The frame order is fixed to avoid spending a
 // selector CC on every individual sensor value.
 void sendDiagnosticData(bool sendNow) {
-
-    static unsigned long diagnosticSendTimer = 0;
 
     if (!diagnosticMode) {
         return;
     }
 
-    unsigned long nowtime = millis();
-    if (!sendNow && (nowtime - diagnosticSendTimer) < 50) {
-        return;
-    }
-    diagnosticSendTimer = nowtime;
-
-    // Reuse the Config Tool battery-voltage protocol: CC106/70, then the value on CC119.
-    // getBattVoltage() already returns the smoothed battery voltage used by manageBattery().
-    float diagnosticBatteryVoltage = getBattVoltage();
-    sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((diagnosticBatteryVoltage + 0.005f) * 100.0f) - 50.0f));
+    sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((smoothed_voltage + 0.005f) * 100.0f) - 50.0f));
 
     // CC106/78 marks the beginning of a 26-byte CC119 frame:
     // hardware revision (1), runtime minutes (2), signed 32-bit pressure (5), nine toneholes (18).
@@ -2735,7 +2722,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     sendMIDI(MIDI_CC_110_MSG, VERSION);
                     sendMIDICouplet(MIDI_CC_109, MIDI_CC_109_VALUE_126, MIDI_CC_105, PATCH);
 
-                    // Send the first frame immediately instead of waiting for the 100 ms timer.
+                    // Send the first frame immediately.
                     sendDiagnosticData(true);
                 }
 

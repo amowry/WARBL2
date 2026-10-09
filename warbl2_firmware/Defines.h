@@ -223,7 +223,6 @@
 #define USE_BELL_SENSOR 3  // Bool, whether to use the bell sensor.
 #define kWARBL2SETTINGSnVariables 4
 
-
 // Variables in the IMUsettings array
 #define SEND_ROLL 0       // On/off
 #define SEND_PITCH 1      // On/Off
@@ -695,7 +694,7 @@
 #define MIDI_CC_106_VALUE_125 125  // Bidirectional. button action 25
 #define MIDI_CC_106_VALUE_126 126  // Bidirectional. button action 26
 #define MIDI_CC_106_VALUE_127 127  // Bidirectional. button action 27
-//
+
 
 #define MIDI_CC_107 107  // From WARBL. Values 0-127	- MIDI byte 2
 #define MIDI_CC_108 108  // From WARBL. Values 0-127	- MIDI byte 3
