@@ -13,11 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bell sensor is turned on automatically if "bell register" is selected.
 
+- Some changes to the "recorder with half hole" fingering based on user feedback: Remove the third octave C# and Eb, to avoid playing those notes accidentally while in the lower registers. Changed the "all holes open" note (and minor variations on that) to D74 (second register) to mimic an acoustic recorder more fully. Made it so X XXXXOXX and X XXXXOXO both play an F, and X XXOXXXO and X XXOXXOO both play a G.
+
 ### Added
 
 - Support for Bosch BMP585 pressure sensor. This sensor is now being used because the previous Honeywell sensor is being phased out. Also onboard is a BMP580 or BMP581 for sensing/compensating for ambient pressure.
 
 - Duduk fingering
+
+- Note-on hysteresis slider. This allows the user to more accurately simulate instruments that require noticeably more breath to start a note than to sustain it.
+
+- Added a diagnostics page: https://warbl.xyz/WARBL2_Diagnostics.html. When a WARBL2 is connected to this, it displays firmware and hardware versions, battery voltage, runtime per charge, raw pressure sensor counts, and raw optical sensor counts. It has buttons to save the current sensor calibrations as the factory calibration and to reformat LittleFS (the latter can fix rare problems with Bluetooth pairing).
 
 ## [Released]
 
