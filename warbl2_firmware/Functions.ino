@@ -5,7 +5,7 @@
 void printStuff(void) {
 
     //Serial.println(sensorValue);
-    //Serial.println(twelveBitPressure);
+    Serial.println(twelveBitPressure);
     //Serial.println(smoothed_pressure);
     //Serial.println("");
 
@@ -260,6 +260,7 @@ void checkForBreathPause() {
     static float buf[WINDOW_SAMPLES] = {};
     static size_t idx = 0;
     static bool filled = false;
+    const byte resetRange = 6;  // Number of counts away from 400 within which we may reset ambient pressure. By keeping this low we help avoid spurious resets.
 
     buf[idx] = twelveBitPressure;  // Use a ring buffer to track the range in pressure over the time window.
     idx = (idx + 1) % WINDOW_SAMPLES;
@@ -273,9 +274,8 @@ void checkForBreathPause() {
         mx = max(mx, buf[i]);
     }
     float range = mx - mn;
-    //Serial.println(range);
 
-    if (filled && range < 3 && ABS(400 - twelveBitPressure) < 3) {
+    if (filled && range < 3 && ABS(400 - twelveBitPressure) < resetRange) {
         BMPoffset = bmp.pressure - bmpAmbient.pressure;  // Reset the sensor offset if the pressure range over the time window is low and the breath pressure is close to 400 (the calibration pressure at startup). If these conditions are met we assume the user isn't blowing.
         idx = 0;
         filled = false;  // Don't let the window trigger again until it's refilled.
@@ -1137,6 +1137,69 @@ bool isMaybeInTransition() {
 
 
 
+// Stream data to the standalone WARBL2 diagnostics page.
+// A frame is sent every 100 ms (10 Hz). MIDI data bytes are 7-bit, so values larger than
+// 127 are split into low/high 7-bit chunks. The frame order is fixed to avoid spending a
+// selector CC on every individual sensor value.
+void sendDiagnosticData(bool sendNow) {
+
+    static unsigned long diagnosticSendTimer = 0;
+
+    if (!diagnosticMode) {
+        return;
+    }
+
+    unsigned long nowtime = millis();
+    if (!sendNow && (nowtime - diagnosticSendTimer) < 50) {
+        return;
+    }
+    diagnosticSendTimer = nowtime;
+
+    // Reuse the Config Tool battery-voltage protocol: CC106/70, then the value on CC119.
+    // getBattVoltage() already returns the smoothed battery voltage used by manageBattery().
+    float diagnosticBatteryVoltage = getBattVoltage();
+    sendMIDICouplet(MIDI_SEND_BATTERY_VOLTAGE, (((diagnosticBatteryVoltage + 0.005f) * 100.0f) - 50.0f));
+
+    // CC106/78 marks the beginning of a 26-byte CC119 frame:
+    // hardware revision (1), runtime minutes (2), signed 32-bit pressure (5), nine toneholes (18).
+    sendMIDI(MIDI_CC_106_MSG, MIDI_DIAGNOSTIC_FRAME);
+
+    sendMIDI(MIDI_CC_119_MSG, diagnosticHardwareRevision);
+
+    unsigned int runtime = constrain(diagnosticRunTimePerCharge, 0, 16383);
+    sendMIDI(MIDI_CC_119_MSG, runtime & 0x7F);
+    sendMIDI(MIDI_CC_119_MSG, (runtime >> 7) & 0x7F);
+
+    // Preserve the complete signed int pressure value. MIDI data bytes are only 7 bits,
+    // so transmit the raw 32-bit two's-complement representation in five chunks.
+    uint32_t pressure = (uint32_t)((int32_t)twelveBitPressure);
+    sendMIDI(MIDI_CC_119_MSG, (pressure >> 0) & 0x7F);
+    sendMIDI(MIDI_CC_119_MSG, (pressure >> 7) & 0x7F);
+    sendMIDI(MIDI_CC_119_MSG, (pressure >> 14) & 0x7F);
+    sendMIDI(MIDI_CC_119_MSG, (pressure >> 21) & 0x7F);
+    sendMIDI(MIDI_CC_119_MSG, (pressure >> 28) & 0x0F);
+
+    // The firmware array is Bell=0 ... Thumb=8. Send it in reverse order so the web page
+    // receives Thumb first and Bell last, matching the physical top-to-bottom display.
+    for (int i = 8; i >= 0; i--) {
+        unsigned int reading = constrain(toneholeRead[i], 0, 16383);
+        sendMIDI(MIDI_CC_119_MSG, reading & 0x7F);
+        sendMIDI(MIDI_CC_119_MSG, (reading >> 7) & 0x7F);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Send the finger pattern and pressure to the Configuration Tool after a delay to prevent sending during the same connection interval as a new MIDI note.
 void sendToConfig(bool newPattern, bool newPressure) {
 
@@ -1411,8 +1474,8 @@ void getState() {
 
     if (sensorValue <= sensorThreshold[0]) {
         newState = SILENCE;
-        holdoffActive = false;  // No need to wait for jump/drop if we've already crossed the threshold for silence
-    } else if (sensorValue > sensorThreshold[0] + SILENCE_HYSTERESIS) {
+        holdoffActive = false;                                                                 // No need to wait for jump/drop if we've already crossed the threshold for silence
+    } else if (sensorValue > (sensorThreshold[0] + ED[preset][SILENCE_HYSTERESIS] * 2) - 1) {  // Allow a minumum valule of 1 for hysteresis.
         if (currentState == SILENCE) {
             newState = BOTTOM_REGISTER;
         }
@@ -2412,6 +2475,8 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 }
 
                 else if (value == MIDI_ENTER_COMM_MODE) {  // When communication is established, send all current settings to tool.
+                    diagnosticMode = 0;                    // Keep Config Tool mode and diagnostic mode mutually exclusive.
+                    diagnosticModeSource = MIDI_SOURCE_NONE;
                     communicationMode = 1;
                     communicationModeSource = source;
 
@@ -2654,7 +2719,41 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
             /////// CC 106
             if (number == MIDI_CC_106 && value > MIDI_ACTION_MIDI_CHANNEL_END) {
 
-                if (value >= MIDI_ENA_VIBRATO_HOLES_START && value <= MIDI_ENA_VIBRATO_HOLES_END) {  // Update enabled vibrato holes for "universal" vibrato.
+                // Standalone diagnostics page. These commands deliberately do not enter Config Tool communication mode.
+                if (value == MIDI_ENTER_DIAGNOSTIC_MODE) {
+                    communicationMode = 0;
+                    communicationModeSource = MIDI_SOURCE_NONE;
+                    diagnosticMode = 1;
+                    diagnosticModeSource = source;
+                    useBellSensor = true;  // Turn on the bell sensor so we can send its values.
+
+                    // These EEPROM values do not change while diagnostics are running, so read them once on entry.
+                    getEEPROM(EEPROM_EST_RUNTIME_START, diagnosticRunTimePerCharge);
+                    diagnosticHardwareRevision = readEEPROM(EEPROM_HARDWARE_VERSION);
+
+                    // Reuse the existing firmware-version protocol so the page can identify the responding WARBL.
+                    sendMIDI(MIDI_CC_110_MSG, VERSION);
+                    sendMIDICouplet(MIDI_CC_109, MIDI_CC_109_VALUE_126, MIDI_CC_105, PATCH);
+
+                    // Send the first frame immediately instead of waiting for the 100 ms timer.
+                    sendDiagnosticData(true);
+                }
+
+                else if (value == MIDI_EXIT_DIAGNOSTIC_MODE) {
+                    if (diagnosticModeSource == source) {
+                        diagnosticMode = 0;
+                        diagnosticModeSource = MIDI_SOURCE_NONE;
+                    }
+                }
+
+                else if (value == MIDI_RESET_LITTLEFS) {
+                    // Reformat the internal LittleFS filesystem.
+                    InternalFS.begin();
+                    InternalFS.format();
+                    blinkNumber[GREEN_LED] = 3;
+                }
+
+                else if (value >= MIDI_ENA_VIBRATO_HOLES_START && value <= MIDI_ENA_VIBRATO_HOLES_END) {  // Update enabled vibrato holes for "universal" vibrato.
                     bitSet(vibratoHolesSelector[preset], value - MIDI_ENA_VIBRATO_HOLES_START);
                     loadPrefs();
                 }
@@ -4728,6 +4827,14 @@ void checkFirmwareVersion() {
                 writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_AFTERTOUCH_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_AFTERTOUCH_CURVE]);
                 writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3), ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
                 writeEEPROM(EEPROM_ED_VARS_START + i + (CUSTOM_POLYPRESSURE_CURVE * 3) + EEPROM_FACTORY_SETTINGS_START, ED[preset][CUSTOM_POLYPRESSURE_CURVE]);
+            }
+        }
+
+        if (currentVersion < 48) {  // Manage all changes made in version 49.
+            // New per-preset silence hysteresis setting. Preserve the previous hard-coded behavior as the default.
+            for (int i = 0; i < 3; ++i) {
+                writeEEPROM(EEPROM_ED_VARS_START + i + (SILENCE_HYSTERESIS * 3), ED[i][SILENCE_HYSTERESIS]);
+                writeEEPROM(EEPROM_ED_VARS_START + i + (SILENCE_HYSTERESIS * 3) + EEPROM_FACTORY_SETTINGS_START, ED[i][SILENCE_HYSTERESIS]);
             }
         }
 

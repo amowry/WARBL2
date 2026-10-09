@@ -41,6 +41,8 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 #include <Wire.h>  // I2C communication with EEPROM
 #include <SPI.h>   // Communication with ATmega32U4 and IMU
 #include <math.h>
+#include "Adafruit_LittleFS.h"
+#include "InternalFileSystem.h"
 
 // Libraries below may need to be installed.
 #include <MIDI.h>
@@ -207,9 +209,9 @@ byte IMUsettings[3][kIMUnVariables] =                                           
     { 0, 0, 0, 1, 1, 0, 36, 0, 127, 0, 36, 0, 127, 0, 36, 0, 127, 1, 1, 1, 2, 11, 10, 0, 0, 1, 0, 50, 0, 90, 2, 0, 0, 0, 0, 0, 50, 50, 50, 0, 0, 0, 11, 25, 16, 20, 14, 114, 1, 64, 64, 4, 19, 9, 14, 14, 114, 1, 64, 64, 14, 22, 17, 19, 14, 114, 1, 64, 64, 0, 0, 0 } };  // Preset 2
 
 byte ED[3][kEXPRESSIONnVariables] =                                                                                                                                                                                                                                         // Many settings in the Configuration Tool (see defines).
-  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 0
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 },    // Preset 1
-    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64 } };  // Preset 2
+  { { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64, 1 },    // Preset 0
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64, 1 },    // Preset 1
+    { 0, 3, 0, 0, 1, 2, 0, 100, 0, 127, 0, 1, 51, 36, 0, 1, 51, 0, 0, 0, 0, 0, 100, 0, 127, 0, 100, 0, 127, 0, 100, 0, 127, 0, 0, 0, 0, 20, 2, 7, 11, (64 - 35), (64 + 50), 8, 1, 64, 40, 0, 255, 12, 0, 50, 50, 100, 15, 15, 0, 0, 1, 0, 50, 50, 100, 64, 64, 64, 64, 1 } };  // Preset 2
 
 byte pressureSelector[3][12] =                         // Register control variables that can be changed in the Configuration Tool, Dimension 2 is variable: Bag: threshold, multiplier, hysteresis, (unused), jump time, drop time. Breath/mouthpiece: threshold, multiplier, hysteresis, transientFilter, jump time, drop time.
   { { 50, 20, 20, 15, 50, 75, 3, 7, 20, 0, 3, 10 },    // Preset 0
@@ -356,6 +358,12 @@ unsigned int doubleClickTimer = 0;
 // Variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;                       // Whether we are currently communicating with the tool.
 byte communicationModeSource = MIDI_SOURCE_NONE;  // The source of the last MIDI_ENTER_COMM_MODE received: USB or BLE
+
+// Variables for the standalone diagnostics page. Kept separate from Config Tool communication mode.
+bool diagnosticMode = 0;
+byte diagnosticModeSource = MIDI_SOURCE_NONE;
+int diagnosticRunTimePerCharge = 0;  // Cached EEPROM value, in minutes.
+byte diagnosticHardwareRevision = 0; // Cached EEPROM value, e.g. 47 = hardware 4.7.
 byte buttonReceiveMode = 100;                     // Which row in the button configuration matrix for which we're currently receiving data.
 int pressureReceiveMode = 100;                    // Indicates the variable for which we're currently receiving data
 byte fingeringReceiveMode = 0;                    // Indicates the preset for which a fingering pattern is going to be sent
@@ -628,6 +636,7 @@ void loop() {
         detectSip();
         detectShake();               // Gesture detection
         sendToConfig(false, false);  // Check the queue and send to the Configuration Tool if it is time.
+        sendDiagnosticData(false);  // Stream standalone diagnostic data at 10 Hz when diagnostic mode is active.
         updateBLEIntervalStatus();   // See if the BLE connection interval has changed.
     }
 
@@ -646,7 +655,7 @@ void loop() {
 
 
 
-    /////////// Things here happen ~ every 50 us.
+    /////////// Things here happen ~ every 50 ms.
 
     if ((wakeTime - timerC) > 50) {
         timerC = wakeTime;

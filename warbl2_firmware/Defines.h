@@ -1,9 +1,9 @@
 
 
-#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 48  // Firmware version (without decimal point)
-#define PATCH 1     // Firmware patch number
+#define PATCH 0     // Firmware patch number
 //#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 52        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
@@ -90,7 +90,6 @@
 #define SILENCE 1
 #define BOTTOM_REGISTER 2
 #define TOP_REGISTER 3
-#define SILENCE_HYSTERESIS 1
 #define JUMP 0
 #define DROP 1
 
@@ -179,7 +178,8 @@
 #define CUSTOM_VELOCITY_CURVE 64         // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define CUSTOM_AFTERTOUCH_CURVE 65       // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
 #define CUSTOM_POLYPRESSURE_CURVE 66     // 0 -> 127, where 64 is linear, 0 is most log, 127 is most exponential
-#define kEXPRESSIONnVariables 67
+#define SILENCE_HYSTERESIS 67            // Pressure counts above note-on threshold required to leave silence
+#define kEXPRESSIONnVariables 68
 
 // Button combinations/gestures
 #define CLICK_1 0
@@ -579,8 +579,9 @@
 #define MIDI_CC_104_VALUE_113 113  // Bidirectional. Settings for current preset: indicates ED[64] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_114 114  // Bidirectional. Settings for current preset: indicates ED[65] is about to be sent with CC 105.
 #define MIDI_CC_104_VALUE_115 115  // Bidirectional. Settings for current preset: indicates ED[66] is about to be sent with CC 105.
+#define MIDI_CC_104_VALUE_116 116  // Bidirectional. Settings for current preset: indicates ED[67] is about to be sent with CC 105.
 //
-/* 112-127 unused */
+/* 117-127 unused */
 
 #define MIDI_CC_105 105  // Bidirectional - From Warbl. Values 0-127. Settings for current preset: value of above variable indicated by CC 104 or variable indicated by CC 109 (see below)
 
@@ -658,7 +659,12 @@
 #define MIDI_CC_106_VALUE_72 72  // from WARBL. WARBL2 BLE connection interval low byte
 #define MIDI_CC_106_VALUE_73 73  // from WARBL. WARBL2 BLE connection interval high byte
 #define MIDI_CC_106_VALUE_74 74  // from WARBL. WARBL2 battery percentage
-                                 /* 75-99	unused -- can be used for WARBL2 */
+                                 // WARBL2 diagnostic page commands / framing
+#define MIDI_CC_106_VALUE_75 75  // from diagnostics page. Enter diagnostic mode
+#define MIDI_CC_106_VALUE_76 76  // from diagnostics page. Exit diagnostic mode
+#define MIDI_CC_106_VALUE_77 77  // from diagnostics page. Reformat LittleFS
+#define MIDI_CC_106_VALUE_78 78  // from WARBL. Start of diagnostic data frame
+/* 79-99 unused -- can be used for WARBL2 */
 
 //Button Actions, see above 102  90/99
 #define MIDI_CC_106_VALUE_100 100  // Bidirectional. button action 0
@@ -751,6 +757,11 @@
 #define MIDI_CENTER_YAW MIDI_CC_106_VALUE_60                // from Config Tool. WARBL2 recenter yaw
 #define MIDI_RESET_PITCH_EXPRESSION MIDI_CC_106_VALUE_61    // from Config Tool. WARBL2 reset pitch expression override to default
 
+#define MIDI_ENTER_DIAGNOSTIC_MODE MIDI_CC_106_VALUE_75
+#define MIDI_EXIT_DIAGNOSTIC_MODE MIDI_CC_106_VALUE_76
+#define MIDI_RESET_LITTLEFS MIDI_CC_106_VALUE_77
+#define MIDI_DIAGNOSTIC_FRAME MIDI_CC_106_VALUE_78
+
 #define MIDI_STICKS_MODE MIDI_CC_111_VALUE_109  // Bidirectional. Hidden sticks mode - Same for 112 and 113
 
 /* START - END Values */
@@ -777,7 +788,7 @@
 #define MIDI_SWITCHES_VARS_START MIDI_CC_104_VALUE_40                     // Bidirectional. Settings for current preset: indicates that switches[0] is about to be sent with CC 105.
 #define MIDI_SWITCHES_VARS_END MIDI_CC_104_VALUE_53                       // Bidirectional. Settings for current preset: indicates that switches[13] is about to be sent with CC 105. UNUSED?
 #define MIDI_ED_VARS2_START MIDI_CC_104_VALUE_70                          // Bidirectional. Settings for current preset: indicates ED[21] is about to be sent with CC 105.
-#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_115                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
+#define MIDI_ED_VARS2_END MIDI_CC_104_VALUE_116                           // Bidirectional. Settings for current preset: indicates ED[] is about to be sent with CC 105.
 #define MIDI_ED_VARS_NUMBER (MIDI_ED_VARS_END - MIDI_ED_VARS_START + 1)   // ED array number of vars for the first slot
 #define MIDI_ED_VARS2_OFFSET (MIDI_ED_VARS2_START - MIDI_ED_VARS_NUMBER)  // ED array index for 2nd slot of MIDI Msgs
 
@@ -899,8 +910,8 @@
                                             // 343 low byte of vibrato depth  for PRESET 2 (344 high byte)
 #define EEPROM_USE_LEARNED_PRESS_START 345  //values 0-1	use learned calibration - 3 bytes 345-347
 /* 348-350 unused */
-#define EEPROM_ED_VARS_START 351  // 351-551	expression and drones (ED) variables
-/* 552-599 unused, room for extending above array or other variables */
+#define EEPROM_ED_VARS_START 351  // 351-554	expression and drones (ED) variables
+/* 555-599 unused, room for extending above array or other variables */
 #define EEPROM_WARBL2_SETTINGS_START 600  // 600-603 WARBL2settings array
 /* 604-625 unused, room for extending above array or other variables */
 #define EEPROM_IMU_SETTINGS_START 625  // 625-841 WARBL2 IMUsettings array
