@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added a diagnostics page: https://warbl.xyz/WARBL2_Diagnostics.html. When a WARBL2 is connected to this, it displays firmware and hardware versions, battery voltage, runtime per charge, raw pressure sensor counts, and raw optical sensor counts. It has buttons to save the current sensor calibrations as the factory calibration and to reformat LittleFS (the latter can fix rare problems with Bluetooth pairing).
 
+- "Note hold" feature in button behavior options: By triggering this with a button action you can hold the current note so it will continue playing while you play additional notes. If using single button clicks, this can be momentary or latching. The held note can be ended by repeating the button action (or releasing the button if momentary) or stopping blowing.
+
 ## [Released]
 
 ## [4.7] - 2026-6-15
