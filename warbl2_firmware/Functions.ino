@@ -4,19 +4,11 @@
 // Debug
 void printStuff(void) {
 
+
     //Serial.println(sensorValue);
     //Serial.println(twelveBitPressure);
     //Serial.println(smoothed_pressure);
     //Serial.println("");
-
-    //Serial.println(readEEPROM(EEPROM_HARDWARE_VERSION));
-
-    /*
-    for (byte i = 0; i < 9; i++) {
-        Serial.println(toneholeRead[i]);
-    }
-     Serial.println("");
-*/
 
     //static float CPUtemp = readCPUTemperature(); // If needed for something like calibrating sensors. There are also temp sensors on the IMU, magnetometer (if installed), and both BMP sensors (if installed).
 
@@ -30,15 +22,7 @@ void printStuff(void) {
         delay(5000);
     } 
 */
-
-    // Print the total minutes run time per charge (for estimating battery health).
-    /*
-         int runTimePerCharge;
-         getEEPROM(EEPROM_EST_RUNTIME_START, runTimePerCharge);
-         Serial.println(runTimePerCharge);
-         */
 }
-
 
 
 
@@ -237,6 +221,7 @@ void getSensors(void) {
 
 
 
+
 // If using the BMP pressure sensors, adjust for ambient pressure.
 void readAmbientPressure() {
     if (bmpAmbient.performReading()) {
@@ -260,7 +245,7 @@ void checkForBreathPause() {
     static float buf[WINDOW_SAMPLES] = {};
     static size_t idx = 0;
     static bool filled = false;
-    const byte resetRange = 6;  // Number of counts away from 400 within which we may reset ambient pressure. By keeping this low we help avoid spurious resets.
+    const byte resetRange = 6;  // Number of counts away from 400 within which we may reset ambient pressure. By keeping this low we help avoid spurious resets. IF it's too low we may miss a case where drifting happens faster and there hasn't been a sufficient breath pause.
 
     buf[idx] = twelveBitPressure;  // Use a ring buffer to track the range in pressure over the time window.
     idx = (idx + 1) % WINDOW_SAMPLES;
@@ -290,6 +275,7 @@ void checkForBreathPause() {
 
 
 
+
 // Calculate checksum for received sensor values. It should be ~94% effective at detecting a bad sensor value.
 uint8_t computeToneholeChecksum4(const uint8_t* p) {
     uint8_t x = 0;
@@ -303,6 +289,7 @@ uint8_t computeToneholeChecksum4(const uint8_t* p) {
     x ^= (x >> 4);
     return x & 0x0F;
 }
+
 
 
 
@@ -709,7 +696,6 @@ void shakeForVibrato() {
         ) {
             shakeActive = true;
             lastThreshExceedTime = nowtime;
-            // Serial.println("Start ShakeVib");
         } else if (abs(accelFilteredB) > kShakeFinishThresh) {
             lastThreshExceedTime = nowtime;
         }
@@ -1461,6 +1447,7 @@ void getState() {
 
     if (sensorValue <= sensorThreshold[0]) {
         newState = SILENCE;
+        noteHold = false;                                                                      // Turn off noteHold if not blowing.
         holdoffActive = false;                                                                 // No need to wait for jump/drop if we've already crossed the threshold for silence
     } else if (sensorValue > (sensorThreshold[0] + ED[preset][SILENCE_HYSTERESIS] * 2) - 1) {  // Allow a minumum valule of 1 for hysteresis.
         if (currentState == SILENCE) {
@@ -2222,7 +2209,9 @@ void sendNote() {
 
 
         if (notewason && !switches[preset][LEGATO]) {  // Send prior noteoff now if legato is selected.
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);
+            if (!(noteHold && heldNote == notePlaying)) {
+                sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);
+            }
             notewason = 0;
         }
 
@@ -2248,7 +2237,9 @@ void sendNote() {
         if (notewason) {
             // Turn off the previous note after turning on the new one (if it wasn't already done above).
             // We do it after to signal to synths that the notes are legato (not all synths will respond to this).
-            sendMIDI(NOTE_OFF, mainMidiChannel, notewasplaying, 64);
+            if (!(noteHold && heldNote == notewasplaying)) {
+                sendMIDI(NOTE_OFF, mainMidiChannel, notewasplaying, 64);
+            }
         }
 
         pitchBendTimer = millis();  // For some reason it sounds best if we don't send pitchbend right away after starting a new note.
@@ -2268,8 +2259,9 @@ void sendNote() {
           ((newState == SILENCE && !switches[preset][BAGLESS]) || newNote == 0 || (switches[preset][BAGLESS] && !play)) ||  // If the state drops to 1 (off) or we're in bagless mode and the sound has been turned off.
           (modeSelector[preset] == kModeNorthumbrian && newNote == 63) ||                                                   // Or closed Northumbrian pipe.
           (breathMode != kPressureBell && holeCovered == 0b111111111)) {                                                    // Or completely closed pipe with any fingering chart.
-            sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);                                                           // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
-                                                                                                                            // Keep track.
+            if (!(noteHold && heldNote == notePlaying)) {
+                sendMIDI(NOTE_OFF, mainMidiChannel, notePlaying, 64);  // Turn the note off if the breath pressure drops or the bell sensor is covered and all the finger holes are covered.
+            }                                                          // Keep track.
 
             if (IMUsettings[preset][AUTOCENTER_YAW] == true) {  // Reset the autocenter yaw timer.
                 autoCenterYawTimer = millis();
@@ -2284,6 +2276,10 @@ void sendNote() {
                 stopDrones();
             }
         }
+    }
+    if (!noteHold && heldNote != 128) {  // Turn off a held note if note hold has just been turned off.
+        sendMIDI(NOTE_OFF, mainMidiChannel, heldNote, 64);
+        heldNote = 128;  // This tells us that there's not currently a held note.
     }
 }
 
@@ -2700,6 +2696,13 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
                 pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                      // Add to the value because lower pressureReceiveModes are used for other variables.
                 blinkNumber[GREEN_LED] = 0;
+            } else if (number == MIDI_CC_109 && value == MIDI_BUTTON_ACTIONS2_START) {
+                // Extended button-action namespace: CC109 value 104 = button action 28.
+                for (byte i = 0; i < kGESTURESnVariables; i++) {
+                    if (buttonReceiveMode == i) {
+                        buttonPrefs[preset][i][0] = NOTE_HOLD;
+                    }
+                }
             }
 
 
@@ -2844,7 +2847,7 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 else if (value >= MIDI_BUTTON_ACTIONS_START) {
                     for (byte i = 0; i < kGESTURESnVariables; i++) {  // Update button configuration
                         if (buttonReceiveMode == i) {
-                            for (byte j = 0; j < 27; j++) {  // Update column 0 (action).
+                            for (byte j = 0; j < 28; j++) {  // CC106 values 100-127 map to actions 0-27.
                                 if (value == MIDI_BUTTON_ACTIONS_START + j) {
                                     buttonPrefs[preset][i][0] = j;
                                 }
@@ -2902,7 +2905,7 @@ void detectSip() {
     static byte debounce = 20;   // Number of high pressure readings required to turn sip off
 
     if (sensorValue < (sensorCalibration - sipThreshold) && !sip) {  //Immediately trigger sip if we've crossed the threshold.
-        performAction(8, 127);
+        performAction(SIP, 127);
         sip = true;
     }
 
@@ -2934,7 +2937,7 @@ void detectShake() {
 
     if (shakeDetected) {  //Immediately trigger shake if detected by the IMU
         if (!shake) {
-            performAction(9, 127);
+            performAction(SHAKE, 127);
             shake = true;
         }
     }
@@ -3260,7 +3263,17 @@ void performAction(byte action, byte button) {
                 toggleSlideMode();  // Toggle again if we're in momentary mode and this is a release.
             }
             break;
-
+        case NOTE_HOLD:
+            if (button != 127 && !momentary[preset][button]) {
+                blinkNumber[GREEN_LED] = 1;
+                noteHold = !noteHold;  // Toggle note hold if we're not in momentary mode.
+                if (noteHold) {
+                    heldNote = notePlaying;
+                }
+            } else {
+                noteHold = false;  // If we're in momentary mode this is a release, so just turn off note hold.
+            }
+            break;
         default:
             return;
     }
@@ -3408,6 +3421,13 @@ void handleMomentary(byte button) {
 
         if (buttonPrefs[preset][button][0] == 17) {
             toggleSlideMode();
+        }
+
+        if (buttonPrefs[preset][button][0] == 28) {
+            noteHold = !noteHold;
+            if (noteHold) {
+                heldNote = notePlaying;
+            }
         }
     }
 }
@@ -3589,7 +3609,13 @@ void sendSettings() {
     }
 
     for (byte i = 0; i < kGESTURESnVariables; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[preset][i][0]);  // Send  data for button commands row i (click 1, click 2, etc.).
+        // Send the gesture selector first, then its action. Actions 0-27 use the original
+        // CC106 namespace; action 28 starts the extended CC109 namespace at value 104.
+        if (buttonPrefs[preset][i][0] <= 27) {
+            sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[preset][i][0]);
+        } else if (buttonPrefs[preset][i][0] == NOTE_HOLD) {
+            sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_109, MIDI_BUTTON_ACTIONS2_START);
+        }
 
         //This would require a "quadruplet mutex"...
         if (buttonPrefs[preset][i][0] == 1) {  // If the action is a MIDI command, send the rest of the MIDI info for that row.

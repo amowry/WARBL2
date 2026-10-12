@@ -355,6 +355,8 @@ bool specialPressUsed[] = { 0, 0, 0 };
 bool dronesOn = 0;                         //used to monitor drones on/off.
 bool waitingSecondClick[3] = { 0, 0, 0 };  //20240629 MrMep - Double-click Action
 unsigned int doubleClickTimer = 0;
+bool noteHold = false;  // Whether note hold is active
+byte heldNote = 128;    // The currently held MIDI note. Uses 128 to indicate no held note.
 
 // Variables for communication with the WARBL Configuration Tool
 bool communicationMode = 0;                       // Whether we are currently communicating with the tool.
@@ -498,7 +500,7 @@ void setup() {
     // SPI for ATmega.
     pinMode(2, OUTPUT);     // CS for ATmega
     digitalWrite(2, HIGH);  // Ensure CS stays high for now.
-    SPI.begin();            // This uses SPIM3 for programming the Atmega.
+    SPI.begin();
 
     // IMU
     sox.begin_SPI(12, &SPI, 0, 10000000);       // Start IMU (CS pin is D12) at 10 Mhz. If using SPIM2 I believe this is limited to 8 Mhz.
@@ -510,15 +512,15 @@ void setup() {
     if (readEEPROM(EEPROM_SETTINGS_SAVED) != 3) {
         WDDTelapsedTime = millis();
         watchdogReset();        // Feed the watchdog because we need to do some things that will take some time.
-        saveFactorySettings();  // If we're running the software for the first time, or if a factory reset has been requested, copy all settings to EEPROM.
+        saveFactorySettings();  // If we're running the software for the first time, copy all settings to EEPROM.
     }
 
     checkFirmwareVersion();  // Make any necessary changes to saved settings if we've just upgraded the firmware.
 
     writeEEPROM(EEPROM_FIRMWARE_VERSION, VERSION);  // Update the firmware version if it has changed.
 
-    if (readEEPROM(EEPROM_HARDWARE_VERSION) == 255) {
-        writeEEPROM(EEPROM_HARDWARE_VERSION, HARDWARE_REVISION);  // Write the hardware revision to EEPROM if it hasn't been written previously.
+    if (readEEPROM(EEPROM_FIRMWARE_VERSION) == 255) {
+        writeEEPROM(EEPROM_HARDWARE_VERSION, HARDWARE_REVISION);  // Write the hardware revision to EEPROM if this is the first time the firmware has ever been installed.
     }
 
     if (readEEPROM(EEPROM_SENSOR_CALIB_SAVED) == 3) {

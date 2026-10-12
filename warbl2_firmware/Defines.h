@@ -1,10 +1,10 @@
 
 
-//#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
+#define RELEASE  // Uncomment for release version (turns off CDC to make the device USB class compliant). Comment out to be able to print to the serial monitor.
 
 #define VERSION 48  // Firmware version (without decimal point)
 #define PATCH 0     // Firmware patch number
-//#define PROTOTYPE46                 // Hardware -- version 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
+//#define PROTOTYPE46                 // Hardware revision 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
 #define HARDWARE_REVISION 52        // Not currently used. Can be written to EEPROM 1992 to store revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
 #define WATCHDOG_TIMEOUT_SECS 10    // The timeout needs to be set longer than any task that might interrupt the loop().
@@ -214,7 +214,9 @@
 #define SHOW_BATTERY_LEVEL 15
 #define REGISTER_HOLD 16
 #define TOGGLE_SLIDE_MODES 17
-#define kACTIONSnVariables 18
+// 18-27 reserved for the original CC106 button-action namespace.
+#define NOTE_HOLD 28
+#define kACTIONSnVariables 29
 
 // Variables in the WARBL2settings array (independent of PRESET)
 #define MIDI_DESTINATION 0  // 0 means send MIDI to USB only, 1 means send to BLE only, 2 means send to both, see defines below
@@ -657,7 +659,7 @@
 
 #define MIDI_CC_106_VALUE_72 72  // from WARBL. WARBL2 BLE connection interval low byte
 #define MIDI_CC_106_VALUE_73 73  // from WARBL. WARBL2 BLE connection interval high byte
-#define MIDI_CC_106_VALUE_74 74  // from WARBL. WARBL2 battery percentage
+#define MIDI_CC_106_VALUE_74 74  // from WARBL. WARBL2 battery percentage \
                                  // WARBL2 diagnostic page commands / framing
 #define MIDI_CC_106_VALUE_75 75  // from diagnostics page. Enter diagnostic mode
 #define MIDI_CC_106_VALUE_76 76  // from diagnostics page. Exit diagnostic mode
@@ -694,7 +696,7 @@
 #define MIDI_CC_106_VALUE_125 125  // Bidirectional. button action 25
 #define MIDI_CC_106_VALUE_126 126  // Bidirectional. button action 26
 #define MIDI_CC_106_VALUE_127 127  // Bidirectional. button action 27
-
+// (There are more values for button actions below: CC109 stating with value 104.)
 
 #define MIDI_CC_107 107  // From WARBL. Values 0-127	- MIDI byte 2
 #define MIDI_CC_108 108  // From WARBL. Values 0-127	- MIDI byte 3
@@ -714,7 +716,9 @@
 #define MIDI_CC_109_VALUE_101 101  // Bidirectional. Indicates that  WARBL2 custom fingering chart 2 is about to be sent on CC 105.
 #define MIDI_CC_109_VALUE_102 102  // Bidirectional. Indicates that  WARBL2 custom fingering chart 3 is about to be sent on CC 105.
 #define MIDI_CC_109_VALUE_103 103  // Bidirectional. Indicates that  WARBL2 custom fingering chart 4 is about to be sent on CC 105.
-                                   /* 104-125	unused */
+
+#define MIDI_CC_109_VALUE_104 104  // Bidirectional. button action 28 (note hold)
+                                   /* 105-125 can be used for more button actions */
 
 #define MIDI_CC_109_VALUE_126 126  // From WARBL. Indicates that firmware patch number will be sent on CC 105
 #define MIDI_CC_109_VALUE_127 127  // From WARBL. Indicates button/gesture action will be sent on CC 105
@@ -799,7 +803,8 @@
 #define MIDI_DIS_VIBRATO_HOLES_END MIDI_CC_106_VALUE_38    // Bidirectional. Disable vibrato hole, 8
 #define MIDI_WARBL2_SETTINGS_START MIDI_CC_106_VALUE_55    // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
 #define MIDI_WARBL2_SETTINGS_END MIDI_CC_106_VALUE_74      // Bidirectional. WARBL2 settings array (for settings that are independent of preset)
-#define MIDI_BUTTON_ACTIONS_START MIDI_CC_106_VALUE_100    // Bidirectional. Button action 0
+#define MIDI_BUTTON_ACTIONS_START MIDI_CC_106_VALUE_100    // Bidirectional. Button actions 0-27
+#define MIDI_BUTTON_ACTIONS2_START MIDI_CC_109_VALUE_104   // Bidirectional. Extended button action 28
 
 #define MIDI_CUSTOM_CHARTS_START MIDI_CC_109_VALUE_100                                   // Beginning of WARBL2 CustomCharts
 #define MIDI_CUSTOM_CHARTS_END MIDI_CC_109_VALUE_103                                     // End of WARBL2 CustomCharts
