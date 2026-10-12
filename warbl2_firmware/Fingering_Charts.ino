@@ -6775,7 +6775,7 @@ const byte charts[kModeNModes - 4][256] =
         60,  //11111111
       },
 
-        // Duduk
+      // Duduk
       {
         69,  //00000000
         69,  //00000001
