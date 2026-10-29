@@ -5,7 +5,7 @@
 #define VERSION 48  // Firmware version (without decimal point)
 #define PATCH 0     // Firmware patch number
 //#define PROTOTYPE46                 // Hardware revision 46 uses older pinout without the expansion port or the ability to reprogram the ATmega. Comment this out for all later versions.
-#define HARDWARE_REVISION 52        // Not currently used. Can be written to EEPROM 1992 to store revision number.
+#define HARDWARE_REVISION 51        // Written to EEPROM 1992 to store revision number (starting with revision 5.1). Earlier revisions will have 255 for the revision number.
 #define ATMEGA_FIRMWARE_VERSION 11  // Increment this when the ATmega firmware has changed to make sure the ATmega gets reprogrammed at startup.
 #define WATCHDOG_TIMEOUT_SECS 10    // The timeout needs to be set longer than any task that might interrupt the loop().
 
