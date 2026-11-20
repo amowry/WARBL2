@@ -65,8 +65,7 @@ byte calculateDelayTime(void) {
 // Read the pressure sensor and get latest tone hole readings from the ATmega.
 void getSensors(void) {
 
-    analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
-    twelveBitPressure = analogPressure.getRawValue();
+    readStreamAnalogPressure(sensorStreamOn);       // Preserve stock 12-bit path when not streaming.
     smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
     sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
 
@@ -100,11 +99,14 @@ void getSensors(void) {
         toneholePacked[10] = toneholePacked[10] << 2;
     }
 
-    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);  // Unpack the upper 2 bits of hole 8.
+    toneholeRead[8] = toneholeRead[8] | (toneholePacked[11] << 8);
+    toneholeRawUpdated = true;    // Early prototype has no checksum validation.
+    toneholeRawRejected = false;  // Unpack the upper 2 bits of hole 8.
 
 
 
     for (byte i = 0; i < 9; i++) {
+        toneholeRaw[i] = toneholeRead[i];
         // run through adaptive smoothing filter
         filterToneholes[i].update(toneholeRead[i]);
         toneholeRead[i] = filterToneholes[i].getValue();
@@ -123,9 +125,8 @@ void getSensors(void) {
 
 void getSensors(void) {
 
-    if (!useBMP) {                // Honeywell ABPLLND060MGAA3 pressure sensor (older)
-        analogPressure.update();  //  Read the pressure sensor now while the ATmega is still asleep and the board is very quiet.
-        twelveBitPressure = analogPressure.getRawValue();
+    if (!useBMP) {                                      // Honeywell ABPLLND060MGAA3 pressure sensor (older)
+        readStreamAnalogPressure(sensorStreamOn);       // Preserve stock 12-bit path when not streaming.
         smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly.
         sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
     }
@@ -134,9 +135,11 @@ void getSensors(void) {
                                                                                      // This sensor has less noise, so we could probably use one more effective bit for the pressure mapping calculations. It also has potential for inhale notes/mapping and has a much higher range than the Honeywell sensor.
         if (bmp.performReading()) {                                                  // SPI transfer takes 58 us at 8 MHz (~same as reading older analog sensor).
             twelveBitPressure = (((bmp.pressure - BMPcalibration) * 54.60f) + 400);  // Scale to ABPLLND060MGAA3 equivalent range at twelve bits.
-            sensorValue = twelveBitPressure >> 2;                                    // Reduce the reading to stable 10 bits for state machine.
-            analogPressure.update(twelveBitPressure);                                // Update the smoothing filter.
-            smoothed_pressure = analogPressure.getValue();                           // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly. The filter currently constrains the values 0-4095 because of the adc bits used in setup. I don't think the library will accept negative values.
+            // Scale BMP pressure to the Honeywell equivalent 14-bit range for sensor streaming.
+            fourteenBitPressure = constrain((int32_t)lroundf((bmp.pressure - BMPcalibration) * 54.60f * 4.0f) + 1600, 0, 16383);
+            sensorValue = twelveBitPressure >> 2;           // Reduce the reading to stable 10 bits for state machine.
+            analogPressure.update(twelveBitPressure);       // Update the smoothing filter.
+            smoothed_pressure = analogPressure.getValue();  // Use an adaptively smoothed 12-bit reading to map to CC, aftertouch, poly. The filter currently constrains the values 0-4095 because of the adc bits used in setup. I don't think the library will accept negative values.
         }
     }
 
@@ -171,6 +174,8 @@ void getSensors(void) {
     //}
 
 
+    toneholeRawUpdated = goodChecksum && goodtestByte;
+    toneholeRawRejected = !toneholeRawUpdated;
     if (goodChecksum && goodtestByte) {  // Just try again next time if the transfer was bad. This happens occasionally if lots of MIDI messages are being sent.
                                          //...could be AHB bus stall issue: https://devzone.nordicsemi.com/f/nordic-q-a/127744/ble-radio-interrupts-interfering-with-spi
                                          // ...or one of the many issues with SPIM3. SPIM2 seems to be similar, though. You can select either by changing the build flag in boards.local.txt. 0 is for SPIM3, 1 for SPIM2.
@@ -198,6 +203,7 @@ void getSensors(void) {
 
 
         for (byte i = 0; i < 9; i++) {
+            toneholeRaw[i] = toneholeRead[i];
             // Run through adaptive smoothing filter. Takes 50 us.
             filterToneholes[i].update(toneholeRead[i]);
             toneholeRead[i] = filterToneholes[i].getValue();
@@ -3958,11 +3964,7 @@ void loadPrefs() {
     customCurve[2] = ED[preset][CUSTOM_AFTERTOUCH_CURVE];
     customCurve[3] = ED[preset][CUSTOM_POLYPRESSURE_CURVE];
 
-    if (ED[preset][ENABLE_REGISTER_HOLD] || IMUsettings[preset][SEND_ROLL] || IMUsettings[preset][SEND_PITCH] || IMUsettings[preset][SEND_YAW] || IMUsettings[preset][PITCH_REGISTER] || IMUsettings[preset][STICKS_MODE] || IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
-        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
-    } else {
-        sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
-    }
+    updateStreamGyroPower();
 
     // Calculate upper and lower bounds for IMU pitch (elevation) register mapping.
     byte pitchPerRegister = (IMUsettings[preset][PITCH_REGISTER_INPUT_MAX] - IMUsettings[preset][PITCH_REGISTER_INPUT_MIN]) * 5 / IMUsettings[preset][PITCH_REGISTER_NUMBER];  // Number of degrees per register
@@ -4337,6 +4339,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d1, uint8_t d2) {  // Send a 3-byte 
 
     m &= 0xF0;
     c = constrain(c, 1, 16);
+    if (sensorStreamSuppressNotes && !(m == 0xB0 && c == MIDI_CONFIG_TOOL_CHANNEL && d1 >= 102)) return;
     d1 &= 0x7F;
     d2 &= 0x7F;
 
@@ -4428,6 +4431,7 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
     m &= 0xF0;
     c = constrain(c, 1, 16);
     d &= 0x7F;
+    if (sensorStreamSuppressNotes) return;
 
     switch (m) {
 
@@ -4959,4 +4963,14 @@ void eraseEEPROM(void) {
     analogWrite(LEDpins[GREEN_LED], 1023);  // Success
     delay(500);
     analogWrite(LEDpins[GREEN_LED], 0);
+}
+
+
+// Shared gyro policy for preset changes and sensor-stream start/stop.
+void updateStreamGyroPower() {
+    if (sensorStreamOn || ED[preset][ENABLE_REGISTER_HOLD] || IMUsettings[preset][SEND_ROLL] || IMUsettings[preset][SEND_PITCH] || IMUsettings[preset][SEND_YAW] || IMUsettings[preset][PITCH_REGISTER] || IMUsettings[preset][STICKS_MODE] || IMUsettings[preset][MAP_ROLL_TO_PITCHBEND] || IMUsettings[preset][MAP_ELEVATION_TO_PITCHBEND] || IMUsettings[preset][MAP_YAW_TO_PITCHBEND]) {
+        sox.setGyroDataRate(LSM6DS_RATE_208_HZ);  // Turn on the gyro if we need it.
+    } else {
+        sox.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+    }
 }

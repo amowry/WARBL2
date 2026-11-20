@@ -53,7 +53,8 @@ Pinout from left to right, holding WARBL with mouthpiece pointing up, looking at
 
 // Create instances of library classes.
 BLEDis bledis;
-BLEMidi blemidi;
+#include "WarblBLEMidi.h"
+WarblBLEMidi blemidi;
 Adafruit_USBD_MIDI usb_midi;
 Adafruit_LSM6DSOX sox;
 SF sfusion;
@@ -76,7 +77,7 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings {
 };
 
 // Create instances of the Arduino MIDI Library classes.
-MIDI_CREATE_CUSTOM_INSTANCE(BLEMidi, blemidi, BLEMIDI, MySettings);
+MIDI_CREATE_CUSTOM_INSTANCE(WarblBLEMidi, blemidi, BLEMIDI, MySettings);
 MIDI_CREATE_CUSTOM_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI, MySettings);
 
 
@@ -376,6 +377,17 @@ SemaphoreHandle_t midiSendCoupletMutex = xSemaphoreCreateMutex();  // Semephore 
 
 unsigned long WDDTelapsedTime;  // Time since starting the watchdog timer, so we know if we need to reset it
 
+// Sensor-stream additions (protocol v3)
+bool sensorStreamOn = false;
+bool sensorStreamSuppressNotes = false;
+bool sensorStreamOverBLE = false;
+int toneholeRaw[9] = { 0 };
+bool toneholeRawUpdated = false;
+bool toneholeRawRejected = false;
+int fourteenBitPressure = 0;
+int ambientPressure14 = 0;
+
+
 
 
 
@@ -455,6 +467,7 @@ void setup() {
     MIDI.turnThruOff();
     MIDI.setHandleControlChange(handleControlChangeFromUSB);  // Handle received MIDI CC messages.
     MIDI.setHandleProgramChange(handleProgramChangeFromUSB);  // Handle received MIDI PC messages.
+    MIDI.setHandleSystemExclusive(handleSysExFromUSB);        // Sensor stream
 
     //delay(2000); // Makes it so button 3 must be held down for two seconds to power on.
 
@@ -489,6 +502,7 @@ void setup() {
     BLEMIDI.turnThruOff();
     BLEMIDI.setHandleControlChange(handleControlChangeFromBLE);   // Handle received MIDI CC messages.
     BLEMIDI.setHandleProgramChange(handleProgramChangeFromBLE);   // Handle received MIDI PC messages.
+    BLEMIDI.setHandleSystemExclusive(handleSysExFromBLE);         // Sensor stream
     Bluefruit.Periph.setConnectCallback(connect_callback);        // Get connection information and handle indication.
     Bluefruit.Periph.setDisconnectCallback(disconnect_callback);  // Detect disconnect.
     startAdv();
@@ -568,11 +582,12 @@ void setup() {
 
 
 
-    if (!useBMP) {                // Otherwise use the Honeywell pressure sensor (older hardware).
-        analogPressure.update();  // Read the pressure sensor for calibration to ambient pressure.
-        twelveBitPressure = analogPressure.getRawValue();
+    if (!useBMP) {                       // Otherwise use the Honeywell pressure sensor (older hardware).
+        readStreamAnalogPressure(true);  // Capture 14-bit ambient reference; retain the 12-bit filter input.
     }
 
+    ambientPressure14 = useBMP ? 1600 : fourteenBitPressure;  // 14-bit ambient pressure reference for sensor streaming.
+    if (useBMP) fourteenBitPressure = ambientPressure14;
     sensorCalibration = twelveBitPressure >> 2;  // Reduce the reading to 10 bits and use it to calibrate.
 
     loadPrefs();                // Load the correct user settings based on current preset.
@@ -608,11 +623,13 @@ void loop() {
     wakeTime = millis();                    // When we woke from sleep.
     getSensors();                           // 240 us
     getFingers();                           // Find which holes are covered. 4 us.
-    getState();                             // Get the breath state. 3 us.
-    debounceFingerHoles();                  // Get the new MIDI note if the fingering has changed.
-    getShift();                             // Shift the next note up or down based on register and key.
-    sendNote();                             // Send the note as soon as we know the note, state, and shift.
-    readMIDI();                             // Read incoming MIDI messages.
+    if (!sensorStreamSuppressNotes) {       // We can skip a lot of processing if just sending the sensor stream.
+        getState();                         // Get the breath state. 3 us.
+        debounceFingerHoles();              // Get the new MIDI note if the fingering has changed.
+        getShift();                         // Shift the next note up or down based on register and key.
+        sendNote();
+    }
+    readMIDI();  // Read incoming MIDI messages.
 
 
 
@@ -621,7 +638,7 @@ void loop() {
     byte pressureInterval = calculatePressureInterval();  // Determine how frequently to send MIDI messages based on pressure.
     if ((wakeTime - pressureTimer) >= pressureInterval) {
         pressureTimer = wakeTime;
-        calculateAndSendPressure();
+        if (!sensorStreamSuppressNotes) calculateAndSendPressure();
     }
 
 
@@ -649,10 +666,12 @@ void loop() {
     const int pbsendinterval = (connIntvl > 8 && WARBL2settings[MIDI_DESTINATION] != 0) ? (12) : ((pitchBendModeSelector[preset] == kPitchBendLegatoSlideVibrato) ? 4 : 9);
 
     if ((wakeTime - pitchBendTimer) >= pbsendinterval) {
-        pitchBendTimer = wakeTime;    // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
-        calculateAndSendPitchbend();  // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
-        printStuff();                 // Debug
-        sendIMU();                    // ~ 130 us
+        printStuff();               // Debug
+        pitchBendTimer = wakeTime;  // This timer is also reset when we send a note, so none if these things will happen until the next connection interval if using BLE.
+        if (!sensorStreamSuppressNotes) {
+            calculateAndSendPitchbend();  // 5 us with no pitchbend turned on, 50 us with vibrato, 65 us with slide/vibrato, 45 us with shake vibrato only, 30 us with half hole only, ~ 65 us with all of the above.
+            sendIMU();                    // ~ 130 us
+        }
     }
 
 
@@ -676,6 +695,8 @@ void loop() {
         manageBattery(false);  // Check the battery and manage charging. Takes about 300 us because of reading the battery voltage.
         watchdogReset();       // Feed the watchdog.
     }
+
+    sendSensorFrame();  // Maintain the sensor stream if necessary, one sample per loop.
 
     // timerD = micros(); // For benchmarking--can paste these lines around any of the function calls above.
     // Serial.println(micros() - timerD);
