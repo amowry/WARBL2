@@ -213,7 +213,7 @@ void sendSensorFrame() {
         addBatchSample(seq);
         return;
     }
-    if (!tud_ready()) {  // The USB host has gone (cable pulled, computer asleep): stop, which also brings Bluetooth back.
+    if (!tud_ready()) {  // The USB host has gone (cable pulled, computer asleep): stop, which also brings BLE back.
         setSensorStream(false, false, false);
         return;
     }

@@ -407,7 +407,7 @@ bool WarblBLEMidi::sendSplit(uint8_t data[], uint8_t len)
 /*------------------------------------------------------------------*/
 /* WARBL addition
  *------------------------------------------------------------------*/
-// BLE MIDI packet layout for SysEx (MIDI over Bluetooth LE spec): every packet starts with a header byte
+// BLE MIDI packet layout for SysEx (MIDI over BLE spec): every packet starts with a header byte
 // (bit 7 set, the timestamp's high 6 bits); a timestamp byte (bit 7 set, low 7 bits) comes before F0 and before
 // F7; packets in between carry only the header and data bytes.
 uint16_t WarblBLEMidi::maxPacketLength(void)
