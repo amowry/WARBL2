@@ -981,6 +981,22 @@ input {
 	z-index:100;
 }
 
+.bleLabel {
+	display: none;
+	position: absolute;
+	left: 300px;
+	top: 223px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+#switchBLE {
+	display: none;
+	top: 220px;
+	left:  380px;
+	z-index:100;
+}
+
 
 .radiogroup11 {
 	display: block;
