@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- BLE on/off: a "Toggle BLE on/off" button action and a BLE switch in the WARBL2 Settings panel. Turning BLE off disconnects and stops advertising; USB MIDI is unaffected, and BLE is always on after power-up. The LED blinks blue three times when BLE turns on and red three times when it turns off.
+- BLE on/off: a "Toggle BLE on/off" button action and a BLE switch in the WARBL2 Settings panel. Turning BLE off disconnects and stops advertising; USB MIDI is unaffected. BLE can only be turned off while a USB host is connected and turns back on when USB is disconnected, so it can't be lost when playing with a phone or tablet; it is also always on after power-up. The LED blinks blue three times when BLE turns on and red three times when it turns off.
 
 ## [4.8] - 2026-11-20
 

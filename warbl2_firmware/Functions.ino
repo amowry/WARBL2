@@ -4483,8 +4483,14 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
 
 // Turn BLE off (drop any connection and stop advertising so the radio is idle) or back on (resume advertising). USB MIDI is unaffected.
-// The LED blinks blue three times when turning on and red three times when turning off.
+// BLE can only be turned off while a USB host is connected (not just a charger), and loop() turns it back on when USB goes away
+// or the host sleeps, so someone using only a phone or tablet can never lose BLE.
+// The LED blinks blue three times when BLE is (or stays) on and red three times when it turns off.
 void setBLE(bool enable) {
+
+    if (!enable && !tud_ready()) {
+        enable = true;  // Refused without a USB host: fall through to confirm that BLE is still on.
+    }
 
     if (enable != bleEnabled) {
         bleEnabled = enable;
