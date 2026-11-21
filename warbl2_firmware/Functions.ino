@@ -2702,11 +2702,11 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                 || (number == MIDI_CC_109 && value >= MIDI_CUSTOM_CHARTS_START && value <= MIDI_CUSTOM_CHARTS_END)) {  // Indicates that value for IMUsettings variable will be sent on CC 105.
                 pressureReceiveMode = value + MIDI_CC_109_OFFSET;                                                      // Add to the value because lower pressureReceiveModes are used for other variables.
                 blinkNumber[GREEN_LED] = 0;
-            } else if (number == MIDI_CC_109 && value == MIDI_BUTTON_ACTIONS2_START) {
-                // Extended button-action namespace: CC109 value 104 = button action 28.
+            } else if (number == MIDI_CC_109 && value >= MIDI_BUTTON_ACTIONS2_START && value < MIDI_BUTTON_ACTIONS2_START + (kACTIONSnVariables - NOTE_HOLD)) {
+                // Extended button-action namespace: CC109 value 104 = button action 28 (note hold), 105 = action 29 (BLE on/off), and so on.
                 for (byte i = 0; i < kGESTURESnVariables; i++) {
                     if (buttonReceiveMode == i) {
-                        buttonPrefs[preset][i][0] = NOTE_HOLD;
+                        buttonPrefs[preset][i][0] = NOTE_HOLD + (value - MIDI_BUTTON_ACTIONS2_START);
                     }
                 }
             }
@@ -2848,6 +2848,10 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
 
                 else if (value == MIDI_RESET_PITCH_EXPRESSION) {  // Recenter IMU heading based on current
                     resetExpressionOverrideDefaults();
+                }
+
+                else if (value == MIDI_BLE_OFF || value == MIDI_BLE_ON) {  // Turn BLE off/on from the Config Tool.
+                    setBLE(value == MIDI_BLE_ON);
                 }
 
                 else if (value >= MIDI_BUTTON_ACTIONS_START) {
@@ -3280,6 +3284,11 @@ void performAction(byte action, byte button) {
                 noteHold = false;  // If we're in momentary mode this is a release, so just turn off note hold.
             }
             break;
+
+        case BLE_TOGGLE:
+            setBLE(!bleEnabled);  // In momentary mode handleMomentary() has already toggled on the press, so this toggles back on the release.
+            break;
+
         default:
             return;
     }
@@ -3434,6 +3443,10 @@ void handleMomentary(byte button) {
             if (noteHold) {
                 heldNote = notePlaying;
             }
+        }
+
+        if (buttonPrefs[preset][button][0] == BLE_TOGGLE) {
+            setBLE(!bleEnabled);
         }
     }
 }
@@ -3619,8 +3632,8 @@ void sendSettings() {
         // CC106 namespace; action 28 starts the extended CC109 namespace at value 104.
         if (buttonPrefs[preset][i][0] <= 27) {
             sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_106, MIDI_BUTTON_ACTIONS_START + buttonPrefs[preset][i][0]);
-        } else if (buttonPrefs[preset][i][0] == NOTE_HOLD) {
-            sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_109, MIDI_BUTTON_ACTIONS2_START);
+        } else if (buttonPrefs[preset][i][0] < kACTIONSnVariables) {
+            sendMIDICouplet(MIDI_CC_102, MIDI_GESTURE_START + i, MIDI_CC_109, MIDI_BUTTON_ACTIONS2_START + (buttonPrefs[preset][i][0] - NOTE_HOLD));
         }
 
         //This would require a "quadruplet mutex"...
@@ -3659,6 +3672,8 @@ void sendSettings() {
     }
 
     manageBattery(true);  // Do this to send voltage and charging status to Config Tool.
+
+    sendMIDI(MIDI_CC_106_MSG, bleEnabled ? MIDI_BLE_ON : MIDI_BLE_OFF);  // Send BLE on/off status (before the connection interval).
 
     uint16_t interval_x100 = (uint16_t)(connIntvl * 100.0f);
     sendMIDICouplet(MIDI_CC_106, MIDI_BLE_INTERVAL_LSB,
@@ -4463,6 +4478,41 @@ void sendMIDI(uint8_t m, uint8_t c, uint8_t d) {
 
 
 
+
+
+
+
+// Turn BLE off (drop any connection and stop advertising so the radio is idle) or back on (resume advertising). USB MIDI is unaffected.
+// The LED blinks blue three times when turning on and red three times when turning off.
+void setBLE(bool enable) {
+
+    if (enable != bleEnabled) {
+        bleEnabled = enable;
+
+        if (enable) {
+            Bluefruit.Advertising.restartOnDisconnect(true);
+            Bluefruit.Advertising.start(0);
+        } else {
+            Bluefruit.Advertising.restartOnDisconnect(false);  // Must be set before disconnecting, otherwise advertising would restart.
+            Bluefruit.Advertising.stop();
+            for (uint8_t i = 0; i < BLE_MAX_CONNECTION; i++) {
+                BLEConnection* connection = Bluefruit.Connection(i);
+                if (connection && connection->connected()) {
+                    connection->disconnect();
+                }
+            }
+        }
+    }
+
+    // Indicate the new state even if it didn't change, so pressing the button always confirms whether BLE is on or off.
+    blinkNumber[GREEN_LED] = 0;  // Override the single green blink for a received Config Tool message.
+    blinkNumber[RED_LED] = enable ? 0 : 3;
+    blinkNumber[BLUE_LED] = enable ? 3 : 0;
+
+    if (communicationMode) {
+        sendMIDI(MIDI_CC_106_MSG, bleEnabled ? MIDI_BLE_ON : MIDI_BLE_OFF);
+    }
+}
 
 
 

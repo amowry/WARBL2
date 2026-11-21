@@ -111,6 +111,7 @@ var instrument = 0; //currently selected preset tab
 var lsb = 0; //used for reassembling pressure bytes from WARBL
 
 var connIntvlLSB = 0; //used for reassembling connection interval from WARBL
+var bleOn = true; //BLE on/off status reported by WARBL2
 
 var defaultInstr = 0; //default preset
 
@@ -229,6 +230,7 @@ function showWARBLNotDetected() {
 	document.getElementById("pressure").innerHTML = "";
 	document.getElementById("connLabel").innerHTML = "BLE not connected";
 	document.getElementById("connLabel").style.left = "95px";
+	showBLEControls(false); //only shown once WARBL reports its BLE status
 	for (var m = 0; m < 9; m++) { //turn off toneholes
 		document.getElementById("dot" + m).style.backgroundColor = "#333";
 		if (m == 0) {
@@ -1167,6 +1169,12 @@ function WARBL_Receive(event, source) {
 				else if (data1 == MIDI_CC_104) {
 					jumpFactorWrite = data2;
 				} // so we know which pressure setting is going to be received.
+				else if (data1 == MIDI_CC_109 && data2 >= MIDI_BUTTON_ACTIONS2_START && data2 <= MIDI_BUTTON_ACTIONS2_END) { //extended button actions (28 and up)
+					if (buttonRowWrite < numberOfGestures) {
+						document.getElementById("row" + buttonRowWrite).value = MIDI_BUTTON_ACTIONS2_FIRST_ACTION + data2 - MIDI_BUTTON_ACTIONS2_START;
+						updateCells();
+					}
+				}
 				else if (data1 == MIDI_CC_109 && data2 != MIDI_CUSTOM_CHARTS_RCVD) {
 					jumpFactorWrite = data2 + MIDI_CC_109_OFFSET;
 				} // so we know which WARBL2 IMU setting is going to be received.
@@ -2315,6 +2323,21 @@ function WARBL_Receive(event, source) {
 					}
 
 
+					if (data2 == MIDI_BLE_OFF || data2 == MIDI_BLE_ON) { //BLE on/off status
+						bleOn = data2 == MIDI_BLE_ON;
+						document.getElementById("bleCheck").checked = bleOn;
+						showBLEControls(true);
+						if (!bleOn) {
+							document.getElementById("connLabel").innerHTML = "BLE off";
+							document.getElementById("connLabel").style.left = "130px";
+						}
+						else if (document.getElementById("connLabel").innerHTML == "BLE off") {
+							document.getElementById("connLabel").innerHTML = "BLE not connected";
+							document.getElementById("connLabel").style.left = "95px";
+						}
+					}
+
+
 					if (data2 >= MIDI_BUTTON_ACTIONS_START && version > 3.9) {
 
 						//console.log(buttonRowWrite); 
@@ -2384,7 +2407,11 @@ function WARBL_Receive(event, source) {
 						x = x / 100;              // convert back to decimal
 						x = parseFloat(x.toFixed(1));   // keep 1 digit after decimal					
 
-						if (x == 0) {
+						if (x == 0 && !bleOn) {
+							document.getElementById("connLabel").innerHTML = "BLE off";
+							document.getElementById("connLabel").style.left = "130px";
+						}
+						else if (x == 0) {
 							document.getElementById("connLabel").innerHTML = "BLE not connected";
 							document.getElementById("connLabel").style.left = "95px";
 						}
@@ -4472,8 +4499,12 @@ function sendRow(rowNum) {
 	blink(1);
 	updateCells();
 	sendToWARBL(MIDI_CC_102, MIDI_GESTURE_START + rowNum);
-	var y = (100) + parseFloat(document.getElementById("row" + rowNum).value);
-	if (version < 4.0) {
+	var action = parseFloat(document.getElementById("row" + rowNum).value);
+	var y = (100) + action;
+	if (action >= MIDI_BUTTON_ACTIONS2_FIRST_ACTION) { //extended button actions (28 and up) are sent on CC 109
+		sendToWARBL(MIDI_CC_109, MIDI_BUTTON_ACTIONS2_START + action - MIDI_BUTTON_ACTIONS2_FIRST_ACTION);
+	}
+	else if (version < 4.0) {
 		sendToWARBL(MIDI_CC_102, y);
 		sendMIDIrow(rowNum); //this is just to fix an issue with the LED being stuck on with the old WARBL and this Config Tool version.
 	}
@@ -4937,6 +4968,21 @@ function WARBL2Radio(selection) {
 	sendToWARBL(MIDI_CC_119, selection);
 }
 
+
+//Show or hide the BLE on/off switch and the "Toggle BLE on/off" button action, which are only offered once WARBL2 reports its BLE status.
+function showBLEControls(show) {
+	document.getElementById("bleLabel").style.display = show ? "block" : "none";
+	document.getElementById("switchBLE").style.display = show ? "inline-block" : "none";
+	var options = document.getElementsByClassName("bleToggleOption");
+	for (var i = 0; i < options.length; i++) {
+		options[i].hidden = !show;
+	}
+}
+
+function sendBLE(selection) {
+	blink(1);
+	sendToWARBL(MIDI_CC_106, selection ? MIDI_BLE_ON : MIDI_BLE_OFF);
+}
 
 function sendHost(selection) {
 	blink(1);
