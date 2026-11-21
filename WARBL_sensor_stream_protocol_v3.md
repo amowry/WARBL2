@@ -58,6 +58,8 @@ Repeat the active configuration approximately once per second, preserving the de
 
 The input transport of an enabling command selects the output transport. Only one stream is active at a time; a command on another transport can switch it. There is no separate transport-selection byte or payload flag.
 
+While a USB stream is active, BLE is paused: any BLE connection is dropped and WARBL stops advertising, so the loop runs at 2 ms and nearby BLE devices can't interrupt it. BLE resumes (advertising again) when the stream stops for any reason. A BLE stream leaves BLE as it is.
+
 ## 4. BIT PACKING
 
 WARBL-generated payloads are consecutive MSB-first fields, packed into 7-bit bytes. Within each byte, bits are consumed from bit 6 to bit 0. Bit 7 is always zero. There is no alignment between fields. Unused low bits of the final byte are zero. Packed length = ceil(total bits / 7). For example, the 14-bit value 0x1234 on a 7-bit boundary is 24 34 (hex). Signed 16-bit fields use two's complement.
@@ -88,7 +90,7 @@ const reader = new BitReader(message.slice(6, -1));
 
 ## 5. USB INDIVIDUAL FRAME (01)
 
-One frame per main loop, nominally 2 ms (500 Hz), or 3 ms when BLE is also connected. Offsets below are bit offsets into the payload.
+One frame per main loop, nominally 2 ms (500 Hz). BLE is paused during a USB stream, so a BLE connection doesn't slow the loop to 3 ms. Offsets below are bit offsets into the payload.
 
   Field               Offset   Bits   Representation
   ------------------- -------- ------ ---------------------
@@ -299,7 +301,7 @@ Guard against zero denominator. This does not reproduce WARBL's full adaptive ho
 
 ## 10. TRANSPORT COMPARISON AND THROUGHPUT
 
-USB: individual frames, nominally 500 Hz; full pressure/holes, per-frame motion, timestamps, flags and mask. BLE: batches, nominally 333 Hz; full pressure/holes, shared motion and flags, first/last timestamps, no mask. USB may run at 3 ms when BLE is connected. Calibration format is identical. Nominal SysEx throughput (decimal kB/s, excluding transport overhead):
+USB: individual frames, nominally 500 Hz; full pressure/holes, per-frame motion, timestamps, flags and mask. BLE: batches, nominally 333 Hz; full pressure/holes, shared motion and flags, first/last timestamps, no mask. Calibration format is identical. Nominal SysEx throughput (decimal kB/s, excluding transport overhead):
 
 ``` text
   USB 500 Hz: 19.50
