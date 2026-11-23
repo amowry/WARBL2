@@ -1895,6 +1895,11 @@ void handlePitchBend() {
 
     if (pitchBendMode != kPitchBendNone) {  // If halfhole pitchbend is enabled but no other pitchbend is, we don't need to calculate any vibrato.
 
+        const bool naturalVibrato = true;  // Testing: always enabled, independent of EEPROM and Config Tool.
+        const int soundingHole = naturalVibrato ? findSoundingHole() : 0;
+        unsigned int naturalVibratoHoles = 0;  // Holes contributing natural vibrato, so the total can be capped below.
+        int naturalVibratoSum = 0;
+
         for (byte i = 0; i < 9; i++) {
 
             if (bitRead(holeLatched, i) == 1 && toneholeRead[i] < senseDistance) {
@@ -1918,9 +1923,61 @@ void handlePitchBend() {
                 if (bitRead(holeCovered, i) == 1) {
                     iPitchBend[i] = adjvibdepth;  // Set vibrato to max downward bend if a hole was being used to bend down and now is covered
                 }
+
+                if (naturalVibrato) {
+                    iPitchBend[i] = (iPitchBend[i] * naturalVibratoWeight(soundingHole - i)) / 100;
+                    if (iPitchBend[i] != 0) {
+                        bitSet(naturalVibratoHoles, i);
+                        naturalVibratoSum += iPitchBend[i];
+                    }
+                }
+            }
+        }
+
+        if (naturalVibratoSum > adjvibdepth) {  // Several holes add up, but never to more than the vibrato depth.
+            for (byte i = 0; i < 9; i++) {
+                if (bitRead(naturalVibratoHoles, i)) {
+                    iPitchBend[i] = (int)(((long)iPitchBend[i] * adjvibdepth) / naturalVibratoSum);
+                }
             }
         }
     }
+}
+
+
+
+
+
+
+
+
+
+// For "natural" vibrato: the hole the current note sounds from, i.e. the highest open finger hole that sets the note (closing it would change the note).
+// If there isn't one (e.g. the lowest note with all holes covered), the lowest covered finger hole is used instead, so the holes below it still give vibrato.
+int findSoundingHole() {
+    for (int i = 7; i > 0; i--) {  // Finger holes only (8 is the thumb and 0 the bell sensor).
+        if (bitRead(holeCovered, i) == 0 && findStepsOffsetFor(i) != 0) {
+            return i;
+        }
+    }
+    for (int i = 1; i < 8; i++) {
+        if (bitRead(holeCovered, i) == 1) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+
+
+// For "natural" vibrato: how much (%) a hole contributes, by how many holes it is below the sounding hole (0 is the sounding hole itself, which is only used for vibrato if it isn't being used for slide).
+// The levels are set in the Config Tool. As on a real instrument, the effect falls off further down, and holes above the sounding hole or more than three below it have no effect.
+int naturalVibratoWeight(int holesBelow) {
+    if (holesBelow < 0 || holesBelow > 3) {
+        return 0;
+    }
+    static const byte weights[] = { 100, 70, 40, 10 };  // These weights can be changed.
+    return weights[holesBelow];
 }
 
 

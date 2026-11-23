@@ -22,10 +22,12 @@ some colors:
 	--gauge-over-color: #dc4c2c;
 }
 
-.smalllogo{width: 35px;
+.smalllogo {
+	width: 35px;
 }
 
-html, body {
+html,
+body {
 	height: 100%;
 	-webkit-text-size-adjust: none;
 }
@@ -236,13 +238,13 @@ a {
 }
 
 .volume::before {
-  content: "";
-  position: absolute;
-  top: -15px;
-  left: -15px;
-  right: -15px;
-  bottom: -15px;
-  cursor: pointer;
+	content: "";
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	right: -15px;
+	bottom: -15px;
+	cursor: pointer;
 }
 
 .volume:focus {
@@ -265,16 +267,16 @@ a {
 }
 
 .audioSettings::before {
-  content: "";
-  position: absolute;
-  top: -15px;
-  left: -15px;
-  right: -15px;
-  bottom: -15px;
-  cursor: pointer;
+	content: "";
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	right: -15px;
+	bottom: -15px;
+	cursor: pointer;
 }
 
-.title{
+.title {
 	position: relative;
 	top: -10px;
 }
@@ -353,7 +355,7 @@ input {
 	color: var(--warning-color);
 }
 
-#updateInfocircle{
+#updateInfocircle {
 	visibility: hidden;
 	top: -30px;
 	left: 420px;
@@ -370,7 +372,7 @@ input {
 	top: -20px;
 }
 
-.customFingeringOkay{
+.customFingeringOkay {
 	display: block;
 	position: absolute;
 	width: 60px !important;
@@ -379,7 +381,7 @@ input {
 	left: 820px;
 }
 
-.WARBL2customFingeringOkay{
+.WARBL2customFingeringOkay {
 	display: block;
 	position: absolute;
 	width: 100px !important;
@@ -398,7 +400,7 @@ input {
 	width: 300px;
 	left: 400px;
 	top: 250px;
-	z-index:100;
+	z-index: 100;
 }
 
 #WARBL2CustomTextArea {
@@ -421,7 +423,7 @@ input {
 
 #switch17 {
 	top: 370px;
-	left:  860px;
+	left: 860px;
 	z-index: 99;
 }
 
@@ -438,8 +440,8 @@ input {
 
 #switch18 {
 	top: 420px;
-	left:  860px;
-	z-index:100;
+	left: 860px;
+	z-index: 100;
 }
 
 .R4Label {
@@ -454,12 +456,12 @@ input {
 
 
 
-.fingering{
+.fingering {
 	display: block;
 	position: absolute;
 }
 
-.fingeringInput{
+.fingeringInput {
 	display: block;
 	position: absolute;
 	height: 23px;
@@ -479,7 +481,7 @@ input {
 	top: 280px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .MIDILabel {
@@ -489,7 +491,7 @@ input {
 	top: 280px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .customThumbLabel {
@@ -499,7 +501,7 @@ input {
 	top: 305px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 
@@ -510,7 +512,7 @@ input {
 	top: 305px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 
@@ -521,7 +523,7 @@ input {
 	top: 492px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .whiteHoleLabel {
@@ -531,7 +533,7 @@ input {
 	top: 542px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .grayHoleLabel {
@@ -541,7 +543,7 @@ input {
 	top: 592px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 
@@ -552,7 +554,7 @@ input {
 	top: 510px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .asteriskLabel {
@@ -562,7 +564,7 @@ input {
 	top: 655px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .asterisk {
@@ -572,21 +574,21 @@ input {
 	top: 316px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 
-#whiteHole{
+#whiteHole {
 	top: 125px;
 	left: 180px;
 }
 
-#blackHole{
+#blackHole {
 	top: 75px;
 	left: 180px;
 }
 
-#grayHole{
+#grayHole {
 	top: 175px;
 	left: 180px;
 }
@@ -594,128 +596,129 @@ input {
 
 
 
-#fingering1{
+#fingering1 {
 	top: -82px;
 	left: -80px;
 }
 
-#fingering2{
+#fingering2 {
 	top: -48px;
 	left: -80px;
 }
 
-#fingering3{
+#fingering3 {
 	top: -14px;
 	left: -80px;
 }
 
-#fingering4{
+#fingering4 {
 	top: 20px;
 	left: -80px;
 }
 
-#fingering5{
+#fingering5 {
 	top: 54px;
 	left: -80px;
 }
 
-#fingering6{
+#fingering6 {
 	top: 88px;
 	left: -80px;
 }
 
-#fingering7{
+#fingering7 {
 	top: 122px;
 	left: -80px;
 }
 
-#fingering8{
+#fingering8 {
 	top: 156px;
 	left: -80px;
 }
 
 
-#fingering9{
+#fingering9 {
 	top: 190px;
 	left: -80px;
 }
 
-#fingering10{
+#fingering10 {
 	top: 224px;
 	left: -80px;
 }
 
-#fingering11{
+#fingering11 {
 	top: 258px;
 	left: -80px;
 }
 
 
 
-#fingeringInput1{
+#fingeringInput1 {
 	left: 315px;
 	top: 331px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput2{
+#fingeringInput2 {
 	left: 315px;
 	top: 365px;
-	z-index:100;
+	z-index: 100;
 }
-#fingeringInput3{
+
+#fingeringInput3 {
 	left: 315px;
 	top: 399px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput4{
+#fingeringInput4 {
 	left: 315px;
 	top: 433px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput5{
+#fingeringInput5 {
 	left: 315px;
 	top: 467px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput6{
+#fingeringInput6 {
 	left: 315px;
 	top: 501px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput7{
+#fingeringInput7 {
 	left: 315px;
 	top: 535px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput8{
+#fingeringInput8 {
 	left: 315px;
 	top: 569px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput9{
+#fingeringInput9 {
 	left: 315px;
 	top: 603px;
-	z-index:100;
+	z-index: 100;
 }
 
-#fingeringInput10{
+#fingeringInput10 {
 	left: 315px;
 	top: 637px;
-	z-index:100;
+	z-index: 100;
 }
 
 
-#fingeringInput11{
+#fingeringInput11 {
 	left: 315px;
 	top: 671px;
-	z-index:100;
+	z-index: 100;
 }
 
 #customControlsHeader {
@@ -723,7 +726,7 @@ input {
 	width: 300px;
 	left: 555px;
 	top: 271px;
-	z-index:100;
+	z-index: 100;
 }
 
 #customControls {
@@ -736,14 +739,14 @@ input {
 	position: absolute;
 }
 
-#configureCustomFingering{
+#configureCustomFingering {
 	display: block;
 	position: absolute;
 	width: 230px;
 	height: 32px;
 	top: 375px;
 	left: 50px;
-	z-index:210;
+	z-index: 210;
 }
 
 .notechannellabel {
@@ -873,23 +876,23 @@ input {
 }
 
 
-#battery0{
+#battery0 {
 	display: none;
 }
 
-#battery25{
+#battery25 {
 	display: none;
 }
 
-#battery50{
+#battery50 {
 	display: block;
 }
 
-#battery75{
+#battery75 {
 	display: none;
 }
 
-#battery100{
+#battery100 {
 	display: none;
 }
 
@@ -977,8 +980,8 @@ input {
 
 #switch19 {
 	top: 107px;
-	left:  670px;
-	z-index:100;
+	left: 670px;
+	z-index: 100;
 }
 
 
@@ -1072,7 +1075,7 @@ input {
 	height: 200px;
 	left: 50px;
 	top: 317px;
-	z-index:200;
+	z-index: 200;
 }
 
 
@@ -1119,7 +1122,7 @@ input[type=radio]:not(old) {
 	opacity: 0;
 }
 
-input[type=radio]:not(old) + label {
+input[type=radio]:not(old)+label {
 	display: inline-block;
 	margin-left: 0px;
 	line-height: 1.5em;
@@ -1127,7 +1130,7 @@ input[type=radio]:not(old) + label {
 }
 
 /*the outer circle*/
-input[type=radio]:not(old) + label > span {
+input[type=radio]:not(old)+label>span {
 	display: inline-block;
 	width: 16px;
 	height: 16px;
@@ -1141,14 +1144,14 @@ input[type=radio]:not(old) + label > span {
 }
 
 /*the outer circle*/
-input[type=radio][disabled]:not(old) + label > span {
+input[type=radio][disabled]:not(old)+label>span {
 	background: var(--disabled-bg-color);
 	border: solid 2px var(--disabled-bg-color);
 	cursor: default;
 }
 
 /*the checkmark*/
-input[type=radio]:not(old):checked + label > span > span {
+input[type=radio]:not(old):checked+label>span>span {
 	display: block;
 	width: 12px;
 	height: 12px;
@@ -1246,11 +1249,11 @@ fieldset {
 	box-shadow: 0px -4px 13px rgba(50, 50, 50, 0.5);
 }
 
-.fingeringRadio [type=radio]:not(old) + label > span {
+.fingeringRadio [type=radio]:not(old)+label>span {
 	display: none;
 }
 
-.fingeringRadio input[type=radio]:not(old):checked + label {
+.fingeringRadio input[type=radio]:not(old):checked+label {
 	z-index: 7;
 	background: var(--main-bg-color);
 	border-bottom: 2px solid var(--main-bg-color);
@@ -1319,6 +1322,7 @@ fieldset {
 	height: 275px;
 	border-radius: 5px;
 }
+
 .controlbox2 {
 	position: absolute;
 	background-color: var(--main-bg-color);
@@ -1384,7 +1388,7 @@ fieldset {
 	box-shadow: 0px 0px 13px rgba(50, 50, 50, 0.75);
 }
 
-#buttonBox{
+#buttonBox {
 	//top: 1390px;
 	top: 1850px;
 }
@@ -1411,7 +1415,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
-    background: #440000;
+	background: #440000;
 }
 
 #box7 {
@@ -1434,7 +1438,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: block;
-	z-index:999;
+	z-index: 999;
 }
 
 #box11 {
@@ -1442,7 +1446,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
-	z-index:999;
+	z-index: 999;
 }
 
 #box12 {
@@ -1450,7 +1454,7 @@ fieldset {
 	top: 900px;
 	height: 405px;
 	display: none;
-	z-index:999;
+	z-index: 999;
 }
 
 #pressuregraph {
@@ -1476,7 +1480,7 @@ fieldset {
 	border: none;
 	padding: 5px;
 	cursor: pointer;
-	z-index:100;
+	z-index: 100;
 }
 
 .info {
@@ -1488,14 +1492,13 @@ fieldset {
 #volumeOn {
 	display: none;
 }
-	
+
 
 .infocircle:focus {
 	outline: none;
 }
 
-.button:hover {
-}
+.button:hover {}
 
 .button:active {
 	transform: translateY(2px);
@@ -1600,9 +1603,26 @@ fieldset {
 	color: var(--button-text-color);
 }
 
+.toggleSimple {
+	width: 180px;
+	height: 30px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--primary-color);
+	color: var(--button-text-color);
+	position: absolute;
+	top: 100px;
+	left: 720px;
+
+}
+
 .smallbutton:disabled {
 	background-color: var(--disabled-bg-color);
-		cursor: default;
+	cursor: default;
 	color: #555;
 }
 
@@ -1663,8 +1683,8 @@ fieldset {
 
 #switch35 {
 	top: 70px;
-	left:  545px;
-	z-index:100;
+	left: 545px;
+	z-index: 100;
 }
 
 
@@ -1705,7 +1725,7 @@ fieldset {
 	top: 900px;
 	left: 527px;
 	height: 405px;
-	z-index:999;
+	z-index: 999;
 }
 
 .pitchbend {
@@ -1731,7 +1751,7 @@ fieldset {
 	visibility: hidden;
 }
 
-#leddot {	
+#leddot {
 	display: block;
 	position: absolute;
 	top: 145px;
@@ -1812,15 +1832,15 @@ fieldset {
 	display: none;
 }
 
-input:checked + .vibratoSlider {
+input:checked+.vibratoSlider {
 	background: var(--primary-color);
 }
 
-input:focus + .vibratoSlider {
+input:focus+.vibratoSlider {
 	box-shadow: 0 0 1px var(--secondary-color);
 }
 
-input:checked + .vibratoSlider:before {
+input:checked+.vibratoSlider:before {
 	display: none;
 }
 
@@ -1833,7 +1853,7 @@ input:checked + .vibratoSlider:before {
 	border-radius: 50%;
 }
 
-input:disabled + .vibratoSlider {
+input:disabled+.vibratoSlider {
 	background-color: #444;
 }
 
@@ -1842,7 +1862,7 @@ input:disabled {
 }
 
 
-input:disabled + .vibratoSlider:before {
+input:disabled+.vibratoSlider:before {
 	border: solid 2px #444;
 }
 
@@ -1977,7 +1997,7 @@ input:disabled + .vibratoSlider:before {
 	left: -20px;
 	width: 20px;
 	//z-index: 999;
-	
+
 }
 
 .bellsensorrect {
@@ -2047,7 +2067,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 #switch4 {
-	visibility:hidden;
+	visibility: hidden;
 	top: 68px;
 	left: 377px;
 }
@@ -2138,7 +2158,7 @@ input:disabled + .vibratoSlider:before {
 }
 
 .jumpvalue23 {
-	visibility:hidden;
+	visibility: hidden;
 	left: 270px;
 	top: 105px;
 }
@@ -2307,7 +2327,7 @@ input:disabled + .vibratoSlider:before {
 
 
 #switch8 {
-	top: 285px;
+	top: 280px;
 	left: 160px;
 }
 
@@ -2368,7 +2388,7 @@ input:disabled + .vibratoSlider:before {
 	display: block;
 	position: absolute;
 	left: 52px;
-	top: 288px;
+	top: 282px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -2430,8 +2450,8 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	height: 40px;
 	width: 110px;
-	top: 340px;
-	left: 230px;
+	top: 360px;
+	left: 250px;
 }
 
 .advancedPB {
@@ -2707,7 +2727,7 @@ input:disabled + .vibratoSlider:before {
 	position: absolute;
 	z-index: 99;
 	top: 352px;
-	left: 270px;	
+	left: 270px;
 }
 
 .customFingeringFillLabel {
@@ -2717,7 +2737,7 @@ input:disabled + .vibratoSlider:before {
 	top: 510px;
 	width: 200px;
 	z-index: 99;
-	font-size: 14px;	
+	font-size: 14px;
 }
 
 .slidecontainer5 {
@@ -2868,18 +2888,18 @@ input:disabled + .vibratoSlider:before {
 }
 
 
-#reverbSlider{
+#reverbSlider {
 	width: 75%;
 }
 
 
-#audioStatus{
-	color:#090;
+#audioStatus {
+	color: #090;
 }
 
 .synthBendRangeContainer {
 	display: flex;
-    justify-content: center;
+	justify-content: center;
 	margin-bottom: 25px;
 	margin-top: 10px;
 }
@@ -2925,47 +2945,47 @@ input:disabled + .vibratoSlider:before {
 
 
 .reverbContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
 	margin-bottom: 20px;
 }
 
 .audioSettingsHeader {
 	position: relative;
 	left: 12px;
-	}
+}
 
 .audioSelector {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
 	margin-bottom: 20px;
 	margin-top: 10px;
 }
 
 .synthKeySelectContainer {
 	display: flex;
-    justify-content: center;
-    align-items: center;
+	justify-content: center;
+	align-items: center;
 	height: 30px;
 	margin-bottom: 30px;
 }
 
 .synthKeySelectLabel {
 	display: flex;
-    justify-content: center;
-    align-items: center;
+	justify-content: center;
+	align-items: center;
 	z-index: 99;
 	margin-bottom: 18px;
 }
 
 
 .row {
-    display: flex;
-    justify-content: center;
+	display: flex;
+	justify-content: center;
 }
 
 
@@ -2976,6 +2996,10 @@ input:disabled + .vibratoSlider:before {
 	top: 100px;
 	left: 350px;
 }
+
+
+
+
 
 
 .tinyConsoleLabel {
@@ -3043,7 +3067,7 @@ input:disabled + .vibratoSlider:before {
 	font-size: 14px;
 }
 
-.doubleClickLabel  {
+.doubleClickLabel {
 	display: block;
 	position: absolute;
 	left: 117px;
@@ -3051,6 +3075,7 @@ input:disabled + .vibratoSlider:before {
 	z-index: 99;
 	font-size: 14px;
 }
+
 /* The slider */
 .slider {
 	position: absolute;
@@ -3077,15 +3102,15 @@ input:disabled + .vibratoSlider:before {
 	transition: .2s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
 	background: var(--primary-color);
 }
 
-input:focus + .slider {
+input:focus+.slider {
 	box-shadow: 0 0 1px var(--secondary-color);
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
 	-webkit-transform: translateX(22px);
 	-ms-transform: translateX(22px);
 	transform: translateX(22px);
@@ -3101,11 +3126,11 @@ input:checked + .slider:before {
 	border-radius: 50%;
 }
 
-input:disabled + .slider {
+input:disabled+.slider {
 	background-color: #444;
 }
 
-input:disabled + .slider:before {
+input:disabled+.slider:before {
 	border: solid 2px #444;
 }
 
@@ -3136,15 +3161,15 @@ input:disabled + .slider:before {
 	transition: .2s;
 }
 
-input:checked + .slider2 {
+input:checked+.slider2 {
 	//background: var(--switch-bg-color));
 }
 
-input:focus + .slider2 {
+input:focus+.slider2 {
 	box-shadow: 0 0 1px var(--secondary-color);
 }
 
-input:checked + .slider2:before {
+input:checked+.slider2:before {
 	-webkit-transform: translateX(22px);
 	-ms-transform: translateX(22px);
 	transform: translateX(22px);
@@ -3161,11 +3186,11 @@ input:checked + .slider2:before {
 }
 
 
-input:disabled + .slider2 {
+input:disabled+.slider2 {
 	background-color: #444;
 }
 
-input:disabled + .slider2:before {
+input:disabled+.slider2:before {
 	border: solid 2px #444;
 }
 
@@ -3254,7 +3279,7 @@ h2 {
 
 h3 {
 	font-size: medium;
-		margin-top: 40px;
+	margin-top: 40px;
 	margin-bottom: 10px;
 	color: black;
 }
@@ -3302,6 +3327,7 @@ h3 {
 	visibility: visible;
 	pointer-events: auto;
 }
+
 /*
 .modal-window > div {
 	width: 400px;
@@ -3323,7 +3349,7 @@ h3 {
 
 
 
-.modal-window > div {
+.modal-window>div {
 	max-width: 700px;
 	width: 90vw;
 	position: fixed;
@@ -3366,41 +3392,93 @@ body.modal-open {
 
 
 .modal {
-display: none; /* Hidden by default */
-position: fixed; /* Stay in place */
-z-index: 102; /* Sit on top */
-padding-top: 200px; /* Location of the box */
-left: 0;
-top: 0;
-width: 100%; /* Full width */
-height: 100%; /* Full height */
-overflow: auto; /* Enable scroll if needed */
-background-color: rgb(0,0,0); /* Fallback color */
-background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+	display: none;
+	/* Hidden by default */
+	position: fixed;
+	/* Stay in place */
+	z-index: 102;
+	/* Sit on top */
+	padding-top: 200px;
+	/* Location of the box */
+	left: 0;
+	top: 0;
+	width: 100%;
+	/* Full width */
+	height: 100%;
+	/* Full height */
+	overflow: auto;
+	/* Enable scroll if needed */
+	background-color: rgb(0, 0, 0);
+	/* Fallback color */
+	background-color: rgba(0, 0, 0, 0.4);
+	/* Black w/ opacity */
 }
 
 .modal-content {
-background-color: #fefefe;
-margin: auto;
-padding: 20px;
-border: 1px solid #888;
-width: 600px;
+	background-color: #fefefe;
+	margin: auto;
+	padding: 20px;
+	border: 1px solid #888;
+	width: 600px;
 }
 
 /* For modal dialog prompt replacement */
-.modal_flat_background { background-color: #000; opacity: 0.4; }
-.modal_flat_main { border: 1px solid #333; box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);  }
+.modal_flat_background {
+	background-color: #000;
+	opacity: 0.4;
+}
+
+.modal_flat_main {
+	border: 1px solid #333;
+	box-shadow: 0px 0px 15px -2px rgba(0, 0, 0, 0.75);
+}
 
 /* font size only */
-.modal_flat_main, .modal_flat_main input, .modal_flat_main button {  font-size: 16px; }
+.modal_flat_main,
+.modal_flat_main input,
+.modal_flat_main button {
+	font-size: 16px;
+}
 
-.modal_flat_main input, .modal_flat_main button {  padding: 5px; box-sizing: border-box; }
-.modal_flat_inner { padding: 10px 30px 30px 30px; background: #fff; color: #000; }
-.modal_flat_content { font-family:"Helvetica"; margin: 20px 0px;}
-.modal_flat_input { margin: 20px 0px;}
-.modal_flat_buttons { text-align:center;margin-top: 40px; }
-.modal_flat_main button { background-color: #ccc; color: #000; padding: 10px 20px; border: 0px; cursor: pointer; outline: none; width: 100px;  }
-.modal_flat_cancel {margin-left: 5px;}
+.modal_flat_main input,
+.modal_flat_main button {
+	padding: 5px;
+	box-sizing: border-box;
+}
+
+.modal_flat_inner {
+	padding: 10px 30px 30px 30px;
+	background: #fff;
+	color: #000;
+}
+
+.modal_flat_content {
+	font-family: "Helvetica";
+	margin: 20px 0px;
+}
+
+.modal_flat_input {
+	margin: 20px 0px;
+}
+
+.modal_flat_buttons {
+	text-align: center;
+	margin-top: 40px;
+}
+
+.modal_flat_main button {
+	background-color: #ccc;
+	color: #000;
+	padding: 10px 20px;
+	border: 0px;
+	cursor: pointer;
+	outline: none;
+	width: 100px;
+}
+
+.modal_flat_cancel {
+	margin-left: 5px;
+}
 
 
 #modal-center34 .modal-footer {
@@ -3468,19 +3546,19 @@ width: 600px;
 	width: 60%;
 }
 
-#selectedSettings{
+#selectedSettings {
 	display: block;
 	position: relative;
 	width: 162px;
-	height: 235px;	
+	height: 235px;
 	top: 50px;
 	left: 285px;
-	border-style:solid;
-	border-width:thin;
-	border-color:  var(--text-color);
+	border-style: solid;
+	border-width: thin;
+	border-color: var(--text-color);
 }
 
-#advancedSliders{
+#advancedSliders {
 	display: block;
 	position: relative;
 	top: -105px;
@@ -3524,7 +3602,7 @@ width: 600px;
 .jumplabel5 {
 	left: 35px;
 	top: 206px;
-	visibility:hidden;
+	visibility: hidden;
 
 }
 
@@ -3568,7 +3646,7 @@ width: 600px;
 	left: 135px;
 	top: 205px;
 	z-index: 99;
-	visibility:hidden;
+	visibility: hidden;
 }
 
 #jumpfactor5Container {
@@ -3617,7 +3695,7 @@ width: 600px;
 	left: 305px;
 	top: 205px;
 	z-index: 99;
-	visibility:hidden;
+	visibility: hidden;
 }
 
 
@@ -3662,7 +3740,7 @@ width: 600px;
 .jumpvalue4 {
 	left: 250px;
 	top: 190px;
-	visibility:hidden;
+	visibility: hidden;
 
 }
 
@@ -3695,7 +3773,7 @@ width: 600px;
 .jumpvalue10 {
 	left: 420px;
 	top: 190px;
-	visibility:hidden;
+	visibility: hidden;
 }
 
 .jumpvalue11 {
@@ -3875,7 +3953,7 @@ width: 600px;
 	top: 200px;
 	left: 27px;
 	width: 50px;
-	font-size: 12px;    
+	font-size: 12px;
 }
 
 #exprfixedcenterslider-value {
@@ -3885,7 +3963,7 @@ width: 600px;
 	left: 217px;
 	top: 207px;
 	z-index: 99;
-	font-size: 14px;    
+	font-size: 14px;
 }
 
 .slidecontainer4 {
@@ -3905,7 +3983,7 @@ width: 600px;
 	width: 95%;
 	top: 110px;
 	height: 126px;
-    //background: #323232;
+	//background: #323232;
 	border: solid 2px var(--console-border-color);
 	border-radius: 6px;
 	margin-left: 10px;
@@ -4177,7 +4255,7 @@ width: 600px;
 	left: 10px;
 	top: -65px;
 	font-size: 14px;
-    text-align: center;
+	text-align: center;
 	z-index: 99;
 }
 
@@ -4267,20 +4345,20 @@ width: 600px;
 }
 
 
-#pressureChannel{
-	visibility:hidden;
+#pressureChannel {
+	visibility: hidden;
 }
 
-#pressureCC{
-	visibility:hidden;
+#pressureCC {
+	visibility: hidden;
 }
 
-#expressionChannel{
-	visibility:hidden;
+#expressionChannel {
+	visibility: hidden;
 }
 
-#highByte{
-	visibility:hidden;
+#highByte {
+	visibility: hidden;
 }
 
 .radiogroup7 {
@@ -4328,7 +4406,7 @@ width: 600px;
 	position: absolute;
 	left: 5px;
 	top: -28px;
-    text-align: center;
+	text-align: center;
 }
 
 
@@ -4358,7 +4436,7 @@ width: 600px;
 	left: 55px;
 	padding: 0px;
 }
-	
+
 
 .maxMinContainer {
 	display: block;
@@ -4396,7 +4474,7 @@ width: 600px;
 	z-index: 99;
 }
 
-#exprInputPressureLevelContainer{
+#exprInputPressureLevelContainer {
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -4406,7 +4484,7 @@ width: 600px;
 	background: var(--gauge-bg-color);
 }
 
-#IMUInputPressureLevelContainer{
+#IMUInputPressureLevelContainer {
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -4416,7 +4494,7 @@ width: 600px;
 	background: var(--gauge-bg-color);
 }
 
-#exprInputPressureLevel{
+#exprInputPressureLevel {
 	display: block;
 	position: absolute;
 	width: 0%;
@@ -4426,7 +4504,7 @@ width: 600px;
 	background: var(--gauge-color);
 }
 
-#IMUInputPressureLevel{
+#IMUInputPressureLevel {
 	display: block;
 	position: absolute;
 	width: 0%;
@@ -4436,7 +4514,7 @@ width: 600px;
 	background: var(--gauge-color);
 }
 
-#exprOutputBendLevelContainer{
+#exprOutputBendLevelContainer {
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -4446,7 +4524,7 @@ width: 600px;
 	background: var(--gauge-bg-color);
 }
 
-#IMUOutputBendLevelContainer{
+#IMUOutputBendLevelContainer {
 	display: block;
 	position: absolute;
 	width: 65%;
@@ -4456,9 +4534,9 @@ width: 600px;
 	background: var(--gauge-bg-color);
 }
 
-#exprOutputBendLevel{
+#exprOutputBendLevel {
 	display: block;
-    position: absolute;
+	position: absolute;
 	width: 0%;
 	height: 35px;
 	left: 0%;
@@ -4466,9 +4544,9 @@ width: 600px;
 	background: var(--gauge-color);
 }
 
-#IMUOutputBendLevel{
+#IMUOutputBendLevel {
 	display: block;
-    position: absolute;
+	position: absolute;
 	width: 0%;
 	height: 35px;
 	left: 0%;
@@ -4480,7 +4558,7 @@ width: 600px;
 	position: absolute;
 	top: 138px;
 	left: 20px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 .maxMinContainerExprHigh {
@@ -4505,7 +4583,7 @@ width: 600px;
 	position: absolute;
 	top: 210px;
 	left: 20px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 
@@ -4532,7 +4610,7 @@ width: 600px;
 	position: absolute;
 	top: 256px;
 	left: 20px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 .maxMinContainerExprHighBend {
@@ -4558,7 +4636,7 @@ width: 600px;
 	position: absolute;
 	top: 292px;
 	left: 20px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 .maxMinContainerExprCurveLow {
@@ -4583,14 +4661,14 @@ width: 600px;
 	position: absolute;
 	top: 331px;
 	left: 25px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 .IMUcurvelowlabel {
 	position: absolute;
 	top: 331px;
 	left: 25px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 
@@ -4602,7 +4680,7 @@ width: 600px;
 	left: 110px;
 	top: 331px;
 	z-index: 99;
-	font-size: 12px;    
+	font-size: 12px;
 }
 
 #IMUcurvelowslider-value {
@@ -4612,7 +4690,7 @@ width: 600px;
 	left: 110px;
 	top: 331px;
 	z-index: 99;
-	font-size: 12px;    
+	font-size: 12px;
 }
 
 .maxMinContainerExprCurveHigh {
@@ -4637,14 +4715,14 @@ width: 600px;
 	position: absolute;
 	top: 331px;
 	left: 185px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 .IMUcurvehighlabel {
 	position: absolute;
 	top: 331px;
 	left: 185px;
-	font-size: 11px;    
+	font-size: 11px;
 }
 
 #exprcurvehighslider-value {
@@ -4654,7 +4732,7 @@ width: 600px;
 	left: 270px;
 	top: 331px;
 	z-index: 99;
-	font-size: 12px;    
+	font-size: 12px;
 }
 
 #IMUcurvehighslider-value {
@@ -4664,7 +4742,7 @@ width: 600px;
 	left: 270px;
 	top: 331px;
 	z-index: 99;
-	font-size: 12px;    
+	font-size: 12px;
 }
 
 .resetExpressionButton {
@@ -4704,11 +4782,11 @@ width: 600px;
 }
 
 #exprlowslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #exprhighslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #exprhighslider-value-max {
@@ -4730,19 +4808,19 @@ width: 600px;
 }
 
 #exprlowbendslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #exprlowbendslider .noUi-handle[data-handle="1"] {
-    display: none;
+	display: none;
 }
 
 #exprhighbendslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #exprhighbendslider .noUi-handle[data-handle="1"] {
-    display: none;
+	display: none;
 }
 
 
@@ -4788,11 +4866,11 @@ width: 600px;
 }
 
 #IMUlowslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #IMUhighslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #IMUhighslider-value-max {
@@ -4814,19 +4892,19 @@ width: 600px;
 }
 
 #IMUlowbendslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #IMUlowbendslider .noUi-handle[data-handle="1"] {
-    display: none;
+	display: none;
 }
 
 #IMUhighbendslider .noUi-connect {
-    background: #f7c839;
+	background: #f7c839;
 }
 
 #IMUhighbendslider .noUi-handle[data-handle="1"] {
-    display: none;
+	display: none;
 }
 
 
@@ -5203,7 +5281,7 @@ width: 600px;
 	top: 180px;
 }
 
-#pressureGroup{
+#pressureGroup {
 	display: block;
 	position: absolute;
 	left: 0px;
@@ -5214,7 +5292,7 @@ width: 600px;
 	display: block;
 	position: absolute;
 	left: 60px;
-	top: 330px;
+	top: 350px;
 	z-index: 99;
 	font-size: 14px;
 }
@@ -5271,7 +5349,7 @@ width: 600px;
 	height: 21px;
 	left: 270px;
 	top: 185px;
-    padding-right: 5px;
+	padding-right: 5px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -5282,7 +5360,7 @@ width: 600px;
 }
 
 
-#PBlevelContainer{
+#PBlevelContainer {
 	display: block;
 	position: absolute;
 	width: 20px;
@@ -5293,7 +5371,7 @@ width: 600px;
 	z-index: 109;
 }
 
-#PBlevel{
+#PBlevel {
 	display: block;
 	height: 0%;
 	left: 240px;
@@ -5302,7 +5380,7 @@ width: 600px;
 	z-index: 99;
 }
 
-#topPBlevelContainer{
+#topPBlevelContainer {
 	display: block;
 	position: absolute;
 	width: 20px;
@@ -5314,7 +5392,7 @@ width: 600px;
 }
 
 
-#PBmarker{
+#PBmarker {
 	display: block;
 	position: absolute;
 	width: 20px;
@@ -5325,7 +5403,7 @@ width: 600px;
 	z-index: 999;
 }
 
-#PBZeromarker{
+#PBZeromarker {
 	display: block;
 	position: absolute;
 	width: 30px;
@@ -5336,7 +5414,7 @@ width: 600px;
 	z-index: 99;
 }
 
-#topPBlevel{
+#topPBlevel {
 	display: block;
 	position: relative;
 	height: 0%;
@@ -5371,7 +5449,7 @@ width: 600px;
 	border-radius: 5px;
 }
 
-#CClevelContainer{
+#CClevelContainer {
 	display: block;
 	position: absolute;
 	width: 170px;
@@ -5381,7 +5459,7 @@ width: 600px;
 	background: var(--secondary-color);
 }
 
-#CClevel{
+#CClevel {
 	display: block;
 	width: 0%;
 	height: 20px;
@@ -5419,7 +5497,7 @@ width: 600px;
 	border-radius: 5px;
 }
 
-#CCpressurelevelContainer{
+#CCpressurelevelContainer {
 	display: block;
 	position: absolute;
 	width: 170px;
@@ -5429,7 +5507,7 @@ width: 600px;
 	background: var(--secondary-color);
 }
 
-#CCpressurelevel{
+#CCpressurelevel {
 	display: block;
 	width: 0%;
 	height: 20px;
@@ -5457,7 +5535,7 @@ width: 600px;
 	width: 60px;
 	height: 21px;
 	left: 79px;
-	top: 360px;
+	top: 380px;
 	color: var(--text-color);
 	z-index: 99;
 	font-size: 14px;
@@ -5536,21 +5614,22 @@ input[type=range]::-moz-range-track {
 }
 
 input[type="range"]:disabled::-webkit-slider-thumb {
-  background: var(--disabled-bg-color) !important;
-  cursor: context-menu !important;
+	background: var(--disabled-bg-color) !important;
+	cursor: context-menu !important;
 }
 
 input[type="range"]:disabled::-moz-range-thumb {
-  background: var(--disabled-bg-color) !important;
-  cursor: context-menu !important;
+	background: var(--disabled-bg-color) !important;
+	cursor: context-menu !important;
 }
 
 input[type="range"]:disabled::-ms-thumb {
-  background: var(--disabled-bg-color) !important;;
-  cursor: context-menu !important;
+	background: var(--disabled-bg-color) !important;
+	;
+	cursor: context-menu !important;
 }
 
-	
+
 #modal-center18 {
 	height: 800px;
 	width: 200px;
@@ -5572,7 +5651,8 @@ input[type="range"]:disabled::-ms-thumb {
 	border: none;
 	font-size: 14px;
 	height: 23px;
-	padding: 3px;  /* If you add too much padding here, the options won't show in IE */
+	padding: 3px;
+	/* If you add too much padding here, the options won't show in IE */
 	width: 268px;
 	cursor: pointer;
 }
@@ -5592,7 +5672,8 @@ input[type="range"]:disabled::-ms-thumb {
 	border: none;
 	font-size: 14px;
 	height: 23px;
-	padding: 3px;  /* If you add too much padding here, the options won't show in IE */
+	padding: 3px;
+	/* If you add too much padding here, the options won't show in IE */
 	width: 70px;
 	cursor: pointer;
 	overflow: auto;
@@ -5612,7 +5693,8 @@ input[type="range"]:disabled::-ms-thumb {
 	background: transparent;
 	border: none;
 	font-size: 14px;
-	padding: 3px;  /* If you add too much padding here, the options won't show in IE */
+	padding: 3px;
+	/* If you add too much padding here, the options won't show in IE */
 	width: 268px;
 	cursor: pointer;
 }
@@ -5634,7 +5716,8 @@ input[type="range"]:disabled::-ms-thumb {
 	border: none;
 	font-size: 14px;
 	height: 23px;
-	padding: 3px;  /* If you add too much padding here, the options won't show in IE */
+	padding: 3px;
+	/* If you add too much padding here, the options won't show in IE */
 	width: 268px;
 	cursor: pointer;
 }
@@ -5836,7 +5919,10 @@ select option {
 	z-index: 99;
 }
 
-#instrument1, #key1, #instrument2, #key2 {
+#instrument1,
+#key1,
+#instrument2,
+#key2 {
 	display: none;
 }
 
@@ -5886,29 +5972,29 @@ input[type="file"] {
 	display: none;
 }
 
-#d3PressureGraph{
+#d3PressureGraph {
 	width: 320px;
 	height: 320px;
 }
 
-ath { 
-    stroke: white;
-    stroke-width: 1;
-    fill: none;
+ath {
+	stroke: white;
+	stroke-width: 1;
+	fill: none;
 }
 
 .axis path,
 .axis line {
-    fill: none;
-    stroke: white;
-    stroke-width: 1;
-    shape-rendering: crispEdges;
+	fill: none;
+	stroke: white;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
 }
 
-.pressureline{
+.pressureline {
 	fill: none;
-	stroke:white;
-    stroke-width: 1;
+	stroke: white;
+	stroke-width: 1;
 }
 
 
@@ -5925,7 +6011,7 @@ ath {
 .exportbutton:active,
 .audioSettings:active,
 .defaultInstrumentButton:active {
-  transform: none !important;
+	transform: none !important;
 }
 
 /* Keep shadows visually similar but slightly cheaper to redraw */
@@ -5937,8 +6023,8 @@ ath {
 .tab0,
 .tab1,
 .tab2,
-.modal-window > div {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22) !important;
+.modal-window>div {
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22) !important;
 }
 
 /* Avoid unnecessary backface/compositing surprises during zoom */
@@ -5949,9 +6035,9 @@ ath {
 .audioSettings,
 .defaultInstrumentButton,
 .modal-window,
-.modal-window > div {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+.modal-window>div {
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
 }
 
 /* Preserve existing layout bounds; do not clip or contain large wrappers */
@@ -5959,11 +6045,162 @@ html,
 body,
 .pagewrapper,
 #topcontrolbox {
-  overflow-x: visible !important;
-  contain: none !important;
+	overflow-x: visible !important;
+	contain: none !important;
 }
 
 /* Prevent zooming to field on iOS*/
 html.ios-app input[type="text"] {
-  font-size: 16px !important;
+	font-size: 16px !important;
+}
+
+
+
+
+
+
+/* Controls for "simple" mode*/
+
+/*body.simple-mode #tab1,*/
+/*body.simple-mode #tab2,*/
+body.simple-mode #transient,
+body.simple-mode #topAdvControls,
+body.simple-mode #headerbuttonwrapper2,
+body.simple-mode #headerbuttonwrapper3,
+body.simple-mode #halfHoleSetupBox,
+body.simple-mode #expressionPressureBox,
+body.simple-mode #box3,
+body.simple-mode #WARBL2Settings,
+body.simple-mode #buttonBox,
+body.simple-mode #MIDIconsole,
+body.simple-mode #midiSelector {
+	display: none !important;
+}
+
+body.simple-mode #box10> :not(#IMUbottomControls) {
+	display: none;
+}
+
+body.simple-mode #IMUbottomControls> :not(#shake) {
+	display: none;
+}
+
+body.simple-mode #box1> :not(#registerRadios) {
+	display: none;
+}
+
+body.simple-mode #box5> :not(#slideVibratoRadios) {
+	display: none;
+}
+
+/*simple mode positioning*/
+
+body.simple-mode #box10,
+body.simple-mode #box1,
+body.simple-mode #box5 {
+	border: none !important;
+	-webkit-box-shadow: none !important;
+	-moz-box-shadow: none !important;
+	box-shadow: none !important;
+	background: none !important;
+}
+
+body.simple-mode #shake {
+	position: absolute;
+	top: -665px;
+	left: 60px;
+}
+
+body.simple-mode .sendShakeLabel {
+	width: 100px !important;
+	left: 95px !important;
+}
+
+body.simple-mode #topcontrolbox {
+	height: 600px !important;
+}
+
+body.simple-mode #registerRadios {
+	top: -20px !important;
+	left: -120px !important;
+	z-index: 99999 !important;
+}
+
+body.simple-mode #slideVibratoRadios {
+	top: -20px !important;
+	left: 80px !important;
+	z-index: 99999 !important;
+}
+
+body.simple-mode #audioSettings {
+	width: 150px;
+	padding: 10px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+	cursor: pointer;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--primary-color);
+	color: var(--button-text-color);
+	top: -10px;
+	left: -280px;
+}
+
+body.simple-mode #headerbuttonwrapper {
+	top: 315px;
+	left: 400px;
+}
+
+body.simple-mode #importExportTopWrapper {
+	top: 310px;
+	left: 590px;
+}
+
+body.simple-mode #importPresetBtn {
+	padding: 12px !important;
+}
+
+body.simple-mode #exportPreset {
+	padding: 12px !important;
+}
+
+body.simple-mode #tiny {
+	position: relative;
+	top: -140px;
+	left: -100px !important;
+}
+
+
+.silenceHysteresisLabel {
+	display: block;
+	position: absolute;
+	left: 78px;
+	top: 318px;
+	z-index: 99;
+	font-size: 14px;
+}
+
+.silenceHysteresisSliderContainer {
+	display: block;
+	position: absolute;
+	left: 225px;
+	top: 316px;
+	width: 150px;
+	z-index: 99;
+}
+
+.silenceHysteresisSliderContainer .ranger {
+	width: 100%;
+}
+
+.silenceHysteresisValue {
+	display: block;
+	position: absolute;
+	left: 390px;
+	top: 317px;
+	width: 35px;
+	text-align: right;
+	z-index: 99;
+	font-size: 14px;
 }
