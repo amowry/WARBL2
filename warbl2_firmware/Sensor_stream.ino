@@ -258,7 +258,7 @@ void sendSensorStreamInfo() {
     w.put(sensorCalibration, 16);
     w.put(sox.getAccelRange(), 16);
     w.put(sox.getGyroRange(), 16);
-    w.put(connIntvl == 0 ? 2 : 3, 16);  // Loop period in ms, as calculateDelayTime() aims for (a prediction, not a measurement).
+    w.put((connIntvl == 0 || (sensorStreamOn && !sensorStreamOverBLE)) ? 2 : 3, 16);  // Loop period in ms, as calculateDelayTime() aims for (a prediction, not a measurement). A USB stream pauses BLE, so 2 ms even if the disconnect is still pending.
     w.put(ambientPressure14 & 0x3FFF, 16);
 
     sendStreamSysEx(STREAM_INFO, payload, w.length);
@@ -278,8 +278,39 @@ void setSensorStream(bool on, bool suppressNotes, bool overBLE) {
     sensorStreamOverBLE = on && overBLE;
     streamBatchReset = true;
 
+    pauseBLEForStream(on && !overBLE);
+
     // Keep the normal 208 Hz accelerometer rate. Gyro follows stream/preset needs.
     updateStreamGyroPower();
+}
+
+
+
+// While streaming over USB, BLE is paused (disconnected and not advertising): with a BLE connection the loop runs
+// every 3 ms instead of 2 ms (see calculateDelayTime()), and a phone or tablet nearby that connects or reconnects would
+// interrupt the loop and the sensor readings. BLE comes back when the stream stops, including when the host goes
+// quiet (keep-alive timeout) or the USB host goes away.
+void pauseBLEForStream(bool pause) {
+    static bool paused = false;
+
+    if (pause == paused) {
+        return;
+    }
+    paused = pause;
+
+    if (pause) {
+        Bluefruit.Advertising.restartOnDisconnect(false);  // Must be set before disconnecting, otherwise advertising would restart.
+        Bluefruit.Advertising.stop();
+        for (uint8_t i = 0; i < BLE_MAX_CONNECTION; i++) {
+            BLEConnection* connection = Bluefruit.Connection(i);
+            if (connection && connection->connected()) {
+                connection->disconnect();  // disconnect_callback() sets connIntvl to 0, so the loop goes back to 2 ms.
+            }
+        }
+    } else {
+        Bluefruit.Advertising.restartOnDisconnect(true);
+        Bluefruit.Advertising.start(0);
+    }
 }
 
 

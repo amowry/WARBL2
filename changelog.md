@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Sensor streaming over USB pauses BLE (disconnects and stops advertising) so the loop always runs at 2 ms; BLE comes back when the stream stops.
+
 ## [4.8] - 2026-11-20
 
 ### Changed
