@@ -1408,6 +1408,11 @@ function WARBL_Receive(event, source) {
 						console.log("Patch = " + patch);
 						const el = document.getElementById('version');
 						el.appendChild(document.createTextNode('.' + patch));
+						if (version == 4.8 && patch >= 2) { // Tin whistle/flute, lower holes fingering needs 4.8.2 or later.
+							for (let i = 0; i < 3; i++) {
+								document.getElementById("fingeringSelect" + i).options[26].disabled = false;
+							}
+						}
 
 					}
 
@@ -1839,7 +1844,7 @@ function WARBL_Receive(event, source) {
 
 
 					if (version < 4.9) {
-						document.getElementById("fingeringSelect0").options[26].disabled = true; // Disable tin whistle/flute, lower holes fingering.
+						document.getElementById("fingeringSelect0").options[26].disabled = true; // Disable tin whistle/flute, lower holes fingering (re-enabled below when 4.8 firmware sends patch 2 or later).
 						document.getElementById("fingeringSelect1").options[26].disabled = true;
 						document.getElementById("fingeringSelect2").options[26].disabled = true;
 					}
