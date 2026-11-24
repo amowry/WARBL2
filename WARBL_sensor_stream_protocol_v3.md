@@ -56,7 +56,7 @@ Request information:           F0 00 03 0F 03 21 F7
 
 Repeat the active configuration approximately once per second, preserving the desired suppression flag. Every active stream needs renewal regardless of bit 2. Streaming stops when the last renewal is more than 3000 ms old or the relevant connection is lost. Normal MIDI operation resumes. The subsequent local inactivity-timer change also prevents automatic power-down while active configuration messages continue to arrive.
 
-The input transport of an enabling command selects the output transport. Only one stream is active at a time; a command on another transport can switch it. There is no separate transport-selection byte or payload flag.
+The input transport of an enabling command selects the output transport. Only one stream is active at a time; a command on another transport can switch it, except that a USB stream ignores STREAM_CONFIG received over BLE (so a host that sends to both ports keeps the USB stream). There is no separate transport-selection byte or payload flag.
 
 While a USB stream is active, BLE is paused: any BLE connection is dropped and WARBL stops advertising, so the loop runs at 2 ms and nearby BLE devices can't interrupt it. BLE resumes (advertising again) when the stream stops for any reason. A BLE stream leaves BLE as it is.
 
