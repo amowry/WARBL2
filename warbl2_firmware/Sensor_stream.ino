@@ -333,6 +333,9 @@ void handleStreamSysEx(byte* data, unsigned size, bool fromBLE) {
 
     switch (data[5]) {
         case STREAM_CONFIG:
+            if (fromBLE && sensorStreamOn && !sensorStreamOverBLE) {
+                break;  // A USB stream wins: BLE is being paused, and a host that sends to both ports would otherwise switch the stream to BLE and back
+            }
             if (size >= 8) {
                 const bool on = data[6] & STREAM_CONFIG_ON, suppress = data[6] & STREAM_CONFIG_SUPPRESS_NOTES;
                 streamKeepAlive = on;  // Every stream needs renewing, with or without the (older) keep-alive bit
