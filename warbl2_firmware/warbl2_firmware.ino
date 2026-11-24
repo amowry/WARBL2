@@ -185,6 +185,7 @@ byte overblowSemitones = 5;                        // Number of semitones for ov
 
 // These are containers for the above variables, storing the value used by the three different presets.  First variable in array is for preset 0, etc.
 byte modeSelector[] = { kModeWhistle, kModeUilleann, kModeGHB };  // The fingering patterns chosen in the configuration tool, for the three presets.
+bool lowerHoles[] = { false, false, false };                       // Whether the fingering pattern is a "lower holes" one (modeSelector[] is then the base chart).
 int8_t octaveShiftSelector[] = { 0, 0, 0 };
 int8_t noteShiftSelector[] = { 0, 0, 0 };
 byte pitchBendModeSelector[] = { 1, 1, 1 };

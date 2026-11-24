@@ -1227,11 +1227,43 @@ void sendToConfig(bool newPattern, bool newPressure) {
 
 
 
+// "Lower holes" fingering patterns aren't charts of their own: they're stored and sent with their own ID, but play the base chart with the fingering shifted down one hole.
+// Keeping modeSelector[] as the base chart means all the chart-specific behavior (vibrato, thumb register, etc.) applies unchanged.
+void setModeSelector(byte i, byte pattern) {
+    lowerHoles[i] = (pattern == kModeWhistleLowerHoles);
+    modeSelector[i] = lowerHoles[i] ? kModeWhistle : pattern;
+}
+
+
+
+// The fingering pattern ID to save or send to the Config Tool for preset i.
+byte getModeSelectorID(byte i) {
+    return lowerHoles[i] ? kModeWhistleLowerHoles : modeSelector[i];
+}
+
+
+
+// Convert the physical hole pattern to the pattern used for fingering lookups.
+// With "lower holes" the fingering is shifted down one hole: L2-R4 play as L1-R3, L1 is ignored, and the R4 position reads as uncovered. Thumb and bell are unchanged.
+unsigned int getFingeringPattern(unsigned int fingerPattern) {
+    if (lowerHoles[preset]) {
+        return (fingerPattern & 0b100000001) | ((fingerPattern & 0b001111110) << 1);
+    }
+    return fingerPattern;
+}
+
+
+
+
+
+
+
+
 // Return a MIDI note number (0-127) based on the current fingering.
 byte getNote(unsigned int fingerPattern) {
     byte ret = 127;  // Default (blank position)
 
-    uint8_t tempCovered = fingerPattern >> 1;  // Bitshift once to ignore bell sensor reading.
+    uint8_t tempCovered = getFingeringPattern(fingerPattern) >> 1;  // Bitshift once to ignore bell sensor reading.
 
     // Read the MIDI note for the current fingering (all charts except the custom ones).
     if (modeSelector[preset] < kWARBL2Custom1) {
@@ -1429,8 +1461,8 @@ void getRegisterHold() {
 void getState() {
 
     byte scalePosition;  // ScalePosition is used to tell where we are on the scale, because higher notes are more difficult to overblow.
-    unsigned int tempHoleCovered = holeCovered;
-    bitSet(tempHoleCovered, 8);                                  // Ignore thumb hole.
+    unsigned int tempHoleCovered = getFingeringPattern(holeCovered);  // Use the fingering-chart positions, so "lower holes" overblows the same as the standard layout.
+    bitSet(tempHoleCovered, 8);                                       // Ignore thumb hole.
     scalePosition = findleftmostunsetbit(tempHoleCovered) + 62;  // Use the highest open hole to calculate. ToDo: This could be rewritten because soe charts may ignore upper holes. Maybe use the number of uncovered holes or something like that?
     if (scalePosition > 69) {
         scalePosition = 70;
@@ -1777,6 +1809,9 @@ int findStepsOffsetFor(int hole) {
 
 // Custom pitchbend algorithms, tin whistle and uilleann by Michael Eskin
 void handleCustomPitchBend() {
+    const byte v1 = lowerHoles[preset] ? 1 : 2;  // The two vibrato holes (R3 and R2, or R4 and R3 with "lower holes" fingering).
+    const byte v2 = v1 + 1;
+
     for (byte i = 0; i < 9; i++) {  // Reset all holes
         iPitchBend[i] = 0;
     }
@@ -1787,18 +1822,18 @@ void handleCustomPitchBend() {
 
     if (pitchBendMode != kPitchBendNone) {  // If halfhole pitchbend is enabled but no other pitchbend is, we don't need to calculate any vibrato.
 
-        // This method only cares if 2 or 3 are slideholes.
-        int slideHoleIndex = iPitchBend[2] != 0 ? 2 : iPitchBend[3] != 0 ? 3
+        // This method only cares if v1 or v2 are slideholes.
+        int slideHoleIndex = iPitchBend[v1] != 0 ? v1 : iPitchBend[v2] != 0 ? v2
                                                                          : 0;
 
         if (modeSelector[preset] != kModeGHB && modeSelector[preset] != kModeNorthumbrian) {  // Only used for whistle and uilleann
             if (vibratoEnable == 1) {                                                         // If it's a vibrato fingering pattern
-                if (iPitchBend[2] == 0) {
-                    iPitchBend[2] = adjvibdepth;  // Just assign max vibrato depth to a hole that isn't being used for sliding (it doesn't matter which hole, it's just so it will be added in later).
-                    iPitchBend[3] = 0;
-                } else if (iPitchBend[3] == 0) {
-                    iPitchBend[3] = adjvibdepth;
-                    iPitchBend[2] = 0;
+                if (iPitchBend[v1] == 0) {
+                    iPitchBend[v1] = adjvibdepth;  // Just assign max vibrato depth to a hole that isn't being used for sliding (it doesn't matter which hole, it's just so it will be added in later).
+                    iPitchBend[v2] = 0;
+                } else if (iPitchBend[v2] == 0) {
+                    iPitchBend[v2] = adjvibdepth;
+                    iPitchBend[v1] = 0;
                 }
             }
 
@@ -1806,39 +1841,39 @@ void handleCustomPitchBend() {
             if (vibratoEnable == 2) {  // Used for whistle and uilleann, indicates that it's a pattern where lowering finger 2 or 3 partway would trigger progressive vibrato.
 
                 if (modeSelector[preset] == kModeWhistle || modeSelector[preset] == kModeChromatic) {
-                    for (byte i = 2; i < 4; i++) {
+                    for (byte i = v1; i <= v2; i++) {
                         if ((toneholeRead[i] > senseDistance) && (bitRead(holeCovered, i) != 1 && (i != slideHoleIndex))) {  // If the hole is contributing, bend down.
                             iPitchBend[i] = (int)((toneholeRead[i] - senseDistance) * vibratoScale[i]);
                         } else if (i != slideHoleIndex) {
                             iPitchBend[i] = 0;
                         }
                     }
-                    if (slideHoleIndex != 2 && slideHoleIndex != 3 && iPitchBend[2] + iPitchBend[3] > adjvibdepth) {
-                        iPitchBend[2] = adjvibdepth;  // Cap at max vibrato depth if they combine to add up to more than that (just set one to max and the other to zero).
-                        iPitchBend[3] = 0;
+                    if (slideHoleIndex != v1 && slideHoleIndex != v2 && iPitchBend[v1] + iPitchBend[v2] > adjvibdepth) {
+                        iPitchBend[v1] = adjvibdepth;  // Cap at max vibrato depth if they combine to add up to more than that (just set one to max and the other to zero).
+                        iPitchBend[v2] = 0;
                     }
                 }
 
                 else if (modeSelector[preset] == kModeUilleann || modeSelector[preset] == kModeUilleannStandard) {
 
                     if ((holeCovered & 0b100000000) == 0) {  // If the back-D is open, and the vibrato hole completely open, max the pitch bend.
-                        if (bitRead(holeCovered, 3) == 1) {
-                            iPitchBend[3] = 0;
+                        if (bitRead(holeCovered, v2) == 1) {
+                            iPitchBend[v2] = 0;
                         } else {  // Otherwise, bend down proportional to distance
-                            if (toneholeRead[3] > senseDistance) {
-                                iPitchBend[3] = adjvibdepth - (((toneholeRead[3] - senseDistance) * vibratoScale[3]));
+                            if (toneholeRead[v2] > senseDistance) {
+                                iPitchBend[v2] = adjvibdepth - (((toneholeRead[v2] - senseDistance) * vibratoScale[v2]));
                             } else {
-                                iPitchBend[3] = adjvibdepth;
+                                iPitchBend[v2] = adjvibdepth;
                             }
                         }
                     } else {
 
-                        if ((toneholeRead[3] > senseDistance) && (bitRead(holeCovered, 3) != 1) && 3 != slideHoleIndex) {
-                            iPitchBend[3] = (int)((toneholeRead[3] - senseDistance) * vibratoScale[3]);
+                        if ((toneholeRead[v2] > senseDistance) && (bitRead(holeCovered, v2) != 1) && v2 != slideHoleIndex) {
+                            iPitchBend[v2] = (int)((toneholeRead[v2] - senseDistance) * vibratoScale[v2]);
                         }
 
-                        else if ((toneholeRead[3] < senseDistance) || (bitRead(holeCovered, 3) == 1)) {
-                            iPitchBend[3] = 0;  // If the finger is removed or the hole is fully covered, there's no pitchbend contributed by that hole.
+                        else if ((toneholeRead[v2] < senseDistance) || (bitRead(holeCovered, v2) == 1)) {
+                            iPitchBend[v2] = 0;  // If the finger is removed or the hole is fully covered, there's no pitchbend contributed by that hole.
                         }
                     }
                 }
@@ -1847,7 +1882,7 @@ void handleCustomPitchBend() {
 
 
         else if (modeSelector[preset] == kModeGHB || modeSelector[preset] == kModeNorthumbrian) {  // This one is designed for closed fingering patterns, so raising a finger sharpens the note.
-            for (byte i = 2; i < 4; i++) {                                                         // Use holes 2 and 3 for vibrato.
+            for (byte i = v1; i <= v2; i++) {                                                         // Use holes v1 and v2 for vibrato.
                 if (i != slideHoleIndex || (holeCovered & 0b100000000) == 0) {
                     static unsigned int testNote;                        // The hypothetical note that would be played if a finger were lowered all the way.
                     if (bitRead(holeCovered, i) != 1) {                  // If the hole is not fully covered
@@ -1867,9 +1902,9 @@ void handleCustomPitchBend() {
                     }
                 }
             }
-            if ((((iPitchBend[2] + iPitchBend[3]) * -1) > adjvibdepth) && ((slideHoleIndex != 2 && slideHoleIndex != 3) || (holeCovered & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
-                iPitchBend[2] = 0 - adjvibdepth;                                                                                                                 // Assign max vibrato depth to a hole that isn't being used for sliding.
-                iPitchBend[3] = 0;
+            if ((((iPitchBend[v1] + iPitchBend[v2]) * -1) > adjvibdepth) && ((slideHoleIndex != v1 && slideHoleIndex != v2) || (holeCovered & 0b100000000) == 0)) {  // Cap at vibrato depth if more than one hole is contributing and they add to up to more than the vibrato depth.
+                iPitchBend[v1] = 0 - adjvibdepth;                                                                                                                 // Assign max vibrato depth to a hole that isn't being used for sliding.
+                iPitchBend[v2] = 0;
             }
         }
     }
@@ -2553,8 +2588,8 @@ void handleControlChange(byte source, byte channel, byte number, byte value) {
                     }
                 }
 
-                if ((value >= MIDI_FINGERING_PATTERN_START && value <= MIDI_FINGERING_PATTERN_END) || (value >= MIDI_CUST_FINGERING_PATTERN_START && value <= MIDI_CUST_FINGERING_PATTERN_END)) {
-                    modeSelector[fingeringReceiveMode] = value - MIDI_FINGERING_PATTERN_START;
+                if ((value >= MIDI_FINGERING_PATTERN_START && value <= MIDI_FINGERING_PATTERN_END) || (value >= MIDI_CUST_FINGERING_PATTERN_START && value <= MIDI_CUST_FINGERING_PATTERN_END) || value == MIDI_LOWER_HOLES_FINGERING_PATTERN) {
+                    setModeSelector(fingeringReceiveMode, value - MIDI_FINGERING_PATTERN_START);
                     loadPrefs();
                 }
 
@@ -3634,7 +3669,7 @@ void sendSettings() {
 
 
     for (byte i = 0; i < 3; i++) {
-        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for preset i.
+        sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + getModeSelectorID(i));  //Send the fingering pattern for preset i.
 
         if (noteShiftSelector[i] >= 0) {
             sendMIDI(MIDI_SEND_CC, MIDI_CC_111 + i, noteShiftSelector[i]);
@@ -3741,11 +3776,11 @@ void sendSettings() {
 // Load saved fingering patterns
 void loadFingering() {
     for (byte i = 0; i < 3; i++) {
-        modeSelector[i] = readEEPROM(EEPROM_FINGERING_PATTERN_START + i);
+        setModeSelector(i, readEEPROM(EEPROM_FINGERING_PATTERN_START + i));
         noteShiftSelector[i] = (int8_t)readEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i);
 
         if (communicationMode) {
-            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + modeSelector[i]);  //Send the fingering pattern for preset i.
+            sendMIDICouplet(MIDI_CC_102, MIDI_FINGERING_PATTERN_MODE_START + i, MIDI_CC_102, MIDI_FINGERING_PATTERN_START + getModeSelectorID(i));  //Send the fingering pattern for preset i.
 
             if (noteShiftSelector[i] >= 0) {
                 sendMIDI(MIDI_SEND_CC, (MIDI_CC_111 + i), noteShiftSelector[i]);
@@ -3769,7 +3804,7 @@ void loadFingering() {
 // Save settings for current preset as defaults for given preset (i).
 void saveSettings(byte i) {
 
-    writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, modeSelector[preset]);
+    writeEEPROM(EEPROM_FINGERING_PATTERN_START + i, getModeSelectorID(preset));
     writeEEPROM(EEPROM_NOTE_SHIFT_SEL_START + i, noteShiftSelector[preset]);
     writeEEPROM(EEPROM_SENS_DISTANCE_START + i, senseDistanceSelector[preset]);
 

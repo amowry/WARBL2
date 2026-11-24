@@ -63,6 +63,7 @@
 #define kWARBL2Custom2 68
 #define kWARBL2Custom3 69
 #define kWARBL2Custom4 70
+#define kModeWhistleLowerHoles 78  // Not a chart of its own: tin whistle shifted down one hole (see setModeSelector()). Sent with CC 102 value 111.
 #define kModeNModes 31
 
 // Pitch bend modes
@@ -445,7 +446,8 @@
 #define MIDI_CC_102_VALUE_102 102  // Bidirectional. WARBL2 custom fingering chart 3
 #define MIDI_CC_102_VALUE_103 103  // Bidirectional. WARBL2 custom fingering chart 4
 #define MIDI_CC_102_VALUE_104 104  //from Config Tool. exit communication mode (previously 102 99)
-/* 105-111	unused -- can be used for WARBL2 */
+/* 105-110	unused -- can be used for WARBL2 */
+#define MIDI_CC_102_VALUE_111 111  // Bidirectional. Tin whistle, lower holes
 #define MIDI_CC_102_VALUE_112 112  // Bidirectional. send midi note on/note off
 #define MIDI_CC_102_VALUE_113 113  // Bidirectional. Send midi CC
 #define MIDI_CC_102_VALUE_114 114  // Bidirectional. Send MIDI PC
@@ -782,6 +784,7 @@
 #define MIDI_GESTURE_START MIDI_CC_102_VALUE_90                  // Bidirectional. Sending data for click 1 (dropdown row 0)
 #define MIDI_CUST_FINGERING_PATTERN_START MIDI_CC_102_VALUE_100  // Bidirectional. WARBL2 custom fingering chart 1
 #define MIDI_CUST_FINGERING_PATTERN_END MIDI_CC_102_VALUE_103    // Bidirectional. WARBL2 custom fingering chart 4
+#define MIDI_LOWER_HOLES_FINGERING_PATTERN MIDI_CC_102_VALUE_111  // Bidirectional. Tin whistle, lower holes (MIDI_FINGERING_PATTERN_START + kModeWhistleLowerHoles)
 #define MIDI_ACTION_MIDI_START MIDI_CC_102_VALUE_112             // Bidirectional. send midi note on/note off
 
 #define MIDI_PRESS_SELECT_VARS_START MIDI_CC_104_VALUE_1                  // Bidirectional. Settings for current preset: indicates ""bag threshold"" is about to be sent with CC 105.
