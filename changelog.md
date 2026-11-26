@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Sensor streaming mode over sysex, to allow developers to use the sensor data directly rather than relying on WARBL's MIDI message encoding. It is documented here: https://github.com/amowry/WARBL2/blob/main/WARBL_sensor_stream_protocol_v3.md As an example, this web page will connect to the WARBL and dsiplay sensor data and streaming statistics: https://warbl.xyz/WARBL_stream_monitor.html. Sensor streaming over USB pauses BLE (disconnects and stops advertising) so the loop always runs at 2 ms; BLE comes back when the stream stops.
+- Sensor streaming mode over sysex, to allow developers to use the sensor data directly rather than relying on WARBL's MIDI message encoding. It is documented here: https://github.com/amowry/WARBL2/blob/main/WARBL_sensor_stream_protocol_v3.md As an example, this web page will connect to the WARBL and dsiplay sensor data and streaming statistics: https://warbl.xyz/WARBL_stream_monitor.html. Sensor streaming over USB pauses BLE (disconnects and stops advertising) so the loop always runs at 2 ms; BLE comes back when the stream stops. While streaming over USB, stream commands arriving over BLE are ignored, so a host that sends to both ports doesn't switch the stream to BLE.
 
 - Support for Bosch BMP585 pressure sensor. This sensor is now being used because the previous Honeywell sensor is being phased out. Also onboard is a BMP580 or BMP581 for sensing/compensating for ambient pressure.
 
