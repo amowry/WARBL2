@@ -1004,6 +1004,13 @@ function WARBL_Receive(event, source) {
 							updateCells(); //update any dependant fields	
 						}
 
+						if (data2 == MIDI_LOWER_HOLES_FINGERING_PATTERN) {
+							if (fingeringWrite == i) {
+								document.getElementById("fingeringSelect" + i).value = data2 - MIDI_FINGERING_PATTERN_START;
+							}
+							updateCells(); //update any dependant fields	
+						}
+
 					}
 
 
@@ -1401,6 +1408,11 @@ function WARBL_Receive(event, source) {
 						console.log("Patch = " + patch);
 						const el = document.getElementById('version');
 						el.appendChild(document.createTextNode('.' + patch));
+						if (version == 4.8 && patch >= 2) { // Tin whistle/flute, lower holes fingering needs 4.8.2 or later.
+							for (let i = 0; i < 3; i++) {
+								document.getElementById("fingeringSelect" + i).options[26].disabled = false;
+							}
+						}
 
 					}
 
@@ -1831,6 +1843,13 @@ function WARBL_Receive(event, source) {
 					//add new items that should only be visible with newer software versions and disable ones that are for newer version than the current one.
 
 
+					if (version < 4.9) {
+						document.getElementById("fingeringSelect0").options[26].disabled = true; // Disable tin whistle/flute, lower holes fingering (re-enabled below when 4.8 firmware sends patch 2 or later).
+						document.getElementById("fingeringSelect1").options[26].disabled = true;
+						document.getElementById("fingeringSelect2").options[26].disabled = true;
+					}
+
+
 					if (version < 4.8) {
 						document.getElementById("fingeringSelect0").options[25].disabled = true; // Disable duduk fingering.
 						document.getElementById("fingeringSelect1").options[25].disabled = true;
@@ -1933,16 +1952,22 @@ function WARBL_Receive(event, source) {
 						document.getElementById("fingeringSelect0").options[26].disabled = true;
 						document.getElementById("fingeringSelect0").options[27].disabled = true;
 						document.getElementById("fingeringSelect0").options[28].disabled = true;
+						document.getElementById("fingeringSelect0").options[29].disabled = true;
+						document.getElementById("fingeringSelect0").options[30].disabled = true;
 						document.getElementById("fingeringSelect1").options[24].disabled = true;
 						document.getElementById("fingeringSelect1").options[25].disabled = true;
 						document.getElementById("fingeringSelect1").options[26].disabled = true;
 						document.getElementById("fingeringSelect1").options[27].disabled = true;
 						document.getElementById("fingeringSelect1").options[28].disabled = true;
+						document.getElementById("fingeringSelect1").options[29].disabled = true;
+						document.getElementById("fingeringSelect1").options[30].disabled = true;
 						document.getElementById("fingeringSelect2").options[24].disabled = true;
 						document.getElementById("fingeringSelect2").options[25].disabled = true;
 						document.getElementById("fingeringSelect2").options[26].disabled = true;
 						document.getElementById("fingeringSelect2").options[27].disabled = true;
 						document.getElementById("fingeringSelect2").options[28].disabled = true;
+						document.getElementById("fingeringSelect2").options[29].disabled = true;
+						document.getElementById("fingeringSelect2").options[30].disabled = true;
 
 						document.getElementById("keyLabel").innerHTML = "Key";
 						document.getElementById("keyLabel").style.left = "305px";
@@ -3833,7 +3858,7 @@ function updateCustom() { //keep correct settings enabled/disabled with respect 
 
 	var a = document.getElementById("fingeringSelect" + instrument).value;
 
-	if (document.getElementById("pitchbendradio2").checked == false && (((a == 0 || a == 1 || a == 4 || a == 10) && ((document.getElementById("pitchbendradio1").checked == true && version < 1.6) || (version == "Unknown" || version > 1.5))) || (version == "Unknown" || version > 1.5) && (a == 3 || a == 2))) {
+	if (document.getElementById("pitchbendradio2").checked == false && (((a == 0 || a == 1 || a == 4 || a == 10 || a == 78) && ((document.getElementById("pitchbendradio1").checked == true && version < 1.6) || (version == "Unknown" || version > 1.5))) || (version == "Unknown" || version > 1.5) && (a == 3 || a == 2))) {
 		document.getElementById("checkbox5").disabled = false;
 		document.getElementById("switch5").style.cursor = "pointer";
 	} else {

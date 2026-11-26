@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- "Tin whistle/flute, lower holes" fingering pattern: tin whistle/flute fingering shifted down by one hole, so the six holes from L2 to R4 play as L1 to R3 normally would and the L1 hole is ignored. Overblowing behaves the same as with the standard tin whistle/flute fingering, and custom vibrato uses R4/R3 instead of R3/R2.
+
 ## [4.8] - 2026-11-20
 
 ### Changed
